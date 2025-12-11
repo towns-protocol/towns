@@ -1,19 +1,21 @@
-# Enqueued Messages Retention & Quota Implementation Plan
+# Enqueued Messages Retention Implementation Plan
 
 ## Problem
-The `enqueued_messages` table grows unbounded when bots stay offline or never publish session keys. There is no TTL or quota mechanism.
+The `enqueued_messages` table grows unbounded when bots stay offline or never publish session keys. There is no TTL or limit mechanism.
 
 ## Solution Overview
 1. Add `created_at` timestamp to track message age
-2. Add per-bot message count tracking
-3. Implement "suspended" state for bots exceeding limits
-4. Background cleanup job for expired messages
-5. Wake-up mechanism when bot calls `RegisterWebhook` (startup)
-6. Prometheus metrics for visibility
+2. Background cleanup job that:
+   - Deletes messages older than TTL (7 days)
+   - Trims per-bot queues to max limit (1000 messages), keeping newest
+3. Prometheus metrics for visibility
+
+**Note**: We trim oldest messages rather than suspending bots. This ensures bots continue
+working in all channels while capping storage per bot.
 
 ## Configuration Defaults
 - **TTL**: 7 days (messages older than this are deleted)
-- **Per-bot limit**: 1000 messages
+- **Max messages per bot**: 1000 (oldest messages trimmed when exceeded)
 - **Cleanup interval**: 5 minutes
 
 ---
@@ -27,21 +29,15 @@ The `enqueued_messages` table grows unbounded when bots stay offline or never pu
 -- Add created_at to enqueued_messages
 ALTER TABLE enqueued_messages ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
 
--- Add suspended flag to app_registry table
-ALTER TABLE app_registry ADD COLUMN suspended BOOLEAN DEFAULT FALSE;
-
--- Index for efficient cleanup queries
+-- Index for efficient cleanup queries (by time and by device)
 CREATE INDEX enqueued_messages_created_at_idx ON enqueued_messages (created_at);
-
--- Index for counting messages per device
-CREATE INDEX enqueued_messages_device_key_idx ON enqueued_messages (device_key);
+CREATE INDEX enqueued_messages_device_key_created_at_idx ON enqueued_messages (device_key, created_at);
 ```
 
 **Down migration**: `000008_add_enqueue_retention.down.sql`
 ```sql
-DROP INDEX IF EXISTS enqueued_messages_device_key_idx;
+DROP INDEX IF EXISTS enqueued_messages_device_key_created_at_idx;
 DROP INDEX IF EXISTS enqueued_messages_created_at_idx;
-ALTER TABLE app_registry DROP COLUMN IF EXISTS suspended;
 ALTER TABLE enqueued_messages DROP COLUMN IF EXISTS created_at;
 ```
 
@@ -50,7 +46,7 @@ ALTER TABLE enqueued_messages DROP COLUMN IF EXISTS created_at;
 
 Add to `AppRegistryConfig`:
 ```go
-// EnqueuedMessageRetention configures retention limits for enqueued messages
+// EnqueuedMessageRetention configures retention for enqueued messages
 EnqueuedMessageRetention EnqueuedMessageRetentionConfig
 ```
 
@@ -59,7 +55,8 @@ New struct:
 type EnqueuedMessageRetentionConfig struct {
     // TTL is how long messages are kept before cleanup (default: 7 days)
     TTL time.Duration
-    // MaxMessagesPerBot is the per-bot message limit (default: 1000)
+    // MaxMessagesPerBot is the max messages kept per bot (default: 1000)
+    // Oldest messages are deleted when this limit is exceeded
     MaxMessagesPerBot int
     // CleanupInterval is how often the cleanup job runs (default: 5 minutes)
     CleanupInterval time.Duration
@@ -71,49 +68,75 @@ type EnqueuedMessageRetentionConfig struct {
 
 Add to `AppRegistryStore` interface:
 ```go
-// GetEnqueuedMessageCount returns the count of enqueued messages for a device
-GetEnqueuedMessageCount(ctx context.Context, deviceKey string) (int, error)
-
 // DeleteExpiredEnqueuedMessages removes messages older than the given threshold
+// Returns the number of deleted rows
 DeleteExpiredEnqueuedMessages(ctx context.Context, olderThan time.Time) (int64, error)
 
-// SetAppSuspended marks an app as suspended (stops new message enqueueing)
-SetAppSuspended(ctx context.Context, app common.Address, suspended bool) error
+// TrimEnqueuedMessagesPerBot deletes oldest messages for bots exceeding maxMessages
+// Returns the number of deleted rows
+TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
 
-// IsAppSuspended checks if an app is suspended
-IsAppSuspended(ctx context.Context, app common.Address) (bool, error)
-
-// GetSuspendedAppsWithCounts returns suspended apps with their message counts
-GetSuspendedAppsWithCounts(ctx context.Context) ([]SuspendedAppInfo, error)
+// GetEnqueuedMessagesCount returns the total count of enqueued messages (for metrics)
+GetEnqueuedMessagesCount(ctx context.Context) (int64, error)
 ```
 
-New type:
-```go
-type SuspendedAppInfo struct {
-    App          common.Address
-    DeviceKey    string
-    MessageCount int
-}
-```
-
-### 4. Modify EnqueueUnsendableMessages
+### 4. Storage Implementation
 **File**: `core/node/storage/pg_app_registry_store.go`
 
-Update `EnqueueUnsendableMessages` to:
-1. Check if app is suspended - if so, skip enqueueing and return in `unsendableApps` with a flag
-2. Check message count before enqueueing
-3. If count >= limit: mark app as suspended, don't enqueue
-4. Log warning when suspending
+```go
+func (s *PostgresAppRegistryStore) DeleteExpiredEnqueuedMessages(
+    ctx context.Context,
+    olderThan time.Time,
+) (int64, error) {
+    result, err := s.pool.Exec(ctx,
+        `DELETE FROM enqueued_messages WHERE created_at < $1`,
+        olderThan,
+    )
+    if err != nil {
+        return 0, err
+    }
+    return result.RowsAffected(), nil
+}
+
+func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
+    ctx context.Context,
+    maxMessages int,
+) (int64, error) {
+    // Delete oldest messages for each device_key that exceeds the limit
+    result, err := s.pool.Exec(ctx, `
+        DELETE FROM enqueued_messages
+        WHERE ctid IN (
+            SELECT ctid FROM (
+                SELECT ctid,
+                       ROW_NUMBER() OVER (PARTITION BY device_key ORDER BY created_at DESC) as rn
+                FROM enqueued_messages
+            ) ranked
+            WHERE rn > $1
+        )
+    `, maxMessages)
+    if err != nil {
+        return 0, err
+    }
+    return result.RowsAffected(), nil
+}
+
+func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCount(
+    ctx context.Context,
+) (int64, error) {
+    var count int64
+    err := s.pool.QueryRow(ctx, `SELECT COUNT(*) FROM enqueued_messages`).Scan(&count)
+    return count, err
+}
+```
 
 ### 5. Background Cleanup Job
 **File**: `core/node/app_registry/cleanup.go` (new file)
 
 ```go
 type EnqueuedMessagesCleaner struct {
-    store           storage.AppRegistryStore
-    cfg             config.EnqueuedMessageRetentionConfig
-    metrics         *cleanupMetrics
-    stop            chan struct{}
+    store   storage.AppRegistryStore
+    cfg     config.EnqueuedMessageRetentionConfig
+    metrics *cleanupMetrics
 }
 
 func (c *EnqueuedMessagesCleaner) Run(ctx context.Context) {
@@ -126,52 +149,69 @@ func (c *EnqueuedMessagesCleaner) Run(ctx context.Context) {
             c.cleanup(ctx)
         case <-ctx.Done():
             return
-        case <-c.stop:
-            return
         }
     }
 }
 
 func (c *EnqueuedMessagesCleaner) cleanup(ctx context.Context) {
+    log := logging.FromCtx(ctx)
+
+    // 1. Delete messages older than TTL
     threshold := time.Now().Add(-c.cfg.TTL)
-    deleted, err := c.store.DeleteExpiredEnqueuedMessages(ctx, threshold)
+    expiredDeleted, err := c.store.DeleteExpiredEnqueuedMessages(ctx, threshold)
     if err != nil {
         log.Errorw("failed to cleanup expired messages", "error", err)
-        return
+    } else if expiredDeleted > 0 {
+        log.Infow("cleaned up expired enqueued messages", "count", expiredDeleted)
+        c.metrics.deletedByTTL.Add(float64(expiredDeleted))
     }
-    if deleted > 0 {
-        log.Infow("cleaned up expired enqueued messages", "count", deleted)
-        c.metrics.deletedMessages.Add(float64(deleted))
+
+    // 2. Trim per-bot queues exceeding the limit
+    trimmed, err := c.store.TrimEnqueuedMessagesPerBot(ctx, c.cfg.MaxMessagesPerBot)
+    if err != nil {
+        log.Errorw("failed to trim per-bot message queues", "error", err)
+    } else if trimmed > 0 {
+        log.Infow("trimmed per-bot message queues", "count", trimmed)
+        c.metrics.deletedByLimit.Add(float64(trimmed))
     }
 }
 ```
 
-### 6. Wake-up Mechanism
-**File**: `core/node/app_registry/service.go`
-
-In `RegisterWebhook` (called on bot startup):
-```go
-// Unsuspend the app if it was suspended
-if err := s.store.SetAppSuspended(ctx, app, false); err != nil {
-    log.Warnw("failed to unsuspend app", "app", app, "error", err)
-}
-```
-
-This allows bots to "wake up" by re-registering their webhook.
-
-### 7. Metrics
+### 6. Metrics
 **File**: `core/node/app_registry/cleanup.go`
 
 ```go
 type cleanupMetrics struct {
-    enqueuedMessagesTotal   prometheus.GaugeFunc  // Current count
-    deletedMessages         prometheus.Counter    // Messages deleted by TTL
-    suspendedApps          prometheus.GaugeFunc  // Currently suspended apps
-    suspensionEvents       prometheus.Counter    // Times apps were suspended
+    enqueuedMessagesTotal prometheus.GaugeFunc  // Current count in queue
+    deletedByTTL          prometheus.Counter    // Messages deleted by TTL
+    deletedByLimit        prometheus.Counter    // Messages deleted by per-bot limit
+}
+
+func newCleanupMetrics(factory infra.MetricsFactory, store storage.AppRegistryStore) *cleanupMetrics {
+    return &cleanupMetrics{
+        enqueuedMessagesTotal: factory.NewGaugeFunc(
+            prometheus.GaugeOpts{
+                Name: "app_registry_enqueued_messages_total",
+                Help: "Total number of messages in the enqueued_messages table",
+            },
+            func() float64 {
+                count, _ := store.GetEnqueuedMessagesCount(context.Background())
+                return float64(count)
+            },
+        ),
+        deletedByTTL: factory.NewCounterEx(
+            "app_registry_enqueued_messages_deleted_by_ttl_total",
+            "Total enqueued messages deleted due to TTL expiration",
+        ),
+        deletedByLimit: factory.NewCounterEx(
+            "app_registry_enqueued_messages_deleted_by_limit_total",
+            "Total enqueued messages deleted due to per-bot limit",
+        ),
+    }
 }
 ```
 
-### 8. Service Integration
+### 7. Service Integration
 **File**: `core/node/app_registry/service.go`
 
 Add cleaner to Service struct and start in `Start()`:
@@ -198,10 +238,10 @@ func (s *Service) Start(ctx context.Context) {
 | `core/node/storage/app_registry_migrations/000008_add_enqueue_retention.up.sql` | Create | Schema migration |
 | `core/node/storage/app_registry_migrations/000008_add_enqueue_retention.down.sql` | Create | Down migration |
 | `core/config/config.go` | Modify | Add retention config |
-| `core/node/storage/pg_app_registry_store.go` | Modify | Add interface methods & implementations |
-| `core/node/app_registry/cleanup.go` | Create | Background cleanup job |
-| `core/node/app_registry/service.go` | Modify | Integrate cleaner, add wake-up in RegisterWebhook |
-| `core/node/storage/pg_app_registry_store_test.go` | Modify | Add tests for new storage methods |
+| `core/node/storage/pg_app_registry_store.go` | Modify | Add cleanup methods |
+| `core/node/app_registry/cleanup.go` | Create | Background cleanup job + metrics |
+| `core/node/app_registry/service.go` | Modify | Integrate cleaner into service startup |
+| `core/node/storage/pg_app_registry_store_test.go` | Modify | Add tests for storage methods |
 | `core/node/app_registry/cleanup_test.go` | Create | Tests for cleanup logic |
 
 ---
@@ -209,15 +249,17 @@ func (s *Service) Start(ctx context.Context) {
 ## Behavior Summary
 
 1. **Normal operation**: Messages enqueued with `created_at` timestamp
-2. **Per-bot limit exceeded**: App marked as `suspended=true`, new messages rejected
-3. **TTL exceeded**: Background job deletes old messages every 5 min
-4. **Bot restart**: `RegisterWebhook` sets `suspended=false`, bot resumes receiving
-5. **Metrics**: Track queue size, suspensions, and deletions for alerting
+2. **TTL cleanup**: Delete messages older than 7 days
+3. **Per-bot trim**: For each bot with > 1000 messages, delete oldest until at 1000
+4. **Metrics**: Track queue size and deletion counts (by TTL vs by limit)
 
 ---
 
 ## Testing Strategy
 
-1. **Unit tests**: Storage methods (count, delete, suspend)
-2. **Integration tests**: Full flow from enqueue to suspension to wake-up
-3. **Cleanup tests**: TTL-based deletion, verify correct messages removed
+1. **Unit tests**: Storage methods (delete expired, trim per-bot, count)
+2. **Cleanup tests**:
+   - TTL-based deletion removes correct messages
+   - Per-bot trim keeps newest 1000 per device_key
+   - Both cleanups run in sequence
+3. **Metrics tests**: Verify gauges and counters work correctly
