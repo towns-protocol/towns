@@ -15,6 +15,23 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
+type fakeNodeIndexResolver struct{}
+
+func (fakeNodeIndexResolver) PermanentIndexForAddress(addr common.Address) (int32, error) {
+	b := addr.Bytes()
+	if len(b) == 0 {
+		return 0, base.RiverError(prot.Err_INVALID_ARGUMENT, "empty address")
+	}
+	return int32(b[len(b)-1]), nil
+}
+
+func (fakeNodeIndexResolver) AddressForPermanentIndex(index int32) (common.Address, error) {
+	if index < 0 || index > 255 {
+		return common.Address{}, base.RiverError(prot.Err_INVALID_ARGUMENT, "index out of range", "index", index)
+	}
+	return common.BytesToAddress(bytes.Repeat([]byte{byte(index)}, 20)), nil
+}
+
 func setupMetadataShardStoreTest(t *testing.T) (*PostgresMetadataShardStore, context.Context) {
 	t.Helper()
 	params := setupStreamStorageTest(t)
@@ -23,6 +40,7 @@ func setupMetadataShardStoreTest(t *testing.T) (*PostgresMetadataShardStore, con
 		params.ctx,
 		&params.pgStreamStore.PostgresEventStore,
 		1,
+		fakeNodeIndexResolver{},
 	)
 	require.NoError(t, err)
 

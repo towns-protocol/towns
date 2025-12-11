@@ -22,9 +22,9 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 ## Storage Layout
 
-- Table names derive from the shard id: `md_%04x_s` (streams) and `md_%04x_n` (nodes) with 4-digit hex shard ids.
-- Streams table columns: `stream_id` (PK, 32 bytes), `genesis_miniblock_hash` (32 bytes), `genesis_miniblock` (payload), `last_miniblock_hash` (32 bytes), `last_miniblock_num` (BIGINT), `replication_factor` (INT), `sealed` (BOOL) plus CHECK constraints on lengths and positivity.
-- Nodes table columns: `stream_id` (FK → streams), `position` (ordering), `node_addr` (20 bytes); PK on `(stream_id, position)`, unique `(stream_id, node_addr)`, index on `node_addr`. Replacements delete and reinsert to preserve ordering.
+- Table names derive from the shard id: `md_%04x_s` (streams) with 4-digit hex shard ids.
+- Streams table columns: `stream_id` (PK, 32 bytes), `genesis_miniblock_hash` (32 bytes), `genesis_miniblock` (payload), `last_miniblock_hash` (32 bytes), `last_miniblock_num` (BIGINT), `replication_factor` (INT), `sealed` (BOOL), and `nodes` (INT[] of node permanent indexes). The `nodes` array preserves ordering; a GIN index on `nodes` accelerates node→stream lookups.
+- Node addresses in protobuf transactions and query responses are resolved to/from permanent indexes using `NodeRecord.PermanentIndex` from the node registry.
 - Shared `metadata` table holds one row per shard with last height/hash; created on first `EnsureShardStorage` call. There is no per-block tx log; the app hash is recomputed from the streams table when needed.
 
 ## Execution Flow
@@ -44,8 +44,8 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 - Create stream: enforces unique `stream_id`, validates replication factor against node count, stores the genesis miniblock (empty when starting above height 0), and seeds `last_miniblock_hash` from the genesis hash when `last_miniblock_num` is 0.
 - Miniblock batch: rejects sealed streams, requires `prev_miniblock_hash` to match the current hash, demands `last_miniblock_num` increment by exactly 1, and ORs the `sealed` flag with existing state.
-- Update nodes/replication: defaults to the existing node set when `nodes` is empty, forbids node changes on sealed streams unless identical, enforces replication factor bounds, and rewrites node rows to keep the provided order.
-- Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) all hydrate nodes via ordered array aggregation.
+- Update nodes/replication: defaults to the existing node set when `nodes` is empty, forbids node changes on sealed streams unless identical, enforces replication factor bounds, and rewrites the stored `nodes` array to keep the provided order.
+- Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) resolve stored permanent indexes back into ordered node address lists.
 
 ## App Hash
 
@@ -54,7 +54,7 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 # TODO
 
-- [ ] Update database to use single table for streams data using int array and GIN index for nodes (insted of putting nodes in a separate table).
+- [x] Update database to use single table for streams data using int array and GIN index for nodes (insted of putting nodes in a separate table).
 - [ ] Collect block state in memory and only commit when Commit is called in a single transaction.
 - [ ] Implement app_hash using fixed depth sparse merkle tree with pg backing.
 - [ ] Implement snapshotting/export functionality.

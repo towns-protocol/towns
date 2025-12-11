@@ -8,6 +8,7 @@ import (
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -24,6 +25,23 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
+
+type fakeNodeIndexResolver struct{}
+
+func (fakeNodeIndexResolver) PermanentIndexForAddress(addr common.Address) (int32, error) {
+	b := addr.Bytes()
+	if len(b) == 0 {
+		return 0, base.RiverError(prot.Err_INVALID_ARGUMENT, "empty address")
+	}
+	return int32(b[len(b)-1]), nil
+}
+
+func (fakeNodeIndexResolver) AddressForPermanentIndex(index int32) (common.Address, error) {
+	if index < 0 || index > 255 {
+		return common.Address{}, base.RiverError(prot.Err_INVALID_ARGUMENT, "index out of range", "index", index)
+	}
+	return common.BytesToAddress(bytes.Repeat([]byte{byte(index)}, 20)), nil
+}
 
 type metadataTestEnv struct {
 	shard *MetadataShard
@@ -71,7 +89,12 @@ func setupMetadataShardTest(t *testing.T) metadataTestEnv {
 	)
 	require.NoError(t, err)
 
-	store, err := storage.NewPostgresMetadataShardStore(ctx, &streamStore.PostgresEventStore, 1)
+	store, err := storage.NewPostgresMetadataShardStore(
+		ctx,
+		&streamStore.PostgresEventStore,
+		1,
+		fakeNodeIndexResolver{},
+	)
 	require.NoError(t, err)
 
 	shard := &MetadataShard{
