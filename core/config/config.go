@@ -596,6 +596,23 @@ type AppRegistryConfig struct {
 
 	// MixpanelToken is the project token for Mixpanel analytics. If empty, analytics is disabled.
 	MixpanelToken string
+
+	// EnqueuedMessageRetention configures retention for enqueued messages
+	EnqueuedMessageRetention EnqueuedMessageRetentionConfig
+}
+
+// EnqueuedMessageRetentionConfig configures TTL and limits for the enqueued_messages table.
+type EnqueuedMessageRetentionConfig struct {
+	// TTL is how long messages are kept before cleanup. Default: 7 days.
+	// Messages older than this are deleted by the background cleanup job.
+	TTL time.Duration
+
+	// MaxMessagesPerBot is the maximum number of messages kept per bot. Default: 1000.
+	// When a bot exceeds this limit, the oldest messages are deleted.
+	MaxMessagesPerBot int
+
+	// CleanupInterval is how often the cleanup job runs. Default: 5 minutes.
+	CleanupInterval time.Duration
 }
 
 type LogConfig struct {
