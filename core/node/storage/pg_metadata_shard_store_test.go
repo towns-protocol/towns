@@ -285,7 +285,7 @@ func TestMetadataShardListAndCount(t *testing.T) {
 	require.Len(t, byNode, 3)
 }
 
-func TestMetadataShardSealedNodeChangeRejected(t *testing.T) {
+func TestMetadataShardSealedAllowsNodeChange(t *testing.T) {
 	store, ctx := setupMetadataShardStoreTest(t)
 	const shardID = 1
 	var err error
@@ -305,12 +305,17 @@ func TestMetadataShardSealedNodeChangeRejected(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.UpdateStreamNodesAndReplication(ctx, shardID, 2, &prot.UpdateStreamNodesAndReplicationTx{
+	updated, err := store.UpdateStreamNodesAndReplication(ctx, shardID, 2, &prot.UpdateStreamNodesAndReplicationTx{
 		StreamId: streamID,
 		Nodes:    [][]byte{bytes.Repeat([]byte{0x02}, 20)},
 	})
-	require.Error(t, err)
-	require.Equal(t, prot.Err_FAILED_PRECONDITION, base.AsRiverError(err).Code)
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{bytes.Repeat([]byte{0x02}, 20)}, updated.Nodes)
+
+	fetched, err := store.GetStream(ctx, shardID, streamId)
+	require.NoError(t, err)
+	require.True(t, fetched.Sealed)
+	require.Equal(t, [][]byte{bytes.Repeat([]byte{0x02}, 20)}, fetched.Nodes)
 }
 
 func TestMetadataShardCountsAndState(t *testing.T) {
