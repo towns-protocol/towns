@@ -1,15 +1,15 @@
 {
     "name": "@towns-protocol/rpc-connector",
-    "version": "0.0.416",
+    "version": "0.0.434",
     "type": "module",
     "main": "./dist/node/index.cjs",
     "types": "./dist/node/index.d.ts",
     "scripts": {
         "build": "tsdown",
-        "cb": "yarn clean && yarn build",
+        "cb": "bun run clean && bun run build",
         "clean": "rm -rf dist",
         "lint": "eslint --format unix ./src  --max-warnings=0",
-        "lint:fix": "yarn lint --fix",
+        "lint:fix": "bun run lint --fix",
         "test": "vitest",
         "test:ci": "echo 'CI test skipped'",
         "watch": "tsdown --watch"

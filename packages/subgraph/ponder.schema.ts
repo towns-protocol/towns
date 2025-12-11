@@ -1,4 +1,5 @@
 import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
+import { AgentData } from './src/agentData'
 
 export const analyticsEventType = onchainEnum('analytics_event_type', [
     'swap',
@@ -6,6 +7,9 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'join',
     'review',
 ])
+
+// Actor type enum for tip events
+export type ActorType = 'Member' | 'Bot'
 
 // Type definitions for analytics event data
 export type SwapEventData = {
@@ -21,12 +25,14 @@ export type SwapEventData = {
 export type TipEventData = {
     type: 'tip'
     sender: string
+    senderType: ActorType
     receiver: string
+    recipientType: ActorType
     currency: string
     amount: string
-    tokenId: string
-    messageId: string
-    channelId: string
+    tokenId?: string
+    messageId?: string
+    channelId?: string
 }
 
 export type JoinEventData = {
@@ -60,6 +66,7 @@ export const space = onchainTable(
         totalAmountStaked: t.bigint().default(0n),
         swapVolume: t.bigint().default(0n),
         tipVolume: t.bigint().default(0n),
+        botTipVolume: t.bigint().default(0n),
         joinVolume: t.bigint().default(0n),
         memberCount: t.bigint().default(0n),
         reviewCount: t.bigint().default(0n),
@@ -256,7 +263,72 @@ export const app = onchainTable('apps', (t) => ({
     isRegistered: t.boolean().default(false),
     isBanned: t.boolean().default(false),
     installedIn: t.hex().array().notNull(),
+    lastUpdatedAt: t.bigint(),
+    currentVersionId: t.hex(),
+    tipsCount: t.bigint().default(0n),
+    tipsVolume: t.bigint().default(0n),
 }))
+
+// app installations - tracks which apps are installed in which spaces/accounts
+export const appInstallation = onchainTable(
+    'app_installations',
+    (t) => ({
+        // Composite key: app + account uniquely identifies an installation
+        app: t.hex().notNull(),
+        account: t.hex().notNull(),
+        // versionId
+        appId: t.hex().notNull(),
+
+        // Lifecycle timestamps
+        installedAt: t.bigint().notNull(),
+        lastUpdatedAt: t.bigint(),
+        lastRenewedAt: t.bigint(),
+        uninstalledAt: t.bigint(),
+
+        // Transaction metadata
+        installTxHash: t.hex().notNull(),
+        installLogIndex: t.integer().notNull(),
+
+        // Status
+        isActive: t.boolean().default(true).notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.account] }),
+        accountIdx: index().on(table.account),
+        activeIdx: index().on(table.isActive),
+        appIdIdx: index().on(table.appId),
+        installedAtIdx: index().on(table.installedAt),
+    }),
+)
+
+// app versions - tracks version history for apps
+export const appVersion = onchainTable(
+    'app_versions',
+    (t) => ({
+        appId: t.hex().notNull(),
+        app: t.hex().notNull(),
+
+        // Version metadata
+        createdAt: t.bigint().notNull(),
+        upgradedFromId: t.hex(),
+
+        // Transaction metadata
+        txHash: t.hex().notNull(),
+        logIndex: t.integer().notNull(),
+        blockNumber: t.bigint().notNull(),
+
+        // Status
+        isLatest: t.boolean().default(false).notNull(),
+        isCurrent: t.boolean().default(true).notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.appId] }),
+        appIdx: index().on(table.app),
+        appIdIdx: index().on(table.appId),
+        latestIdx: index().on(table.app, table.isLatest),
+        currentIdx: index().on(table.isCurrent),
+    }),
+)
 
 // reviews
 export const review = onchainTable(
@@ -350,6 +422,36 @@ export const failureToSubscription = relations(subscriptionFailure, ({ one }) =>
     }),
 }))
 
+// each app has many installations
+export const appToInstallations = relations(app, ({ many }) => ({
+    installations: many(appInstallation),
+}))
+
+// each installation belongs to an app
+export const installationToApp = relations(appInstallation, ({ one }) => ({
+    app: one(app, { fields: [appInstallation.app], references: [app.address] }),
+}))
+
+// each installation belongs to a space
+export const installationToSpace = relations(appInstallation, ({ one }) => ({
+    space: one(space, { fields: [appInstallation.account], references: [space.id] }),
+}))
+
+// each space has many app installations
+export const spaceToInstallations = relations(space, ({ many }) => ({
+    appInstallations: many(appInstallation),
+}))
+
+// each app has many versions
+export const appToVersions = relations(app, ({ many }) => ({
+    versions: many(appVersion),
+}))
+
+// each version belongs to an app
+export const versionToApp = relations(appVersion, ({ one }) => ({
+    app: one(app, { fields: [appVersion.app], references: [app.address] }),
+}))
+
 // tip leaderboard - per-space tip stats per user (senders only)
 export const tipLeaderboard = onchainTable(
     'tip_leaderboard',
@@ -358,10 +460,129 @@ export const tipLeaderboard = onchainTable(
         spaceId: t.hex().notNull(),
         totalSent: t.bigint().default(0n),
         tipsSentCount: t.integer().default(0),
+        memberTipsSent: t.integer().default(0),
+        memberTotalSent: t.bigint().default(0n),
+        botTipsSent: t.integer().default(0),
+        botTotalSent: t.bigint().default(0n),
         lastActivity: t.bigint().notNull(),
     }),
     (table) => ({
         pk: primaryKey({ columns: [table.user, table.spaceId] }),
         spaceSentIdx: index().on(table.spaceId, table.totalSent),
+    }),
+)
+
+// Agent Identity Registry - ERC-721 based agent identities for apps
+export const agentIdentity = onchainTable(
+    'agent_identities',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        agentUri: t.text(),
+        agentData: t.json().$type<AgentData>(),
+        registeredAt: t.bigint().notNull(),
+        registeredAtBlock: t.bigint().notNull(),
+        updatedAt: t.bigint(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.agentId] }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+    }),
+)
+
+// Agent Metadata - key-value metadata storage for agents
+export const agentMetadata = onchainTable(
+    'agent_metadata',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        metadataKey: t.text().notNull(),
+        metadataValue: t.hex().notNull(), // bytes from Solidity -> hex string
+        setAt: t.bigint().notNull(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.metadataKey] }),
+        appIdx: index().on(table.app),
+    }),
+)
+
+// Agent Feedback - reviews/feedback for agents (ERC-8004 compliant)
+export const agentFeedback = onchainTable(
+    'agent_feedback',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        reviewerAddress: t.hex().notNull(),
+        feedbackIndex: t.bigint().notNull(),
+        rating: t.integer().notNull(),
+        tag1: t.hex(),
+        tag2: t.hex(),
+        comment: t.text(),
+        commentHash: t.hex(),
+        isRevoked: t.boolean().default(false).notNull(),
+        createdAt: t.bigint().notNull(),
+        revokedAt: t.bigint(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.agentId, table.reviewerAddress, table.feedbackIndex] }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+        reviewerIdx: index().on(table.reviewerAddress),
+        ratingIdx: index().on(table.agentId, table.rating),
+        activeIdx: index().on(table.agentId, table.isRevoked),
+    }),
+)
+
+// Feedback Responses - responses to agent feedback
+export const feedbackResponse = onchainTable(
+    'feedback_responses',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        reviewerAddress: t.hex().notNull(),
+        feedbackIndex: t.bigint().notNull(),
+        responderAddress: t.hex().notNull(),
+        comment: t.text(),
+        commentHash: t.hex(),
+        createdAt: t.bigint().notNull(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({
+            columns: [
+                table.agentId,
+                table.reviewerAddress,
+                table.feedbackIndex,
+                table.responderAddress,
+                table.createdAt,
+            ],
+        }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+        feedbackIdx: index().on(table.agentId, table.reviewerAddress, table.feedbackIndex),
+        responderIdx: index().on(table.responderAddress),
+    }),
+)
+
+// Agent Reputation Summary - precomputed aggregated stats
+export const agentReputationSummary = onchainTable(
+    'agent_reputation_summary',
+    (t) => ({
+        app: t.hex().primaryKey(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        totalFeedback: t.integer().notNull().default(0),
+        activeFeedback: t.integer().notNull().default(0),
+        revokedFeedback: t.integer().notNull().default(0),
+        averageRating: t.real(),
+        totalResponses: t.integer().notNull().default(0),
+        uniqueReviewers: t.integer().notNull().default(0),
+        lastFeedbackAt: t.bigint(),
+    }),
+    (table) => ({
+        agentIdIdx: index().on(table.agentId),
+        ratingIdx: index().on(table.averageRating),
     }),
 )

@@ -29,7 +29,7 @@ The subgraph consists of:
 ## Prerequisites
 
 - Node.js >= 18.14
-- Yarn package manager
+- Bun package manager
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
@@ -39,8 +39,8 @@ The subgraph consists of:
 # For Alpha environment
 docker compose --env-file .env.alpha up -d
 
-# For Gamma environment
-docker compose --env-file .env.gamma up -d
+# For Beta environment
+docker compose --env-file .env.beta up -d
 
 # For Omega environment
 docker compose --env-file .env.omega up -d
@@ -88,7 +88,7 @@ If you encounter issues:
 
 ```
 # regenerate schema.graphql file with a headless instance
-yarn dev:no-ui
+bun run dev:no-ui
 ```
 
 ## Getting Started
@@ -101,7 +101,7 @@ The easiest way to get started is to use our automated setup script:
 
 ```bash
 # Start the subgraph with an Anvil fork
-yarn dev:fork
+bun run dev:fork
 ```
 
 This script will:
@@ -124,7 +124,7 @@ If you prefer more control, you can set up each component manually:
 2. **Set the environment**:
 
    ```bash
-   export RIVER_ENV=gamma
+   export RIVER_ENV=beta
    export PONDER_RPC_URL_1=http://localhost:8545
    ```
 
@@ -132,7 +132,7 @@ If you prefer more control, you can set up each component manually:
 
    ```bash
    cd packages/subgraph
-   yarn dev
+   bun run dev
    ```
 
 ## Interacting with Contracts
@@ -142,7 +142,7 @@ To create events for the subgraph to index, you can interact with the contracts 
 ```bash
 # Create a new space on the Anvil fork
 cd contracts
-make interact-any-local context=gamma rpc=base_anvil contract=InteractCreateSpace
+make interact-any-local context=beta rpc=base_anvil contract=InteractCreateSpace
 ```
 
 This will:
@@ -164,9 +164,9 @@ const spaceFactoryAddress = getContractAddress("spaceFactory", "base", "alpha");
 
 This system automatically:
 
-- Reads from the correct environment (alpha, gamma, omega, etc.)
+- Reads from the correct environment (alpha, beta, omega, etc.)
 - Finds the correct network (base, mainnet, etc.)
-- Falls back to default environments if needed: gamma
+- Falls back to default environments if needed: beta
 - Provides detailed error messages for troubleshooting
 
 ## Debugging Tools
@@ -175,7 +175,7 @@ If you encounter issues with contract address resolution, you can use our debugg
 
 ```bash
 # Find the correct path to contract deployments
-yarn find-paths
+bun run find-paths
 ```
 
 You can also enable debug mode in the code:
@@ -188,15 +188,15 @@ const address = getContractAddress("contractName", network, env, {
 
 ## Available Commands
 
-- `yarn dev`: Start the development server with hot reloading
-- `yarn dev:fork`: Start with an Anvil fork of Base Sepolia
-- `yarn start`: Start the production server
-- `yarn db`: Access the database CLI
-- `yarn codegen`: Generate TypeScript types from the schema
-- `yarn serve`: Serve the API without indexing
-- `yarn lint`: Run ESLint
-- `yarn typecheck`: Run TypeScript type checking
-- `yarn find-paths`: Debug tool to find correct contract paths
+- `bun run dev`: Start the development server with hot reloading
+- `bun run dev:fork`: Start with an Anvil fork of Base Sepolia
+- `bun run start`: Start the production server
+- `bun run db`: Access the database CLI
+- `bun run codegen`: Generate TypeScript types from the schema
+- `bun run serve`: Serve the API without indexing
+- `bun run lint`: Run ESLint
+- `bun run typecheck`: Run TypeScript type checking
+- `bun run find-paths`: Debug tool to find correct contract paths
 
 ## API Endpoints
 
@@ -220,7 +220,7 @@ The subgraph uses several environment variables for configuration:
 
 - `PONDER_RPC_URL_1`: RPC URL for the blockchain network (default: http://localhost:8545)
 - `PONDER_START_BLOCK`: Block number to start indexing from
-- `PONDER_ENVIRONMENT`: Environment to use for contract addresses (default: gamma)
+- `PONDER_ENVIRONMENT`: Environment to use for contract addresses (default: beta)
 
 These can be set in a `.env.local` file or via the command line.
 
@@ -229,18 +229,18 @@ These can be set in a `.env.local` file or via the command line.
 The subgraph supports multiple environments:
 
 - **alpha**: Development environment
-- **gamma**: Staging environment
+- **beta**: Staging environment
 - **omega**: Production environment
 
 To switch environments:
 
 ```bash
 # Using the fork script
-yarn dev:fork --environment gamma
+bun run dev:fork --environment beta
 
 # Or manually
-export PONDER_ENVIRONMENT=gamma
-yarn dev
+export PONDER_ENVIRONMENT=beta
+bun run dev
 ```
 
 ## Troubleshooting
@@ -248,19 +248,16 @@ yarn dev
 If you encounter issues:
 
 1. **Contract Address Resolution**:
-
-   - Run `yarn find-paths` to debug path resolution
+   - Run `bun run find-paths` to debug path resolution
    - Enable debug mode: `getContractAddress('contractName', network, env, { debug: true })`
    - Check that the environment is correctly set
 
 2. **Anvil Fork Issues**:
-
    - Ensure Anvil is running and accessible at the expected port
    - Check for error messages in the Anvil console
    - Try restarting the fork with `./scripts/anvil-fork.sh`
 
 3. **Indexing Issues**:
-
    - Verify that the start block is set correctly
    - Check that the contract addresses are correct
    - Look for error messages in the Ponder console
@@ -282,13 +279,13 @@ You can create custom contract interactions to generate specific events:
 
 ```bash
 # Create a custom interaction script
-make interact-any-local context=gamma rpc=base_anvil contract=YourCustomInteraction
+make interact-any-local context=beta rpc=base_anvil contract=YourCustomInteraction
 ```
 
 ### Transfer Ownership
 
 ```bash
-yarn transfer-ownership
+bun run transfer-ownership
 ```
 
 ### Working with Multiple Networks

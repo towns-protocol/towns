@@ -24,6 +24,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/infra/analytics"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -107,8 +108,11 @@ func NewService(
 	}
 
 	if listener == nil {
-		listener = NewAppMessageProcessor(ctx, cache)
+		analyticsClient := analytics.New(cfg.MixpanelToken)
+		listener = NewAppMessageProcessor(ctx, cache, analyticsClient)
 	}
+
+	cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
 
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
@@ -119,6 +123,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
+		cookieStore,
 		otelTracer,
 	)
 	if err != nil {

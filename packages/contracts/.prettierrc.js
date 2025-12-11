@@ -1,5 +1,5 @@
 module.exports = {
-  ...require("@towns-protocol/prettier-config"),
+  ...require("../prettier-config/config.js"),
   plugins: ["prettier-plugin-solidity"],
   overrides: [
     {

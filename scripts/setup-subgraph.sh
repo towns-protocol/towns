@@ -9,7 +9,7 @@ FORK_BLOCK_NUMBER="${FORK_BLOCK_NUMBER:-}"
 CHAIN_ID="${CHAIN_ID:-84532}"  # Default to Base Sepolia testnet
 PORT="${PORT:-8545}"
 PONDER_ENV_FILE="packages/subgraph/.env.local"
-ENVIRONMENT="${ENVIRONMENT:-gamma}"  # Default environment
+ENVIRONMENT="${ENVIRONMENT:-beta}"  # Default environment
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -122,7 +122,7 @@ done
 # Generating typings if not exists
 if [ ! -f "contracts/typings/index.ts" ]; then
   echo "Generating contract typings..."
-  yarn workspace @towns-protocol/contracts typings
+  bun run --filter @towns-protocol/contracts typings
 fi
 
 # Now update the ponder.config.ts file to use the environment variables
@@ -131,7 +131,7 @@ echo "Updating Ponder configuration..."
 # Navigate to the subgraph directory and start Ponder
 echo "Starting Ponder development server..."
 cd packages/subgraph
-yarn ponder dev
+bun ponder dev
 
 # Note: The cleanup function will be called when this script exits
 # to ensure that the Anvil process is properly terminated

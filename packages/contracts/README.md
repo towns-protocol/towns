@@ -58,11 +58,10 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 
 ## Requirements
 
-Install [yarn](https://yarnpkg.com/getting-started/install) via corepack:
+Install [Bun](https://bun.sh/):
 
 ```shell
-npm install -g corepack
-corepack enable
+curl -fsSL https://bun.sh/install | bash
 ```
 
 Install [Foundry](https://github.com/foundry-rs/foundry):
@@ -77,7 +76,7 @@ foundryup
 Clone the repo, then:
 
 ```shell
-yarn
+bun install
 ```
 
 **To compile the smart contracts:**
@@ -172,14 +171,14 @@ make deploy-base-sepolia contract=Deploy[Contract] type=facets context=[context]
 make deploy-facet rpc=base_sepolia contract=[FacetName] context=[context]
 ```
 
-For example, to deploy the WalletLink facet to Base Sepolia with a deployment context of "gamma":
+For example, to deploy the WalletLink facet to Base Sepolia with a deployment context of "beta":
 
 ```shell
 # Using custom deployment script:
-make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+make deploy-base-sepolia contract=DeployWalletLink type=facets context=beta
 
 # Using standardized DeployFacet script:
-make deploy-facet rpc=base_sepolia contract=WalletLink context=gamma
+make deploy-facet rpc=base_sepolia contract=WalletLink context=beta
 ```
 
 ### Hardware Wallet Deployments
@@ -188,10 +187,10 @@ For hardware wallet deployments, use the corresponding ledger commands:
 
 ```shell
 # Using custom deployment script:
-make deploy-ledger-base-sepolia contract=DeployWalletLink type=facets context=gamma
+make deploy-ledger-base-sepolia contract=DeployWalletLink type=facets context=beta
 
 # Using standardized DeployFacet script:
-make deploy-facet-ledger rpc=base_sepolia contract=WalletLink context=gamma
+make deploy-facet-ledger rpc=base_sepolia contract=WalletLink context=beta
 ```
 
 You can see all the contracts available for deployment in the [deployments](./scripts/deployments) directory.

@@ -98,25 +98,31 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function setMembershipPrice(uint256 newPrice) external onlyOwner {
-        _verifyPrice(newPrice);
-        if (newPrice > 0 && _getMembershipFreeAllocation() > 0)
-            Membership__CannotSetPriceOnFreeSpace.selector.revertWith();
         IMembershipPricing(_getPricingModule()).setPrice(newPrice);
     }
 
     /// @inheritdoc IMembership
-    function getMembershipPrice() external view returns (uint256) {
-        return _getMembershipPrice(_totalSupply());
+    function getMembershipPrice() external view returns (uint256 totalRequired) {
+        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+        if (membershipPrice == 0) return 0;
+
+        (totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
     }
 
     /// @inheritdoc IMembership
-    function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256) {
-        return _getMembershipRenewalPrice(tokenId, _totalSupply());
+    function getMembershipRenewalPrice(
+        uint256 tokenId
+    ) external view returns (uint256 totalRequired) {
+        uint256 renewalPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        if (renewalPrice == 0) return 0;
+        (totalRequired, ) = _getTotalMembershipPayment(renewalPrice);
     }
 
     /// @inheritdoc IMembership
-    function getProtocolFee() external view returns (uint256) {
-        return _getProtocolFee(_getMembershipPrice(_totalSupply()));
+    function getProtocolFee() external view returns (uint256 protocolFee) {
+        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+        if (membershipPrice == 0) return 0;
+        (, protocolFee) = _getTotalMembershipPayment(membershipPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -133,11 +139,6 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
             Membership__InvalidFreeAllocation.selector.revertWith();
         }
 
-        if (_getMembershipPrice(_totalSupply()) > 0) {
-            Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
-        }
-
-        // verify newLimit is not more than the allowed platform limit
         _verifyFreeAllocation(newAllocation);
         _setMembershipFreeAllocation(newAllocation);
     }

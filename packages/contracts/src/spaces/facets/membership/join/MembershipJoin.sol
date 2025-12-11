@@ -89,8 +89,8 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        // Regular paid join
-        (joinDetails.amountDue, joinDetails.shouldCharge) = (membershipPrice, true);
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
+        (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
     /// @notice Handles the process of joining a space
@@ -317,8 +317,7 @@ abstract contract MembershipJoin is
             sender,
             receiver,
             joinDetails.amountDue,
-            ownerProceeds,
-            joinDetails.basePrice
+            ownerProceeds
         );
     }
 
@@ -365,8 +364,7 @@ abstract contract MembershipJoin is
             sender,
             receiver,
             joinDetails.amountDue,
-            ownerProceeds,
-            joinDetails.basePrice
+            ownerProceeds
         );
     }
 
@@ -375,8 +373,7 @@ abstract contract MembershipJoin is
         address payer,
         address receiver,
         uint256 paymentRequired,
-        uint256 ownerProceeds,
-        uint256 membershipPrice
+        uint256 ownerProceeds
     ) internal {
         // account for owner's proceeds
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
@@ -384,7 +381,7 @@ abstract contract MembershipJoin is
         _releaseCapturedValue(transactionId, paymentRequired);
         _deleteCapturedData(transactionId);
 
-        _mintMembershipPoints(receiver, membershipPrice);
+        _mintMembershipPoints(receiver, paymentRequired);
     }
 
     /// @notice Issues a membership token to the receiver
@@ -498,22 +495,39 @@ abstract contract MembershipJoin is
 
     function _renewMembership(address payer, uint256 tokenId) internal {
         address receiver = _ownerOf(tokenId);
-
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
         uint256 duration = _getMembershipDuration();
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
-        if (membershipPrice > msg.value) Membership__InvalidPayment.selector.revertWith();
+        // Handle free renewal
+        if (basePrice == 0) {
+            // Refund any ETH sent
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                payer,
+                msg.value
+            );
+            _renewSubscription(tokenId, uint64(duration));
+            return;
+        }
 
-        _mintMembershipPoints(receiver, membershipPrice);
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
-        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
+        if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-        uint256 remainingDue = membershipPrice - protocolFee;
-        if (remainingDue > 0) _transferIn(payer, remainingDue);
+        // Collect protocol fee (transfers from payer)
+        uint256 protocolFee = _collectProtocolFee(payer, basePrice);
 
-        uint256 excess = msg.value - membershipPrice;
+        // Calculate owner proceeds (what goes to space owner)
+        uint256 ownerProceeds = totalRequired - protocolFee;
+
+        // Transfer owner proceeds to contract
+        if (ownerProceeds > 0) _transferIn(payer, ownerProceeds);
+
+        // Handle excess payment
+        uint256 excess = msg.value - totalRequired;
         if (excess > 0) {
             CurrencyTransfer.transferCurrency(
                 _getMembershipCurrency(),
@@ -523,6 +537,7 @@ abstract contract MembershipJoin is
             );
         }
 
+        _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }
 

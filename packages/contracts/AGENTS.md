@@ -189,17 +189,17 @@ function updateData(uint256 value) external {
 
 ```bash
 # Install dependencies
-yarn
+bun install
 
 # Build contracts
 forge build
 # or
-yarn build
+bun run build
 
 # Run tests
 forge test --ffi --nmc Fork --fuzz-runs 4096
 # or
-yarn test
+bun run test
 
 # Run specific test
 forge test --match-test testFunctionName -vvvv
@@ -208,13 +208,13 @@ forge test --match-test testFunctionName -vvvv
 forge snapshot --isolate
 
 # Format code
-yarn format
+bun run format
 
 # Lint
-yarn lint
+bun run lint
 
 # Generate TypeScript types
-yarn typings
+bun run typings
 ```
 
 ## Deployment
@@ -241,7 +241,7 @@ make deploy-facet-local rpc=base_anvil contract=MembershipFacet
 make deploy-base-sepolia contract=DeploySpace type=diamonds context=alpha
 
 # Deploy with hardware wallet
-make deploy-ledger-base-sepolia contract=DeploySpace type=diamonds context=gamma
+make deploy-ledger-base-sepolia contract=DeploySpace type=diamonds context=beta
 ```
 
 ## Environment Variables

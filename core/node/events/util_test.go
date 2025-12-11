@@ -241,7 +241,7 @@ func (ctc *cacheTestContext) addReplEvent(
 	streamId StreamId,
 	prevMiniblock *MiniblockRef,
 	nodes []common.Address,
-) {
+) *ParsedEvent {
 	addr := crypto.GetTestAddress()
 	ev, err := MakeParsedEventWithPayload(
 		ctc.clientWallet,
@@ -265,6 +265,8 @@ func (ctc *cacheTestContext) addReplEvent(
 			assert.NoError(collect, err)
 		}, 3*time.Second, 5*time.Millisecond, "failed to add event to stream, node %d %s", i, n)
 	}
+
+	return ev
 }
 
 // TODO: rename to allocateStream
@@ -776,7 +778,7 @@ func (i *cacheTestInstance) makeMbCandidateForView(
 	ctx context.Context,
 	view *StreamView,
 ) (*MiniblockInfo, error) {
-	proposal := view.proposeNextMiniblock(ctx, i.params.ChainConfig.Get(), false)
+	proposal := view.proposeNextMiniblock(ctx, i.params.ChainConfig.Get(), false, true)
 	mbCandidate, err := view.makeMiniblockCandidate(ctx, i.params, proposal)
 	if err != nil {
 		return nil, err

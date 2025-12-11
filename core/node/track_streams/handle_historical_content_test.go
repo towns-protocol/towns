@@ -1,0 +1,425 @@
+package track_streams
+
+import (
+	"context"
+	"testing"
+
+	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
+)
+
+// mockTrackedStreamView implements events.TrackedStreamView for testing
+type mockTrackedStreamView struct {
+	mock.Mock
+}
+
+func (m *mockTrackedStreamView) ApplyBlock(miniblock *protocol.Miniblock, snapshot *protocol.Envelope) error {
+	args := m.Called(miniblock, snapshot)
+	return args.Error(0)
+}
+
+func (m *mockTrackedStreamView) ApplyEvent(ctx context.Context, event *protocol.Envelope) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *mockTrackedStreamView) SendEventNotification(ctx context.Context, event *events.ParsedEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *mockTrackedStreamView) ShouldPersistCookie(ctx context.Context) bool {
+	args := m.Called(ctx)
+	return args.Bool(0)
+}
+
+var _ events.TrackedStreamView = (*mockTrackedStreamView)(nil)
+
+// TestHandleHistoricalContent_NoGap tests that no gap recovery happens when persisted position is after server snapshot
+func TestHandleHistoricalContent_NoGap(t *testing.T) {
+	// Create server miniblock at position 100
+	serverMiniblock := makeMiniblockWithNum(t, 150)
+
+	// Create record with persisted position after server snapshot
+	record := &streamSyncInitRecord{
+		streamId: shared.StreamId{},
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
+	}
+
+	// Create mocks
+	mockView := &mockTrackedStreamView{}
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+
+	// No calls should be made to fetch miniblocks or send notifications
+	// (mock will fail if unexpected calls are made)
+
+	// Create minimal syncSessionRunner
+	ctx := context.Background()
+	ssr := &syncSessionRunner{
+		syncCtx:      ctx,
+		nodeRegistry: mockRegistry,
+		node:         common.Address{},
+	}
+
+	// Create StreamAndCookie with server snapshot at 150
+	streamAndCookie := &protocol.StreamAndCookie{
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+	}
+
+	// Execute - server snapshot at 150, our persisted position at 150
+	// No gap recovery should be triggered (mockRegistry would fail if GetStreamServiceClientForAddress was called)
+	ssr.handleHistoricalContent(record, mockView, streamAndCookie)
+}
+
+// TestHandleHistoricalContent_GapDetected tests gap recovery when gap is detected
+func TestHandleHistoricalContent_GapDetected(t *testing.T) {
+	// Create server miniblock at position 155
+	serverMiniblock := makeMiniblockWithNum(t, 155)
+
+	// Create gap miniblocks (150-154) that will be fetched
+	gapMiniblocks := make([]*protocol.Miniblock, 5)
+	for i := range gapMiniblocks {
+		gapMiniblocks[i] = makeMiniblockWithNum(t, int64(150+i))
+	}
+
+	streamId := shared.StreamId{0x20} // channel stream
+	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Create record with persisted state that creates a gap
+	record := &streamSyncInitRecord{
+		streamId: streamId,
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
+		remotes: nodes.NewStreamNodesWithLock(1, []common.Address{nodeAddr}, common.Address{}),
+	}
+
+	// Create mocks
+	mockView := &mockTrackedStreamView{}
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+	mockClient := mocks.NewMockStreamServiceClient(t)
+
+	// Setup mock expectations
+	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
+
+	// Mock GetMiniblocks to return all gap miniblocks in one response
+	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
+		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 155
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{
+				Miniblocks: gapMiniblocks,
+			},
+		}, nil).
+		Once()
+
+	// Create syncSessionRunner
+	ctx := context.Background()
+	ssr := &syncSessionRunner{
+		syncCtx:      ctx,
+		nodeRegistry: mockRegistry,
+		node:         nodeAddr,
+	}
+
+	// Create StreamAndCookie with server snapshot at 155
+	streamAndCookie := &protocol.StreamAndCookie{
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+	}
+
+	// Execute - server snapshot at 155, our persisted position at 150
+	ssr.handleHistoricalContent(record, mockView, streamAndCookie)
+
+	// Verify GetMiniblocks was called with correct range (Once() ensures it was called exactly once)
+	mockClient.AssertExpectations(t)
+}
+
+// TestHandleHistoricalContent_ServerSnapshotOlder tests that no gap recovery happens when server is behind
+func TestHandleHistoricalContent_ServerSnapshotOlder(t *testing.T) {
+	// Create server miniblock at position 200
+	serverMiniblock := makeMiniblockWithNum(t, 200)
+
+	// Create record where our persisted position is ahead of server
+	record := &streamSyncInitRecord{
+		streamId:             shared.StreamId{},
+		persistedMinipoolGen: 250, // > serverSnapshotMb (200) - server is behind
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 250,
+		},
+	}
+
+	// Create mocks
+	mockView := &mockTrackedStreamView{}
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+
+	ctx := context.Background()
+	ssr := &syncSessionRunner{
+		syncCtx:      ctx,
+		nodeRegistry: mockRegistry,
+		node:         common.Address{},
+	}
+
+	// Create StreamAndCookie with server snapshot at 200
+	streamAndCookie := &protocol.StreamAndCookie{
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+	}
+
+	// Execute - server snapshot at 200, our persisted position at 250
+	// No gap recovery should be triggered (mockRegistry would fail if GetStreamServiceClientForAddress was called)
+	ssr.handleHistoricalContent(record, mockView, streamAndCookie)
+}
+
+// TestNotifyEventsFromMiniblocks tests that events are correctly extracted and notified
+func TestNotifyEventsFromMiniblocks(t *testing.T) {
+	require := require.New(t)
+
+	// Create a miniblock with actual events
+	streamId := shared.StreamId{0x20}
+
+	// Create mock view that tracks notifications
+	mockView := &mockTrackedStreamView{}
+	notificationCount := 0
+	mockView.On("SendEventNotification", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			notificationCount++
+		}).
+		Return(nil)
+
+	ctx := context.Background()
+	ssr := &syncSessionRunner{
+		syncCtx: ctx,
+	}
+
+	// Create miniblocks without events (just headers)
+	mb1 := makeMiniblockWithNum(t, 100)
+	mb2 := makeMiniblockWithNum(t, 101)
+
+	// Execute
+	ssr.notifyEventsFromMiniblocks(streamId, mockView, []*protocol.Miniblock{mb1, mb2})
+
+	// Our test miniblocks have no events, so no notifications should be sent
+	require.Equal(0, notificationCount, "No notifications expected for miniblocks without events")
+}
+
+// Helper to create a minimal syncSessionRunner for testing applyUpdateToStream
+func newTestSyncSessionRunner(
+	t *testing.T,
+	nodeRegistry *mocks.MockNodeRegistry,
+	trackedViewForStream TrackedViewForStream,
+) *syncSessionRunner {
+	ctx := context.Background()
+	cancelFunc := func(err error) {}
+
+	// Create metrics
+	metricsFactory := infra.NewMetricsFactory(nil, "", "")
+	metrics := NewTrackStreamsSyncMetrics(metricsFactory)
+
+	return &syncSessionRunner{
+		rootCtx:              ctx,
+		syncCtx:              ctx,
+		cancelSync:           cancelFunc,
+		node:                 common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		nodeRegistry:         nodeRegistry,
+		metrics:              metrics,
+		trackedViewForStream: trackedViewForStream,
+		streamRecords:        xsync.NewMap[shared.StreamId, *streamSyncInitRecord](),
+	}
+}
+
+// TestApplyUpdateToStream_WithGapRecovery tests the full flow through applyUpdateToStream
+// when gap recovery is triggered
+func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
+	require := require.New(t)
+
+	streamId := shared.StreamId{0x20} // channel stream
+
+	// Create server response miniblock at position 155 (new snapshot)
+	serverMiniblock := makeMiniblockWithNum(t, 155)
+
+	// Create gap miniblocks that will be fetched (150-154)
+	gapMiniblocks := make([]*protocol.Miniblock, 5)
+	for i := range gapMiniblocks {
+		gapMiniblocks[i] = makeMiniblockWithNum(t, int64(150+i))
+	}
+
+	// Create mock tracked view
+	mockView := &mockTrackedStreamView{}
+	mockView.On("SendEventNotification", mock.Anything, mock.Anything).Return(nil)
+	mockView.On("ShouldPersistCookie", mock.Anything).Return(false)
+
+	// Create mock node registry and client
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+	mockClient := mocks.NewMockStreamServiceClient(t)
+
+	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Setup mock for gap recovery fetch - return all miniblocks in one response
+	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
+	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
+		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 155
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{
+				Miniblocks: gapMiniblocks,
+			},
+		}, nil)
+
+	// Create trackedViewForStream function that returns our mock
+	trackedViewForStream := func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
+		return mockView, nil
+	}
+
+	// Create sync session runner
+	ssr := newTestSyncSessionRunner(t, mockRegistry, trackedViewForStream)
+	ssr.node = nodeAddr
+
+	// Create record with persisted state that will trigger gap recovery
+	record := &streamSyncInitRecord{
+		streamId:             streamId,
+		persistedMinipoolGen: 150, // Gap: need miniblocks 150-154
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
+		remotes: nodes.NewStreamNodesWithLock(1, []common.Address{nodeAddr}, common.Address{}),
+	}
+
+	// Create StreamAndCookie response (reset with new snapshot at 155)
+	streamAndCookie := &protocol.StreamAndCookie{
+		SyncReset:  true,
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+		NextSyncCookie: &protocol.SyncCookie{
+			MinipoolGen: 156,
+		},
+	}
+
+	// Execute
+	ssr.applyUpdateToStream(streamAndCookie, record)
+
+	// Verify gap recovery was triggered - GetMiniblocks should have been called
+	mockClient.AssertCalled(t, "GetMiniblocks", mock.Anything, mock.Anything)
+
+	// Verify trackedView was set on record
+	require.NotNil(record.trackedView)
+
+	require.True(true)
+}
+
+// TestApplyUpdateToStream_NoGapRecovery tests that no gap recovery happens
+// when persisted position is after server snapshot
+func TestApplyUpdateToStream_NoGapRecovery(t *testing.T) {
+	require := require.New(t)
+
+	streamId := shared.StreamId{0x20}
+
+	// Create server response miniblock at position 100
+	serverMiniblock := makeMiniblockWithNum(t, 100)
+
+	// Create mock tracked view
+	mockView := &mockTrackedStreamView{}
+	mockView.On("SendEventNotification", mock.Anything, mock.Anything).Return(nil)
+	mockView.On("ShouldPersistCookie", mock.Anything).Return(false)
+
+	// Create mock node registry - should NOT be called for miniblock fetch
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+
+	// Create trackedViewForStream function
+	trackedViewForStream := func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
+		return mockView, nil
+	}
+
+	// Create sync session runner
+	ssr := newTestSyncSessionRunner(t, mockRegistry, trackedViewForStream)
+
+	// Create record with persisted position after server snapshot
+	record := &streamSyncInitRecord{
+		streamId:             streamId,
+		persistedMinipoolGen: 150, // > server snapshot (100) - no gap
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
+	}
+
+	// Create StreamAndCookie response
+	streamAndCookie := &protocol.StreamAndCookie{
+		SyncReset:  true,
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+		NextSyncCookie: &protocol.SyncCookie{
+			MinipoolGen: 151,
+		},
+	}
+
+	// Execute
+	ssr.applyUpdateToStream(streamAndCookie, record)
+
+	// Verify NO gap recovery - GetStreamServiceClientForAddress should NOT have been called
+	mockRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
+
+	require.True(true)
+}
+
+// TestApplyUpdateToStream_NoPersistedState tests behavior when there's no persisted state
+// (first time syncing a stream)
+func TestApplyUpdateToStream_NoPersistedState(t *testing.T) {
+	require := require.New(t)
+
+	streamId := shared.StreamId{0x20}
+
+	// Create server response miniblock
+	serverMiniblock := makeMiniblockWithNum(t, 100)
+
+	// Create mock tracked view
+	mockView := &mockTrackedStreamView{}
+	mockView.On("SendEventNotification", mock.Anything, mock.Anything).Return(nil)
+	mockView.On("ShouldPersistCookie", mock.Anything).Return(false)
+
+	// Create mock node registry - should NOT be called
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+
+	// Create trackedViewForStream function
+	trackedViewForStream := func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
+		return mockView, nil
+	}
+
+	// Create sync session runner
+	ssr := newTestSyncSessionRunner(t, mockRegistry, trackedViewForStream)
+
+	// Create record with NO persisted state (persistedMinipoolGen = 0)
+	record := &streamSyncInitRecord{
+		streamId:               streamId,
+		persistedMinipoolGen:   0, // No persisted state
+		applyHistoricalContent: ApplyHistoricalContent{Enabled: false},
+	}
+
+	// Create StreamAndCookie response
+	streamAndCookie := &protocol.StreamAndCookie{
+		SyncReset:  true,
+		Miniblocks: []*protocol.Miniblock{serverMiniblock},
+		NextSyncCookie: &protocol.SyncCookie{
+			MinipoolGen: 101,
+		},
+	}
+
+	// Execute
+	ssr.applyUpdateToStream(streamAndCookie, record)
+
+	// Verify NO gap recovery - GetStreamServiceClientForAddress should NOT have been called
+	mockRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
+
+	require.True(true)
+}

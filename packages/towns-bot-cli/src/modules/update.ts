@@ -1,13 +1,32 @@
 import fs from 'fs'
 import path from 'path'
-import { default as spawn } from 'cross-spawn'
 import { green, red, yellow, cyan } from 'picocolors'
-import * as jsonc from 'jsonc-parser'
-import { getPackageManager, getInstallCommand, runCommand, type PackageJson } from './utils.js'
+import { getPackageManager, getInstallCommand, getDlxCommand, runCommand } from './utils.js'
 import type { UpdateArgs } from '../parser.js'
 
-interface PackageVersions {
-    [key: string]: string
+interface PackageJson {
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+}
+
+interface VersionUpdate {
+    package: string
+    from: string
+    to: string
+}
+
+function getTownsVersions(packageJson: PackageJson): Record<string, string> {
+    const versions: Record<string, string> = {}
+    for (const deps of [packageJson.dependencies, packageJson.devDependencies]) {
+        if (deps) {
+            for (const [pkg, version] of Object.entries(deps)) {
+                if (pkg.startsWith('@towns-protocol/')) {
+                    versions[pkg] = version
+                }
+            }
+        }
+    }
+    return versions
 }
 
 export async function update(_argv: UpdateArgs) {
@@ -19,103 +38,56 @@ export async function update(_argv: UpdateArgs) {
         process.exit(1)
     }
 
-    const packageJson = jsonc.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as PackageJson
-    const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies }
+    const packageManager = getPackageManager()
+    const dlxCommand = getDlxCommand(packageManager)
 
-    const townsPackages = Object.keys(dependencies).filter((pkg) =>
-        pkg.startsWith('@towns-protocol/'),
-    )
+    console.log(cyan('Checking for @towns-protocol updates...'))
 
-    if (townsPackages.length === 0) {
-        console.log(yellow('No @towns-protocol packages found in this project'))
-        process.exit(0)
-    }
+    try {
+        const [dlxBin, ...dlxArgs] = dlxCommand.split(' ')
 
-    console.log(cyan('Found Towns Protocol packages:'))
-    townsPackages.forEach((pkg) => {
-        console.log(`  - ${pkg}@${dependencies[pkg]}`)
-    })
-    console.log()
+        const packageJsonBefore: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        const versionsBefore = getTownsVersions(packageJsonBefore)
 
-    console.log(cyan('Fetching latest versions...'))
-    const latestVersions: PackageVersions = {}
+        await runCommand(
+            dlxBin,
+            [...dlxArgs, 'npm-check-updates', '-u', '-f', '@towns-protocol/*'],
+            {
+                silent: true,
+            },
+        )
 
-    for (const pkg of townsPackages) {
-        try {
-            const version = await getLatestVersion(pkg)
-            latestVersions[pkg] = version
-            console.log(green('✓'), `${pkg}: ${version}`)
-        } catch {
-            console.error(red('✗'), `Failed to fetch version for ${pkg}`)
-        }
-    }
+        const packageJsonAfter: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        const versionsAfter = getTownsVersions(packageJsonAfter)
 
-    console.log()
-    console.log(cyan('Updating package.json...'))
-
-    const content = fs.readFileSync(packageJsonPath, 'utf-8')
-    const edits: jsonc.Edit[] = []
-
-    for (const [pkg, version] of Object.entries(latestVersions)) {
-        const currentVersion = dependencies[pkg]
-        if (currentVersion !== `^${version}`) {
-            if (packageJson.dependencies?.[pkg]) {
-                edits.push(...jsonc.modify(content, ['dependencies', pkg], `^${version}`, {}))
-            }
-            if (packageJson.devDependencies?.[pkg]) {
-                edits.push(...jsonc.modify(content, ['devDependencies', pkg], `^${version}`, {}))
+        const updates: VersionUpdate[] = []
+        for (const [pkg, newVersion] of Object.entries(versionsAfter)) {
+            const oldVersion = versionsBefore[pkg]
+            if (oldVersion && oldVersion !== newVersion) {
+                updates.push({ package: pkg, from: oldVersion, to: newVersion })
             }
         }
-    }
 
-    if (edits.length > 0) {
-        const modifiedContent = jsonc.applyEdits(content, edits)
-        fs.writeFileSync(packageJsonPath, modifiedContent)
-        console.log(green('✓'), 'Updated package.json')
+        if (updates.length === 0) {
+            console.log(green('✓'), 'All @towns-protocol packages are up to date!')
+            return
+        }
 
-        const packageManager = getPackageManager()
+        console.log()
+        for (const update of updates) {
+            console.log(green('✓'), `${update.package} ${update.from} → ${update.to}`)
+        }
+
         console.log()
         console.log(cyan(`Installing dependencies with ${packageManager}...`))
+        const installCmd = getInstallCommand(packageManager)
+        const [installBin, ...installArgs] = installCmd.split(' ')
+        await runCommand(installBin, installArgs.length > 0 ? installArgs : [])
 
-        try {
-            await runCommand(packageManager, [
-                getInstallCommand(packageManager).split(' ')[1] || 'install',
-            ])
-            console.log()
-            console.log(green('✓'), 'Dependencies updated successfully!')
-        } catch {
-            console.error(red('Error:'), 'Failed to install dependencies')
-            console.log(
-                yellow('Please run'),
-                cyan(getInstallCommand(packageManager)),
-                yellow('manually'),
-            )
-        }
-    } else {
-        console.log(green('✓'), 'All packages are already up to date!')
+        console.log()
+        console.log(green('✓'), 'Dependencies updated successfully!')
+    } catch {
+        console.error(red('Error:'), 'Failed to update dependencies')
+        process.exit(1)
     }
-}
-
-async function getLatestVersion(packageName: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const child = spawn('npm', ['view', packageName, 'version'], {
-            stdio: ['ignore', 'pipe', 'ignore'],
-        })
-
-        let output = ''
-        child.stdout?.on('data', (data) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            output += data.toString()
-        })
-
-        child.on('close', (code) => {
-            if (code !== 0) {
-                reject(new Error(`Failed to fetch version for ${packageName}`))
-            } else {
-                resolve(output.trim())
-            }
-        })
-
-        child.on('error', reject)
-    })
 }

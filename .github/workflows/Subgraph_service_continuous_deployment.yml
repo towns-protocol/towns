@@ -10,9 +10,8 @@ on:
                 options:
                     - alpha
                     - beta
-                    - gamma
                     - omega
-                default: gamma
+                default: beta
             docker_image_tag:
                 description: 'The tag to use for the Docker image'
                 required: true
@@ -59,7 +58,7 @@ jobs:
                   if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
                     ENV_NAME=$ENVIRONMENT_NAME_INPUT
                   elif [ $BRANCH_NAME = "refs/heads/main" ]; then
-                    ENV_NAME="gamma"
+                    ENV_NAME="beta"
                   else
                       echo "Error: Could not determine environment name. Exiting."
                       exit 1

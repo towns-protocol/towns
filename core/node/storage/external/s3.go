@@ -39,17 +39,16 @@ var _ UploadSession = (*s3UploadSession)(nil)
 func newS3UploadSession(
 	ctx context.Context,
 	streamID StreamId,
-	schemaLockID int64,
+	schemaName string,
 	bucketName string,
 	region string,
 	totalMiniblockDataSize uint64,
 	signer *v4.Signer,
 	creds aws.Credentials,
-	httpClient *http.Client,
 ) (*s3UploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
-		objectKey              = StorageObjectKey(schemaLockID, streamID)
+		objectKey              = StorageObjectKey(schemaName, streamID)
 		url                    = fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, objectKey)
 		contentLength          = int64(totalMiniblockDataSize)
 		timestamp              = time.Now().UTC()
@@ -93,7 +92,7 @@ func newS3UploadSession(
 		defer close(respChan)
 		defer reqCancel()
 
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			_ = bodyWriter.CloseWithError(err)
 			respChan <- struct {
@@ -164,7 +163,7 @@ func (s *s3UploadSession) Finish(ctx context.Context) (
 }
 
 // Abort cancels the pending upload session.
-func (s *s3UploadSession) Abort(ctx context.Context) {
+func (s *s3UploadSession) Abort() {
 	s.miniblocks = nil
 	s.reqCancel()
 	_ = s.s3Writer.Close()

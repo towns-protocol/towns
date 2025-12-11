@@ -753,8 +753,12 @@ func TestMainForLeaksIgnoreGeth() {
 		"github.com/patrickmn/go-cache.(*janitor).Run",
 	)
 
+	// GCS/S3 clients can leak goroutines.
+	ignoreGoOpencensus := goleak.IgnoreAnyFunction(
+		"go.opencensus.io/stats/view.(*worker).start")
+
 	now := time.Now()
-	err := goleak.Find(ignorePgxPoolHealthCheck, ignoreGoCacheJanitor)
+	err := goleak.Find(ignorePgxPoolHealthCheck, ignoreGoCacheJanitor, ignoreGoOpencensus)
 	elapsed := time.Since(now)
 	if err != nil {
 		msg := err.Error()

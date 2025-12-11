@@ -32,15 +32,14 @@ var _ UploadSession = (*gcsUploadSession)(nil)
 func newGcsUploadSession(
 	ctx context.Context,
 	streamID StreamId,
-	schemaLockID int64,
+	schemaName string,
 	bucket string,
 	totalMiniblockDataSize uint64,
 	token *oauth2.Token,
-	httpClient *http.Client,
 ) (*gcsUploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
-		objectKey              = StorageObjectKey(schemaLockID, streamID)
+		objectKey              = StorageObjectKey(schemaName, streamID)
 		url                    = fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, objectKey)
 		contentLength          = totalMiniblockDataSize
 		bodyReader, bodyWriter = io.Pipe()
@@ -74,7 +73,7 @@ func newGcsUploadSession(
 		defer close(respChan)
 		defer reqCancel()
 
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			_ = bodyWriter.CloseWithError(err)
 			respChan <- struct {
@@ -158,7 +157,7 @@ func (g *gcsUploadSession) Finish(ctx context.Context) (
 }
 
 // Abort the pending upload session
-func (g *gcsUploadSession) Abort(ctx context.Context) {
+func (g *gcsUploadSession) Abort() {
 	g.miniblocks = nil
 	g.reqCancel()
 	_ = g.gcStorage.Close()

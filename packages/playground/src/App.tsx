@@ -17,7 +17,6 @@ function App() {
     const [persistedAuth] = useState(() => loadAuth())
     useEffect(() => {
         if (persistedAuth) {
-            console.log('river_env', persistedAuth.riverEnvironmentId)
             connectTowns(persistedAuth.signerContext, {
                 townsConfig: townsEnv(VITE_ENV_OPTIONS).makeTownsConfig(
                     persistedAuth.riverEnvironmentId,

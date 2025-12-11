@@ -61,7 +61,7 @@ if ! command -v yq &> /dev/null; then
     echo "yq installed successfully."
 fi
 
-yarn install
+bun install --frozen-lockfile
 
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
@@ -118,19 +118,19 @@ echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 
-yarn csb:build
+bun run csb:build
 
 # Array of commands from the VS Code tasks
 commands=(
-    "watch_sdk:cd packages/sdk && yarn watch"
-    "watch_encryption:cd packages/encryption && yarn watch"
-    "watch_utils:cd packages/utils && yarn watch"
-    "watch_proto:cd packages/proto && yarn watch"
-    "watch_web3:cd packages/web3 && yarn watch"
-    "watch_go:cd protocol && yarn watch:go"
+    "watch_sdk:cd packages/sdk && bun run watch"
+    "watch_encryption:cd packages/encryption && bun run watch"
+    "watch_utils:cd packages/utils && bun run watch"
+    "watch_proto:cd packages/proto && bun run watch"
+    "watch_web3:cd packages/web3 && bun run watch"
+    "watch_go:cd protocol && bun run watch:go"
     "core_multi:(cd ./core && just run)"
     "app_registry_multi:(cd ./core && just run-app-registry)"
-    "river_stream_metadata_multi:yarn workspace @towns-protocol/stream-metadata dev:local_dev"
+    "river_stream_metadata_multi:bun run --filter @towns-protocol/stream-metadata dev:local_dev"
 )
 
 # Create a Tmux window for each command
@@ -154,5 +154,5 @@ is_closed() {
 if is_closed ; then
     echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
     ./core/scripts/stop_storage.sh
-    yarn workspace @towns-protocol/stream-metadata kill:local_dev
+    bun run --filter @towns-protocol/stream-metadata kill:local_dev
 fi

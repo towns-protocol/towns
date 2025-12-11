@@ -5,14 +5,14 @@
 - **Go**: [https://go.dev/](https://go.dev/)
 - **Node v20.x.x**: We recommend using a version manager like [nvm](https://github.com/nvm-sh/nvm) to install node.
 - **Docker**: We're using Docker to run PostgreSQL and Redis for local node development.
-- **Yarn 2.x**: We're using yarn v2, to handle our monorepo. There should be only one `node_modules` and one lockfile at the root of the repository.
+- **Bun 1.3**: We're using Bun to handle our monorepo. There should be only one `node_modules` and one lockfile at the root of the repository.
 - **Anvil**: We're using Anvil to run a local Base network for development. Please follow the instructions [here](https://book.getfoundry.sh/getting-started/installation) to install Anvil.
 - **Just**: We're using Just to run commands in the CLI. Please follow the instructions [here](https://github.com/casey/just) to install Just.
 - **jq**: Json parser utility for the CLI.
 
 ## Setup
 
-1. Run `yarn install && yarn prepare` from the root of the repository
+1. Run `bun install` from the root of the repository
 
 1. Create `.env.local` files:
 
@@ -41,9 +41,9 @@ If you want to restart just the server, `CMD+P` + `task RestartCasablanca` will 
 
 ## Tests
 
-- Run all unit tests via: `yarn test:unit`
-- Run all e2e tests via: `yarn test:e2e`
-- Run all tests (both unit and e2e) via: `yarn test`
+- Run all unit tests via: `bun run test:unit`
+- Run all e2e tests via: `bun run test:e2e`
+- Run all tests (both unit and e2e) via: `bun run test`
 
 CI will gate PR merges via unit tests. However, failing e2e tests won't gate merges. In fact, they won't even be run pre-merge. e2e tests will be run after merging to main. This allows us to keep merging our work to main, while also staying aware of failing e2e tests.
 
@@ -73,7 +73,7 @@ c) you want its unit tests to be run on CI, add a `"test:unit"` script
 Sincerely,
 The team
 d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
-e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
+e) you want a single script to run all tests within the package, add `"test": "bun run test:unit && bun run test:e2e"` script to its package.json
 
 Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.
 

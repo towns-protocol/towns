@@ -6,7 +6,7 @@ import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} fro
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
-import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntryPoint.sol";
+import {IAppExecution} from "src/spaces/facets/account/IAppExecution.sol";
 
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 
@@ -122,7 +122,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp, Simp
     }
 
     function mockRequestFunds() external view {
-        if (!IAppAccount(msg.sender).isAppExecuting(address(this))) {
+        if (!IAppExecution(msg.sender).isAppExecuting(address(this))) {
             revert("App is not executing");
         }
     }

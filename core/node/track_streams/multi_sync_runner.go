@@ -1,7 +1,6 @@
 package track_streams
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -46,12 +45,12 @@ type RemoteStreamSyncer interface {
 // ApplyHistoricalContent describes how historical content should be applied during sync
 type ApplyHistoricalContent struct {
 	// If false, only sync from current position. If true, apply historical content
-	// since inception/last snapshot, unless FromMiniblockHash is set, in which case
-	// only events from a specific miniblock hash will be applied
+	// since inception/last snapshot, unless FromMiniblockNum is set, in which case
+	// only events from that miniblock number onwards will be applied.
 	Enabled bool
-	// If non-nil, start applying from this specific miniblock hash onwards
-	// Enabled must be set to true
-	FromMiniblockHash []byte
+	// If > 0, start applying from this miniblock number onwards.
+	// Enabled must be set to true.
+	FromMiniblockNum int64
 }
 
 type streamSyncInitRecord struct {
@@ -67,6 +66,11 @@ type streamSyncInitRecord struct {
 	minipoolGen       int64
 	prevMiniblockHash []byte
 	remotes           nodes.StreamNodes
+
+	// Persisted minipoolGen to avoid redundant DB writes.
+	// Loaded from the cookie store when adding a stream.
+	// We only persist when minipoolGen changes (new miniblock created).
+	persistedMinipoolGen int64
 }
 
 // Run a sync session, including parsing out the streaming sync response and multiplexing to the
@@ -115,6 +119,9 @@ type syncSessionRunner struct {
 	// closeErr is assigned when the sync has encountered an error state, is re-assigning all
 	// of it's streams, and is no longer assignable.
 	closeErr error
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	cookieStore SyncCookieStore
 }
 
 func (ssr *syncSessionRunner) AddStream(
@@ -173,6 +180,157 @@ func (ssr *syncSessionRunner) AddStream(
 	return nil
 }
 
+// handleHistoricalContent processes historical miniblocks on sync reset.
+// if applyHistoricalContent.Enabled is true, apply the events from the
+// specified miniblock till the latest event in the minipool.
+func (ssr *syncSessionRunner) handleHistoricalContent(
+	record *streamSyncInitRecord,
+	trackedView events.TrackedStreamView,
+	streamAndCookie *protocol.StreamAndCookie,
+) {
+	log := logging.FromCtx(ssr.syncCtx)
+	streamId := record.streamId
+	fromMiniblockNum := record.applyHistoricalContent.FromMiniblockNum
+
+	miniblocks := streamAndCookie.GetMiniblocks()
+	if len(miniblocks) == 0 || !record.applyHistoricalContent.Enabled {
+		return
+	}
+
+	serverSnapshotMb, err := getFirstMiniblockNumber(miniblocks)
+	if err != nil {
+		// Log but continue - don't block sync for parse errors
+		log.Errorw("handleHistoricalContent: Failed to parse first miniblock", "error", err, "streamId", streamId)
+		return
+	}
+
+	// FromMiniblockNum is before our first miniblock num, we need to fetch miniblocks from the remote
+	if fromMiniblockNum < serverSnapshotMb {
+		log.Infow("handleHistoricalContent: fetching missing miniblocks",
+			"streamId", streamId,
+			"FromMiniblockNum", fromMiniblockNum,
+			"serverSnapshotMb", serverSnapshotMb,
+			"gapSize", serverSnapshotMb-fromMiniblockNum,
+		)
+
+		missingMiniblocks, err := fetchMiniblocks(
+			ssr.syncCtx,
+			ssr.nodeRegistry,
+			ssr.node, // Try the node we're syncing from first
+			record.remotes,
+			streamId,
+			fromMiniblockNum,
+			serverSnapshotMb,
+		)
+		if err != nil {
+			log.Errorw("handleHistoricalContent: failed to fetch missing miniblocks",
+				"streamId", streamId,
+				"fromInclusive", fromMiniblockNum,
+				"toExclusive", serverSnapshotMb,
+				"error", err,
+			)
+			// continue to handle miniblocks we have from the reset
+		}
+
+		if len(missingMiniblocks) > 0 {
+			log.Infow("Gap recovery: fetched missing miniblocks, sending notifications",
+				"streamId", streamId,
+				"numMiniblocks", len(missingMiniblocks),
+			)
+			ssr.notifyEventsFromMiniblocks(streamId, trackedView, missingMiniblocks)
+		}
+	}
+
+	startIdx := record.applyHistoricalContent.FromMiniblockNum - serverSnapshotMb
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	if startIdx < int64(len(miniblocks)) {
+		ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[int(startIdx):])
+	}
+}
+
+// notifyEventsFromMiniblocks sends notifications for all events in the given miniblocks.
+// This is used for historical recovery to process events from miniblocks that were missed during downtime.
+func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
+	streamId shared.StreamId,
+	trackedView events.TrackedStreamView,
+	miniblocks []*protocol.Miniblock,
+) {
+	log := logging.FromCtx(ssr.syncCtx)
+
+	for _, block := range miniblocks {
+		for _, event := range block.GetEvents() {
+			parsedEvent, err := events.ParseEvent(event)
+			if err != nil {
+				log.Errorw("Failed to parse event from historic miniblock",
+					"streamId", streamId,
+					"eventHash", event.Hash,
+					"error", err,
+				)
+				continue
+			}
+			if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
+				log.Errorw("Error sending notification for historic event",
+					"streamId", streamId,
+					"eventHash", parsedEvent.Hash,
+					"error", err,
+				)
+			}
+		}
+	}
+}
+
+// maybePersistCookie persists the sync cookie if configured and the minipoolGen has changed.
+func (ssr *syncSessionRunner) maybePersistCookie(
+	streamId shared.StreamId,
+	trackedView events.TrackedStreamView,
+	record *streamSyncInitRecord,
+	cookie *protocol.SyncCookie,
+) {
+	if ssr.cookieStore == nil ||
+		cookie.MinipoolGen == record.persistedMinipoolGen ||
+		!trackedView.ShouldPersistCookie(ssr.syncCtx) {
+		return
+	}
+
+	if err := ssr.cookieStore.WriteSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+		logging.FromCtx(ssr.syncCtx).Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
+		return
+	}
+	record.persistedMinipoolGen = cookie.MinipoolGen
+}
+
+// handleReset processes a sync reset response for a stream.
+// it will init the trackedView, and will notify historical events if needed
+func (ssr *syncSessionRunner) handleReset(
+	streamAndCookie *protocol.StreamAndCookie,
+	record *streamSyncInitRecord,
+) error {
+	streamId := record.streamId
+	log := logging.FromCtx(ssr.syncCtx)
+	labels := prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
+
+	trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
+	if err != nil {
+		log.Errorw(
+			"Error constructing tracked view for stream; relocating stream",
+			"streamId", streamId,
+			"error", err,
+		)
+		return err
+	}
+
+	// Assuming each stream experiences a reset when it is first added to tracking, we would
+	// expect the reset to be the first event we see for each stream when tracking it.
+	ssr.metrics.TrackedStreams.With(labels).Inc()
+	record.trackedView = trackedView
+
+	ssr.handleHistoricalContent(record, trackedView, streamAndCookie)
+
+	return nil
+}
+
 func (ssr *syncSessionRunner) applyUpdateToStream(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
@@ -184,31 +342,20 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		reset    = streamAndCookie.GetSyncReset()
 		streamId = record.streamId
 		log      = logging.FromCtx(ssr.syncCtx)
-		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
 	if reset {
-		trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
-		if err != nil {
-			log.Errorw(
-				"Error constructing tracked view for stream; relocating stream",
-				"streamId", streamId,
-				"error", err,
-			)
+		if err := ssr.handleReset(streamAndCookie, record); err != nil {
 			ssr.cancelSync(
 				base.AsRiverError(fmt.Errorf("error constructing tracked view for stream: %w", err)).
 					Tag("streamId", streamId).
 					Tag("syncId", ssr.syncer.GetSyncId()).
-					Func("syncSessionRunner.applyUpdateToStream"),
+					Func("syncSessionRunner.handleReset"),
 			)
 			return
 		}
-		// Assuming each stream experiences a reset when it is first added to tracking, we would
-		// expect the reset to be the first event we see for each stream when tracking it.
-		ssr.metrics.TrackedStreams.With(labels).Inc()
-		record.trackedView = trackedView
 	}
 
 	trackedView := record.trackedView
@@ -220,45 +367,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				Func("syncSessionRunner.applyUpdateToStream"),
 		)
 		return
-	}
-
-	applyBlocks := false
-	for _, block := range streamAndCookie.GetMiniblocks() {
-		if !reset {
-			if err := trackedView.ApplyBlock(
-				block,
-				streamAndCookie.Snapshot,
-			); err != nil {
-				log.Errorw("Unable to apply block", "error", err)
-			}
-		}
-		// apply blocks from the first block that matches the specified miniblock hash
-		// and all consecutive blocks
-		if record.applyHistoricalContent.Enabled {
-			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockHash == nil ||
-				bytes.Equal(block.Header.GetHash(), record.applyHistoricalContent.FromMiniblockHash)
-		}
-		// If the stream was just allocated, process the miniblocks and events for notifications.
-		// If not, ignore them because there were already notifications sent for the stream, and possibly
-		// for these miniblocks and events.
-		if applyBlocks {
-			// Send notifications for all events in all blocks.
-			for _, event := range block.GetEvents() {
-				if parsedEvent, err := events.ParseEvent(event); err == nil {
-					if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
-						log.Errorw(
-							"Error sending event notification",
-							"error",
-							err,
-							"streamId",
-							streamId,
-							"eventHash",
-							event.Hash,
-						)
-					}
-				}
-			}
-		}
 	}
 
 	for _, event := range streamAndCookie.GetEvents() {
@@ -289,6 +397,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
+
+	ssr.maybePersistCookie(streamId, trackedView, record, streamAndCookie.NextSyncCookie)
 }
 
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
@@ -317,6 +427,13 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
 		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
 		ssr.metrics.SyncDown.With(prometheus.Labels{"target_node": ssr.node.Hex()}).Inc()
+		streamID, _ := shared.StreamIdFromBytes(update.GetStreamId())
+		log.Infow(
+			"Received SYNC_DOWN from remote, stream will be relocated",
+			"streamId", streamID,
+			"syncId", ssr.syncer.GetSyncId(),
+			"targetNode", ssr.node,
+		)
 		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
@@ -434,21 +551,33 @@ func (ssr *syncSessionRunner) Run() {
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	record, ok := ssr.streamRecords.LoadAndDelete(streamID)
 
+	remainingStreams := ssr.streamRecords.Size()
+	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
+
 	// Cancel the remote sync session if all streams have been relocated.
-	if ssr.streamRecords.Size() <= 0 {
+	if remainingStreams <= 0 {
+		log.Infow(
+			"Sync session runner has no streams remaining after relocation, cancelling session",
+			"targetNode", ssr.node,
+		)
 		ssr.cancelSync(
 			base.RiverError(protocol.Err_SYNC_SESSION_RUNNER_EMPTY, "Sync session runner has no streams remaining"),
 		)
 	}
 
-	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
 	if !ok {
 		log.Errorw("Expected stream to exist in the stream records for this sync session runner")
 		return
 	}
 
 	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
-	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
+	log.Infow(
+		"Relocating stream to new target",
+		"oldNode", ssr.node,
+		"newTarget", newTarget,
+		"remainingStreamsInSession", remainingStreams,
+		"syncCause", context.Cause(ssr.syncCtx),
+	)
 	ssr.relocateStreams <- record
 }
 
@@ -540,6 +669,7 @@ func newSyncSessionRunner(
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
+	cookieStore SyncCookieStore,
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
@@ -555,6 +685,7 @@ func newSyncSessionRunner(
 		streamRecords:            xsync.NewMap[shared.StreamId, *streamSyncInitRecord](),
 		metrics:                  metrics,
 		otelTracer:               otelTracer,
+		cookieStore:              cookieStore,
 	}
 	runner.syncStarted.Add(1)
 	return &runner
@@ -602,6 +733,10 @@ type MultiSyncRunner struct {
 
 	// TODO: use a single node registry and modify http client settings for better performance.
 	nodeRegistries []nodes.NodeRegistry
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	// If nil, cookie persistence is disabled.
+	cookieStore SyncCookieStore
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -619,6 +754,8 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 }
 
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
+// cookieStore is optional - if nil, cookie persistence is disabled. Cookie persistence
+// is controlled by each TrackedStreamView's ShouldPersistCookie method.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
 	onChainConfig crypto.OnChainConfiguration,
@@ -626,6 +763,7 @@ func NewMultiSyncRunner(
 	trackedStreamViewConstructor TrackedViewConstructorFn,
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	cookieStore SyncCookieStore,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -649,6 +787,7 @@ func NewMultiSyncRunner(
 		concurrentNodeRequests: xsync.NewMap[common.Address, *semaphore.Weighted](),
 		unfilledSyncs:          xsync.NewMap[common.Address, *syncSessionRunner](),
 		otelTracer:             otelTracer,
+		cookieStore:            cookieStore,
 	}
 }
 
@@ -712,6 +851,7 @@ func (msr *MultiSyncRunner) addToSync(
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
+			msr.cookieStore,
 		)
 		var loaded bool
 
@@ -793,6 +933,7 @@ func (msr *MultiSyncRunner) addToSync(
 				targetNode,
 				msr.metrics,
 				msr.otelTracer,
+				msr.cookieStore,
 			)
 
 			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
@@ -857,19 +998,47 @@ func (msr *MultiSyncRunner) addToSync(
 }
 
 // AddStream adds a stream to the queue to be added to a sync session for event tracking.
+// If a cookie store is configured, it will attempt to load a stored cookie for the stream
+// to resume from the last persisted position.
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
+	ctx context.Context,
 	stream *river.StreamWithId,
 	applyHistoricalContent ApplyHistoricalContent,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
+	streamId := stream.StreamId()
+	var persistedMinipoolGen int64
+
+	// Try to load persisted state for gap detection on restart.
+	// Note: We always start with minipoolGen=MaxInt64 to force a reset response from the server.
+	// The persisted state is only used for gap detection after we receive the reset response.
+	if msr.cookieStore != nil {
+		cookie, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
+		if err != nil {
+			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
+		} else if cookie != nil {
+			persistedMinipoolGen = cookie.MinipoolGen
+			applyHistoricalContent = ApplyHistoricalContent{
+				Enabled:          true,
+				FromMiniblockNum: persistedMinipoolGen,
+			}
+			logging.FromCtx(ctx).Infow("Loaded sync cookie for historical content",
+				"streamId", streamId,
+				"persistedMinipoolGen", persistedMinipoolGen,
+				"updatedAt", updatedAt,
+			)
+		}
+	}
+
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId:               stream.StreamId(),
+		streamId:               streamId,
 		applyHistoricalContent: applyHistoricalContent,
-		minipoolGen:            math.MaxInt64,
+		minipoolGen:            int64(math.MaxInt64),
 		prevMiniblockHash:      common.Hash{}.Bytes(),
+		persistedMinipoolGen:   persistedMinipoolGen,
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

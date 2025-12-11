@@ -11,21 +11,25 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra/analytics"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type MessageToAppProcessor struct {
-	cache *CachedEncryptedMessageQueue
+	cache     *CachedEncryptedMessageQueue
+	analytics analytics.Analytics
 }
 
 func NewAppMessageProcessor(
 	ctx context.Context,
 	cache *CachedEncryptedMessageQueue,
+	analytics analytics.Analytics,
 ) *MessageToAppProcessor {
 	return &MessageToAppProcessor{
-		cache: cache,
+		cache:     cache,
+		analytics: analytics,
 	}
 }
 
@@ -158,8 +162,14 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		return
 	}
 
+	// Track message posted event
+	p.analytics.Track(ctx, creator, "posted message", map[string]any{
+		"isBot": isApp,
+	})
+
 	// Do not forward bot-authored events
 	if isApp {
+		log.Infow("Skipping bot-authored event", "creatorAddress", creator.Hex(), "channelId", channelId)
 		return
 	}
 
@@ -177,8 +187,20 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 				"event",
 				event,
 			)
-		} else if isForwardable && shouldForwardSpaceChannelMessage(ctx, appId, settings, event) {
-			appIds = append(appIds, appId)
+		} else if isForwardable {
+			shouldForward := shouldForwardSpaceChannelMessage(ctx, appId, settings, event)
+			log.Infow(
+				"Bot message forwarding decision",
+				"appId", appId.Hex(),
+				"channelId", channelId,
+				"shouldForward", shouldForward,
+				"forwardSetting", settings.ForwardSetting,
+				"messageInteractionType", event.Event.Tags.GetMessageInteractionType(),
+				"eventHash", hex.EncodeToString(event.Hash[:]),
+			)
+			if shouldForward {
+				appIds = append(appIds, appId)
+			}
 		}
 
 		return false
@@ -189,12 +211,27 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		return
 	}
 
+	sessionId := getEncryptionSession(event)
+
+	if len(appIds) > 0 {
+		log.Infow(
+			"Dispatching message to bots",
+			"channelId", channelId,
+			"spaceId", spaceId,
+			"appCount", len(appIds),
+			"appIds", appIds,
+			"sessionId", sessionId,
+			"hasEncryptedContent", sessionId != "",
+			"eventHash", hex.EncodeToString(event.Hash[:]),
+		)
+	}
+
 	// The cache is also a broker that will dispatch sendable messages to the appropriate
 	// consumers in order to make webhook calls to app services.
 	if err := p.cache.DispatchOrEnqueueMessages(
 		ctx,
 		appIds,
-		getEncryptionSession(event),
+		sessionId,
 		channelId,
 		streamEnvelope,
 	); err != nil {

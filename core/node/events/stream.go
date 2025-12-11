@@ -1038,6 +1038,7 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 	if err != nil {
 		return err
 	}
+
 	if applied {
 		return nil
 	}
@@ -1050,12 +1051,13 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 	return s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
 }
 
-// tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply iff
+// tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply if
 // it matches the first in the list of pending candidates, and then it will apply the entire
 // list of pending candidates. It will also return a true result if this block matches the
 // last block applied to the stream.
 // tryApplyCandidate is thread-safe.
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
+	// try to apply the candidate
 	_, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
@@ -1297,6 +1299,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
@@ -1307,6 +1310,7 @@ func (s *Stream) GetQuorumNodes() []common.Address {
 func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	r, l := s.nodesLocked.GetRemotesAndIsLocal()
 	return slices.Clone(r), l
 }
@@ -1330,6 +1334,7 @@ func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []com
 func (s *Stream) GetStickyPeer() common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.nodesLocked.GetStickyPeer()
 }
 
@@ -1339,6 +1344,7 @@ func (s *Stream) GetStickyPeer() common.Address {
 func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
@@ -1357,15 +1363,15 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 }
 
 func (s *Stream) GetReconcileNodes() []common.Address {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	return s.nodesLocked.GetReconcileNodes()
+	return slices.Clone(s.nodesLocked.GetReconcileNodes())
 }
 
 func (s *Stream) IsLocalInQuorum() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	return s.nodesLocked.IsLocalInQuorum()
 }

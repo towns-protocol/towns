@@ -160,7 +160,7 @@ func (re *ruleBuilderAEImpl) run() (bool, *AddEventVerifications, *AddEventSideE
 	if err != nil {
 		return false, nil, nil, err
 	}
-	if len(re.checks) == 0 && len(chainAuthArgsList) == 0 && requiredParentEvent == nil {
+	if len(re.checks) == 0 && len(re.chainAuths) == 0 && requiredParentEvent == nil {
 		return false, nil, nil, RiverError(Err_INTERNAL, "no checks or requirements")
 	}
 	sideEffects := &AddEventSideEffects{

@@ -7,7 +7,7 @@ React Hooks for River SDK.
 in the future:
 
 ```sh
-yarn add @towns-protocol/react-sdk
+bun add @towns-protocol/react-sdk
 ```
 
 # Usage
@@ -31,7 +31,7 @@ import { WagmiProvider } from "wagmi";
 import { useEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
-const townsConfig = townsEnv().makeTownsConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("beta");
 
 const App = ({ children }: { children: React.ReactNode }) => {
   return (

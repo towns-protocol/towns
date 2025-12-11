@@ -385,6 +385,7 @@ export class Client
 
         const syncedStreamsControllerDelegate = {
             startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                this.streamsView.setLastAccessedAt(lastAccessedAt)
                 this.streams.startSyncStreams(lastAccessedAt)
                 this.decryptionExtensions?.start()
             },
@@ -1238,12 +1239,24 @@ export class Client
         return this.makeEventAndAddToStream(spaceStreamId, event, { method: 'setSpaceImage' })
     }
 
-    async setUserProfileImage(chunkedMediaInfo: PlainMessage<ChunkedMedia>) {
-        this.logCall('setUserProfileImage', chunkedMediaInfo.streamId, chunkedMediaInfo.info)
+    async setUserProfileImage(chunkedMediaInfo: PlainMessage<ChunkedMedia>, userId?: string) {
+        this.logCall(
+            'setUserProfileImage',
+            userId,
+            chunkedMediaInfo.streamId,
+            chunkedMediaInfo.info,
+        )
+        const targetUserId = userId ?? this.userId
 
         // create the chunked media to be added
-        const context = this.userId.toLowerCase()
-        const userStreamId = makeUserMetadataStreamId(this.userId)
+        const context = targetUserId.toLowerCase()
+        const userStreamId = makeUserMetadataStreamId(targetUserId)
+
+        // initialize the target user's stream (creates SyncedStream and adds to this.streams)
+        // usually only needed in case of bot owner updating their bot profile image
+        if (targetUserId !== this.userId) {
+            await this.initStream(userStreamId)
+        }
 
         // encrypt the chunked media
         // use the lowercased userId as the key phrase
@@ -2163,6 +2176,7 @@ export class Client
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.tags?.threadId,
         }
 
         return this.makeEventAndAddToStream(
@@ -2181,7 +2195,7 @@ export class Client
         recipient: Uint8Array,
         payload: PlainMessage<InteractionResponsePayload>,
         toUserDevice: UserDevice,
-        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean; threadId: string | undefined },
     ): Promise<{ eventId: string }> {
         const binaryData = toBinary(
             InteractionResponsePayloadSchema,
@@ -2193,6 +2207,7 @@ export class Client
         check(isDefined(ciphertext), 'ciphertext not found')
         const response: PlainMessage<InteractionResponse> = {
             recipient: recipient,
+            threadId: opts?.threadId ? bin_fromHexString(opts?.threadId) : undefined,
             encryptedData: {
                 ciphertext: ciphertext,
                 algorithm: EncryptionAlgorithmId.Olm,
@@ -3078,6 +3093,7 @@ export class Client
         this.syncedStreamsExtensions.setHighPriorityStreams(streamIds)
         this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
+        this.streamsView.setHighPriorityStreams(streamIds)
     }
 
     public async ensureOutboundSession(streamId: string, opts?: EnsureOutboundSessionOpts) {

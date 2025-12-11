@@ -271,7 +271,7 @@ export const makeAppPrivateData = (
     privateKey: string,
     /** exported encryption device */
     exportedDevice: ExportedDevice,
-    /** alpha, gamma, delta, omega */
+    /** alpha, beta, delta, omega */
     env: string,
     /** app address: simple app or custom app contract address */
     appAddress: Address,

@@ -13,6 +13,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -147,6 +148,8 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	if err != nil {
 		return nil, AsRiverError(err).Func("createMediaStream")
 	}
+
+	s.callRateMonitor.RecordCall(parsedEvents[0].Event.CreatorAddress, time.Now(), highusage.CallTypeCreateMediaStream)
 
 	// add derived events
 	for _, de := range csRules.DerivedEvents {

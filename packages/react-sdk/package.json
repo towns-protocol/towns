@@ -1,21 +1,21 @@
 {
     "name": "@towns-protocol/react-sdk",
     "description": "React Hooks for Towns Protocol SDK",
-    "version": "0.0.416",
+    "version": "0.0.434",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
     "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
+        "build": "bun run clean && bun run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
-        "gen": "yarn gen:extractor && yarn gen:docs",
+        "gen": "bun run gen:extractor && bun run gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
         "gen:extractor": "api-extractor run --local",
         "lint": "eslint ./src --max-warnings=0",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
-        "watch": "yarn build -w"
+        "watch": "bun run build -w"
     },
     "dependencies": {
         "@towns-protocol/proto": "workspace:^",

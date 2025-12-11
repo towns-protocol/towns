@@ -40,9 +40,8 @@ packages/subgraph/
 │       └── index.ts          # API routes (GraphQL, SQL endpoints)
 ├── ponder.config.ts          # Main config (local/development)
 ├── ponder.config.alpha.ts    # Alpha environment config
-├── ponder.config.gamma.ts    # Gamma environment config
-├── ponder.config.omega.ts    # Omega environment config
 ├── ponder.config.beta.ts     # Beta environment config
+├── ponder.config.omega.ts    # Omega environment config
 ├── ponder.schema.ts          # Database schema definitions
 ├── utils/
 │   └── makePonderConfig.ts   # Config factory for environments
@@ -243,7 +242,7 @@ async function getReadBlockNumber(blockNumber: bigint): Promise<bigint> {
 
     const minBlockByEnvironment: Record<string, bigint> = {
         alpha: 30861709n,
-        gamma: 30861709n,
+        beta: 30861709n,
         omega: 35350928n
     }
 
@@ -313,27 +312,27 @@ if (!space) {
 
 ```bash
 # Development
-yarn dev                    # Start Ponder dev server with UI
-yarn dev:no-ui             # Start dev server without UI (for schema.graphql generation)
-yarn dev:fork              # Run setup script for forked development
+bun run dev                    # Start Ponder dev server with UI
+bun run dev:no-ui             # Start dev server without UI (for schema.graphql generation)
+bun run dev:fork              # Run setup script for forked development
 
 # Type checking and validation
-yarn typings               # Generate contract typings from @towns-protocol/contracts
-yarn test:unit             # Type check without emitting files (tsc --noEmit)
+bun run typings               # Generate contract typings from @towns-protocol/contracts
+bun run test:unit             # Type check without emitting files (tsc --noEmit)
 
 # Code generation
-yarn codegen               # Generate Ponder types and GraphQL schema
+bun run codegen               # Generate Ponder types and GraphQL schema
 
 # Code quality
-yarn format                # Format code with Prettier
-yarn lint                  # Run ESLint
+bun run format                # Format code with Prettier
+bun run lint                  # Run ESLint
 
 # Production
-yarn start                 # Start indexing from configured start block
-yarn serve                 # Start API server only (requires existing database)
+bun run start                 # Start indexing from configured start block
+bun run serve                 # Start API server only (requires existing database)
 
 # Database
-yarn db                    # Ponder database management commands
+bun run db                    # Ponder database management commands
 ```
 
 ## Configuration
@@ -349,7 +348,7 @@ PONDER_RPC_URL_1=https://base-mainnet.g.alchemy.com/v2/YOUR_KEY
 # Starting block for indexing (default: 22890725)
 PONDER_START_BLOCK=22890725
 
-# Environment name (local_dev, alpha, gamma, omega, beta)
+# Environment name (local_dev, alpha, beta, omega)
 PONDER_ENVIRONMENT=local_dev
 
 # Database connection (auto-configured in Docker)
@@ -361,10 +360,10 @@ DATABASE_URL=postgresql://ponder:ponder@localhost:5432/ponder
 The subgraph supports multiple deployment environments:
 
 ```typescript
-// ponder.config.alpha.ts, ponder.config.gamma.ts, etc.
+// ponder.config.alpha.ts, ponder.config.beta.ts, etc.
 export default createConfig(
     makePonderConfig({
-        environment: 'alpha',  // or 'gamma', 'omega', 'beta'
+        environment: 'alpha',  // or 'beta', 'omega'
         baseChain: {
             id: 8453,  // Base mainnet
             rpc: http(process.env.PONDER_RPC_URL_1),
@@ -455,7 +454,7 @@ ponder.on('NewContract:EventName', async ({ event, context }) => {
 
 4. **Regenerate GraphQL Schema**:
 ```bash
-yarn dev:no-ui  # Generates updated schema.graphql
+bun run dev:no-ui  # Generates updated schema.graphql
 ```
 
 5. **Test**: Query via GraphQL playground at http://localhost:42069/graphql
@@ -533,13 +532,13 @@ curl http://localhost:42069/status
 **Local Development Debugging**:
 ```bash
 # Run with detailed logs
-yarn dev
+bun run dev
 
 # Type check without running
-yarn test:unit
+bun run test:unit
 
 # Verify contract ABIs are up to date
-yarn typings
+bun run typings
 ```
 
 ### 4. Optimizing Query Performance
@@ -589,14 +588,14 @@ query {
 - **Denormalize for performance** - Aggregate common queries into dedicated tables/fields
 - **Type safety** - Use Drizzle's type-safe queries and typed JSON fields for complex data
 - **Docker architecture** - Production uses separate indexer and server containers (2025 architecture)
-- **GraphQL schema generation** - Run `yarn dev:no-ui` to regenerate `generated/schema.graphql`
+- **GraphQL schema generation** - Run `bun run dev:no-ui` to regenerate `generated/schema.graphql`
 
 ## Testing Strategy
 
 ### Development Testing
 
-1. **Type checking**: `yarn test:unit` (runs `tsc --noEmit`)
-2. **Local indexing**: `yarn dev` with a local blockchain or fork
+1. **Type checking**: `bun run test:unit` (runs `tsc --noEmit`)
+2. **Local indexing**: `bun run dev` with a local blockchain or fork
 3. **GraphQL queries**: Use http://localhost:42069/graphql playground
 
 ### Integration Testing Patterns

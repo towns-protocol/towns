@@ -11,6 +11,7 @@ import {IEntitlementGated, IEntitlementGatedBase} from "src/spaces/facets/gated/
 
 // libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
@@ -33,13 +34,13 @@ contract MembershipJoinSpaceTest is
     }
 
     function test_joinDynamicSpace() external {
-        uint256 membershipFee = MembershipFacet(dynamicSpace).getMembershipPrice();
+        uint256 totalPrice = MembershipFacet(dynamicSpace).getMembershipPrice();
 
-        vm.deal(alice, membershipFee);
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        MembershipFacet(dynamicSpace).joinSpace{value: membershipFee}(alice);
+        MembershipFacet(dynamicSpace).joinSpace{value: totalPrice}(alice);
 
-        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(membershipFee));
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(totalPrice));
     }
 
     function test_joinSpaceMultipleTimes()
@@ -91,24 +92,29 @@ contract MembershipJoinSpaceTest is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_joinPaidSpace() external givenMembershipHasPrice {
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         assertEq(membershipToken.balanceOf(alice), 1);
         assertEq(alice.balance, 0);
-        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(MEMBERSHIP_PRICE));
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(totalPrice));
     }
 
     function test_fuzz_joinSpace_refundOnSuccess(
         uint256 overPayment
     ) external givenMembershipHasPrice {
-        overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+        overPayment = bound(overPayment, totalPrice, 100 * totalPrice);
+
         _joinSpaceWithCrosschainValidation(bob, overPayment, NodeVoteStatus.PASSED, true);
     }
 
     function test_joinSpace_refundOnFail() external givenMembershipHasPrice {
-        _joinSpaceWithCrosschainValidation(bob, MEMBERSHIP_PRICE, NodeVoteStatus.FAILED, false);
+        uint256 membershipPrice = membership.getMembershipPrice();
+        _joinSpaceWithCrosschainValidation(bob, membershipPrice, NodeVoteStatus.FAILED, false);
     }
 
     function test_joinSpace_withValueAndFreeAllocation() external {
@@ -136,16 +142,18 @@ contract MembershipJoinSpaceTest is
     }
 
     function test_joinSpace_priceChangesMidTransaction() external givenMembershipHasPrice {
-        vm.deal(bob, MEMBERSHIP_PRICE);
+        uint256 membershipPrice = membership.getMembershipPrice();
+
+        vm.deal(bob, membershipPrice);
         assertEq(membershipToken.balanceOf(bob), 0);
 
         vm.recordLogs();
         vm.prank(bob);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(bob);
+        membership.joinSpace{value: membershipPrice}(bob);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         vm.prank(founder);
-        membership.setMembershipPrice(MEMBERSHIP_PRICE * 2);
+        membership.setMembershipPrice(membershipPrice * 2);
 
         (
             ,
@@ -166,7 +174,7 @@ contract MembershipJoinSpaceTest is
         }
 
         assertEq(membershipToken.balanceOf(bob), 0);
-        assertEq(bob.balance, MEMBERSHIP_PRICE);
+        assertEq(bob.balance, membershipPrice);
         assertEq(IERC20(riverAirdrop).balanceOf(bob), 0);
     }
 
@@ -178,30 +186,37 @@ contract MembershipJoinSpaceTest is
         membership.setMembershipPrice(fee);
         vm.stopPrank();
 
-        vm.deal(alice, fee);
+        // Total price = base price + protocol fee
+        uint256 totalPrice = membership.getMembershipPrice();
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpace{value: fee}(alice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         assertEq(membershipToken.balanceOf(alice), 1);
         assertEq(alice.balance, 0);
-        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(fee));
-        assertEq(membership.revenue(), 0);
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(totalPrice));
+        assertEq(membership.revenue(), fee); // Space gets the base price
     }
 
     function test_getProtocolFee() external view {
+        // For free membership, protocol fee should be 0 (truly free)
         uint256 protocolFee = membership.getProtocolFee();
-        uint256 fee = platformReqs.getMembershipFee();
-        assertEq(protocolFee, fee);
+
+        assertEq(protocolFee, 0);
     }
 
     function test_getProtocolFee_withPriceAboveMinPrice() external {
-        vm.prank(founder);
-        membership.setMembershipPrice(1 ether);
+        uint256 basePrice = 1 ether;
 
-        uint256 price = membership.getMembershipPrice();
+        vm.prank(founder);
+        membership.setMembershipPrice(basePrice);
         uint256 protocolFee = membership.getProtocolFee();
 
-        assertEq(protocolFee, BasisPoints.calculate(price, platformReqs.getMembershipBps()));
+        uint256 expectedProtocolFee = platformReqs.getMembershipFee(); // Min fee for 1 ether
+        uint256 bpsFee = BasisPoints.calculate(basePrice, platformReqs.getMembershipBps());
+        expectedProtocolFee = FixedPointMathLib.max(bpsFee, expectedProtocolFee);
+
+        assertEq(protocolFee, expectedProtocolFee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -391,7 +406,7 @@ contract MembershipJoinSpaceTest is
         givenMembershipHasPrice
         givenJoinspaceHasAdditionalCrosschainEntitlements
     {
-        uint256 payment = MEMBERSHIP_PRICE;
+        uint256 payment = membership.getMembershipPrice();
         vm.deal(bob, payment);
 
         vm.recordLogs();
@@ -426,7 +441,7 @@ contract MembershipJoinSpaceTest is
         // Verify successful join with proper refund
         assertEq(membershipToken.balanceOf(bob), 1);
         assertEq(bob.balance, 0); // Exact payment, no refund
-        assertEq(IERC20(riverAirdrop).balanceOf(bob), _getPoints(MEMBERSHIP_PRICE));
+        assertEq(IERC20(riverAirdrop).balanceOf(bob), _getPoints(payment));
     }
 
     /// @dev Test payment refund with multiple crosschain entitlements - failure case
@@ -435,7 +450,7 @@ contract MembershipJoinSpaceTest is
         givenMembershipHasPrice
         givenJoinspaceHasAdditionalCrosschainEntitlements
     {
-        uint256 payment = MEMBERSHIP_PRICE;
+        uint256 payment = membership.getMembershipPrice();
         vm.deal(bob, payment);
 
         vm.recordLogs();
@@ -638,8 +653,9 @@ contract MembershipJoinSpaceTest is
         if (expectSuccess) {
             assertEq(membershipToken.balanceOf(user), initialTokenBalance + 1);
             if (payment > 0) {
-                assertEq(user.balance, initialBalance + payment - MEMBERSHIP_PRICE);
-                assertEq(IERC20(riverAirdrop).balanceOf(user), _getPoints(MEMBERSHIP_PRICE));
+                uint256 totalPrice = membership.getMembershipPrice();
+                assertEq(user.balance, initialBalance + payment - totalPrice);
+                assertEq(IERC20(riverAirdrop).balanceOf(user), _getPoints(totalPrice));
             }
         } else {
             assertEq(membershipToken.balanceOf(user), initialTokenBalance);
@@ -650,7 +666,7 @@ contract MembershipJoinSpaceTest is
 
     /// @dev Helper to validate payment distribution and verify single payment for multiple entitlements
     function _validateSinglePaymentForMultipleCrosschainEntitlements(address user) internal {
-        uint256 payment = MEMBERSHIP_PRICE;
+        uint256 payment = membership.getMembershipPrice();
         vm.deal(user, payment);
 
         vm.recordLogs();

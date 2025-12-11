@@ -337,43 +337,39 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         b.feeRecipient = feeRecipient.balance;
     }
 
-    function _calculateProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
-        uint256 minPrice = IPlatformRequirements(spaceFactory).getMembershipMinPrice();
-        if (membershipPrice < minPrice)
-            return IPlatformRequirements(spaceFactory).getMembershipFee();
-        return
-            BasisPoints.calculate(
-                membershipPrice,
-                IPlatformRequirements(spaceFactory).getMembershipBps()
-            );
+    function _calculateProtocolFee(uint256 basePrice) internal view returns (uint256) {
+        uint256 protocolFee = platformRequirements.getMembershipFee(); // Min fee for 1 ether
+        uint256 bpsFee = BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps());
+        if (bpsFee > protocolFee) return bpsFee;
+        return protocolFee;
     }
 
     function assertNativeDistribution(
+        uint256 originalBasePrice,
+        uint256 renewalPrice,
         BalanceSnapshot memory beforeSnap,
         BalanceSnapshot memory afterSnap
     ) internal view {
-        // Ensure account balance decreased (paid)
-        assertGe(beforeSnap.account, afterSnap.account, "account balance should decrease");
+        // Verify payment distribution: account paid original renewal price
         uint256 paidAmount = beforeSnap.account - afterSnap.account;
+        assertEq(paidAmount, renewalPrice, "Should pay original renewal price");
 
-        // Ensure fee recipient balance increased
-        assertGe(
-            afterSnap.feeRecipient,
-            beforeSnap.feeRecipient,
-            "fee recipient balance should increase"
+        uint256 expectedProtocolFee = _calculateProtocolFee(originalBasePrice);
+        assertEq(
+            afterSnap.feeRecipient - beforeSnap.feeRecipient,
+            expectedProtocolFee,
+            "Protocol fee mismatch"
         );
-        uint256 protocolFee = afterSnap.feeRecipient - beforeSnap.feeRecipient;
 
-        // Ensure space balance increased
-        assertGe(afterSnap.space, beforeSnap.space, "space balance should increase");
         uint256 creatorAmount = afterSnap.space - beforeSnap.space;
-
-        uint256 expectedProtocolFee = _calculateProtocolFee(paidAmount);
         uint256 expectedCreatorAmount = paidAmount - expectedProtocolFee;
 
-        assertEq(protocolFee, expectedProtocolFee, "protocol fee mismatch");
         assertEq(creatorAmount, expectedCreatorAmount, "space amount mismatch");
-        assertEq(protocolFee + creatorAmount, paidAmount, "distribution must sum to payment");
+        assertEq(
+            expectedProtocolFee + creatorAmount,
+            paidAmount,
+            "distribution must sum to payment"
+        );
     }
 
     function assertSubscriptionActive(address account, uint32 entityId) internal view {

@@ -36,6 +36,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/scrub"
@@ -146,6 +147,8 @@ func (s *Service) start(opts *ServerStartOpts) error {
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
+
+	s.initCallRateMonitor()
 
 	s.initTracing("river-stream", s.wallet.String())
 
@@ -294,6 +297,19 @@ func (s *Service) initWallet() error {
 	}
 
 	return nil
+}
+
+func (s *Service) initCallRateMonitor() {
+	var monitorLogger *zap.Logger
+	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
+		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
+	}
+	s.callRateMonitor = highusage.NewCallRateMonitor(
+		s.serverCtx,
+		s.config.HighUsageDetection,
+		monitorLogger,
+		s.wallet.Address,
+	)
 }
 
 func (s *Service) initBaseChain() error {
@@ -636,6 +652,7 @@ func (s *Service) initStore() error {
 			s.exitSignal,
 			s.metrics,
 			s.chainConfig,
+			&s.config.ExternalMediaStreamStorage,
 			s.config.TrimmingBatchSize,
 		)
 		if err != nil {
