@@ -153,7 +153,6 @@ type CreateStreamTx struct {
 	Sealed bool `protobuf:"varint,7,opt,name=sealed,proto3" json:"sealed,omitempty"`
 	// Serialized genesis miniblock payload.
 	// Must be set if last_miniblock_num is 0.
-	// Must be 32 bytes.
 	// TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
 	GenesisMiniblock []byte `protobuf:"bytes,8,opt,name=genesis_miniblock,json=genesisMiniblock,proto3" json:"genesis_miniblock,omitempty"`
 }
@@ -469,6 +468,7 @@ type StreamMetadata struct {
 	StreamId []byte `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
 	// Hash of the genesis miniblock.
 	// Must be 32 bytes.
+	// Set on creation and cannot be changed.
 	GenesisMiniblockHash []byte `protobuf:"bytes,2,opt,name=genesis_miniblock_hash,json=genesisMiniblockHash,proto3" json:"genesis_miniblock_hash,omitempty"`
 	// Hash of the last miniblock.
 	// Must be 32 bytes.
@@ -487,8 +487,11 @@ type StreamMetadata struct {
 	// Remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
 	ReplicationFactor uint32 `protobuf:"varint,7,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"`
 	// Whether the stream is sealed.
+	// When stream is sealed, last miniblock hash and number are immutable.
+	// Both replication factor and nodes can be updated when stream is sealed.
 	Sealed bool `protobuf:"varint,8,opt,name=sealed,proto3" json:"sealed,omitempty"`
 	// Serialized genesis miniblock payload.
+	// Set on creation and cannot be changed.
 	// TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
 	GenesisMiniblock []byte `protobuf:"bytes,9,opt,name=genesis_miniblock,json=genesisMiniblock,proto3" json:"genesis_miniblock,omitempty"`
 }
