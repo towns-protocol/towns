@@ -1,16 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest} from "./TippingMod.sol";
+import {TippingMod} from "./TippingMod.sol";
 
-interface ITipping {
+interface ITippingBase {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event TipSent(
+        address indexed sender,
+        address indexed receiver,
+        TippingMod.TipRecipientType indexed recipientType,
+        address currency,
+        uint256 amount,
+        bytes data
+    );
+
+    // Maintain legacy event for backwards compatibility
+    event Tip(
+        uint256 indexed tokenId,
+        address indexed currency,
+        address sender,
+        address receiver,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId
+    );
+}
+
+interface ITipping is ITippingBase {
     /// @notice Send a tip using flexible encoding based on recipient type
     /// @param recipientType The type of recipient (Member, Wallet, Bot, Pool)
     /// @param data ABI-encoded tip params based on recipientType:
     ///   - Member: abi.encode(MembershipTipParams)
     ///   - Wallet: abi.encode(WalletTipParams)
     ///   - Bot: abi.encode(BotTipParams)
-    function sendTip(TipRecipientType recipientType, bytes calldata data) external payable;
+    function sendTip(
+        TippingMod.TipRecipientType recipientType,
+        bytes calldata data
+    ) external payable;
 
     /// @notice Sends a tip to a space member (legacy)
     /// @param tipRequest The tip request containing token ID, currency, amount, message ID and
@@ -19,7 +47,7 @@ interface ITipping {
     /// @dev Requires amount > 0 and valid currency address
     /// @dev Emits Tip event
     ///@custom:deprecated Use sendTip instead
-    function tip(TipRequest calldata tipRequest) external payable;
+    function tip(TippingMod.TipRequest calldata tipRequest) external payable;
 
     /// @notice Get tips received by wallet address and currency
     /// @param wallet The wallet address to get tips for

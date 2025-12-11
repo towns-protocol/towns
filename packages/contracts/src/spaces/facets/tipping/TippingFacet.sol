@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ITipping, TipRecipientType, TipRequest} from "./ITipping.sol";
+import {ITipping} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 
 // libraries
-import "./TippingMod.sol" as TippingMod;
+import {TippingMod} from "./TippingMod.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -21,7 +21,7 @@ contract TippingFacet is ITipping, PointsBase, ERC721ABase, Facet, ReentrancyGua
 
     /// @inheritdoc ITipping
     function sendTip(
-        TipRecipientType recipientType,
+        TippingMod.TipRecipientType recipientType,
         bytes calldata data
     ) external payable nonReentrant {
         (uint256 protocolFee, ) = TippingMod.sendTip(address(this), recipientType, data);
@@ -38,7 +38,7 @@ contract TippingFacet is ITipping, PointsBase, ERC721ABase, Facet, ReentrancyGua
     }
 
     /// @inheritdoc ITipping
-    function tip(TipRequest calldata tipRequest) external payable nonReentrant {
+    function tip(TippingMod.TipRequest calldata tipRequest) external payable nonReentrant {
         (uint256 protocolFee, ) = TippingMod.tip(address(this), tipRequest);
 
         if (protocolFee > 0) {

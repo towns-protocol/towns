@@ -9,7 +9,7 @@ import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest, TipMetadata} from "src/spaces/facets/tipping/TippingMod.sol";
+import {TippingMod} from "src/spaces/facets/tipping/TippingMod.sol";
 
 // contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
@@ -92,12 +92,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         // User sends the full amount, fee is deducted internally
         vm.deal(from, amount);
 
-        MembershipTipParams memory params = MembershipTipParams({
+        TippingMod.MembershipTipParams memory params = TippingMod.MembershipTipParams({
             receiver: to,
             tokenId: 1,
             currency: CurrencyTransfer.NATIVE_TOKEN,
             amount: amount,
-            metadata: TipMetadata({
+            metadata: TippingMod.TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -105,7 +105,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip{value: amount}(TipRecipientType.Member, abi.encode(params));
+        tipping.sendTip{value: amount}(TippingMod.TipRecipientType.Member, abi.encode(params));
 
         // Calculate actual tip amount (amount - fee)
         uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
@@ -120,7 +120,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         // User sends the full amount, fee is deducted internally
         vm.deal(from, amount);
 
-        TipRequest memory request = TipRequest({
+        TippingMod.TipRequest memory request = TippingMod.TipRequest({
             receiver: to,
             tokenId: 1,
             currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -140,12 +140,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
     function _sendBotTip(address from, address to, uint256 amount) internal {
         vm.deal(from, amount);
 
-        BotTipParams memory params = BotTipParams({
+        TippingMod.BotTipParams memory params = TippingMod.BotTipParams({
             receiver: to,
             currency: CurrencyTransfer.NATIVE_TOKEN,
             appId: bytes32(0),
             amount: amount,
-            metadata: TipMetadata({
+            metadata: TippingMod.TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -153,7 +153,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip{value: amount}(TipRecipientType.Bot, abi.encode(params));
+        tipping.sendTip{value: amount}(TippingMod.TipRecipientType.Bot, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -170,12 +170,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        MembershipTipParams memory params = MembershipTipParams({
+        TippingMod.MembershipTipParams memory params = TippingMod.MembershipTipParams({
             receiver: to,
             tokenId: 1,
             currency: address(mockUSDC),
             amount: amount,
-            metadata: TipMetadata({
+            metadata: TippingMod.TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -183,7 +183,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip(TipRecipientType.Member, abi.encode(params));
+        tipping.sendTip(TippingMod.TipRecipientType.Member, abi.encode(params));
 
         // Calculate actual tip amount (amount - fee)
         uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
@@ -200,7 +200,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        TipRequest memory request = TipRequest({
+        TippingMod.TipRequest memory request = TippingMod.TipRequest({
             receiver: to,
             tokenId: 1,
             currency: address(mockUSDC),
@@ -212,9 +212,9 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         tipping.tip(request);
 
-        // // Calculate actual tip amount (amount - fee)
-        // uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
-        // return amount - fee;
+        // Calculate actual tip amount (amount - fee)
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
+        return amount - fee;
     }
 
     function _sendBotTipERC20(address from, address to, uint256 amount) internal {
@@ -223,12 +223,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        BotTipParams memory params = BotTipParams({
+        TippingMod.BotTipParams memory params = TippingMod.BotTipParams({
             receiver: to,
             currency: address(mockUSDC),
             appId: bytes32(0),
             amount: amount,
-            metadata: TipMetadata({
+            metadata: TippingMod.TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -236,7 +236,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip(TipRecipientType.Bot, abi.encode(params));
+        tipping.sendTip(TippingMod.TipRecipientType.Bot, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -7,7 +7,7 @@ import {ITownsPoints} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest, TipMetadata, Tip, TipSent, CurrencyIsZero, CannotTipSelf, AmountIsZero, MsgValueMismatch, UnexpectedETH, InvalidRecipientType} from "src/spaces/facets/tipping/TippingMod.sol";
+import {ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
 import {IFeeManager} from "src/factory/facets/fee/IFeeManager.sol";
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 
@@ -15,6 +15,7 @@ import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
+import {TippingMod} from "src/spaces/facets/tipping/TippingMod.sol";
 
 // contracts
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
@@ -24,7 +25,7 @@ import {TippingFacet} from "src/spaces/facets/tipping/TippingFacet.sol";
 import {DeployMockERC20, MockERC20} from "scripts/deployments/utils/DeployMockERC20.s.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-contract TippingTest is Test, BaseSetup, IERC721ABase {
+contract TippingTest is Test, BaseSetup, IERC721ABase, ITippingBase {
     // Default test parameters
     bytes32 internal constant DEFAULT_MESSAGE_ID = bytes32(uint256(0x1));
     bytes32 internal constant DEFAULT_CHANNEL_ID = bytes32(uint256(0x2));
@@ -113,7 +114,7 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         );
         vm.startSnapshotGas("tipEth");
         tipping.tip{value: amount}(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -171,7 +172,7 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         emit Tip(tokenId, address(mockERC20), sender, receiver, amount, messageId, channelId);
         vm.startSnapshotGas("tipERC20");
         tipping.tip(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: address(mockERC20),
@@ -203,9 +204,9 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
     ) external givenUsersAreMembers(sender, receiver) {
         uint256 tokenId = token.tokensOfOwner(receiver)[0];
 
-        vm.expectRevert(CurrencyIsZero.selector);
+        vm.expectRevert(TippingMod.CurrencyIsZero.selector);
         tipping.tip(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: address(0),
@@ -223,9 +224,9 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         uint256 tokenId = token.tokensOfOwner(sender)[0];
 
         vm.prank(sender);
-        vm.expectRevert(CannotTipSelf.selector);
+        vm.expectRevert(TippingMod.CannotTipSelf.selector);
         tipping.tip(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: sender,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -242,10 +243,10 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
     ) external givenUsersAreMembers(sender, receiver) {
         uint256 tokenId = token.tokensOfOwner(receiver)[0];
 
-        vm.expectRevert(AmountIsZero.selector);
+        vm.expectRevert(TippingMod.AmountIsZero.selector);
         vm.prank(sender);
         tipping.tip(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -266,10 +267,10 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         vm.assume(amount != value);
         uint256 tokenId = token.tokensOfOwner(receiver)[0];
 
-        vm.expectRevert(MsgValueMismatch.selector);
+        vm.expectRevert(TippingMod.MsgValueMismatch.selector);
         hoax(sender, value);
         tipping.tip{value: value}(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -296,9 +297,9 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         vm.startPrank(sender);
         mockERC20.approve(address(tipping), amount);
 
-        vm.expectRevert(UnexpectedETH.selector);
+        vm.expectRevert(TippingMod.UnexpectedETH.selector);
         tipping.tip{value: value}(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: address(mockERC20),
@@ -337,14 +338,18 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         hoax(sender, amount);
         vm.startSnapshotGas("sendTip_member_eth");
         tipping.sendTip{value: amount}(
-            TipRecipientType.Member,
+            TippingMod.TipRecipientType.Member,
             abi.encode(
-                MembershipTipParams({
+                TippingMod.MembershipTipParams({
                     receiver: receiver,
                     tokenId: tokenId,
                     currency: CurrencyTransfer.NATIVE_TOKEN,
                     amount: amount,
-                    metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+                    metadata: TippingMod.TipMetadata({
+                        messageId: bytes32(0),
+                        channelId: bytes32(0),
+                        data: ""
+                    })
                 })
             )
         );
@@ -384,14 +389,18 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         hoax(sender, amount);
         vm.startSnapshotGas("sendTip_bot_eth");
         tipping.sendTip{value: amount}(
-            TipRecipientType.Bot,
+            TippingMod.TipRecipientType.Bot,
             abi.encode(
-                BotTipParams({
+                TippingMod.BotTipParams({
                     receiver: botAddress,
                     currency: CurrencyTransfer.NATIVE_TOKEN,
                     appId: bytes32(0),
                     amount: amount,
-                    metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+                    metadata: TippingMod.TipMetadata({
+                        messageId: bytes32(0),
+                        channelId: bytes32(0),
+                        data: ""
+                    })
                 })
             )
         );
@@ -418,17 +427,21 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         vm.assume(sender != receiver);
         amount = bound(amount, 1, type(uint256).max);
 
-        BotTipParams memory params = BotTipParams({
+        TippingMod.BotTipParams memory params = TippingMod.BotTipParams({
             receiver: receiver,
             currency: CurrencyTransfer.NATIVE_TOKEN,
             appId: bytes32(0),
             amount: amount,
-            metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+            metadata: TippingMod.TipMetadata({
+                messageId: bytes32(0),
+                channelId: bytes32(0),
+                data: ""
+            })
         });
 
         hoax(sender, amount);
-        vm.expectRevert(InvalidRecipientType.selector);
-        tipping.sendTip{value: amount}(TipRecipientType.Pool, abi.encode(params));
+        vm.expectRevert(TippingMod.InvalidRecipientType.selector);
+        tipping.sendTip{value: amount}(TippingMod.TipRecipientType.Pool, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -468,13 +481,13 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
         emit TipSent(
             sender,
             receiver,
-            TipRecipientType.Member,
+            TippingMod.TipRecipientType.Member,
             CurrencyTransfer.NATIVE_TOKEN,
             tipAmount,
             abi.encode(tokenId)
         );
         tipping.tip{value: amount}(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -505,7 +518,7 @@ contract TippingTest is Test, BaseSetup, IERC721ABase {
 
         hoax(sender, amount);
         tipping.tip{value: amount}(
-            TipRequest({
+            TippingMod.TipRequest({
                 receiver: receiver,
                 tokenId: tokenId,
                 currency: CurrencyTransfer.NATIVE_TOKEN,
