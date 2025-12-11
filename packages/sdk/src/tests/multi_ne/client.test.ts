@@ -14,6 +14,7 @@ import {
     makeUniqueChannelStreamId,
     addressFromUserId,
     makeUniqueMediaStreamId,
+    streamIdToBytes,
 } from '../../id'
 import {
     makeDonePromise,
@@ -49,6 +50,7 @@ import {
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
+    make_UserInboxPayload_GroupEncryptionSessions,
 } from '../../types'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
@@ -328,6 +330,47 @@ describe('clientTest', () => {
         expect(
             bobsAnotherClient.streams.get(makeUserMetadataStreamId(bobsClient.userId)),
         ).toBeDefined()
+    })
+
+    test('bobCanSendGroupEncryptionSessions', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+        expect(bobsClient.userInboxStreamId).toBeDefined()
+
+        // send it to yourself, works for now...
+        const fakeStreamId = makeUniqueSpaceStreamId()
+        const deviceId = 'd1'
+        const payload = make_UserInboxPayload_GroupEncryptionSessions({
+            streamId: streamIdToBytes(fakeStreamId),
+            senderKey: bobsClient.userId,
+            sessionIds: ['123'],
+            ciphertexts: {
+                [deviceId]: 'ciphertext',
+            },
+            algorithm: GroupEncryptionAlgorithmId.GroupEncryption,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userInboxStreamId!, payload),
+        ).resolves.not.toThrow()
+
+        // sending the same one again should fail
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userInboxStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+        // but with another id it should work
+        const payload2 = make_UserInboxPayload_GroupEncryptionSessions({
+            streamId: streamIdToBytes(fakeStreamId),
+            senderKey: bobsClient.userId,
+            sessionIds: ['123', '456'],
+            ciphertexts: {
+                [deviceId]: 'ciphertext',
+            },
+            algorithm: GroupEncryptionAlgorithmId.GroupEncryption,
+        })
+
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userInboxStreamId!, payload2),
+        ).resolves.not.toThrow()
     })
 
     test('bobCanSendMemberPayload', async () => {
