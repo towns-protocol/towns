@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/logging"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -148,7 +149,7 @@ func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEven
 
 	// Handle miniblock headers - these signal a new block was created and we need to prune
 	if event.Event.GetMiniblockHeader() != nil {
-		return ts.applyMiniblockHeader(event)
+		return ts.applyMiniblockHeader(ctx, event)
 	}
 
 	// Add regular event to minipool
@@ -167,7 +168,7 @@ func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEven
 // 1. Collect events from our minipool that match the header's event hashes
 // 2. Create a MiniblockInfo from the header and events
 // 3. Apply the block to prune our minipool
-func (ts *TrackedStreamViewImpl) applyMiniblockHeader(headerEvent *ParsedEvent) error {
+func (ts *TrackedStreamViewImpl) applyMiniblockHeader(ctx context.Context, headerEvent *ParsedEvent) error {
 	header := headerEvent.Event.GetMiniblockHeader()
 
 	// Collect events from minipool that are in this block
@@ -177,7 +178,7 @@ func (ts *TrackedStreamViewImpl) applyMiniblockHeader(headerEvent *ParsedEvent) 
 		if event, ok := ts.view.minipool.events.Get(hash); ok {
 			events = append(events, event)
 		} else {
-			logging.FromCtx(context.TODO()).Errorw(
+			logging.FromCtx(ctx).Errorw(
 				"Event in miniblock header not found in minipool",
 				"streamId", ts.streamID,
 				"miniblockNum", header.MiniblockNum,
