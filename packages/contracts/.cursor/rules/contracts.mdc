@@ -78,7 +78,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 ### General
 
 1. All contracts must follow the Diamond Pattern for upgradeability
-2. Use explicit visibility modifiers for all functions and state variables
+2. Use explicit visibility modifiers for all functions and state variables unless they are free functions
 3. Implement proper access control using modifiers
 4. Follow gas optimization best practices
 5. Use events for important state changes
