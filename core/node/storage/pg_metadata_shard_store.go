@@ -55,7 +55,7 @@ type MetadataStore interface {
 	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
 	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
 	ApplyMetadataTx(ctx context.Context, shardId uint64, height int64, tx *MetadataTx) error
-	ComputeAppHash(ctx context.Context, shardId uint64) ([]byte, error)
+	ComputeAppHash(ctx context.Context, shardId uint64, height int64) ([]byte, error)
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -1100,44 +1100,20 @@ func (s *PostgresMetadataShardStore) ApplyMetadataTx(
 	}
 }
 
-func (s *PostgresMetadataShardStore) ComputeAppHash(ctx context.Context, shardId uint64) ([]byte, error) {
+func (s *PostgresMetadataShardStore) ComputeAppHash(
+	_ context.Context,
+	_ uint64,
+	height int64,
+) ([]byte, error) {
+	// TEMPORARY: This "fake" app hash is only a hash of the block height.
+	// It exists to unblock metadata shard development while the real app hash
+	// (a fixed-depth sparse Merkle tree backed by Postgres) is implemented.
+	if height < 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "height must be >= 0")
+	}
 	hasher := sha256.New()
-	rows, err := s.store.pool.Query(ctx, s.sqlForShard(
-		`SELECT stream_id, last_miniblock_hash, last_miniblock_num, replication_factor, sealed FROM {{streams}} ORDER BY stream_id`,
-		shardId,
-	))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			streamId          []byte
-			lastHash          []byte
-			lastNum           int64
-			replicationFactor uint32
-			sealed            bool
-		)
-		if err := rows.Scan(&streamId, &lastHash, &lastNum, &replicationFactor, &sealed); err != nil {
-			return nil, err
-		}
-		hasher.Write(streamId)
-		hasher.Write(lastHash)
-		var buf [8]byte
-		// lastNum
-		binary.BigEndian.PutUint64(buf[:], uint64(lastNum))
-		hasher.Write(buf[:])
-		binary.BigEndian.PutUint64(buf[:], uint64(replicationFactor))
-		hasher.Write(buf[:])
-		if sealed {
-			hasher.Write([]byte{1})
-		} else {
-			hasher.Write([]byte{0})
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], uint64(height))
+	hasher.Write(buf[:])
 	return hasher.Sum(nil), nil
 }
