@@ -286,17 +286,17 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	appHash := m.lastAppHash
-	if appHash == nil {
-		var err error
-		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID)
-		if err != nil {
-			return nil, AsRiverError(err).Func("Commit")
-		}
-	}
 	height := m.lastBlockHeight
 	if height == 0 && m.node != nil {
 		height = m.node.BlockStore().Height()
+	}
+	appHash := m.lastAppHash
+	if appHash == nil {
+		var err error
+		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID, height)
+		if err != nil {
+			return nil, AsRiverError(err).Func("Commit")
+		}
 	}
 	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
@@ -578,7 +578,7 @@ func (m *MetadataShard) FinalizeBlock(
 		}
 		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
 	}
-	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID)
+	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID, req.Height)
 	if err != nil {
 		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
 	}

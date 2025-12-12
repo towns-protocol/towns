@@ -25,13 +25,13 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 - Table names derive from the shard id: `md_%04x_s` (streams) with 4-digit hex shard ids.
 - Streams table columns: `stream_id` (PK, 32 bytes), `genesis_miniblock_hash` (32 bytes), `genesis_miniblock` (payload), `last_miniblock_hash` (32 bytes), `last_miniblock_num` (BIGINT), `replication_factor` (INT), `sealed` (BOOL), and `nodes` (INT[] of node permanent indexes). The `nodes` array preserves ordering; a GIN index on `nodes` accelerates node→stream lookups.
 - Node addresses in protobuf transactions and query responses are resolved to/from permanent indexes using `NodeRecord.PermanentIndex` from the node registry.
-- Shared `metadata` table holds one row per shard with last height/hash; created on first `EnsureShardStorage` call. There is no per-block tx log; the app hash is recomputed from the streams table when needed.
+- Shared `metadata` table holds one row per shard with last height/hash; created on first `EnsureShardStorage` call. There is no per-block tx log. **Temporary:** the app hash is currently a placeholder derived only from the block height to unblock development. It does not yet commit to shard state and will be replaced with a fixed-depth sparse Merkle tree.
 
 ## Execution Flow
 
 - `NewMetadataShard` derives the chain id (`metadata-shard-<hex>`), writes the genesis doc, configures CometBFT for local-friendly defaults (no RPC listener, tighter consensus timeouts), and ensures shard tables exist.
 - `SubmitTx` feeds bytes into the mempool `CheckTx`. `Height` reflects the Comet block store height when the node is running.
-- `FinalizeBlock` decodes and validates each tx, applies it via `ApplyMetadataTx` (serially inside a tx runner), computes the app hash, and caches `{height, appHash}` for `Commit`.
+- `FinalizeBlock` decodes and validates each tx, applies it via `ApplyMetadataTx` (serially inside a tx runner), computes the (temporary) app hash, and caches `{height, appHash}` for `Commit`.
 - `Commit` writes `last_height`/`last_app_hash` into the shared `metadata` table using the cached app hash (or recomputing if missing).
 - Query endpoints:
   - `/stream/<hex>` (or `req.Data`): returns a single `StreamMetadata` as protojson.
@@ -47,16 +47,17 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 - Update nodes/replication: defaults to the existing node set when `nodes` is empty, allows node and/or replication-factor changes even when sealed, enforces replication factor bounds, and rewrites the stored `nodes` array to keep the provided order.
 - Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) resolve stored permanent indexes back into ordered node address lists.
 
-## App Hash
+## App Hash (Temporary Placeholder)
 
-- `ComputeAppHash` materializes streams ordered by `stream_id` and hashes `stream_id || last_miniblock_hash || last_miniblock_num || replication_factor || sealed_byte` with SHA-256.
-- Node placement and genesis payloads are not currently part of the app hash, so changing only the node list does not alter the hash.
+- **Current behavior:** the app hash is a fake commitment equal to `SHA256(block_height)` (with the height encoded as a big-endian uint64). This is intentionally minimal and exists only to satisfy ABCI/CometBFT plumbing while metadata shard development proceeds.
+- **Important:** this hash does *not* reflect the shard’s actual state. Do not rely on it for consensus safety, proofs, or cross-node validation beyond height monotonicity.
+- **Future:** the placeholder will be replaced by a real state commitment using a fixed-depth sparse Merkle tree backed by Postgres. At that point, app hashes will deterministically commit to stream metadata and support efficient proofs.
 
 # TODO
 
 - [x] Update database to use single table for streams data using int array and GIN index for nodes (instead of putting nodes in a separate table).
 - [ ] Collect block state in memory and only commit when Commit is called in a single transaction.
-- [ ] Implement app_hash using fixed depth sparse merkle tree with pg backing.
+- [ ] Replace temporary fake app_hash with fixed depth sparse merkle tree with pg backing.
 - [ ] Implement snapshotting/export functionality.
 - [ ] Add restart, replica change and replica recovery tests.
 - [ ] Include node set (and other non-miniblock metadata) in the app_hash inputs so placement-only changes affect consensus state.
