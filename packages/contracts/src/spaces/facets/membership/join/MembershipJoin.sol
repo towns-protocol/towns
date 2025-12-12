@@ -22,10 +22,10 @@ import {DispatcherBase} from "../../dispatcher/DispatcherBase.sol";
 import {Entitled} from "../../Entitled.sol";
 import {EntitlementGatedBase} from "../../gated/EntitlementGatedBase.sol";
 import {PointsBase} from "../../points/PointsBase.sol";
-import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
 import {MembershipBase} from "../MembershipBase.sol";
+import {PrepayStorage} from "../prepay/PrepayStorage.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -41,7 +41,6 @@ abstract contract MembershipJoin is
     RolesBase,
     EntitlementGatedBase,
     Entitled,
-    PrepayBase,
     PointsBase,
     ERC721ABase
 {
@@ -82,9 +81,9 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        // Check if this is a free join due to prepaid supply
-        uint256 prepaidSupply = _getPrepaidSupply();
-        if (prepaidSupply > 0) {
+        // Check if this is a free join due to prepaid seats
+        uint256 prepaidSeats = PrepayStorage.getPrepaidSeats();
+        if (prepaidSeats > 0) {
             joinDetails.isPrepaid = true;
             return joinDetails;
         }
@@ -105,9 +104,6 @@ abstract contract MembershipJoin is
             Membership__InsufficientPayment.selector.revertWith();
         }
 
-        // Consume prepaid membership if applicable
-        if (joinDetails.isPrepaid) _reducePrepay(1);
-
         bytes32 transactionId = _registerTransaction(
             receiver,
             _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
@@ -122,6 +118,7 @@ abstract contract MembershipJoin is
 
         if (!isCrosschainPending) {
             if (isEntitled) {
+                if (joinDetails.isPrepaid) PrepayStorage.reducePrepay(1);
                 if (joinDetails.shouldCharge) _chargeForJoinSpace(transactionId, joinDetails);
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
@@ -144,9 +141,6 @@ abstract contract MembershipJoin is
             Membership__InsufficientPayment.selector.revertWith();
         }
 
-        // Consume prepaid membership if applicable
-        if (joinDetails.isPrepaid) _reducePrepay(1);
-
         _validateUserReferral(receiver, referral);
 
         bytes memory referralData = abi.encode(referral);
@@ -167,6 +161,7 @@ abstract contract MembershipJoin is
 
         if (!isCrosschainPending) {
             if (isEntitled) {
+                if (joinDetails.isPrepaid) PrepayStorage.reducePrepay(1);
                 if (joinDetails.shouldCharge)
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
 

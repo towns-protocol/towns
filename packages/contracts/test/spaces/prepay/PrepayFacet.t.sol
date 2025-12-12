@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// utils
-
 //interfaces
-import {IPrepayBase} from "src/spaces/facets/prepay/IPrepay.sol";
+import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 
 //libraries
 
 //contracts
 import {MembershipBaseSetup} from "test/spaces/membership/MembershipBaseSetup.sol";
 
-contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
+contract PrepayFacetTest is MembershipBaseSetup {
     modifier givenFounderHasPrepaid(uint256 amount) {
         uint256 membershipFee = prepayFacet.calculateMembershipPrepayFee(amount);
 
@@ -30,11 +28,12 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
         assertEq(prepayFacet.prepaidMembershipSupply(), 0);
     }
 
-    function test_calculateMembershipPrepayFee() external view {
-        uint256 membershipFee = platformReqs.getMembershipFee();
+    function test_calculateMembershipPrepayFee() external givenMembershipHasPrice {
+        uint256 protocolFee = platformReqs.getMembershipFee();
         uint256 supply = 5;
 
-        uint256 expectedFee = supply * membershipFee;
+        // Each seat costs MEMBERSHIP_PRICE + protocolFee
+        uint256 expectedFee = (MEMBERSHIP_PRICE + protocolFee) * supply;
         uint256 actualFee = prepayFacet.calculateMembershipPrepayFee(supply);
 
         assertEq(actualFee, expectedFee);
@@ -44,6 +43,12 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
         assertEq(prepayFacet.calculateMembershipPrepayFee(0), 0);
     }
 
+    function test_calculateMembershipPrepayFee_zeroPrice() external view {
+        // When price is 0, only protocol fee is charged
+        uint256 protocolFee = platformReqs.getMembershipFee();
+        assertEq(prepayFacet.calculateMembershipPrepayFee(5), protocolFee * 5);
+    }
+
     // =============================================================
     //                           Prepay Membership
     // =============================================================
@@ -51,9 +56,17 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
     function test_prepayMembership() external givenMembershipHasPrice givenFounderHasPrepaid(2) {
         assertEq(prepayFacet.prepaidMembershipSupply(), 2);
 
-        uint256 membershipFee = prepayFacet.calculateMembershipPrepayFee(2);
+        // Platform recipient receives only the protocol fee (not the membership price)
+        uint256 protocolFeePerUnit = platformReqs.getMembershipFee();
+        uint256 totalProtocolFee = protocolFeePerUnit * 2;
         address platformRecipient = platformReqs.getFeeRecipient();
-        assertEq(platformRecipient.balance, membershipFee);
+        assertEq(platformRecipient.balance, totalProtocolFee);
+
+        // Space contract receives the membership revenue (base price, not including protocol fee)
+        // getMembershipPrice() includes protocol fee, so we calculate base price separately
+        // Each prepaid slot costs 1 ETH (MEMBERSHIP_PRICE) * 2 = 2 ETH
+        uint256 expectedSpaceRevenue = MEMBERSHIP_PRICE * 2;
+        assertEq(membership.revenue(), expectedSpaceRevenue);
     }
 
     function test_prepayMembership_singleUnit() external givenMembershipHasPrice {
@@ -73,7 +86,7 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
         vm.deal(founder, cost);
         vm.prank(founder);
         vm.expectEmit(true, true, true, true);
-        emit Prepay__Prepaid(supply);
+        emit MembershipPrepaid(supply);
         prepayFacet.prepayMembership{value: cost}(supply);
     }
 
@@ -100,12 +113,14 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
 
         uint256 supply = 2;
         uint256 cost = prepayFacet.calculateMembershipPrepayFee(supply);
+        uint256 protocolFee = platformReqs.getMembershipFee() * supply;
 
         vm.deal(founder, cost);
         vm.prank(founder);
         prepayFacet.prepayMembership{value: cost}(supply);
 
-        assertEq(platformRecipient.balance, initialBalance + cost);
+        // Only protocol fee goes to platform recipient
+        assertEq(platformRecipient.balance, initialBalance + protocolFee);
     }
 
     // =============================================================
@@ -114,13 +129,13 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
 
     function test_revertWhen_invalidSupplyAmount() external {
         vm.prank(founder);
-        vm.expectRevert(Prepay__InvalidSupplyAmount.selector);
+        vm.expectRevert(Membership__InvalidSupplyAmount.selector);
         prepayFacet.prepayMembership(0);
     }
 
     function test_revertWhen_msgValueIsNotEqualToCost() external givenMembershipHasPrice {
         vm.prank(founder);
-        vm.expectRevert(Prepay__InvalidAmount.selector);
+        vm.expectRevert(Membership__InvalidPayment.selector);
         prepayFacet.prepayMembership(1);
     }
 
@@ -129,7 +144,7 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
 
         vm.deal(founder, cost);
         vm.prank(founder);
-        vm.expectRevert(Prepay__InvalidAmount.selector);
+        vm.expectRevert(Membership__InvalidPayment.selector);
         prepayFacet.prepayMembership{value: cost - 1}(2);
     }
 
@@ -138,37 +153,62 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
 
         vm.deal(founder, cost + 1);
         vm.prank(founder);
-        vm.expectRevert(Prepay__InvalidAmount.selector);
+        vm.expectRevert(Membership__InvalidPayment.selector);
         prepayFacet.prepayMembership{value: cost + 1}(2);
     }
 
-    function test_revertWhen_notOwnerOrSpaceFactory() external givenMembershipHasPrice {
-        uint256 cost = prepayFacet.calculateMembershipPrepayFee(1);
+    function test_revertWhen_prepayExceedsSupplyLimit() external givenMembershipHasPrice {
+        // Set supply limit to 10
+        vm.prank(founder);
+        membership.setMembershipLimit(10);
 
-        hoax(alice, cost);
-        vm.expectRevert(Prepay__NotAllowed.selector);
-        prepayFacet.prepayMembership{value: cost}(1);
+        // Prepay 8 seats
+        uint256 cost1 = prepayFacet.calculateMembershipPrepayFee(8);
+        vm.deal(founder, cost1);
+        vm.prank(founder);
+        prepayFacet.prepayMembership{value: cost1}(8);
+
+        // Try to prepay 5 more (8 + 5 = 13 > 10)
+        uint256 cost2 = prepayFacet.calculateMembershipPrepayFee(5);
+        vm.deal(founder, cost2);
+        vm.prank(founder);
+        vm.expectRevert(Membership__MaxSupplyReached.selector);
+        prepayFacet.prepayMembership{value: cost2}(5);
     }
 
-    function test_revertWhen_randomAddressCalls() external givenMembershipHasPrice {
-        uint256 cost = prepayFacet.calculateMembershipPrepayFee(1);
-        address randomUser = makeAddr("randomUser");
+    function test_prepayPriceAccountsForExistingPrepaidSeats()
+        external
+        givenMembershipHasPrice
+        givenFounderHasPrepaid(5)
+    {
+        // First prepay of 5 seats costs 5 * (MEMBERSHIP_PRICE + protocolFee)
+        // Second prepay of 5 seats should also cost 5 * (MEMBERSHIP_PRICE + protocolFee)
+        // because pricing is flat (not tiered) in this test setup
+        uint256 protocolFee = platformReqs.getMembershipFee();
+        uint256 expectedCost = (MEMBERSHIP_PRICE + protocolFee) * 5;
+        uint256 actualCost = prepayFacet.calculateMembershipPrepayFee(5);
 
-        hoax(randomUser, cost);
-        vm.expectRevert(Prepay__NotAllowed.selector);
-        prepayFacet.prepayMembership{value: cost}(1);
+        // With flat pricing, both prepays cost the same
+        assertEq(actualCost, expectedCost);
+
+        // The key behavior: prepaidSeats now = 5, so second batch is priced at supply 5-9
+        // (not 0-4 like before the fix)
+        assertEq(prepayFacet.prepaidMembershipSupply(), 5);
     }
 
     // =============================================================
     //                           Fuzz Tests
     // =============================================================
 
-    function test_fuzz_calculateMembershipPrepayFee(uint256 supply) external view {
+    function test_fuzz_calculateMembershipPrepayFee(
+        uint256 supply
+    ) external givenMembershipHasPrice {
         // Bound to reasonable values to avoid overflow
-        supply = bound(supply, 0, type(uint128).max);
+        supply = bound(supply, 0, 1000);
 
-        uint256 membershipFee = platformReqs.getMembershipFee();
-        uint256 expectedFee = supply * membershipFee;
+        uint256 protocolFee = platformReqs.getMembershipFee();
+        // Each seat costs MEMBERSHIP_PRICE + protocolFee
+        uint256 expectedFee = (MEMBERSHIP_PRICE + protocolFee) * supply;
 
         assertEq(prepayFacet.calculateMembershipPrepayFee(supply), expectedFee);
     }

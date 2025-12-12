@@ -13,7 +13,7 @@ library DeployMembership {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(22);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(25);
 
         // Funds
         arr.p(IMembership.revenue.selector);
@@ -57,6 +57,11 @@ library DeployMembership {
 
         // Factory
         arr.p(IMembership.getSpaceFactory.selector);
+
+        // Prepay
+        arr.p(IMembership.prepayMembership.selector);
+        arr.p(IMembership.prepaidMembershipSupply.selector);
+        arr.p(IMembership.calculateMembershipPrepayFee.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {

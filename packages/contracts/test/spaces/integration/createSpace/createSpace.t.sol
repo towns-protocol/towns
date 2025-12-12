@@ -12,7 +12,6 @@ import {IRuleEntitlementBase} from "src/spaces/entitlements/rule/IRuleEntitlemen
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase, IMembership} from "src/spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IRolesBase, IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
@@ -264,18 +263,22 @@ contract IntegrationCreateSpace is
 
         // create space with default channel
         CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
-        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+        // Use fixed pricing with a known price for deterministic cost calculation
+        spaceInfo.membership.settings.pricingModule = fixedPricingModule;
+        spaceInfo.membership.settings.price = 0.01 ether;
         spaceInfo.prepay.supply = 100;
         spaceInfo.membership.requirements.everyone = true;
 
-        uint256 cost = spaceInfo.prepay.supply *
-            IPlatformRequirements(spaceFactory).getMembershipFee();
+        // Calculate prepay cost: (membershipPrice + protocolFee) * supply
+        uint256 membershipPrice = spaceInfo.membership.settings.price;
+        uint256 protocolFee = IPlatformRequirements(spaceFactory).getMembershipFee();
+        uint256 cost = (membershipPrice + protocolFee) * spaceInfo.prepay.supply;
 
         deal(founder, cost);
         vm.prank(founder);
         address newSpace = createSpaceFacet.createSpaceWithPrepay{value: cost}(spaceInfo);
 
-        uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
+        uint256 prepaidSupply = IMembership(newSpace).prepaidMembershipSupply();
         assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
     }
@@ -370,12 +373,16 @@ contract IntegrationCreateSpace is
         users[0] = user;
 
         CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
-        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+        // Use fixed pricing with a known price for deterministic cost calculation
+        spaceInfo.membership.settings.pricingModule = fixedPricingModule;
+        spaceInfo.membership.settings.price = 0.01 ether;
         spaceInfo.membership.requirements.users = users;
         spaceInfo.prepay.supply = 50;
 
-        uint256 cost = spaceInfo.prepay.supply *
-            IPlatformRequirements(spaceFactory).getMembershipFee();
+        // Calculate prepay cost: (membershipPrice + protocolFee) * supply
+        uint256 membershipPrice = spaceInfo.membership.settings.price;
+        uint256 protocolFee = IPlatformRequirements(spaceFactory).getMembershipFee();
+        uint256 cost = (membershipPrice + protocolFee) * spaceInfo.prepay.supply;
 
         bytes memory data = abi.encode(spaceInfo);
 
@@ -383,7 +390,7 @@ contract IntegrationCreateSpace is
         vm.prank(founder);
         address newSpace = createSpaceFacet.createSpace{value: cost}(Action.CreateWithPrepay, data);
 
-        uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
+        uint256 prepaidSupply = IMembership(newSpace).prepaidMembershipSupply();
         assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
     }
