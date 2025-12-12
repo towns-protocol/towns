@@ -3,15 +3,11 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {ITippingBase} from "../../../spaces/facets/tipping/ITipping.sol";
-import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 
 // libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
-import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         TYPES                            */
@@ -25,7 +21,6 @@ using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
 // keccak256(abi.encode(uint256(keccak256("towns.account.tipping.mod.storage")) - 1)) & ~bytes32(uint256(0xff))
 bytes32 constant STORAGE_SLOT = 0x2a95e0ca73c50924d5ddd84672da871cae538509d7dabaedae2f730a19f18300;
-uint256 constant MAX_FEE_TOLERANCE = 100; // 1% tolerance
 
 /// @notice Stats for a currency
 /// @param total The total number of tips
@@ -43,13 +38,6 @@ struct Layout {
     mapping(address currency => Stats stats) currencyStats;
     mapping(address account => Stats stats) accountStats;
     mapping(address account => mapping(address currency => Stats stats)) accountStatsByCurrency;
-}
-
-/// @notice Returns the address of the contract using this module
-function getSelf() view returns (address self) {
-    assembly {
-        self := address()
-    }
 }
 
 /// @notice Returns the storage layout for the AccountTippingMod
@@ -127,45 +115,6 @@ function processTip(
 
     // Transfer currency
     CurrencyTransfer.transferCurrency(currency, self, receiver, amount);
-}
-
-/// @notice Handles the protocol fee
-/// @param spaceFactory The address of the space factory
-/// @param currency The currency of the tip
-/// @param amount The amount of the tip
-/// @return protocolFee The protocol fee
-function handleProtocolFee(
-    address spaceFactory,
-    address currency,
-    uint256 amount
-) returns (uint256 protocolFee) {
-    uint256 expectedFee = IFeeManager(spaceFactory).calculateFee(
-        FeeTypesLib.TIP_MEMBER,
-        msg.sender,
-        amount,
-        ""
-    );
-
-    if (expectedFee == 0) return 0;
-
-    uint256 maxFee = expectedFee + BasisPoints.calculate(expectedFee, MAX_FEE_TOLERANCE);
-
-    // Approve ERC20 if needed (native token sends value with call)
-    bool isNative = currency == CurrencyTransfer.NATIVE_TOKEN;
-    if (!isNative) SafeTransferLib.safeApproveWithRetry(currency, spaceFactory, maxFee);
-
-    // Charge fee (excess native token will be refunded)
-    protocolFee = IFeeManager(spaceFactory).chargeFee{value: isNative ? maxFee : 0}(
-        FeeTypesLib.TIP_MEMBER,
-        msg.sender,
-        amount,
-        currency,
-        maxFee,
-        ""
-    );
-
-    // Reset ERC20 approval
-    if (!isNative) SafeTransferLib.safeApprove(currency, spaceFactory, 0);
 }
 
 /// @notice Validates a tip
