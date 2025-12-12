@@ -64,6 +64,11 @@ interface ISimpleAppBase {
     /// @param owner The owner of the app
     /// @param agentId The ID of the agent
     event AgentPromoted(address indexed owner, uint256 indexed agentId);
+
+    /// @notice Emitted when payment is received
+    /// @param sender The address that sent the payment
+    /// @param amount The amount of payment that was sent
+    event OnPaymentReceived(address indexed sender, uint256 amount);
 }
 
 interface ISimpleApp is ISimpleAppBase {

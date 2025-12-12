@@ -42,6 +42,7 @@ contract SimpleAppFacet is
     uint256 internal constant MAX_PERMISSIONS = 10;
 
     receive() external payable override(BaseApp, Receiver) {
+        emit OnPaymentReceived(msg.sender, msg.value);
         _onPayment(msg.sender, msg.value);
     }
 
