@@ -600,11 +600,6 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 	}
 }
 
-func (params *aeParams) pass() (bool, error) {
-	// we probably shouldn't ever have 0 checks... currently this is the case in one place
-	return true, nil
-}
-
 func checkIsMember(params *aeParams, creatorAddress []byte) error {
 	isMember, err := params.streamView.IsMember(creatorAddress)
 	if err != nil {
@@ -2396,7 +2391,8 @@ func (ru *aeEncryptedGroupSessionRules) validEncryptedGroupSession() (bool, erro
 			}
 		}
 	}
-	return false, RiverError(Err_INVALID_ARGUMENT, "new session id not found in group encryption sessions")
+	// don't allow it, but don't error, this is a no-op
+	return false, nil
 }
 
 func (ru *aeEnsAddressRules) validEnsAddress() (bool, error) {
