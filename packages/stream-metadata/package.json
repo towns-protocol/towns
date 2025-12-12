@@ -18,7 +18,7 @@
 		"prettier": "prettier --config ../prettier-config/config.js --ignore-path .prettierignore .",
 		"run-build": "bun run build && bun ./dist/node_esbuild.cjs",
 		"start": "bun ./dist/node_esbuild.cjs",
-		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 DEBUG='csb:*,test:*' dotenv -e ../generated/deployments/local_dev/.env -- vitest run --testNamePattern integration/stream-metadata",
+		"test:ci:multi:ne": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 DEBUG='csb:*,test:*' dotenv -e ../generated/deployments/local_dev/.env -- vitest run --testNamePattern integration/stream-metadata",
 		"test:watch": "vitest --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"

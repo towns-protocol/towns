@@ -11,7 +11,7 @@
         "lint": "eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "bun run lint --fix",
         "test": "vitest",
-        "test:ci": "echo 'CI test skipped'",
+        "test:unit": "vitest",
         "watch": "tsdown --watch"
     },
     "dependencies": {
