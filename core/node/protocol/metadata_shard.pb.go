@@ -153,7 +153,6 @@ type CreateStreamTx struct {
 	Sealed bool `protobuf:"varint,7,opt,name=sealed,proto3" json:"sealed,omitempty"`
 	// Serialized genesis miniblock payload.
 	// Must be set if last_miniblock_num is 0.
-	// Must be 32 bytes.
 	// TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
 	GenesisMiniblock []byte `protobuf:"bytes,8,opt,name=genesis_miniblock,json=genesisMiniblock,proto3" json:"genesis_miniblock,omitempty"`
 }
