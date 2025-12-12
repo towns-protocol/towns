@@ -43,6 +43,7 @@ error AccountHub__NotInstalled(address account);
 /// @notice Reverted when the sender is not the registry
 /// @param sender The address of the sender
 error AccountHub__InvalidCaller(address sender);
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         STORAGE                            */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -114,6 +115,12 @@ function setAppRegistry(address appRegistry) {
 /// @return True if the account is installed, false otherwise
 function isInstalled(address account) view returns (bool) {
     return getStorage().installed[account];
+}
+
+/// @notice Gets the space factory
+/// @return spaceFactory The address of the space factory
+function getSpaceFactory() view returns (address) {
+    return getStorage().spaceFactory;
 }
 
 /// @notice Gets the app registry
