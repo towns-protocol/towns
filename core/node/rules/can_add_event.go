@@ -116,7 +116,7 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 }
 
 type aeEncryptedGroupSessionRules struct {
-	params *aeParams
+	params  *aeParams
 	session *UserInboxPayload_GroupEncryptionSessions
 }
 
@@ -429,8 +429,8 @@ func (params *aeParams) canAddUserInboxPayload(payload *StreamEvent_UserInboxPay
 			fail(invalidContentType(content))
 	case *UserInboxPayload_GroupEncryptionSessions_:
 		ru := &aeEncryptedGroupSessionRules{
-		 	params: params,
-		 	session: content.GroupEncryptionSessions,
+			params:  params,
+			session: content.GroupEncryptionSessions,
 		}
 		return aeBuilder().
 			check(ru.validEncryptedGroupSession)
@@ -2368,7 +2368,6 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 	return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with matching device key not found")
 }
 
-
 func (ru *aeEncryptedGroupSessionRules) validEncryptedGroupSession() (bool, error) {
 	if ru.session == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a group encryption session event")
@@ -2393,7 +2392,7 @@ func (ru *aeEncryptedGroupSessionRules) validEncryptedGroupSession() (bool, erro
 			}
 			if _, ok := groupEncryptionSessions[deviceId][sessionId]; !ok {
 				// new session! let's go!
-				return true, nil 
+				return true, nil
 			}
 		}
 	}
