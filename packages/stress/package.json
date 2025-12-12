@@ -13,7 +13,7 @@
         "nft": "node --enable-source-maps ./dist/nft.cjs",
         "notifications": "node --enable-source-maps ./dist/notifications.cjs",
         "start": "node --enable-source-maps ./dist/start.cjs",
-        "test:ci:multi:ent": "bun run load-env vitest run --config ./vitest.config.entitlements.ts --silent",
+        "test:ci:multi:ent": "bun run load-env vitest run --config ./vitest.config.entitlements.ts",
         "test:stress": "bun run load-env vitest run --config ./vitest.config.entitlements.ts ./src/stress.test.ts",
         "test:stress:dev": "bun run test:stress | bun run pino-pretty",
         "transfer-funds": "node --enable-source-maps ./dist/transferFunds.cjs",
