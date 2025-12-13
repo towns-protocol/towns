@@ -1470,11 +1470,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const cost = await space.Prepay.read.calculateMembershipPrepayFee(supply)
+        const cost = await space.Membership.read.calculateMembershipPrepayFee(supply)
 
         return wrapTransaction(
             () =>
-                space.Prepay.write(signer).prepayMembership(supply, {
+                space.Membership.write(signer).prepayMembership(supply, {
                     value: cost,
                 }),
             txnOpts,
@@ -1486,7 +1486,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Prepay.read.prepaidMembershipSupply()
+        return space.Membership.read.prepaidMembershipSupply()
     }
 
     public async setChannelAccess(
@@ -1541,7 +1541,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         // if any prepaid memberships have been purchased, the contracts won't charge for minting a membership nft,
         // else it will charge the membershipPrice
         const prepaidSupplyEncoded =
-            space.Prepay.interface.encodeFunctionData('prepaidMembershipSupply')
+            space.Membership.interface.encodeFunctionData('prepaidMembershipSupply')
 
         const protocolFeeEncoded = space.Membership.interface.encodeFunctionData('getProtocolFee')
 
@@ -1572,7 +1572,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 'getMembershipFreeAllocation',
                 freeAllocationResult,
             )[0] as BigNumber
-            const prepaidSupply = space.Prepay.interface.decodeFunctionResult(
+            const prepaidSupply = space.Membership.interface.decodeFunctionResult(
                 'prepaidMembershipSupply',
                 prepaidSupplyResult,
             )[0] as BigNumber
