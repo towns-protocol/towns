@@ -51,6 +51,8 @@ import {
     make_MemberPayload_Membership2,
     type CreateTownsClientParams,
     waitForRoleCreated,
+    isDMChannelStreamId,
+    make_DMChannelPayload_Message,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
 import { logger } from 'hono/logger'
@@ -2070,12 +2072,16 @@ const buildBotActions = (
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 
-        if (!isChannelStreamId(streamId)) {
+        let eventPayload: PlainMessage<StreamEvent>['payload']
+        if (isChannelStreamId(streamId)) {
+            eventPayload = make_ChannelPayload_Message(message)
+        } else if (isDMChannelStreamId(streamId)) {
+            eventPayload = make_DMChannelPayload_Message(message)
+        } else {
             throw new Error(
-                `Invalid stream ID type: ${streamId} - only channel streams are supported`,
+                `Invalid stream ID type: ${streamId} - only channel and DM streams are supported`,
             )
         }
-        const eventPayload = make_ChannelPayload_Message(message)
         return client.sendEvent(streamId, eventPayload, eventTags, ephemeral)
     }
 
