@@ -53,26 +53,18 @@ interface IMembershipBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error Membership__InvalidAddress();
-    error Membership__InvalidPrice();
-    error Membership__InvalidLimit();
-    error Membership__InvalidCurrency();
-    error Membership__InvalidFeeRecipient();
     error Membership__InvalidDuration();
     error Membership__InvalidMaxSupply();
     error Membership__InvalidFreeAllocation();
     error Membership__InvalidPricingModule();
-    error Membership__AlreadyMember();
     error Membership__InsufficientPayment();
     error Membership__MaxSupplyReached();
-    error Membership__InvalidTokenId();
-    error Membership__NotExpired();
-    error Membership__InsufficientAllowance();
     error Membership__InvalidPayment();
     error Membership__InvalidTransactionType();
     error Membership__Banned();
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
-    error Membership__CannotSetPriceOnFreeSpace();
+    error Membership__InvalidSupplyAmount();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -86,6 +78,7 @@ interface IMembershipBase {
     event MembershipWithdrawal(address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
     event MembershipTokenRejected(address indexed recipient);
+    event MembershipPrepaid(uint256 seats);
 }
 
 interface IMembership is IMembershipBase {
@@ -214,4 +207,21 @@ interface IMembership is IMembershipBase {
     /// @notice Get the current balance of funds held by the space
     /// @return The current balance of funds held by the space
     function revenue() external view returns (uint256);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           PREPAY                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Prepay membership seats with incremental pricing
+    /// @param seats The number of membership seats to prepay
+    function prepayMembership(uint256 seats) external payable;
+
+    /// @notice Get the number of prepaid membership seats remaining
+    /// @return The remaining prepaid seats
+    function prepaidMembershipSupply() external view returns (uint256);
+
+    /// @notice Calculate the prepay fee for a given number of seats
+    /// @param seats The number of membership seats to calculate the fee for
+    /// @return The total fee including membership price and protocol fees
+    function calculateMembershipPrepayFee(uint256 seats) external view returns (uint256);
 }

@@ -7,13 +7,15 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {PrepayStorage} from "./prepay/PrepayStorage.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {MembershipJoin} from "./join/MembershipJoin.sol";
+import {PrepayBase} from "./prepay/PrepayBase.sol";
 
-contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
+contract MembershipFacet is IMembership, MembershipJoin, PrepayBase, ReentrancyGuard, Facet {
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -194,5 +196,28 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function revenue() external view returns (uint256) {
         return address(this).balance;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           PREPAY                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IMembership
+    function prepayMembership(uint256 seats) external payable nonReentrant {
+        _prepayMembership(seats, _totalSupply());
+    }
+
+    /// @inheritdoc IMembership
+    function prepaidMembershipSupply() external view returns (uint256) {
+        return PrepayStorage.getPrepaidSeats();
+    }
+
+    /// @inheritdoc IMembership
+    function calculateMembershipPrepayFee(uint256 seats) external view returns (uint256) {
+        (uint256 totalMembershipCost, uint256 totalProtocolFee) = _calculatePrepayFee(
+            seats,
+            _totalSupply()
+        );
+        return totalMembershipCost + totalProtocolFee;
     }
 }

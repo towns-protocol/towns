@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IMembership} from "../membership/IMembership.sol";
 
 // libraries
+import {PrepayStorage} from "../membership/prepay/PrepayStorage.sol";
 
 // contracts
 import {EntitlementGated} from "../gated/EntitlementGated.sol";
@@ -33,6 +34,9 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
 
         if (result == NodeVoteStatus.PASSED) {
             PricingDetails memory joinDetails = _getPricingDetails();
+
+            // consume prepaid seat if applicable
+            if (joinDetails.isPrepaid) PrepayStorage.reducePrepay(1);
 
             if (joinDetails.shouldCharge) {
                 uint256 payment = _getCapturedValue(transactionId);
