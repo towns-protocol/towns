@@ -11,9 +11,9 @@ Create interactive UI elements like buttons for games, polls, and confirmations.
 ```ts
 import { hexToBytes } from 'viem'
 
-bot.onSlashCommand('play', async (handler, event) => {
-  await handler.sendInteractionRequest(
-    event.channelId,
+bot.onSlashCommand('play', async (ctx, event) => {
+  await ctx.sendInteractionRequest(
+    ctx.channelId,
     {
       case: 'form',
       value: {
@@ -38,7 +38,7 @@ bot.onSlashCommand('play', async (handler, event) => {
         ]
       }
     },
-    hexToBytes(event.userId as `0x${string}`)  // recipient
+    hexToBytes(ctx.userId as `0x${string}`)  // recipient
   )
 })
 ```
@@ -46,17 +46,17 @@ bot.onSlashCommand('play', async (handler, event) => {
 ### Handling Button Clicks
 
 ```ts
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case !== 'form') return
-  
-  const form = event.response.payload.content?.value
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  if (ctx.response.payload.content?.case !== 'form') return
+
+  const form = ctx.response.payload.content?.value
+
   for (const component of form.components) {
     if (component.component.case === 'button') {
       if (component.id === 'start-button') {
-        await handler.sendMessage(event.channelId, '🎮 Starting game...')
+        await ctx.send('🎮 Starting game...')
       } else if (component.id === 'help-button') {
-        await handler.sendMessage(event.channelId, '❓ Help...')
+        await ctx.send('❓ Help...')
       }
     }
   }
@@ -70,17 +70,17 @@ Prompt users to sign and execute blockchain transactions. Perfect for payments, 
 **Any Wallet:**
 
 ```ts
-bot.onSlashCommand('send-usdc', async (handler, event) => {
+bot.onSlashCommand('send-usdc', async (ctx, event) => {
   const usdcAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base
   const recipient = '0x1234567890123456789012345678901234567890'
   const amount = '50000000' // 50 USDC (6 decimals)
-  
+
   // Encode ERC20 transfer: transfer(address,uint256)
   const recipientPadded = recipient.slice(2).padStart(64, '0')
   const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
   const data = `0xa9059cbb${recipientPadded}${amountPadded}`
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: 'transaction',
     value: {
       id: 'usdc-transfer',
@@ -106,19 +106,19 @@ bot.onSlashCommand('send-usdc', async (handler, event) => {
 ```ts
 import { getSmartAccountFromUserId } from '@towns-protocol/bot'
 
-bot.onSlashCommand('send-usdc-sm', async (handler, event) => {
+bot.onSlashCommand('send-usdc-sm', async (ctx, event) => {
   const smartAccount = await getSmartAccountFromUserId(bot, {
-    userId: event.userId
+    userId: ctx.userId
   })
-  
+
   if (!smartAccount) {
-    await handler.sendMessage(event.channelId, "No smart account found")
+    await ctx.send("No smart account found")
     return
   }
-  
+
   // ... same transaction setup ...
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: 'transaction',
     value: {
       // ...
@@ -137,12 +137,11 @@ bot.onSlashCommand('send-usdc-sm', async (handler, event) => {
 ### Handle Transaction Response
 
 ```ts
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === 'transaction') {
-    const txData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
+bot.onInteractionResponse(async (ctx, event) => {
+  if (ctx.response.payload.content?.case === 'transaction') {
+    const txData = ctx.response.payload.content.value
+
+    await ctx.send(
       `✅ Transaction Confirmed!
 
 Request ID: ${txData.requestId}
@@ -161,7 +160,7 @@ Request cryptographic signatures without executing transactions. Perfect for aut
 ```ts
 import { InteractionRequestPayload_Signature_SignatureType } from '@towns-protocol/proto'
 
-bot.onSlashCommand('sign', async (handler, event) => {
+bot.onSlashCommand('sign', async (ctx, event) => {
   // EIP-712 Typed Data Structure
   const typedData = {
     domain: {
@@ -179,13 +178,13 @@ bot.onSlashCommand('sign', async (handler, event) => {
     },
     primaryType: 'Message',
     message: {
-      from: event.userId,
+      from: ctx.userId,
       content: 'I agree to the terms',
       timestamp: Math.floor(Date.now() / 1000)
     }
   }
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: 'signature',
     value: {
       id: 'message-signature',
@@ -203,12 +202,11 @@ bot.onSlashCommand('sign', async (handler, event) => {
 ### Handle Signature Response
 
 ```ts
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === 'signature') {
-    const signatureData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
+bot.onInteractionResponse(async (ctx, event) => {
+  if (ctx.response.payload.content?.case === 'signature') {
+    const signatureData = ctx.response.payload.content.value
+
+    await ctx.send(
       `✅ Signature Received!
 
 Request ID: ${signatureData.requestId}
@@ -227,9 +225,9 @@ You can now verify this signature on-chain or use it for authentication.`
 ## Complete Response Handler
 
 ```ts
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  const { response } = ctx
+
   switch (response.payload.content?.case) {
     case 'form':
       const formData = response.payload.content.value
@@ -240,21 +238,15 @@ bot.onInteractionResponse(async (handler, event) => {
         }
       }
       break
-      
+
     case 'transaction':
       const txData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
-        `Transaction confirmed: ${txData.txHash}`
-      )
+      await ctx.send(`Transaction confirmed: ${txData.txHash}`)
       break
-      
+
     case 'signature':
       const signatureData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
-        `Signature received: ${signatureData.signature}`
-      )
+      await ctx.send(`Signature received: ${signatureData.signature}`)
       break
   }
 })

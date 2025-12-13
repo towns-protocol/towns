@@ -41,12 +41,9 @@ const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 let githubChannelId: string | null = null
 
 // Register channel for GitHub notifications
-bot.onSlashCommand('setup-github', async (handler, event) => {
-  githubChannelId = event.channelId
-  await handler.sendMessage(
-    event.channelId,
-    'GitHub notifications configured for this channel'
-  )
+bot.onSlashCommand('setup-github', async (ctx, event) => {
+  githubChannelId = ctx.channelId
+  await ctx.send('GitHub notifications configured for this channel')
 })
 
 // Towns webhook (required)
@@ -89,9 +86,9 @@ export default app
 const bot = await makeTownsBot(privateData, jwtSecret)
 const priceChannels = new Set()
 
-bot.onSlashCommand('price-alerts', async (handler, event) => {
-  priceChannels.add(event.channelId)
-  await handler.sendMessage(event.channelId, 'Price alerts enabled')
+bot.onSlashCommand('price-alerts', async (ctx, event) => {
+  priceChannels.add(ctx.channelId)
+  await ctx.send('Price alerts enabled')
 })
 
 // Check price every 5 minutes
@@ -128,9 +125,9 @@ const channels = sqliteTable('channels', {
 
 const db = drizzle(new Database('bot.db'))
 
-bot.onSlashCommand('setup', async (handler, event) => {
+bot.onSlashCommand('setup', async (ctx, event) => {
   await db.insert(channels).values({
-    channelId: event.channelId,
+    channelId: ctx.channelId,
     service: 'github'
   })
 })
@@ -170,14 +167,14 @@ import Redis from 'ioredis'
 const redis = new Redis(process.env.REDIS_URL)
 
 // Rate limiting
-bot.onSlashCommand('premium', async (handler, event) => {
-  const count = await redis.incr(`ratelimit:${event.userId}`)
-  
+bot.onSlashCommand('premium', async (ctx, event) => {
+  const count = await redis.incr(`ratelimit:${ctx.userId}`)
+
   if (count > 5) {
-    await handler.sendMessage(event.channelId, 'Rate limit exceeded')
+    await ctx.send('Rate limit exceeded')
     return
   }
-  
+
   // Process request...
 })
 ```

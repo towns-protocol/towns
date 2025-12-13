@@ -68,13 +68,13 @@ import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
 import { waitForTransactionReceipt } from 'viem/actions'
 
-bot.onSlashCommand('transfer', async (handler, { channelId, mentions, args }) => {
-  const recipient = mentions[0]?.userId
-  const amount = parseEther(args[0])
+bot.onSlashCommand('transfer', async (ctx, event) => {
+  const recipient = ctx.mentions[0]?.userId
+  const amount = parseEther(ctx.args[0])
 
-  const hash = await execute(bot.viem, {
-    address: bot.appAddress,
-    account: bot.viem.account,
+  const hash = await execute(ctx.viem, {
+    address: ctx.appAddress,
+    account: ctx.viem.account,
     calls: [{
       to: tokenAddress,
       abi: erc20Abi,
@@ -83,8 +83,8 @@ bot.onSlashCommand('transfer', async (handler, { channelId, mentions, args }) =>
     }]
   })
 
-  await waitForTransactionReceipt(bot.viem, { hash })
-  await handler.sendMessage(channelId, `Transferred! Tx: ${hash}`)
+  await waitForTransactionReceipt(ctx.viem, { hash })
+  await ctx.send(`Transferred! Tx: ${hash}`)
 })
 ```
 
@@ -97,12 +97,12 @@ import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
 import { waitForTransactionReceipt } from 'viem/actions'
 
-bot.onSlashCommand('defi', async (handler, { channelId, args }) => {
-  const amount = parseEther(args[0])
+bot.onSlashCommand('defi', async (ctx, event) => {
+  const amount = parseEther(ctx.args[0])
 
-  const hash = await execute(bot.viem, {
-    address: bot.appAddress,
-    account: bot.viem.account,
+  const hash = await execute(ctx.viem, {
+    address: ctx.appAddress,
+    account: ctx.viem.account,
     calls: [
       {
         to: tokenAddress,
@@ -125,8 +125,8 @@ bot.onSlashCommand('defi', async (handler, { channelId, args }) => {
     ]
   })
 
-  await waitForTransactionReceipt(bot.viem, { hash })
-  await handler.sendMessage(channelId, `Swapped and staked! Tx: ${hash}`)
+  await waitForTransactionReceipt(ctx.viem, { hash })
+  await ctx.send(`Swapped and staked! Tx: ${hash}`)
 })
 ```
 
@@ -176,15 +176,15 @@ Get a user's smart account address from their Towns user ID.
 ```ts
 import { getSmartAccountFromUserId } from '@towns-protocol/bot'
 
-bot.onSlashCommand('wallet', async (handler, event) => {
+bot.onSlashCommand('wallet', async (ctx, event) => {
   const wallet = await getSmartAccountFromUserId(bot, {
-    userId: event.userId
+    userId: ctx.userId
   })
 
   if (wallet) {
-    await handler.sendMessage(event.channelId, `Your wallet: ${wallet}`)
+    await ctx.send(`Your wallet: ${wallet}`)
   } else {
-    await handler.sendMessage(event.channelId, 'No smart account found')
+    await ctx.send('No smart account found')
   }
 })
 ```

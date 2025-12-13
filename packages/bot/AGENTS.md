@@ -74,34 +74,41 @@ User Action → Towns Server → Webhook POST → JWT Verify → Decrypt → Rou
 }
 ```
 
+**Handler Signature:**
+```typescript
+// Both ctx and event contain the same data - ctx has methods, event is just data
+bot.onMessage(async (ctx, event) => {
+  // ctx.channelId === event.channelId
+  // ctx.userId === event.userId
+  // etc.
+})
+```
+
 **Common Patterns:**
 ```typescript
-bot.onMessage(async (handler, event) => {
-  // Mentioned bot
-  if (event.isMentioned) {
-    await handler.sendMessage(event.channelId, "You mentioned me!")
+bot.onMessage(async (ctx, event) => {
+  // Mentioned bot - use convenience method
+  if (ctx.isMentioned) {
+    await ctx.reply("You mentioned me!")  // Replies to this event
   }
-  
-  // Thread message
-  if (event.threadId) {
-    // Note: You don't know what the original thread message said
-    await handler.sendMessage(event.channelId, "Continuing thread...", {
-      threadId: event.threadId
-    })
+
+  // Thread message - use ctx.send() for current channel
+  if (ctx.threadId) {
+    await ctx.send("Continuing thread...", { threadId: ctx.threadId })
   }
-  
+
   // Reply to message
-  if (event.replyId) {
-    // Note: You don't know what message you're replying to
-    await handler.sendMessage(event.channelId, "I see you replied!")
+  if (ctx.replyId) {
+    await ctx.send("I see you replied!")
   }
-  
+
   // Mentioned in thread (combine flags)
-  if (event.threadId && event.isMentioned) {
-    await handler.sendMessage(event.channelId, "Mentioned in thread!", {
-      threadId: event.threadId
-    })
+  if (ctx.threadId && ctx.isMentioned) {
+    await ctx.send("Mentioned in thread!", { threadId: ctx.threadId })
   }
+
+  // You can also access event data from the 2nd parameter (backward compatible)
+  await ctx.sendMessage(event.channelId, `Hello ${event.userId}!`)
 })
 ```
 
@@ -141,14 +148,14 @@ const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 
 3. Register handlers:
 ```typescript
-bot.onSlashCommand("help", async (handler, event) => {
-  await handler.sendMessage(event.channelId, "Commands: /help, /poll")
+bot.onSlashCommand("help", async (ctx, event) => {
+  await ctx.send("Commands: /help, /poll")
 })
 
-bot.onSlashCommand("poll", async (handler, event) => {
+bot.onSlashCommand("poll", async (ctx, event) => {
   const question = event.args.join(" ")
   if (!question) {
-    await handler.sendMessage(event.channelId, "Usage: /poll <question>")
+    await ctx.send("Usage: /poll <question>")
     return
   }
   // Create poll...
@@ -174,22 +181,21 @@ bot.onSlashCommand("poll", async (handler, event) => {
 ```typescript
 const polls = new Map() // messageId -> poll data
 
-bot.onMessage(async (handler, event) => {
-  if (event.message.startsWith("POLL:")) {
-    const sent = await handler.sendMessage(event.channelId, event.message)
+bot.onMessage(async (ctx, event) => {
+  if (ctx.message.startsWith("POLL:")) {
+    const sent = await ctx.send(ctx.message)
     polls.set(sent.eventId, {
-      question: event.message,
+      question: ctx.message,
       votes: { "thumbsup": 0, "thumbsdown": 0 }
     })
   }
 })
 
-bot.onReaction(async (handler, event) => {
-  const poll = polls.get(event.messageId)
-  if (poll && (event.reaction === "thumbsup" || event.reaction === "thumbsdown")) {
-    poll.votes[event.reaction]++
-    await handler.sendMessage(
-      event.channelId,
+bot.onReaction(async (ctx, event) => {
+  const poll = polls.get(ctx.messageId)
+  if (poll && (ctx.reaction === "thumbsup" || ctx.reaction === "thumbsdown")) {
+    poll.votes[ctx.reaction]++
+    await ctx.send(
       `Vote counted! thumbsup: ${poll.votes["thumbsup"]} thumbsdown: ${poll.votes["thumbsdown"]}`
     )
   }
@@ -220,18 +226,18 @@ bot.onReaction(async (handler, event) => {
 ```typescript
 const editHistory = new Map()
 
-bot.onMessageEdit(async (handler, event) => {
-  const history = editHistory.get(event.refEventId) || []
+bot.onMessageEdit(async (ctx, event) => {
+  const history = editHistory.get(ctx.refEventId) || []
   history.push({
-    content: event.message,
+    content: ctx.message,
     editedAt: new Date(),
-    editedBy: event.userId
+    editedBy: ctx.userId
   })
-  editHistory.set(event.refEventId, history)
-  
-  if (event.isMentioned && !history.some(h => h.content.includes(bot.botId))) {
+  editHistory.set(ctx.refEventId, history)
+
+  if (ctx.isMentioned && !history.some(h => h.content.includes(bot.botId))) {
     // Bot was mentioned in edit but not original
-    await handler.sendMessage(event.channelId, "I see you added me to your message!")
+    await ctx.send("I see you added me to your message!")
   }
 })
 ```
@@ -256,40 +262,36 @@ bot.onMessageEdit(async (handler, event) => {
 
 **Use Case - Cleanup Related Data:**
 ```typescript
-bot.onRedaction(async (handler, event) => {
+bot.onRedaction(async (ctx, event) => {
   // Clean up any stored data for this message
-  messageCache.delete(event.refEventId)
-  polls.delete(event.refEventId)
-  editHistory.delete(event.refEventId)
-  
+  messageCache.delete(ctx.refEventId)
+  polls.delete(ctx.refEventId)
+  editHistory.delete(ctx.refEventId)
+
   // Log who deleted what
-  console.log(`Message ${event.refEventId} was deleted by ${event.userId}`)
+  console.log(`Message ${ctx.refEventId} was deleted by ${ctx.userId}`)
 })
 ```
 
 **Implementing Message Deletion:**
 ```typescript
-bot.onSlashCommand("delete", async (handler, event) => {
-  if (!event.replyId) {
-    await handler.sendMessage(event.channelId, "Reply to a message to delete it")
+bot.onSlashCommand("delete", async (ctx, event) => {
+  if (!ctx.replyId) {
+    await ctx.send("Reply to a message to delete it")
     return
   }
-  
+
   // Check if user has redaction permission
-  const canRedact = await handler.checkPermission(
-    event.channelId,
-    event.userId,
-    Permission.Redact
-  )
-  
+  const canRedact = await ctx.checkPermission(ctx.channelId, ctx.userId, Permission.Redact)
+
   if (canRedact) {
     // Admin can delete any message
-    await handler.adminRemoveEvent(event.channelId, event.replyId)
-    await handler.sendMessage(event.channelId, "Message deleted by admin")
+    await ctx.adminRemoveEvent(ctx.channelId, ctx.replyId)
+    await ctx.send("Message deleted by admin")
   } else {
     // Regular users can only delete their own messages
     // Bot would need to track message ownership to verify
-    await handler.sendMessage(event.channelId, "You can only delete your own messages")
+    await ctx.send("You can only delete your own messages")
   }
 })
 ```
@@ -312,13 +314,10 @@ bot.onSlashCommand("delete", async (handler, event) => {
 
 **Use Case - Thank Donors:**
 ```typescript
-bot.onTip(async (handler, event) => {
-  if (event.receiverAddress === bot.botId) {
-    const ethAmount = Number(event.amount) / 1e18
-    await handler.sendMessage(
-      event.channelId,
-      `Thank you for the ${ethAmount} ETH tip!`
-    )
+bot.onTip(async (ctx, event) => {
+  if (ctx.receiverAddress === bot.botId) {
+    const ethAmount = Number(ctx.amount) / 1e18
+    await ctx.send(`Thank you for the ${ethAmount} ETH tip!`)
   }
 })
 ```
@@ -331,11 +330,8 @@ bot.onTip(async (handler, event) => {
 
 **Use Case - Welcome Messages:**
 ```typescript
-bot.onChannelJoin(async (handler, event) => {
-  await handler.sendMessage(
-    event.channelId,
-    `Welcome <@${event.userId}> to the channel!`
-  )
+bot.onChannelJoin(async (ctx, event) => {
+  await ctx.send(`Welcome <@${ctx.userId}> to the channel!`)
 })
 ```
 
@@ -374,8 +370,8 @@ bot.onChannelJoin(async (handler, event) => {
 import { hexToBytes } from 'viem'
 
 // Send interactive form with buttons
-await handler.sendInteractionRequest(
-  channelId,
+await ctx.sendInteractionRequest(
+  ctx.channelId,
   {
     case: "form",
     value: {
@@ -414,7 +410,7 @@ await handler.sendInteractionRequest(
 **OLD FORMAT (SDK < 408) - DO NOT USE:**
 ```typescript
 // ❌ This format no longer works in SDK 408+
-await handler.sendInteractionRequest(channelId, {
+await ctx.sendInteractionRequest(channelId, {
   recipient: hexToBytes(userId as `0x${string}`),  // recipient was inside the object
   content: {
     case: "form",
@@ -430,32 +426,26 @@ await handler.sendInteractionRequest(channelId, {
 
 **Use Case - Button Click Handling:**
 ```typescript
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  const { response } = ctx
+
   // Check if it's a form response (buttons are sent as forms)
   if (response.payload.content?.case !== "form") {
     return
   }
-  
+
   const formResponse = response.payload.content?.value
-  
+
   // Loop through all components to find which button was clicked
   for (const component of formResponse.components) {
     if (component.component.case === "button") {
       const componentId = component.id
-      
+
       // Route to different handlers based on button ID
       if (componentId === "confirm-button") {
-        await handler.sendMessage(
-          event.channelId,
-          "You confirmed the action!"
-        )
+        await ctx.send("You confirmed the action!")
       } else if (componentId === "cancel-button") {
-        await handler.sendMessage(
-          event.channelId,
-          "Action cancelled."
-        )
+        await ctx.send("Action cancelled.")
       }
     }
   }
@@ -469,17 +459,17 @@ import { hexToBytes } from 'viem'
 // Store game state
 const gameStates = new Map()
 
-bot.onSlashCommand("play", async (handler, event) => {
+bot.onSlashCommand("play", async (ctx, event) => {
   // Initialize game state
-  gameStates.set(event.userId, {
+  gameStates.set(ctx.userId, {
     score: 0,
     health: 100,
-    channelId: event.channelId
+    channelId: ctx.channelId
   })
-  
+
   // Send interactive buttons to the user
-  await handler.sendInteractionRequest(
-    event.channelId,
+  await ctx.sendInteractionRequest(
+    ctx.channelId,
     {
       case: "form",
       value: {
@@ -504,45 +494,39 @@ bot.onSlashCommand("play", async (handler, event) => {
         ],
       },
     },
-    hexToBytes(event.userId as `0x${string}`)
+    hexToBytes(ctx.userId as `0x${string}`)
   )
 })
 
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  const { response } = ctx
+
   if (response.payload.content?.case !== "form") {
     return
   }
-  
+
   const formResponse = response.payload.content?.value
-  const gameState = gameStates.get(event.userId)
-  
+  const gameState = gameStates.get(ctx.userId)
+
   if (!gameState) {
-    await handler.sendMessage(event.channelId, "No active game. Use /play to start!")
+    await ctx.send("No active game. Use /play to start!")
     return
   }
-  
+
   // Handle button clicks
   for (const component of formResponse.components) {
     if (component.component.case === "button") {
       const buttonId = component.id
-      
+
       if (buttonId === "attack-button") {
         gameState.score += 10
-        await handler.sendMessage(
-          event.channelId,
-          `⚔️ You attacked! Score: ${gameState.score}`
-        )
+        await ctx.send(`⚔️ You attacked! Score: ${gameState.score}`)
       } else if (buttonId === "defend-button") {
         gameState.health += 5
-        await handler.sendMessage(
-          event.channelId,
-          `🛡️ You defended! Health: ${gameState.health}`
-        )
+        await ctx.send(`🛡️ You defended! Health: ${gameState.health}`)
       }
-      
-      gameStates.set(event.userId, gameState)
+
+      gameStates.set(ctx.userId, gameState)
     }
   }
 })
@@ -551,16 +535,16 @@ bot.onInteractionResponse(async (handler, event) => {
 **Pattern - Re-using Command Handlers with Buttons:**
 ```typescript
 // Define your command handlers as separate functions
-async function handleHit(handler: any, event: any) {
-  const gameState = gameStates.get(event.userId)
+async function handleHit(ctx: any) {
+  const gameState = gameStates.get(ctx.userId)
   // ... hit logic
-  await handler.sendMessage(event.channelId, "You hit!")
+  await ctx.send("You hit!")
 }
 
-async function handleStand(handler: any, event: any) {
-  const gameState = gameStates.get(event.userId)
+async function handleStand(ctx: any) {
+  const gameState = gameStates.get(ctx.userId)
   // ... stand logic
-  await handler.sendMessage(event.channelId, "You stand!")
+  await ctx.send("You stand!")
 }
 
 // Register slash commands
@@ -568,40 +552,25 @@ bot.onSlashCommand("hit", handleHit)
 bot.onSlashCommand("stand", handleStand)
 
 // Handle button clicks by routing to the same handlers
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  const { response } = ctx
+
   if (response.payload.content?.case !== "form") {
     return
   }
-  
+
   const formResponse = response.payload.content?.value
-  
+
   for (const component of formResponse.components) {
     if (component.component.case === "button") {
       const componentId = component.id
-      
-      // Create a clean event object for the handler
-      const cleanEvent = {
-        userId: event.userId,
-        channelId: event.channelId,
-        eventId: event.eventId,
-        spaceId: event.spaceId,
-        createdAt: event.createdAt,
-        command: "",
-        args: [],
-        mentions: [],
-        replyId: undefined,
-        threadId: undefined,
-      }
-      
+
       // Route button clicks to command handlers
+      // ctx already contains userId, channelId, etc.
       if (componentId === "hit-button") {
-        cleanEvent.command = "hit"
-        await handleHit(handler, cleanEvent)
+        await handleHit(ctx)
       } else if (componentId === "stand-button") {
-        cleanEvent.command = "stand"
-        await handleStand(handler, cleanEvent)
+        await handleStand(ctx)
       }
     }
   }
@@ -625,18 +594,18 @@ This example shows a **real USDC ERC-20 transfer transaction** on Base mainnet. 
 ```typescript
 import { InteractionRequestPayload_Signature_SignatureType } from "@towns-protocol/proto"
 
-bot.onSlashCommand("send-usdc", async (handler, event) => {
+bot.onSlashCommand("send-usdc", async (ctx, event) => {
   // USDC Contract on Base (real contract address)
   const usdcContract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
   const recipient = "0x1234567890123456789012345678901234567890"
   const amount = "50000000" // 50 USDC (6 decimals)
-  
+
   // Encode ERC20 transfer: transfer(address,uint256)
   const recipientPadded = recipient.slice(2).padStart(64, '0')
   const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
   const data = `0xa9059cbb${recipientPadded}${amountPadded}`
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: "transaction",
     value: {
       id: "usdc-transfer",
@@ -662,27 +631,27 @@ bot.onSlashCommand("send-usdc", async (handler, event) => {
 This example restricts the transaction to **only the user's smart account wallet**. The user cannot choose a different wallet.
 
 ```typescript
-bot.onSlashCommand("send-usdc-sm", async (handler, event) => {
+bot.onSlashCommand("send-usdc-sm", async (ctx, event) => {
   // Get user's smart account address
   const smartAccount = await getSmartAccountFromUserId(bot, {
-    userId: event.userId,
+    userId: ctx.userId,
   })
-  
+
   if (!smartAccount) {
-    await handler.sendMessage(event.channelId, "Couldn't find smart account!")
+    await ctx.send("Couldn't find smart account!")
     return
   }
-  
+
   // Same USDC transfer, but restricted to smart account
   const usdcContract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
   const recipient = "0x1234567890123456789012345678901234567890"
   const amount = "50000000" // 50 USDC
-  
+
   const recipientPadded = recipient.slice(2).padStart(64, '0')
   const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
   const data = `0xa9059cbb${recipientPadded}${amountPadded}`
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: "transaction",
     value: {
       id: "usdc-transfer-sm",
@@ -721,17 +690,17 @@ contract SimpleGreeting {
 Then interact with it:
 
 ```typescript
-bot.onSlashCommand("set-greeting", async (handler, event) => {
-  const newGreeting = event.args.join(" ") || "Hello Towns!"
+bot.onSlashCommand("set-greeting", async (ctx, event) => {
+  const newGreeting = ctx.args.join(" ") || "Hello Towns!"
   const contractAddress = "0xYourDeployedContractAddress"
-  
+
   // Encode setGreeting(string) function call
   // Function selector: 0xa4136862
   const abiCoder = new ethers.utils.AbiCoder()
   const encodedParams = abiCoder.encode(["string"], [newGreeting]).slice(2)
   const data = `0xa4136862${encodedParams}`
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: "transaction",
     value: {
       id: "set-greeting",
@@ -754,20 +723,19 @@ bot.onSlashCommand("set-greeting", async (handler, event) => {
 
 **Handling Transaction Responses:**
 ```typescript
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === "transaction") {
-    const txData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
+bot.onInteractionResponse(async (ctx, event) => {
+  if (ctx.response.payload.content?.case === "transaction") {
+    const txData = ctx.response.payload.content.value
+
+    await ctx.send(
       `✅ **Transaction Confirmed!**
-      
+
 Request ID: ${txData.requestId}
 Transaction Hash: \`${txData.txHash}\`
 
 View on explorer: https://basescan.org/tx/${txData.txHash}`
     )
-    
+
     // You can now verify the transaction on-chain
     console.log("Transaction data:", txData)
   }
@@ -795,7 +763,7 @@ This example allows the user to sign with **any wallet they control**. Useful fo
 ```typescript
 import { InteractionRequestPayload_Signature_SignatureType } from "@towns-protocol/proto"
 
-bot.onSlashCommand("sign-message", async (handler, event) => {
+bot.onSlashCommand("sign-message", async (ctx, event) => {
   // EIP-712 Typed Data Structure
   const typedData = {
     domain: {
@@ -815,14 +783,14 @@ bot.onSlashCommand("sign-message", async (handler, event) => {
     },
     primaryType: "Message",
     message: {
-      from: event.userId,
+      from: ctx.userId,
       to: bot.botId,
       content: "I agree to the terms",
       timestamp: Math.floor(Date.now() / 1000),
     },
   }
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: "signature",
     value: {
       id: "message-signature",
@@ -842,16 +810,16 @@ bot.onSlashCommand("sign-message", async (handler, event) => {
 This example restricts the signature to **only the user's smart account wallet**. Useful when you need to verify the signature came from a specific account.
 
 ```typescript
-bot.onSlashCommand("sign-message-sm", async (handler, event) => {
+bot.onSlashCommand("sign-message-sm", async (ctx, event) => {
   const smartAccount = await getSmartAccountFromUserId(bot, {
-    userId: event.userId,
+    userId: ctx.userId,
   })
-  
+
   if (!smartAccount) {
-    await handler.sendMessage(event.channelId, "Couldn't find smart account!")
+    await ctx.send("Couldn't find smart account!")
     return
   }
-  
+
   const typedData = {
     domain: {
       name: "My Towns Bot",
@@ -867,12 +835,12 @@ bot.onSlashCommand("sign-message-sm", async (handler, event) => {
     },
     primaryType: "Message",
     message: {
-      from: event.userId,
+      from: ctx.userId,
       content: "Smart account signature",
     },
   }
-  
-  await handler.sendInteractionRequest(event.channelId, {
+
+  await ctx.sendInteractionRequest(ctx.channelId, {
     case: "signature",
     value: {
       id: "message-signature-sm",
@@ -889,14 +857,13 @@ bot.onSlashCommand("sign-message-sm", async (handler, event) => {
 
 **Handling Signature Responses:**
 ```typescript
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === "signature") {
-    const signatureData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
+bot.onInteractionResponse(async (ctx, event) => {
+  if (ctx.response.payload.content?.case === "signature") {
+    const signatureData = ctx.response.payload.content.value
+
+    await ctx.send(
       `✅ **Signature Received!**
-      
+
 Request ID: ${signatureData.requestId}
 
 **Signature:**
@@ -906,10 +873,10 @@ ${signatureData.signature}
 
 You can now verify this signature on-chain or use it for authentication.`
     )
-    
+
     // Verify the signature if needed
     // const isValid = await verifyTypedData({
-    //   address: event.userId,
+    //   address: ctx.userId,
     //   signature: signatureData.signature,
     //   ...typedData
     // })
@@ -928,14 +895,13 @@ You can now verify this signature on-chain or use it for authentication.`
 
 **Complete onInteractionResponse Handler (All Types):**
 ```typescript
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
-  
+bot.onInteractionResponse(async (ctx, event) => {
+  const { response } = ctx
+
   switch (response.payload.content?.case) {
     case "signature":
       const signatureData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
+      await ctx.send(
         `**Signature Received:**
 Request ID: ${signatureData.requestId}
 
@@ -950,11 +916,10 @@ ${JSON.stringify(signatureData, null, 2)}
 \`\`\``
       )
       break
-      
+
     case "transaction":
       const txData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
+      await ctx.send(
         `**Transaction Received:**
 Request ID: ${txData.requestId}
 
@@ -967,11 +932,11 @@ ${JSON.stringify(txData, null, 2)}
 \`\`\``
       )
       break
-      
+
     case "form":
       const formData = response.payload.content.value
       const extractedValues: Record<string, string> = {}
-      
+
       // Extract form values
       for (const component of formData.components) {
         if (component.component.case === "textInput") {
@@ -980,13 +945,12 @@ ${JSON.stringify(txData, null, 2)}
           extractedValues[component.id] = "button_clicked"
         }
       }
-      
+
       const formattedValues = Object.entries(extractedValues)
         .map(([key, value]) => `• ${key}: ${value}`)
         .join("\n")
-      
-      await handler.sendMessage(
-        event.channelId,
+
+      await ctx.send(
         `**Form Received:**
 Request ID: ${formData.requestId}
 
@@ -999,9 +963,9 @@ ${JSON.stringify(extractedValues, null, 2)}
 \`\`\``
       )
       break
-      
+
     default:
-      await handler.sendMessage(event.channelId, "Unknown interaction type")
+      await ctx.send("Unknown interaction type")
       break
   }
 })
@@ -1042,18 +1006,15 @@ The bot SDK provides a utility to convert a user's Towns ID to their smart accou
 ```typescript
 import { getSmartAccountFromUserId } from "@towns-protocol/bot"
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   // Get user's smart account (wallet) address
   // userId comes from bot.onMessage, onSlashCommand, onTip, or other event listeners
-  const walletAddress = await getSmartAccountFromUserId(bot, { userId: event.userId })
-  
-  console.log(`User ${event.userId} has wallet address: ${walletAddress}`)
-  
+  const walletAddress = await getSmartAccountFromUserId(bot, { userId: ctx.userId })
+
+  console.log(`User ${ctx.userId} has wallet address: ${walletAddress}`)
+
   // Use for Web3 operations
-  await handler.sendMessage(
-    event.channelId,
-    `Your wallet address is: ${walletAddress}`
-  )
+  await ctx.send(`Your wallet address is: ${walletAddress}`)
 })
 ```
 
@@ -1061,27 +1022,24 @@ bot.onMessage(async (handler, event) => {
 
 ```typescript
 // From slash command
-bot.onSlashCommand("wallet", async (handler, event) => {
-  const walletAddress = await getSmartAccountFromUserId(bot, { userId: event.userId })
-  await handler.sendMessage(event.channelId, `Your wallet: ${walletAddress}`)
+bot.onSlashCommand("wallet", async (ctx, event) => {
+  const walletAddress = await getSmartAccountFromUserId(bot, { userId: ctx.userId })
+  await ctx.send(`Your wallet: ${walletAddress}`)
 })
 
 // From tip event
-bot.onTip(async (handler, event) => {
-  const senderWallet = await getSmartAccountFromUserId(bot, { userId: event.userId })
+bot.onTip(async (ctx, event) => {
+  const senderWallet = await getSmartAccountFromUserId(bot, { userId: ctx.userId })
   console.log(`Tip from wallet: ${senderWallet}`)
 })
 
 // For mentioned users
-bot.onMessage(async (handler, event) => {
-  if (event.mentions.length > 0) {
-    const firstMentionWallet = await getSmartAccountFromUserId(bot, { 
-      userId: event.mentions[0].userId 
+bot.onMessage(async (ctx, event) => {
+  if (ctx.mentions.length > 0) {
+    const firstMentionWallet = await getSmartAccountFromUserId(bot, {
+      userId: ctx.mentions[0].userId
     })
-    await handler.sendMessage(
-      event.channelId,
-      `${event.mentions[0].displayName}'s wallet: ${firstMentionWallet}`
-    )
+    await ctx.send(`${ctx.mentions[0].displayName}'s wallet: ${firstMentionWallet}`)
   }
 })
 ```
@@ -1165,12 +1123,12 @@ Simply send ETH/tokens to `bot.appAddress` from any wallet (MetaMask, exchange, 
 
 **Example balance check command:**
 ```typescript
-bot.onSlashCommand("balance", async (handler, { channelId }) => {
-  const appBalance = await bot.viem.getBalance({ 
-    address: bot.appAddress 
+bot.onSlashCommand("balance", async (ctx, event) => {
+  const appBalance = await bot.viem.getBalance({
+    address: bot.appAddress
   })
-  
-  await handler.sendMessage(channelId,
+
+  await ctx.send(
 `💰 **Bot Balance**
 
 Bot Treasury Wallet (pays for operations): ${formatEther(appBalance)} ETH
@@ -1199,7 +1157,7 @@ ${appBalance === 0n ? '⚠️ **CRITICAL:** Bot needs funding to execute transac
 Tips can be received by either address. Check both in your tip handler:
 
 ```typescript
-bot.onTip(async (handler, event) => {
+bot.onTip(async (ctx, event) => {
   console.log('Tip receiver:', event.receiverAddress)
   console.log('Bot ID:', bot.botId)
   console.log('App Address:', bot.appAddress)
@@ -1232,27 +1190,27 @@ Store message context to enable rich interactions:
 ```typescript
 const messageContext = new Map()
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   // Store every message for context
-  messageContext.set(event.eventId, {
-    content: event.message,
-    author: event.userId,
-    timestamp: event.createdAt
+  messageContext.set(ctx.eventId, {
+    content: ctx.message,
+    author: ctx.userId,
+    timestamp: ctx.createdAt
   })
-  
+
   // Reply with context
-  if (event.replyId) {
-    const original = messageContext.get(event.replyId)
+  if (ctx.replyId) {
+    const original = messageContext.get(ctx.replyId)
     if (original?.content.includes("help")) {
-      await handler.sendMessage(event.channelId, "I see you're replying to a help request!")
+      await ctx.send("I see you're replying to a help request!")
     }
   }
 })
 
-bot.onReaction(async (handler, event) => {
-  const original = messageContext.get(event.messageId)
-  if (original?.content.includes("vote") && event.reaction === "YES") {
-    await handler.sendMessage(event.channelId, "Vote recorded!")
+bot.onReaction(async (ctx, event) => {
+  const original = messageContext.get(ctx.messageId)
+  if (original?.content.includes("vote") && ctx.reaction === "YES") {
+    await ctx.send("Vote recorded!")
   }
 })
 ```
@@ -1264,32 +1222,29 @@ Track user state across events:
 ```typescript
 const userWorkflows = new Map()
 
-bot.onSlashCommand("setup", async (handler, event) => {
-  userWorkflows.set(event.userId, { 
+bot.onSlashCommand("setup", async (ctx, event) => {
+  userWorkflows.set(ctx.userId, {
     step: "awaiting_name",
-    channelId: event.channelId 
+    channelId: ctx.channelId
   })
-  await handler.sendMessage(event.channelId, "What's your project name?")
+  await ctx.send("What's your project name?")
 })
 
-bot.onMessage(async (handler, event) => {
-  const workflow = userWorkflows.get(event.userId)
+bot.onMessage(async (ctx, event) => {
+  const workflow = userWorkflows.get(ctx.userId)
   if (!workflow) return
-  
+
   switch(workflow.step) {
     case "awaiting_name":
-      workflow.projectName = event.message
+      workflow.projectName = ctx.message
       workflow.step = "awaiting_description"
-      await handler.sendMessage(event.channelId, "Describe your project:")
+      await ctx.send("Describe your project:")
       break
-      
+
     case "awaiting_description":
-      workflow.description = event.message
-      await handler.sendMessage(
-        event.channelId,
-        `Project "${workflow.projectName}" created!`
-      )
-      userWorkflows.delete(event.userId)
+      workflow.description = ctx.message
+      await ctx.send(`Project "${workflow.projectName}" created!`)
+      userWorkflows.delete(ctx.userId)
       break
   }
 })
@@ -1302,41 +1257,39 @@ Maintain thread context:
 ```typescript
 const threadContexts = new Map()
 
-bot.onMessage(async (handler, event) => {
-  if (event.threadId) {
+bot.onMessage(async (ctx, event) => {
+  if (ctx.threadId) {
     // In a thread
-    let context = threadContexts.get(event.threadId)
+    let context = threadContexts.get(ctx.threadId)
     if (!context) {
       context = { messages: [], participants: new Set() }
-      threadContexts.set(event.threadId, context)
+      threadContexts.set(ctx.threadId, context)
     }
-    
+
     context.messages.push({
-      userId: event.userId,
-      message: event.message,
-      timestamp: event.createdAt
+      userId: ctx.userId,
+      message: ctx.message,
+      timestamp: ctx.createdAt
     })
-    context.participants.add(event.userId)
-    
+    context.participants.add(ctx.userId)
+
     // Respond based on thread history
     if (context.messages.length === 5) {
-      await handler.sendMessage(
-        event.channelId,
+      await ctx.send(
         "This thread is getting long! Consider starting a new one.",
-        { threadId: event.threadId }
+        { threadId: ctx.threadId }
       )
     }
-  } else if (event.message.includes("?")) {
+  } else if (ctx.message.includes("?")) {
     // Start a help thread for questions
-    const response = await handler.sendMessage(
-      event.channelId,
+    const response = await ctx.send(
       "Let me help with that!",
-      { threadId: event.eventId }
+      { threadId: ctx.eventId }
     )
-    
-    threadContexts.set(event.eventId, {
+
+    threadContexts.set(ctx.eventId, {
       type: "help",
-      originalQuestion: event.message,
+      originalQuestion: ctx.message,
       helper: bot.botId
     })
   }
@@ -1345,13 +1298,13 @@ bot.onMessage(async (handler, event) => {
 
 ## Bot Actions API Reference
 
-All handlers receive a `handler` parameter with these methods:
+All handlers receive a `ctx` parameter with these methods:
 
 ### Exported Types for Building Abstractions
 
 The `@towns-protocol/bot` package exports several types useful for building abstractions:
 
-**`BotHandler`** - Type representing all methods available on the `handler` parameter. Use this when building helper functions, middleware, or utilities that need to accept a handler as a parameter.
+**`BotHandler`** - Type representing all methods available on the `ctx` parameter. Use this when building helper functions, middleware, or utilities that need to accept a context as a parameter.
 
 **`BasePayload`** - Type containing common fields present in all event payloads (`userId`, `spaceId`, `channelId`, `eventId`, `createdAt`). Use this when building generic event processing utilities that work across different event types.
 
@@ -1360,9 +1313,14 @@ The `@towns-protocol/bot` package exports several types useful for building abst
 ### Message Operations
 
 ```typescript
-// Send a message
-await handler.sendMessage(
-  channelId: string,
+// Convenience methods (use ctx.channelId automatically)
+await ctx.send(message: string, opts?)      // Send to current channel
+await ctx.reply(message: string, opts?)     // Reply to current event
+await ctx.react(reaction: string)           // React to current event
+
+// Full methods (when you need a different streamId)
+await ctx.sendMessage(
+  streamId: string,
   message: string,
   opts?: {
     threadId?: string,      // Continue a thread
@@ -1378,15 +1336,15 @@ await handler.sendMessage(
 )
 
 // Edit a message (bot's own messages only)
-await handler.editMessage(
-  channelId: string,
+await ctx.editMessage(
+  streamId: string,
   messageId: string,       // Your message's eventId
   newMessage: string
 )
 
 // Add reaction
-await handler.sendReaction(
-  channelId: string,
+await ctx.sendReaction(
+  streamId: string,
   messageId: string,       // Message to react to
   reaction: string         // Emoji
 )
@@ -1401,8 +1359,8 @@ The bot framework supports two types of attachments with automatic validation an
 Send images by URL with automatic validation and dimension detection:
 
 ```typescript
-bot.onSlashCommand("showcase", async (handler, event) => {
-  await handler.sendMessage(event.channelId, "Product showcase:", {
+bot.onSlashCommand("showcase", async (ctx, event) => {
+  await ctx.send("Product showcase:", {
     attachments: [{
       type: 'image',
       url: 'https://example.com/product.jpg',
@@ -1418,11 +1376,11 @@ Send multiple attachments of mixed types:
 
 ```typescript
 // GIF Search Bot
-bot.onSlashCommand("gif", async (handler, event) => {
-  const query = event.args.join(" ")
+bot.onSlashCommand("gif", async (ctx, event) => {
+  const query = ctx.args.join(" ")
   const gifUrls = await searchGifs(query)
 
-  await handler.sendMessage(event.channelId, `Results for "${query}":`, {
+  await ctx.send(`Results for "${query}":`, {
     attachments: gifUrls.slice(0, 5).map(url => ({
       type: 'image',
       url,
@@ -1436,12 +1394,11 @@ bot.onSlashCommand("gif", async (handler, event) => {
 
 **Weather Bot with Maps:**
 ```typescript
-bot.onSlashCommand("weather", async (handler, event) => {
-  const location = event.args.join(" ")
+bot.onSlashCommand("weather", async (ctx, event) => {
+  const location = ctx.args.join(" ")
   const weatherData = await getWeatherData(location)
 
-  await handler.sendMessage(
-    event.channelId,
+  await ctx.send(
     `Weather in ${location}: ${weatherData.temp}°F, ${weatherData.conditions}`,
     {
       attachments: [{
@@ -1468,11 +1425,11 @@ Send raw binary data (videos, screenshots, generated images) using `type: 'chunk
 ```typescript
 import { readFileSync } from 'node:fs'
 
-bot.onSlashCommand("rickroll", async (handler, { channelId }) => {
+bot.onSlashCommand("rickroll", async (ctx, event) => {
   // Load video file as binary data
   const videoData = readFileSync('./rickroll.mp4')
 
-  await handler.sendMessage(channelId, "Never gonna give you up!", {
+  await ctx.send("Never gonna give you up!", {
     attachments: [{
       type: 'chunked',
       data: videoData,           // Uint8Array
@@ -1489,25 +1446,25 @@ bot.onSlashCommand("rickroll", async (handler, { channelId }) => {
 ```typescript
 import { createCanvas } from '@napi-rs/canvas'
 
-bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
-  const value = parseInt(args[0]) || 50
+bot.onSlashCommand("chart", async (ctx, event) => {
+  const value = parseInt(ctx.args[0]) || 50
 
   // Generate chart image
   const canvas = createCanvas(400, 300)
-  const ctx = canvas.getContext('2d')
+  const canvasCtx = canvas.getContext('2d')
 
-  ctx.fillStyle = '#2c3e50'
-  ctx.fillRect(0, 0, 400, 300)
-  ctx.fillStyle = '#3498db'
-  ctx.fillRect(50, 300 - value * 2, 300, value * 2)
-  ctx.fillStyle = '#fff'
-  ctx.font = '24px sans-serif'
-  ctx.fillText(`Value: ${value}`, 150, 50)
+  canvasCtx.fillStyle = '#2c3e50'
+  canvasCtx.fillRect(0, 0, 400, 300)
+  canvasCtx.fillStyle = '#3498db'
+  canvasCtx.fillRect(50, 300 - value * 2, 300, value * 2)
+  canvasCtx.fillStyle = '#fff'
+  canvasCtx.font = '24px sans-serif'
+  canvasCtx.fillText(`Value: ${value}`, 150, 50)
 
   // Export as PNG Blob
   const blob = await canvas.encode('png')
 
-  await handler.sendMessage(channelId, "Your chart:", {
+  await ctx.send("Your chart:", {
     attachments: [{
       type: 'chunked',
       data: blob,                // Blob (no mimetype needed)
@@ -1521,11 +1478,11 @@ bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
 
 **Screenshot Example (Raw PNG Data):**
 ```typescript
-bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
+bot.onSlashCommand("screenshot", async (ctx, event) => {
   // Capture screen using your preferred library
   const screenshotBuffer = await captureScreen()
 
-  await handler.sendMessage(channelId, "Current screen:", {
+  await ctx.send("Current screen:", {
     attachments: [{
       type: 'chunked',
       data: screenshotBuffer,    // Uint8Array or Buffer
@@ -1540,7 +1497,7 @@ bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
 **Mixed Attachments Example:**
 ```typescript
 // Combine URL images with chunked media
-await handler.sendMessage(channelId, "Product comparison:", {
+await ctx.send("Product comparison:", {
   attachments: [
     {
       type: 'image',
@@ -1571,26 +1528,26 @@ await handler.sendMessage(channelId, "Product comparison:", {
 1. **`removeEvent`** - Delete bot's own messages
 ```typescript
 // Bot deletes its own message
-const sentMessage = await handler.sendMessage(channelId, "Oops, wrong channel!")
-await handler.removeEvent(channelId, sentMessage.eventId)
+const sentMessage = await ctx.send("Oops, wrong channel!")
+await ctx.removeEvent(ctx.channelId, sentMessage.eventId)
 ```
 
 2. **`adminRemoveEvent`** - Admin deletion (requires Permission.Redact)
 ```typescript
 // Admin bot deletes any message
-bot.onMessage(async (handler, event) => {
-  if (event.message.includes("inappropriate content")) {
+bot.onMessage(async (ctx, event) => {
+  if (ctx.message.includes("inappropriate content")) {
     // Check if bot has redaction permission
-    const canRedact = await handler.checkPermission(
-      event.channelId,
+    const canRedact = await ctx.checkPermission(
+      ctx.channelId,
       bot.botId,  // Check bot's permission
       Permission.Redact
     )
-    
+
     if (canRedact) {
       // Delete the inappropriate message
-      await handler.adminRemoveEvent(event.channelId, event.eventId)
-      await handler.sendMessage(event.channelId, "Message removed for violating guidelines")
+      await ctx.adminRemoveEvent(ctx.channelId, ctx.eventId)
+      await ctx.send("Message removed for violating guidelines")
     }
   }
 })
@@ -1626,7 +1583,7 @@ Permission.React             // Add reactions to messages
 **`hasAdminPermission(userId, spaceId)`** - Quick check for admin status
 ```typescript
 // Check if user is a space admin (has ModifyBanning permission)
-const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+const isAdmin = await ctx.hasAdminPermission(userId, spaceId)
 if (isAdmin) {
   // User can ban, manage channels, modify settings
 }
@@ -1638,16 +1595,16 @@ if (isAdmin) {
 import { Permission } from '@towns-protocol/web3'
 
 // Check if user can delete messages
-const canRedact = await handler.checkPermission(
-  channelId,
-  userId,
+const canRedact = await ctx.checkPermission(
+  ctx.channelId,
+  ctx.userId,
   Permission.Redact
 )
 
 // Check if user can send messages
-const canWrite = await handler.checkPermission(
-  channelId,
-  userId,
+const canWrite = await ctx.checkPermission(
+  ctx.channelId,
+  ctx.userId,
   Permission.Write
 )
 ```
@@ -1656,39 +1613,39 @@ const canWrite = await handler.checkPermission(
 
 **Admin-Only Commands:**
 ```typescript
-bot.onSlashCommand("ban", async (handler, event) => {
+bot.onSlashCommand("ban", async (ctx, event) => {
   // Only admins can ban users
-  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
-    await handler.sendMessage(event.channelId, "You don't have permission to ban users")
+  if (!await ctx.hasAdminPermission(ctx.userId, ctx.spaceId)) {
+    await ctx.send("You don't have permission to ban users")
     return
   }
-  
-  const userToBan = event.mentions[0]?.userId || event.args[0]
+
+  const userToBan = ctx.mentions[0]?.userId || ctx.args[0]
   if (userToBan) {
     try {
       // Bot must have ModifyBanning permission for this to work
-      const result = await handler.ban(userToBan, event.spaceId)
-      await handler.sendMessage(event.channelId, `Successfully banned user ${userToBan}`)
+      const result = await ctx.ban(userToBan, ctx.spaceId)
+      await ctx.send(`Successfully banned user ${userToBan}`)
     } catch (error) {
-      await handler.sendMessage(event.channelId, `Failed to ban: ${error.message}`)
+      await ctx.send(`Failed to ban: ${error.message}`)
     }
   }
 })
 
-bot.onSlashCommand("unban", async (handler, event) => {
-  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
-    await handler.sendMessage(event.channelId, "You don't have permission to unban users")
+bot.onSlashCommand("unban", async (ctx, event) => {
+  if (!await ctx.hasAdminPermission(ctx.userId, ctx.spaceId)) {
+    await ctx.send("You don't have permission to unban users")
     return
   }
-  
-  const userToUnban = event.args[0]
+
+  const userToUnban = ctx.args[0]
   if (userToUnban) {
     try {
       // Bot must have ModifyBanning permission for this to work
-      const result = await handler.unban(userToUnban, event.spaceId)
-      await handler.sendMessage(event.channelId, `Successfully unbanned user ${userToUnban}`)
+      const result = await ctx.unban(userToUnban, ctx.spaceId)
+      await ctx.send(`Successfully unbanned user ${userToUnban}`)
     } catch (error) {
-      await handler.sendMessage(event.channelId, `Failed to unban: ${error.message}`)
+      await ctx.send(`Failed to unban: ${error.message}`)
     }
   }
 })
@@ -1696,24 +1653,24 @@ bot.onSlashCommand("unban", async (handler, event) => {
 
 **Permission-Based Features:**
 ```typescript
-bot.onMessage(async (handler, event) => {
-  if (event.message.startsWith("!delete")) {
+bot.onMessage(async (ctx, event) => {
+  if (ctx.message.startsWith("!delete")) {
     // Check if user can redact messages
-    const canRedact = await handler.checkPermission(
-      event.channelId,
-      event.userId,
+    const canRedact = await ctx.checkPermission(
+      ctx.channelId,
+      ctx.userId,
       Permission.Redact
     )
-    
+
     if (!canRedact) {
-      await handler.sendMessage(event.channelId, "You don't have permission to delete messages")
+      await ctx.send("You don't have permission to delete messages")
       return
     }
-    
+
     // Delete the referenced message
-    const messageId = event.replyId // Assuming they replied to the message to delete
+    const messageId = ctx.replyId // Assuming they replied to the message to delete
     if (messageId) {
-      await handler.adminRemoveEvent(event.channelId, messageId)
+      await ctx.adminRemoveEvent(ctx.channelId, messageId)
     }
   }
 })
@@ -1721,11 +1678,11 @@ bot.onMessage(async (handler, event) => {
 
 ### Web3 Operations
 
-Bot exposes viem client and app address for direct Web3 interactions:
+Context exposes viem client and app address for direct Web3 interactions:
 
 ```typescript
-bot.viem        // Viem client with Account for contract interactions
-bot.appAddress   // Bot's app contract address (SimpleAccount)
+ctx.viem        // Viem client with Account for contract interactions
+ctx.appAddress   // Bot's app contract address (SimpleAccount)
 ```
 
 **Reading from Contracts:**
@@ -1737,8 +1694,8 @@ import { readContract } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
 
 // Read from any contract
-const owner = await readContract(bot.viem, {
-  address: bot.appAddress,
+const owner = await readContract(ctx.viem, {
+  address: ctx.appAddress,
   abi: simpleAppAbi,
   functionName: 'moduleOwner',
   args: []
@@ -1755,14 +1712,14 @@ import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
 import { parseEther, zeroAddress } from 'viem'
 
 // Only for SimpleAccount contract operations
-const hash = await writeContract(bot.viem, {
-  address: bot.appAddress,
+const hash = await writeContract(ctx.viem, {
+  address: ctx.appAddress,
   abi: simpleAppAbi,
   functionName: 'sendCurrency',
   args: [recipientAddress, zeroAddress, parseEther('0.01')]
 })
 
-await waitForTransactionReceipt(bot.viem, { hash })
+await waitForTransactionReceipt(ctx.viem, { hash })
 ```
 
 **Interacting with ANY Contract (PRIMARY METHOD):**
@@ -1774,18 +1731,18 @@ import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
 
 // Single operation: tip a user on Towns
-bot.onSlashCommand("tip", async (handler, { channelId, spaceId, mentions, args }) => {
-  if (mentions.length === 0 || !args[0]) {
-    await handler.sendMessage(channelId, "Usage: /tip @user <amount>")
+bot.onSlashCommand("tip", async (ctx, event) => {
+  if (ctx.mentions.length === 0 || !ctx.args[0]) {
+    await ctx.send("Usage: /tip @user <amount>")
     return
   }
 
-  const recipient = mentions[0].userId
-  const amount = parseEther(args[0])
+  const recipient = ctx.mentions[0].userId
+  const amount = parseEther(ctx.args[0])
 
-  const hash = await execute(bot.viem, {
-    address: bot.appAddress,
-    account: bot.viem.account,
+  const hash = await execute(ctx.viem, {
+    address: ctx.appAddress,
+    account: ctx.viem.account,
     calls: [{
       to: tippingContractAddress,
       abi: tippingAbi,
@@ -1797,14 +1754,14 @@ bot.onSlashCommand("tip", async (handler, { channelId, spaceId, mentions, args }
         currency: ETH_ADDRESS,
         amount: amount,
         messageId: messageId,
-        channelId: channelId
+        channelId: ctx.channelId
       }]
     }]
   })
 
-  await waitForTransactionReceipt(bot.viem, { hash })
+  await waitForTransactionReceipt(ctx.viem, { hash })
 
-  await handler.sendMessage(channelId, `Tipped ${args[0]} ETH to ${recipient}! Tx: ${hash}`)
+  await ctx.send(`Tipped ${ctx.args[0]} ETH to ${recipient}! Tx: ${hash}`)
 })
 ```
 
@@ -1817,16 +1774,16 @@ import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
 
 // Airdrop tips to multiple users in one transaction
-bot.onSlashCommand("airdrop", async (handler, { channelId, mentions, args }) => {
-  if (mentions.length === 0 || !args[0]) {
-    await handler.sendMessage(channelId, "Usage: /airdrop @user1 @user2 ... <amount-each>")
+bot.onSlashCommand("airdrop", async (ctx, event) => {
+  if (ctx.mentions.length === 0 || !ctx.args[0]) {
+    await ctx.send("Usage: /airdrop @user1 @user2 ... <amount-each>")
     return
   }
 
-  const amountEach = parseEther(args[0])
+  const amountEach = parseEther(ctx.args[0])
 
   // Build batch calls - one tip per user
-  const calls = mentions.map(mention => ({
+  const calls = ctx.mentions.map(mention => ({
     to: tippingContractAddress,
     abi: tippingAbi,
     functionName: 'tip',
@@ -1837,22 +1794,19 @@ bot.onSlashCommand("airdrop", async (handler, { channelId, mentions, args }) => 
       currency: ETH_ADDRESS,
       amount: amountEach,
       messageId: messageId,
-      channelId: channelId
+      channelId: ctx.channelId
     }]
   }))
 
-  const hash = await execute(bot.viem, {
-    address: bot.appAddress,
-    account: bot.viem.account,
+  const hash = await execute(ctx.viem, {
+    address: ctx.appAddress,
+    account: ctx.viem.account,
     calls
   })
 
-  await waitForTransactionReceipt(bot.viem, { hash })
+  await waitForTransactionReceipt(ctx.viem, { hash })
 
-  await handler.sendMessage(
-    channelId,
-    `Airdropped ${args[0]} ETH to ${mentions.length} users! Tx: ${hash}`
-  )
+  await ctx.send(`Airdropped ${ctx.args[0]} ETH to ${ctx.mentions.length} users! Tx: ${hash}`)
 })
 ```
 
@@ -1865,12 +1819,12 @@ import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
 
 // Approve, swap, and stake in one atomic transaction
-bot.onSlashCommand("defi", async (handler, { channelId, args }) => {
-  const amount = parseEther(args[0] || '100')
+bot.onSlashCommand("defi", async (ctx, event) => {
+  const amount = parseEther(ctx.args[0] || '100')
 
-  const hash = await execute(bot.viem, {
-    address: bot.appAddress,
-    account: bot.viem.account,
+  const hash = await execute(ctx.viem, {
+    address: ctx.appAddress,
+    account: ctx.viem.account,
     calls: [
       {
         to: tokenAddress,
@@ -1882,7 +1836,7 @@ bot.onSlashCommand("defi", async (handler, { channelId, args }) => {
         to: dexAddress,
         abi: dexAbi,
         functionName: 'swapExactTokensForTokens',
-        args: [amount, minOut, [tokenIn, tokenOut], bot.appAddress]
+        args: [amount, minOut, [tokenIn, tokenOut], ctx.appAddress]
       },
       {
         to: stakingAddress,
@@ -1893,9 +1847,9 @@ bot.onSlashCommand("defi", async (handler, { channelId, args }) => {
     ]
   })
 
-  await waitForTransactionReceipt(bot.viem, { hash })
+  await waitForTransactionReceipt(ctx.viem, { hash })
 
-  await handler.sendMessage(channelId, `Swapped and staked ${args[0]} tokens! Tx: ${hash}`)
+  await ctx.send(`Swapped and staked ${ctx.args[0]} tokens! Tx: ${hash}`)
 })
 ```
 
@@ -1907,9 +1861,9 @@ Use `executeBatch` for executing multiple batches (advanced use case):
 import { executeBatch } from 'viem/experimental/erc7821'
 
 // Execute batches of batches
-const hash = await executeBatch(bot.viem, {
-  address: bot.appAddress,
-  account: bot.viem.account,
+const hash = await executeBatch(ctx.viem, {
+  address: ctx.appAddress,
+  account: ctx.viem.account,
   calls: [
     [/* first batch */],
     [/* second batch */],
@@ -1966,7 +1920,7 @@ Note: Snapshot data may be outdated - it's a point-in-time view
 const messageCache = new Map<string, any>()
 const userStates = new Map<string, any>()
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   messageCache.set(event.eventId, event)
   // Cache persists between webhook calls
 })
@@ -1988,7 +1942,7 @@ const messages = sqliteTable('messages', {
 
 const db = drizzle(new Database('bot.db'))
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   // Persists across cold starts
   await db.insert(messages).values({
     eventId: event.eventId,
@@ -2000,7 +1954,7 @@ bot.onMessage(async (handler, event) => {
   })
 })
 
-bot.onReaction(async (handler, event) => {
+bot.onReaction(async (ctx, event) => {
   // Retrieve context from database
   const [original] = await db
     .select()
@@ -2014,7 +1968,7 @@ bot.onReaction(async (handler, event) => {
 import Redis from 'ioredis'
 const redis = new Redis(process.env.REDIS_URL)
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   // Store with TTL
   await redis.setex(
     `msg:${event.eventId}`,
@@ -2038,33 +1992,27 @@ bot.onMessage(async (handler, event) => {
 const warnings = new Map<string, number>()
 const bannedWords = ['spam', 'scam']
 
-bot.onMessage(async (handler, event) => {
-  const hasViolation = bannedWords.some(word => 
-    event.message.toLowerCase().includes(word)
+bot.onMessage(async (ctx, event) => {
+  const hasViolation = bannedWords.some(word =>
+    ctx.message.toLowerCase().includes(word)
   )
-  
+
   if (hasViolation) {
     // Delete the message
-    await handler.adminRemoveEvent(event.channelId, event.eventId)
-    
+    await ctx.adminRemoveEvent(ctx.channelId, ctx.eventId)
+
     // Track warnings
-    const count = (warnings.get(event.userId) || 0) + 1
-    warnings.set(event.userId, count)
-    
+    const count = (warnings.get(ctx.userId) || 0) + 1
+    warnings.set(ctx.userId, count)
+
     // Send warning
-    await handler.sendMessage(
-      event.channelId,
-      `WARNING: <@${event.userId}> Your message was removed. Warning ${count}/3`
-    )
-    
+    await ctx.send(`WARNING: <@${ctx.userId}> Your message was removed. Warning ${count}/3`)
+
     // Ban after 3 warnings
     if (count >= 3) {
       // Ban the user (requires ModifyBanning permission)
-      await handler.ban(event.userId, event.spaceId)
-      await handler.sendMessage(
-        event.channelId,
-        `<@${event.userId}> has been banned after 3 warnings`
-      )
+      await ctx.ban(ctx.userId, ctx.spaceId)
+      await ctx.send(`<@${ctx.userId}> has been banned after 3 warnings`)
     }
   }
 })
@@ -2074,27 +2022,30 @@ bot.onMessage(async (handler, event) => {
 ```typescript
 const schedules = new Map()
 
-bot.onSlashCommand("remind", async (handler, event) => {
+bot.onSlashCommand("remind", async (ctx, event) => {
   // /remind 5m Check the oven
-  const [time, ...messageParts] = event.args
+  const [time, ...messageParts] = ctx.args
   const message = messageParts.join(" ")
-  
+
   const minutes = parseInt(time)
   if (isNaN(minutes)) {
-    await handler.sendMessage(event.channelId, "Usage: /remind <minutes> <message>")
+    await ctx.send("Usage: /remind <minutes> <message>")
     return
   }
-  
+
+  // Note: For delayed messages, we use bot.sendMessage (not ctx.send)
+  // because the context is only valid during the handler execution
+  const channelId = ctx.channelId
+  const userId = ctx.userId
+  const eventId = ctx.eventId
+
   const scheduleId = setTimeout(async () => {
-    await handler.sendMessage(
-      event.channelId,
-      `REMINDER: Reminder for <@${event.userId}>: ${message}`
-    )
-    schedules.delete(event.eventId)
+    await bot.sendMessage(channelId, `REMINDER: Reminder for <@${userId}>: ${message}`)
+    schedules.delete(eventId)
   }, minutes * 60 * 1000)
-  
-  schedules.set(event.eventId, scheduleId)
-  await handler.sendMessage(event.channelId, `YES Reminder set for ${minutes} minutes`)
+
+  schedules.set(eventId, scheduleId)
+  await ctx.send(`YES Reminder set for ${minutes} minutes`)
 })
 ```
 
@@ -2107,29 +2058,29 @@ const analytics = {
   threadStarts: 0
 }
 
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   // Track metrics
-  analytics.activeUsers.add(event.userId)
+  analytics.activeUsers.add(ctx.userId)
   analytics.messageCount.set(
-    event.userId,
-    (analytics.messageCount.get(event.userId) || 0) + 1
+    ctx.userId,
+    (analytics.messageCount.get(ctx.userId) || 0) + 1
   )
-  
-  if (!event.threadId && !event.replyId) {
+
+  if (!ctx.threadId && !ctx.replyId) {
     // New conversation starter
     analytics.threadStarts++
   }
 })
 
-bot.onSlashCommand("stats", async (handler, event) => {
+bot.onSlashCommand("stats", async (ctx, event) => {
   const stats = `
  **Channel Stats**
 • Active users: ${analytics.activeUsers.size}
 • Total messages: ${Array.from(analytics.messageCount.values()).reduce((a,b) => a+b, 0)}
 • Conversations started: ${analytics.threadStarts}
   `.trim()
-  
-  await handler.sendMessage(event.channelId, stats)
+
+  await ctx.send(stats)
 })
 ```
 
@@ -2150,12 +2101,9 @@ const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 let githubChannelId: string | null = null
 
 // 1. Setup command to register channel for GitHub notifications
-bot.onSlashCommand("setup-github-here", async (handler, event) => {
-  githubChannelId = event.channelId
-  await handler.sendMessage(
-    event.channelId,
-    "GitHub notifications configured for this channel!"
-  )
+bot.onSlashCommand("setup-github-here", async (ctx, event) => {
+  githubChannelId = ctx.channelId
+  await ctx.send("GitHub notifications configured for this channel!")
 })
 
 // 2. Towns webhook endpoint (required for bot to work)
@@ -2203,60 +2151,51 @@ const healthChecks = new Map<string, {
   secondsBetween: number 
 }>()
 
-bot.onSlashCommand("setup-healthcheck", async (handler, event) => {
-  const secondsBetween = parseInt(event.args[0]) || 60
-  const url = event.args[1] || 'https://api.example.com/health'
-  
+bot.onSlashCommand("setup-healthcheck", async (ctx, event) => {
+  const secondsBetween = parseInt(ctx.args[0]) || 60
+  const url = ctx.args[1] || 'https://api.example.com/health'
+
   // Clear existing interval for this channel if any
-  const existing = healthChecks.get(event.channelId)
+  const existing = healthChecks.get(ctx.channelId)
   if (existing) {
     clearInterval(existing.interval)
   }
-  
+
+  // Capture channelId for use in setTimeout (ctx is only valid during handler)
+  const channelId = ctx.channelId
+
   // Setup new health check interval
   const interval = setInterval(async () => {
     try {
       const start = Date.now()
       const response = await fetch(url)
       const latency = Date.now() - start
-      
+
       if (response.ok) {
         // Direct bot.sendMessage() call from timer
-        await bot.sendMessage(
-          event.channelId,
-          `✅ Health Check OK: ${url} (${latency}ms)`
-        )
+        await bot.sendMessage(channelId, `✅ Health Check OK: ${url} (${latency}ms)`)
       } else {
-        await bot.sendMessage(
-          event.channelId,
-          `❌ Health Check Failed: ${url} - Status ${response.status}`
-        )
+        await bot.sendMessage(channelId, `❌ Health Check Failed: ${url} - Status ${response.status}`)
       }
     } catch (error) {
-      await bot.sendMessage(
-        event.channelId,
-        `❌ Health Check Error: ${url} - Service unreachable`
-      )
+      await bot.sendMessage(channelId, `❌ Health Check Error: ${url} - Service unreachable`)
     }
   }, secondsBetween * 1000)
-  
+
   // Store the configuration
-  healthChecks.set(event.channelId, { interval, url, secondsBetween })
-  
-  await handler.sendMessage(
-    event.channelId,
-    `Health check configured! Monitoring ${url} every ${secondsBetween} seconds`
-  )
+  healthChecks.set(channelId, { interval, url, secondsBetween })
+
+  await ctx.send(`Health check configured! Monitoring ${url} every ${secondsBetween} seconds`)
 })
 
-bot.onSlashCommand("stop-healthcheck", async (handler, event) => {
-  const config = healthChecks.get(event.channelId)
+bot.onSlashCommand("stop-healthcheck", async (ctx, event) => {
+  const config = healthChecks.get(ctx.channelId)
   if (config) {
     clearInterval(config.interval)
-    healthChecks.delete(event.channelId)
-    await handler.sendMessage(event.channelId, "Health check monitoring stopped")
+    healthChecks.delete(ctx.channelId)
+    await ctx.send("Health check monitoring stopped")
   } else {
-    await handler.sendMessage(event.channelId, "No health check configured for this channel")
+    await ctx.send("No health check configured for this channel")
   }
 })
 ```
@@ -2370,10 +2309,10 @@ console.log('New balance:', formatEther(newBalance), 'ETH')
 **Format:**
 ```typescript
 // NO WRONG
-await handler.sendMessage(channelId, "@username hello")
+await ctx.send("@username hello")
 
 // YES CORRECT
-await handler.sendMessage(channelId, "Hello <@0x1234...>", {
+await ctx.send("Hello <@0x1234...>", {
   mentions: [{
     userId: "0x1234...",
     displayName: "username"

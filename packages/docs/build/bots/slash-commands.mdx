@@ -57,21 +57,18 @@ import commands from './commands'
 const bot = await makeTownsBot(appPrivateData, jwtSecret, { commands })
 
 // Handle /help command
-bot.onSlashCommand('help', async (handler, event) => {
+bot.onSlashCommand('help', async (ctx, event) => {
   const commandList = commands
     .map(cmd => `• \`/${cmd.name}\` - ${cmd.description}`)
     .join('\n')
 
-  await handler.sendMessage(
-    event.channelId,
-    `**Available Commands**\n${commandList}`
-  )
+  await ctx.send(`**Available Commands**\n${commandList}`)
 })
 
 // Handle /ping command
-bot.onSlashCommand('ping', async (handler, event) => {
-  const latency = Date.now() - event.createdAt.getTime()
-  await handler.sendMessage(event.channelId, `Pong! 🏓 (${latency}ms)`)
+bot.onSlashCommand('ping', async (ctx, event) => {
+  const latency = Date.now() - ctx.createdAt.getTime()
+  await ctx.send(`Pong! 🏓 (${latency}ms)`)
 })
 ```
 
@@ -82,25 +79,19 @@ Slash commands can receive arguments after the command name.
 You can get them from the `args` property of the event.
 
 ```ts
-bot.onSlashCommand('weather', async (handler, { args, channelId }) => {
+bot.onSlashCommand('weather', async (ctx, event) => {
   // /weather San Francisco
-  // args: ['San', 'Francisco']
+  // ctx.args: ['San', 'Francisco']
 
-  const location = args.join(' ')
+  const location = ctx.args.join(' ')
 
   if (!location) {
-    await handler.sendMessage(
-      channelId,
-      'Usage: /weather <location>\nExample: /weather San Francisco'
-    )
+    await ctx.send('Usage: /weather <location>\nExample: /weather San Francisco')
     return
   }
 
   const weather = await callWeatherAPI(location)
-  await handler.sendMessage(
-    channelId,
-    `Weather in ${location}: ${weather.temp}°F, ${weather.conditions}`
-  )
+  await ctx.send(`Weather in ${location}: ${weather.temp}°F, ${weather.conditions}`)
 })
 ```
 
@@ -112,20 +103,17 @@ You can get the mentions from the `mentions` property of the event.
 
 ```ts
 // /greet @john @jane
-bot.onSlashCommand('greet', async (handler, { channelId, mentions}) => {
-  if (mentions.length === 0) {
-    await handler.sendMessage(
-      channelId,
-      'Usage: /greet @user1 @user2 ...'
-    )
+bot.onSlashCommand('greet', async (ctx, event) => {
+  if (ctx.mentions.length === 0) {
+    await ctx.send('Usage: /greet @user1 @user2 ...')
     return
   }
 
-  const greetings = mentions
+  const greetings = ctx.mentions
     .map(m => `Hello <@${m.userId}>!`)
     .join('\n')
 
-  await handler.sendMessage(channelId, greetings, { mentions })
+  await ctx.send(greetings, { mentions: ctx.mentions })
 })
 ```
 
@@ -141,26 +129,23 @@ If you want to check for a specific permission, you can use the `checkPermission
 
 
 ```ts
-bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions }) => {
+bot.onSlashCommand('ban', async (ctx, event) => {
   // Check if user is admin
-  const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+  const isAdmin = await ctx.hasAdminPermission(ctx.userId, ctx.spaceId)
   if (!isAdmin) {
-    await handler.sendMessage( channelId, '❌ Only admins can use this command')
+    await ctx.send('❌ Only admins can use this command')
     return
   }
-  const userToBan = mentions[0]?.userId
+  const userToBan = ctx.mentions[0]?.userId
   if (!userToBan) {
-    await handler.sendMessage( channelId, 'Usage: /ban @user')
+    await ctx.send('Usage: /ban @user')
     return
   }
   try {
-    await handler.ban(userToBan, spaceId)
-    await handler.sendMessage(
-      channelId,
-      `✓ Banned <@${userToBan}>`
-    )
+    await ctx.ban(userToBan, ctx.spaceId)
+    await ctx.send(`✓ Banned <@${userToBan}>`)
   } catch {
-    await handler.sendMessage( channelId, '❌ Failed to ban user')
+    await ctx.send('❌ Failed to ban user')
   }
 })
 ```
@@ -208,12 +193,9 @@ export const commands = [
 
 ```ts
 // Handler only runs after payment succeeds
-bot.onSlashCommand('generate', async (handler, event) => {
+bot.onSlashCommand('generate', async (ctx, event) => {
   // Payment already processed at this point
-  await handler.sendMessage(
-    event.channelId,
-    'Thank you for your purchase! Here is your generated content...'
-  )
+  await ctx.send('Thank you for your purchase! Here is your generated content...')
 })
 ```
 
