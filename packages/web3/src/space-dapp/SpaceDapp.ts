@@ -1527,6 +1527,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         }
         // membershipPrice is either the maximum of either the price set during space creation, or the PlatformRequirements membership fee
         // it will alawys be a value regardless of whether the space has free allocations or prepaid memberships
+        // this also includes the protocol fee if applicable
         const membershipPriceEncoded =
             space.Membership.interface.encodeFunctionData('getMembershipPrice')
         // totalSupply = number of memberships minted
@@ -1591,6 +1592,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
                 prepaidSupply,
                 remainingFreeSupply,
+                // this is returned as a convience - the protocol fee is already included in membershipPrice
                 protocolFee,
             }
         } catch (error) {
