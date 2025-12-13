@@ -2754,7 +2754,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 				streamId,
 			).Func("ReinitializeStreamStorage")
 		}
-		if err := s.reinitializeExistingStreamNoLockTx(
+		if err := s.reinitializeExistingStreamLockedTx(
 			ctx,
 			tx,
 			streamId,
@@ -2791,7 +2791,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 				return err
 			}
 
-			if err := s.reinitializeExistingStreamNoLockTx(
+			if err := s.reinitializeExistingStreamLockedTx(
 				ctx,
 				tx,
 				streamId,
@@ -2848,8 +2848,8 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	return nil
 }
 
-// reinitializeExistingStreamNoLockTx expects caller to have a lock on the stream.
-func (s *PostgresStreamStore) reinitializeExistingStreamNoLockTx(
+// reinitializeExistingStreamLockedTx expects caller to have a lock on the stream.
+func (s *PostgresStreamStore) reinitializeExistingStreamLockedTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
