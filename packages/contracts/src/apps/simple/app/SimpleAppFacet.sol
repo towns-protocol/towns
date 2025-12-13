@@ -4,13 +4,14 @@ pragma solidity ^0.8.29;
 // interfaces
 import {ISimpleApp} from "../../simple/app/ISimpleApp.sol";
 import {ITownsApp} from "../../../apps/ITownsApp.sol";
-import {ExecutionManifest, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {IIdentityRegistry, IIdentityRegistryBase} from "../../facets/identity/IIdentityRegistry.sol";
+import {IAppTreasury} from "../../../spaces/facets/account/treasury/IAppTreasury.sol";
 
 // contracts
 import {BaseApp} from "../../../apps/BaseApp.sol";
@@ -90,6 +91,21 @@ contract SimpleAppFacet is
     }
 
     /// @inheritdoc ISimpleApp
+    function requestFunds(address token, uint256 amount) external {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        if (!$.installedBy[msg.sender]) SimpleApp__InvalidCaller.selector.revertWith();
+
+        IAppTreasury treasury = IAppTreasury(msg.sender);
+        bytes32 voucherId = treasury.fundsRequest(token, amount);
+        if (voucherId != bytes32(0)) {
+            SimpleAppStorage.getLayout().voucherIds[msg.sender] = voucherId;
+            emit VoucherRequested(voucherId, token, amount);
+        } else {
+            emit FundsReceived(msg.sender, token, amount);
+        }
+    }
+
+    /// @inheritdoc ISimpleApp
     function withdrawETH(address recipient) external onlyOwner nonReentrant {
         if (recipient == address(0)) SimpleApp__ZeroAddress.selector.revertWith();
 
@@ -131,7 +147,23 @@ contract SimpleAppFacet is
 
     /// @inheritdoc IExecutionModule
     function executionManifest() external pure returns (ExecutionManifest memory) {
-        // solhint-disable no-empty-blocks
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](1);
+        ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](0);
+
+        executionFunctions[0] = ManifestExecutionFunction({
+            executionSelector: this.requestFunds.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        bytes4[] memory interfaceIds;
+
+        return
+            ExecutionManifest({
+                executionFunctions: executionFunctions,
+                executionHooks: executionHooks,
+                interfaceIds: interfaceIds
+            });
     }
 
     // Public functions
@@ -173,8 +205,16 @@ contract SimpleAppFacet is
         return false;
     }
 
-    function _onInstall(bytes calldata) internal view override {
-        if (msg.sender != _getCoordinator()) SimpleApp__InvalidCaller.selector.revertWith();
+    function _onInstall(bytes calldata data) internal override {
+        address space = abi.decode(data, (address));
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        $.installedBy[space] = true;
+    }
+
+    function _onUninstall(bytes calldata data) internal override {
+        address space = abi.decode(data, (address));
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        $.installedBy[space] = false;
     }
 
     function _installPrice() internal view override returns (uint256) {

@@ -19,6 +19,8 @@ library SimpleAppStorage {
         uint48 accessDuration;
         address client;
         uint256 agentId;
+        mapping(address => bytes32) voucherIds;
+        mapping(address => bool) installedBy;
     }
 
     function getLayout() internal pure returns (Layout storage l) {
