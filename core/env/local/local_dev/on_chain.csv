@@ -20,5 +20,6 @@
 "server.enablenode2nodeauth",0,0
 "stream.backwardsReconciliationThreshold",0,50
 "stream.historyminiblocks.default",0,0
-"stream.historyminiblocks.10",0,1000
-"stream.historyminiblocks.a5",0,1000
+"stream.historyminiblocks.a1",0,5000
+"stream.historyminiblocks.a5",0,40
+"stream.historyminiblocks.10",0,400

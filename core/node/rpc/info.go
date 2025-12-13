@@ -60,8 +60,8 @@ func (s *Service) info(
 			return s.debugInfoMakeMiniblock(ctx, request)
 		} else if debug == "drop_stream" {
 			return s.debugDropStream(ctx, request)
-		} else if debug == "trim" {
-			return s.debugTrimStream(ctx, request)
+		} else if debug == "trim_stream" {
+			return s.debugTrimStream(ctx, log, request)
 		}
 
 		if s.config.EnableTestAPIs {
@@ -102,6 +102,8 @@ func (s *Service) info(
 						Graffiti: "Context canceled",
 					}), nil
 				}
+			} else if debug == "force_trim_stream" {
+				return s.debugForceTrimStream(ctx, log, request)
 			}
 		}
 	}
@@ -137,6 +139,7 @@ func (s *Service) debugDropStream(
 
 func (s *Service) debugTrimStream(
 	ctx context.Context,
+	log *logging.Log,
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
 	if len(req.Msg.GetDebug()) != 2 {
@@ -197,7 +200,7 @@ func (s *Service) debugTrimStream(
 		)
 	}
 
-	logging.FromCtx(ctx).Infow(
+	log.Infow(
 		"Debug trim stream",
 		"streamId", streamID,
 		"trimToMiniblock", trimToMiniblock,
@@ -207,6 +210,40 @@ func (s *Service) debugTrimStream(
 	)
 
 	if err = s.storage.TrimStream(ctx, streamID, trimToMiniblock, nullifySnapshotMbs); err != nil {
+		return nil, AsRiverError(err, Err_DEBUG_ERROR).
+			Tags("streamId", streamID).
+			Message("failed to trim stream")
+	}
+
+	return connect.NewResponse(&InfoResponse{}), nil
+}
+
+func (s *Service) debugForceTrimStream(
+	ctx context.Context,
+	log *logging.Log,
+	req *connect.Request[InfoRequest],
+) (*connect.Response[InfoResponse], error) {
+	if len(req.Msg.GetDebug()) != 3 {
+		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a stream id")
+	}
+
+	streamID, err := shared.StreamIdFromString(req.Msg.Debug[1])
+	if err != nil {
+		return nil, err
+	}
+
+	trimToMiniblock, err := strconv.Atoi(req.Msg.Debug[2])
+	if err != nil {
+		return nil, RiverError(Err_DEBUG_ERROR, "invalid trimToMiniblock value")
+	}
+
+	log.Infow(
+		"Debug trim stream",
+		"streamId", streamID,
+		"trimToMiniblock", trimToMiniblock,
+	)
+
+	if err = s.storage.TrimStream(ctx, streamID, int64(trimToMiniblock), nil); err != nil {
 		return nil, AsRiverError(err, Err_DEBUG_ERROR).
 			Tags("streamId", streamID).
 			Message("failed to trim stream")
