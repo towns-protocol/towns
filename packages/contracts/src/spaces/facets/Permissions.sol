@@ -8,14 +8,15 @@ pragma solidity ^0.8.23;
 // contracts
 
 library Permissions {
-    string public constant ModifyChannel = "ModifyChannel";
-    string public constant AddRemoveChannels = "AddRemoveChannels";
-    string public constant ModifySpaceSettings = "ModifySpaceSettings";
-    string public constant ModifyRoles = "ModifyRoles";
-    string public constant JoinSpace = "JoinSpace";
-    string public constant ModifyBanning = "ModifyBanning";
-    string public constant Read = "Read";
-    string public constant Write = "Write";
-    string public constant React = "React";
-    string public constant Ping = "Ping";
+    string internal constant ModifyChannel = "ModifyChannel";
+    string internal constant AddRemoveChannels = "AddRemoveChannels";
+    string internal constant ModifySpaceSettings = "ModifySpaceSettings";
+    string internal constant ModifyRoles = "ModifyRoles";
+    string internal constant JoinSpace = "JoinSpace";
+    string internal constant ModifyBanning = "ModifyBanning";
+    string internal constant Read = "Read";
+    string internal constant Write = "Write";
+    string internal constant React = "React";
+    string internal constant Ping = "Ping";
+    string internal constant ModifyAppSettings = "ModifyAppSettings";
 }

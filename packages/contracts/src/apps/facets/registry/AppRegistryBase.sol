@@ -11,6 +11,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {IEntitlementsManager} from "../../../spaces/facets/entitlements/IEntitlementsManager.sol";
 
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
@@ -24,6 +25,7 @@ import {LibAppRegistry} from "./LibAppRegistry.sol";
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {Permissions} from "../../../spaces/facets/Permissions.sol";
 
 // contracts
 import {SchemaBase} from "../schema/SchemaBase.sol";
@@ -32,8 +34,16 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
 
+    /// @notice Modifier to check if the caller is allowed to interact with the app registry
+    /// @dev Only the owner of the space or modular account can interact
     modifier onlyAllowed(IAppAccount account) {
-        if (address(account) != msg.sender && IERC173(address(account)).owner() != msg.sender) {
+        if (
+            address(account) != msg.sender &&
+            !IEntitlementsManager(address(account)).isEntitledToSpace(
+                msg.sender,
+                Permissions.ModifyAppSettings
+            )
+        ) {
             NotAllowed.selector.revertWith();
         }
         _;
