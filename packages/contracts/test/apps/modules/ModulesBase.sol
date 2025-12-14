@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 // utils
 import {BaseSetup} from "../../spaces/BaseSetup.sol";
+import {ERC6900Setup} from "../../account/ERC6900Setup.sol";
 import {BasisPoints} from "../../../src/utils/libraries/BasisPoints.sol";
 
 //interfaces
@@ -24,74 +25,36 @@ import {ModuleEntityLib, ModuleEntity} from "@erc6900/reference-implementation/l
 import {ModuleInstallCommonsLib} from "modular-account/src/libraries/ModuleInstallCommonsLib.sol";
 
 //contracts
-import {AccountFactory} from "modular-account/src/factory/AccountFactory.sol";
-import {ExecutionInstallDelegate} from "modular-account/src/helpers/ExecutionInstallDelegate.sol";
+
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
-import {SemiModularAccountBytecode} from "modular-account/src/account/SemiModularAccountBytecode.sol";
 
 // modules
 import {DeploySubscriptionModule} from "../../../scripts/deployments/diamonds/DeploySubscriptionModule.s.sol";
 import {SubscriptionModuleFacet} from "../../../src/apps/modules/subscription/SubscriptionModuleFacet.sol";
-import {SingleSignerValidationModule} from "modular-account/src/modules/validation/SingleSignerValidationModule.sol";
 
-contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
-    AccountFactory accountFactory;
-    ExecutionInstallDelegate executionInstallDelegate;
+contract ModulesBase is BaseSetup, ERC6900Setup, ISubscriptionModuleBase {
     SubscriptionModuleFacet subscriptionModule;
     IPlatformRequirements platformRequirements;
     DeploySubscriptionModule deploySubscriptionModule;
 
-    uint32 nextEntityId = 1;
     address owner = makeAddr("owner");
     address processor = makeAddr("processor");
 
     uint64 DEFAULT_MEMBERSHIP_DURATION = 365 days;
     uint256 DEFAULT_MEMBERSHIP_PRICE = 1 ether;
 
-    function setUp() public override {
+    function setUp() public override(BaseSetup, ERC6900Setup) {
         super.setUp();
 
         deploySubscriptionModule = new DeploySubscriptionModule();
 
         platformRequirements = IPlatformRequirements(spaceFactory);
-        executionInstallDelegate = new ExecutionInstallDelegate();
         subscriptionModule = SubscriptionModuleFacet(deploySubscriptionModule.deploy(deployer));
 
         vm.startPrank(deployer);
         subscriptionModule.grantOperator(processor);
         subscriptionModule.setSpaceFactory(spaceFactory);
         vm.stopPrank();
-
-        SingleSignerValidationModule singleSignerValidationModule = new SingleSignerValidationModule();
-
-        ModularAccount accountImpl = new ModularAccount(entryPoint, executionInstallDelegate);
-
-        SemiModularAccountBytecode semiModularAccountBytecode = new SemiModularAccountBytecode(
-            entryPoint,
-            executionInstallDelegate
-        );
-
-        accountFactory = new AccountFactory(
-            entryPoint,
-            accountImpl,
-            semiModularAccountBytecode,
-            address(singleSignerValidationModule),
-            address(singleSignerValidationModule),
-            owner
-        );
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                    ACCOUNT HELPERS                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _createAccount(
-        address user,
-        uint256 balance
-    ) internal returns (ModularAccount account) {
-        uint32 entityId = nextEntityId++;
-        account = accountFactory.createAccount(user, 0, entityId);
-        vm.deal(address(account), balance);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

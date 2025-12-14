@@ -6,7 +6,6 @@ import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
-import {ExecutorStorage} from "src/spaces/facets/executor/ExecutorStorage.sol";
 import {DependencyLib} from "src/spaces/facets/DependencyLib.sol";
 import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
