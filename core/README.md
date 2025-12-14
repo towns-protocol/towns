@@ -153,8 +153,3 @@ Then generate the TLS certificates for the node:
 # Clean Build after Bun Install or Branch Switching
 
 Build is incremental, as such it may get confused when packages are updated or branches are switched.
-
-Clean build artifacts and rebuild:
-
-    bun run csb:clean
-    bun run csb:build

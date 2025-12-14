@@ -11,11 +11,6 @@
             "cache": false,
             "outputs": []
         },
-        "test:integration": {
-            "dependsOn": ["build"],
-            "cache": false,
-            "outputs": []
-        },
         "test:ci:multi:ne": {
             "dependsOn": ["build"],
             "cache": false,
@@ -27,11 +22,6 @@
             "outputs": []
         },
         "test:ci:multi:ent:legacy": {
-            "dependsOn": ["build"],
-            "cache": false,
-            "outputs": []
-        },
-        "test:ci:with-entitlements": {
             "dependsOn": ["build"],
             "cache": false,
             "outputs": []

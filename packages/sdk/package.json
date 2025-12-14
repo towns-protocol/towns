@@ -11,11 +11,9 @@
         "lint": "eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "bun run lint --fix",
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
-        "test:ci": "bun run test:ci:multi:ne",
         "test:ci:multi:ent": "bun run load-env vitest run --config vitest.config.ts",
         "test:ci:multi:ent:legacy": "bun run load-env vitest run --config vitest.config.multi_legacy.ts",
         "test:ci:multi:ne": "bun run load-env vitest run --config vitest.config.multi_ne.ts",
-        "test:ci:with-entitlements": "bun run load-env bun run test:ci:multi:ent",
         "test:unit": "vitest run --config vitest.config.unit.ts",
         "watch": "tsc --watch"
     },

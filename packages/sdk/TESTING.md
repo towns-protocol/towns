@@ -106,11 +106,9 @@ Tests commonly use `waitFor` patterns to handle asynchronous operations and even
 bun run test:unit
 
 # Run integration tests (requires appropriate backend)
-bun run test:ci:multi:ne    # Without entitlements (faster)
-bun run test:ci:multi:ent   # With entitlements (slower)
+bun run test:ci:multi:ne    # Without entitlements (skips on chain operations, focuses on node behaviors)
+bun run test:ci:multi:ent   # With entitlements (creates spaces on chain, focuses on end to end integration)
 
-# Watch mode for development
-bun run test:watch
 ```
 
 ### CI Pipeline

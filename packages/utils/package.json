@@ -11,7 +11,7 @@
         "lint": "eslint --format unix ./src",
         "lint:fix": "bun run lint --fix",
         "test": "vitest run",
-        "test:ci": "bun run test",
+        "test:unit": "bun run test",
         "test:debug": "DEBUG=test bun run test",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"

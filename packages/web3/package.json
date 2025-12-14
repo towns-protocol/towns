@@ -12,7 +12,7 @@
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
         "lint:fix": "bun run lint --fix",
         "test": "bun run load-env vitest run",
-        "test:ci": "bun run test",
+        "test:ci:multi:ent": "bun run test",
         "test:debug": "DEBUG=test bun run test",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"
