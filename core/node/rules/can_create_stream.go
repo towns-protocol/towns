@@ -691,7 +691,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 			)
 		}
 		dmPartnerAddress := common.BytesToAddress(dmPartnerBytes)
-		return auth.NewChainAuthArgsForDmValidation(userAddress, dmPartnerAddress), nil
+		return auth.NewChainAuthArgsForDmValidation(userAddress, dmPartnerAddress, true), nil
 	}
 
 	// we don't have a good way to check to see if they have on chain assets yet,
@@ -768,7 +768,7 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 
 func (ru *csDmChannelRules) dmStreamCreationChainAuth() (*auth.ChainAuthArgs, error) {
 	secondPartyAddr := common.BytesToAddress(ru.inception.SecondPartyAddress)
-	return auth.NewChainAuthArgsForDmValidation(ru.params.creatorAddress, secondPartyAddr), nil
+	return auth.NewChainAuthArgsForDmValidation(ru.params.creatorAddress, secondPartyAddr, false), nil
 }
 
 func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error) {

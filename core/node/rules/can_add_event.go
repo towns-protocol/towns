@@ -281,7 +281,7 @@ func (params *aeParams) dmValidationChainAuth() (*auth.ChainAuthArgs, error) {
 	firstPartyAddr := common.BytesToAddress(inception.FirstPartyAddress)
 	secondPartyAddr := common.BytesToAddress(inception.SecondPartyAddress)
 
-	return auth.NewChainAuthArgsForDmValidation(firstPartyAddr, secondPartyAddr), nil
+	return auth.NewChainAuthArgsForDmValidation(firstPartyAddr, secondPartyAddr, false), nil
 }
 
 func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilderAE {

@@ -98,11 +98,12 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 	}
 }
 
-func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address) *ChainAuthArgs {
+func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address, requireBotParty bool) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:             chainAuthKindDmValidation,
-		principal:        firstParty,
+		kind:            chainAuthKindDmValidation,
+		principal:       firstParty,
 		botClientAddress: secondParty,
+		requireBotParty: requireBotParty,
 	}
 }
 
@@ -198,6 +199,9 @@ type ChainAuthArgs struct {
 	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
 	// This is the address of the user stream that the bot owner is trying to write to.
 	botClientAddress common.Address
+
+	// requireBotParty when true requires at least one party to be a bot in DM validation.
+	requireBotParty bool
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -1302,8 +1306,16 @@ func (ca *chainAuth) checkDmValidation(
 		return nil, err
 	}
 
-	// User-to-user: always allow
+	// User-to-user
 	if !firstPartyIsApp && !secondPartyIsApp {
+		if args.requireBotParty {
+			log.Debugw(
+				"checkDmValidation: bot required but neither party is a bot",
+				"firstParty", args.principal,
+				"secondParty", args.botClientAddress,
+			)
+			return boolCacheResult{false, EntitlementResultReason_NO_BOT_PARTY}, nil
+		}
 		log.Debugw(
 			"checkDmValidation: user-to-user DM",
 			"firstParty", args.principal,

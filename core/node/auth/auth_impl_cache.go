@@ -40,6 +40,7 @@ const (
 	EntitlementResultReason_APP_ENTITLEMENTS
 	EntitlementResultReason_IS_NOT_BOT_OWNER
 	EntitlementResultReason_APP_NOT_INSTALLED_ON_USER
+	EntitlementResultReason_NO_BOT_PARTY
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
@@ -58,6 +59,7 @@ var entitlementResultReasonDescriptions = []string{
 	"APP_ENTITLEMENTS",
 	"IS_NOT_BOT_OWNER",
 	"APP_NOT_INSTALLED_ON_USER",
+	"NO_BOT_PARTY",
 }
 
 func (r EntitlementResultReason) String() string {
