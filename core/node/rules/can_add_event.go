@@ -115,6 +115,11 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 	update *SpacePayload_UpdateChannelHideUserJoinLeaveEvents
 }
 
+type aeEncryptedGroupSessionRules struct {
+	params  *aeParams
+	session *UserInboxPayload_GroupEncryptionSessions
+}
+
 /*
 *
 * CanAddEvent
@@ -423,8 +428,12 @@ func (params *aeParams) canAddUserInboxPayload(payload *StreamEvent_UserInboxPay
 		return aeBuilder().
 			fail(invalidContentType(content))
 	case *UserInboxPayload_GroupEncryptionSessions_:
+		ru := &aeEncryptedGroupSessionRules{
+			params:  params,
+			session: content.GroupEncryptionSessions,
+		}
 		return aeBuilder().
-			check(params.pass)
+			check(ru.validEncryptedGroupSession)
 	case *UserInboxPayload_Ack_:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -589,11 +598,6 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		return aeBuilder().
 			fail(unknownContentType(content))
 	}
-}
-
-func (params *aeParams) pass() (bool, error) {
-	// we probably shouldn't ever have 0 checks... currently this is the case in one place
-	return true, nil
 }
 
 func checkIsMember(params *aeParams, creatorAddress []byte) error {
@@ -2357,6 +2361,38 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		}
 	}
 	return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with matching device key not found")
+}
+
+func (ru *aeEncryptedGroupSessionRules) validEncryptedGroupSession() (bool, error) {
+	if ru.session == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a group encryption session event")
+	}
+	// check to make sure there are unique session ids and device ids here
+	// first build up a map of deviceId => sessionIds in the view
+	view := ru.params.streamView
+	streamId, err := shared.StreamIdFromBytes(ru.session.StreamId)
+	if err != nil {
+		return false, err
+	}
+	groupEncryptionSessions, err := view.GetGroupEncryptionSessions(streamId)
+	if err != nil {
+		return false, err
+	}
+	// now check to make sure there is at least one new session in this group
+	for deviceId := range ru.session.Ciphertexts {
+		for _, sessionId := range ru.session.SessionIds {
+			if _, ok := groupEncryptionSessions[deviceId]; !ok {
+				// new device! let's go!
+				return true, nil
+			}
+			if _, ok := groupEncryptionSessions[deviceId][sessionId]; !ok {
+				// new session! let's go!
+				return true, nil
+			}
+		}
+	}
+	// don't allow it, but don't error, this is a no-op
+	return false, nil
 }
 
 func (ru *aeEnsAddressRules) validEnsAddress() (bool, error) {

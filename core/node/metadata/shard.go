@@ -286,17 +286,17 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	appHash := m.lastAppHash
-	if appHash == nil {
-		var err error
-		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID)
-		if err != nil {
-			return nil, AsRiverError(err).Func("Commit")
-		}
-	}
 	height := m.lastBlockHeight
 	if height == 0 && m.node != nil {
 		height = m.node.BlockStore().Height()
+	}
+	appHash := m.lastAppHash
+	if appHash == nil {
+		var err error
+		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID, height)
+		if err != nil {
+			return nil, AsRiverError(err).Func("Commit")
+		}
 	}
 	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
@@ -578,7 +578,7 @@ func (m *MetadataShard) FinalizeBlock(
 		}
 		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
 	}
-	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID)
+	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID, req.Height)
 	if err != nil {
 		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
 	}
@@ -670,16 +670,18 @@ func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicat
 	if len(update.StreamId) != 32 {
 		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
 	}
-	if len(update.Nodes) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
+	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "nothing to update")
 	}
-	for _, n := range update.Nodes {
-		if len(n) != 20 {
-			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+	if len(update.Nodes) > 0 {
+		for _, n := range update.Nodes {
+			if len(n) != 20 {
+				return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+			}
 		}
-	}
-	if update.ReplicationFactor > 0 && len(update.Nodes) > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
-		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		if update.ReplicationFactor > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
+			return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
 	}
 	return nil
 }

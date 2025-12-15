@@ -23,6 +23,7 @@ import (
 
 type NodeRegistry interface {
 	GetNode(address common.Address) (*NodeRecord, error)
+	GetNodeByPermanentIndex(index int32) (*NodeRecord, error)
 	GetAllNodes() []*NodeRecord
 
 	// Returns error for local node.
@@ -43,9 +44,11 @@ type nodeRegistryImpl struct {
 	httpClientWithCert *http.Client
 	connectOpts        []connect.ClientOption
 
-	mu                    sync.RWMutex
-	nodesLocked           map[common.Address]*NodeRecord
-	appliedBlockNumLocked blockchain.BlockNumber
+	mu                       sync.RWMutex
+	nodesLocked              map[common.Address]*NodeRecord
+	nodesByIndexLocked       map[int32]*NodeRecord
+	appliedBlockNumLocked    blockchain.BlockNumber
+	nextPermanentIndexLocked int
 
 	// All fields below are recalculated from nodesLocked by resetLocked()
 	// All fields are immutable, i.e. copy under RWLock can be returned to the caller
@@ -81,14 +84,15 @@ func LoadNodeRegistry(
 	}
 
 	ret := &nodeRegistryImpl{
-		contract:              contract,
-		onChainConfig:         onChainConfig,
-		localNodeAddress:      localNodeAddress,
-		httpClient:            httpClient,
-		httpClientWithCert:    httpClientWithCert,
-		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
-		appliedBlockNumLocked: appliedBlockNum,
-		connectOpts:           connectOpts,
+		contract:                 contract,
+		onChainConfig:            onChainConfig,
+		localNodeAddress:         localNodeAddress,
+		httpClient:               httpClient,
+		httpClientWithCert:       httpClientWithCert,
+		nodesLocked:              make(map[common.Address]*NodeRecord, len(nodes)),
+		appliedBlockNumLocked:    appliedBlockNum,
+		nextPermanentIndexLocked: 1,
+		connectOpts:              connectOpts,
 	}
 
 	localFound := false
@@ -136,12 +140,16 @@ func (n *nodeRegistryImpl) resetLocked() {
 	n.activeNodesLocked = make([]*NodeRecord, 0, len(n.nodesLocked))
 	n.validAddrsLocked = make([]common.Address, 0, len(n.nodesLocked))
 	n.operatorsLocked = make(map[common.Address]bool, len(n.nodesLocked))
+	n.nodesByIndexLocked = make(map[int32]*NodeRecord, len(n.nodesLocked))
 
 	nodeBlocklist := n.onChainConfig.Get().NodeBlocklist
 	for addr, nn := range n.nodesLocked {
 		n.allNodesLocked = append(n.allNodesLocked, nn)
 		n.validAddrsLocked = append(n.validAddrsLocked, addr)
 		n.operatorsLocked[nn.operator] = true
+		if idx := int32(nn.permanentIndex); idx > 0 {
+			n.nodesByIndexLocked[idx] = nn
+		}
 		if nn.Status() == river.NodeStatus_Operational && !slices.Contains(nodeBlocklist, nn.Address()) {
 			n.activeNodesLocked = append(n.activeNodesLocked, nn)
 		}
@@ -149,6 +157,8 @@ func (n *nodeRegistryImpl) resetLocked() {
 }
 
 // addNodeLocked adds a node to the registry if it does not exist.
+// Returns new node record and a true if the node was added,
+// existing node record and false if it already existed.
 func (n *nodeRegistryImpl) addNodeLocked(
 	addr common.Address,
 	url string,
@@ -159,13 +169,14 @@ func (n *nodeRegistryImpl) addNodeLocked(
 		return existingNode, false
 	}
 
-	// Lock should be taken by the caller
 	nn := &NodeRecord{
-		address:  addr,
-		operator: operator,
-		url:      url,
-		status:   status,
+		address:        addr,
+		operator:       operator,
+		url:            url,
+		status:         status,
+		permanentIndex: n.nextPermanentIndexLocked,
 	}
+	n.nextPermanentIndexLocked++
 	if addr == n.localNodeAddress {
 		nn.local = true
 	} else {
@@ -269,6 +280,21 @@ func (n *nodeRegistryImpl) GetNode(address common.Address) (*NodeRecord, error) 
 	return nn, nil
 }
 
+func (n *nodeRegistryImpl) GetNodeByPermanentIndex(index int32) (*NodeRecord, error) {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	nn := n.nodesByIndexLocked[index]
+	if nn == nil {
+		return nil, RiverError(
+			Err_UNKNOWN_NODE,
+			"No record for node index",
+			"index",
+			index,
+		).Func("GetNodeByPermanentIndex")
+	}
+	return nn, nil
+}
+
 func (n *nodeRegistryImpl) GetAllNodes() []*NodeRecord {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -319,12 +345,13 @@ func (n *nodeRegistryImpl) CloneWithClients(
 	defer n.mu.RUnlock()
 
 	clone := &nodeRegistryImpl{
-		contract:              n.contract,
-		onChainConfig:         n.onChainConfig,
-		localNodeAddress:      n.localNodeAddress,
-		httpClient:            httpClient,
-		httpClientWithCert:    httpClientWithCert,
-		appliedBlockNumLocked: n.appliedBlockNumLocked,
+		contract:                 n.contract,
+		onChainConfig:            n.onChainConfig,
+		localNodeAddress:         n.localNodeAddress,
+		httpClient:               httpClient,
+		httpClientWithCert:       httpClientWithCert,
+		appliedBlockNumLocked:    n.appliedBlockNumLocked,
+		nextPermanentIndexLocked: n.nextPermanentIndexLocked,
 	}
 
 	clone.connectOpts = make([]connect.ClientOption, len(n.connectOpts))
@@ -340,8 +367,19 @@ func (n *nodeRegistryImpl) CloneWithClients(
 			local:               node.local,
 			streamServiceClient: node.streamServiceClient,
 			nodeToNodeClient:    node.nodeToNodeClient,
+			permanentIndex:      node.permanentIndex,
 		}
 		clone.nodesLocked[addr] = clonedNode
+	}
+
+	clone.nodesByIndexLocked = make(map[int32]*NodeRecord, len(n.nodesByIndexLocked))
+	for _, node := range clone.nodesLocked {
+		if node == nil {
+			continue
+		}
+		if idx := int32(node.permanentIndex); idx > 0 {
+			clone.nodesByIndexLocked[idx] = node
+		}
 	}
 
 	clone.allNodesLocked = make([]*NodeRecord, len(n.allNodesLocked))
