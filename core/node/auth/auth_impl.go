@@ -100,10 +100,10 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 
 func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address, requireBotParty bool) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:            chainAuthKindDmValidation,
-		principal:       firstParty,
+		kind:             chainAuthKindDmValidation,
+		principal:        firstParty,
 		botClientAddress: secondParty,
-		requireBotParty: requireBotParty,
+		requireBotParty:  requireBotParty,
 	}
 }
 
