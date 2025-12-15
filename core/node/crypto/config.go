@@ -44,7 +44,7 @@ const (
 	StreamMinEventsPerSnapshotUserDeviceConfigKey   = "stream.minEventsPerSnapshot.ad"
 	StreamCacheExpirationMsConfigKey                = "stream.cacheExpirationMs"
 	StreamCacheExpirationPollIntervalMsConfigKey    = "stream.cacheExpirationPollIntervalMs"
-	StreamGetMiniblocksMaxPageSizeConfigKey         = "stream.getMiniblocksMaxPageSize"
+	StreamGetMiniblocksMaxPageSizeConfigKey         = "stream.getminiblocksmaxpagesize"
 	MediaStreamMembershipLimitsGDMConfigKey         = "media.streamMembershipLimits.77"
 	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
@@ -153,7 +153,7 @@ type OnChainSettings struct {
 
 	StreamEphemeralStreamTTL time.Duration `mapstructure:"stream.ephemeralStreamTTLMs"`
 
-	GetMiniblocksMaxPageSize uint64 `mapstructure:"stream.getMiniblocksMaxPageSize"`
+	GetMiniblocksMaxPageSize uint64 `mapstructure:"stream.getminiblocksmaxpagesize"`
 
 	MembershipLimits MembershipLimitsSettings `mapstructure:",squash"`
 
