@@ -99,6 +99,13 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
+		AppRegistry: AppRegistryConfig{
+			EnqueuedMessageRetention: EnqueuedMessageRetentionConfig{
+				TTL:               24 * time.Hour,
+				MaxMessagesPerBot: 10000,
+				CleanupInterval:   30 * time.Minute,
+			},
+		},
 		MetadataShardMask: 0x3ff, // 1023
 	}
 }
@@ -596,6 +603,23 @@ type AppRegistryConfig struct {
 
 	// MixpanelToken is the project token for Mixpanel analytics. If empty, analytics is disabled.
 	MixpanelToken string
+
+	// EnqueuedMessageRetention configures retention for enqueued messages
+	EnqueuedMessageRetention EnqueuedMessageRetentionConfig
+}
+
+// EnqueuedMessageRetentionConfig configures TTL and limits for the enqueued_messages table.
+type EnqueuedMessageRetentionConfig struct {
+	// TTL is how long messages are kept before cleanup.
+	// Messages older than this are deleted by the background cleanup job.
+	TTL time.Duration
+
+	// MaxMessagesPerBot is the maximum number of messages kept per bot.
+	// When a bot exceeds this limit, the oldest messages are deleted.
+	MaxMessagesPerBot int
+
+	// CleanupInterval is how often the cleanup job runs.
+	CleanupInterval time.Duration
 }
 
 type LogConfig struct {

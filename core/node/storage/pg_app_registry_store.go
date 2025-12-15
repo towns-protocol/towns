@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
@@ -235,6 +236,17 @@ type (
 			app common.Address,
 			active bool,
 		) error
+
+		// DeleteExpiredEnqueuedMessages removes messages older than the given threshold.
+		// Returns the number of deleted rows.
+		DeleteExpiredEnqueuedMessages(ctx context.Context, olderThan time.Time) (int64, error)
+
+		// TrimEnqueuedMessagesPerBot deletes oldest messages for bots exceeding maxMessages.
+		// Returns the number of deleted rows.
+		TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
+
+		// GetEnqueuedMessagesCountAprox returns the total count of enqueued messages.
+		GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error)
 
 		// Pool returns the underlying database connection pool.
 		// This is useful for creating shared components like StreamCookieStore.
@@ -1434,4 +1446,84 @@ func (s *PostgresAppRegistryStore) setAppActiveStatus(
 	}
 
 	return nil
+}
+
+// DeleteExpiredEnqueuedMessages removes messages older than the given threshold.
+func (s *PostgresAppRegistryStore) DeleteExpiredEnqueuedMessages(
+	ctx context.Context,
+	olderThan time.Time,
+) (int64, error) {
+	result, err := s.pool.Exec(ctx,
+		`DELETE FROM enqueued_messages WHERE created_at < $1`,
+		olderThan,
+	)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to delete expired enqueued messages")
+	}
+	return result.RowsAffected(), nil
+}
+
+// TrimEnqueuedMessagesPerBot deletes oldest messages for bots exceeding maxMessages.
+func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
+	ctx context.Context,
+	maxMessages int,
+) (int64, error) {
+	// Get all device keys from app_registry that have webhooks registered
+	rows, err := s.pool.Query(ctx, `
+		SELECT device_key FROM app_registry WHERE device_key IS NOT NULL
+	`)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to get device keys for trimming")
+	}
+	deviceKeys, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to collect device keys")
+	}
+
+	// For each device, delete messages beyond the limit using the index efficiently.
+	// The subquery finds the created_at of the (maxMessages+1)th newest message,
+	// then deletes all messages at or before that timestamp.
+	var totalDeleted int64
+	for _, deviceKey := range deviceKeys {
+		result, err := s.pool.Exec(ctx, `
+			DELETE FROM enqueued_messages
+			WHERE device_key = $1
+			  AND created_at <= (
+				  SELECT created_at
+				  FROM enqueued_messages
+				  WHERE device_key = $1
+				  ORDER BY created_at DESC
+				  OFFSET $2
+				  LIMIT 1
+			  )
+		`, deviceKey, maxMessages)
+		if err != nil {
+			return totalDeleted, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to trim enqueued messages for device").
+				Tag("deviceKey", deviceKey)
+		}
+		totalDeleted += result.RowsAffected()
+	}
+
+	return totalDeleted, nil
+}
+
+// GetEnqueuedMessagesCountAprox returns an approximate count of enqueued messages.
+// This uses pg_class statistics which is fast but may be slightly inaccurate
+// (updated by ANALYZE/autovacuum, typically within a few percent of actual count).
+func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error) {
+	var count int64
+	err := s.pool.QueryRow(ctx, `
+		SELECT GREATEST(COALESCE(reltuples::bigint, 0), 0)
+		FROM pg_class
+		WHERE relname = 'enqueued_messages'
+	`).Scan(&count)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to get enqueued messages count estimate")
+	}
+	return count, nil
 }

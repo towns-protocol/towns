@@ -1930,3 +1930,155 @@ func TestIsUsernameAvailable(t *testing.T) {
 	require.NoError(err)
 	require.True(available, "Uppercase version should be available if implementation is case-sensitive")
 }
+
+func TestDeleteExpiredEnqueuedMessages(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Create an app with a webhook
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	secretBytes, _ := hex.DecodeString(testSecretHexString)
+	secret := [32]byte(secretBytes)
+	deviceKey := "test-device-key-ttl"
+	fallbackKey := "test-fallback-key"
+
+	err := store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("ttl_test_app"),
+		secret,
+	)
+	require.NoError(err)
+
+	err = store.RegisterWebhook(params.ctx, app, "https://webhook.com/ttl", deviceKey, fallbackKey)
+	require.NoError(err)
+
+	// Enqueue some messages
+	for i := 0; i < 5; i++ {
+		_, _, err = store.EnqueueUnsendableMessages(
+			params.ctx,
+			[]common.Address{app},
+			fmt.Sprintf("session-%d", i),
+			[]byte(fmt.Sprintf("message-%d", i)),
+		)
+		require.NoError(err)
+	}
+
+	// Delete messages older than 1 hour from now (should delete nothing)
+	deleted, err := store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(-1*time.Hour))
+	require.NoError(err)
+	require.Equal(int64(0), deleted)
+
+	// Delete messages older than 1 hour in the future (should delete all)
+	deleted, err = store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(1*time.Hour))
+	require.NoError(err)
+	require.Equal(int64(5), deleted)
+
+	// Delete again should delete nothing
+	deleted, err = store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(1*time.Hour))
+	require.NoError(err)
+	require.Equal(int64(0), deleted)
+}
+
+func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Create two apps with webhooks
+	owner := safeAddress(t)
+	app1 := safeAddress(t)
+	app2 := safeAddress(t)
+	secretBytes, _ := hex.DecodeString(testSecretHexString)
+	secret := [32]byte(secretBytes)
+
+	err := store.CreateApp(
+		params.ctx,
+		owner,
+		app1,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("trim_test_app1"),
+		secret,
+	)
+	require.NoError(err)
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("trim_test_app2"),
+		secret,
+	)
+	require.NoError(err)
+
+	deviceKey1 := "trim-device-key-1"
+	deviceKey2 := "trim-device-key-2"
+	fallbackKey := "test-fallback-key"
+
+	err = store.RegisterWebhook(params.ctx, app1, "https://webhook.com/trim1", deviceKey1, fallbackKey)
+	require.NoError(err)
+
+	err = store.RegisterWebhook(params.ctx, app2, "https://webhook.com/trim2", deviceKey2, fallbackKey)
+	require.NoError(err)
+
+	// Enqueue 10 messages for app1, 5 for app2
+	for i := 0; i < 10; i++ {
+		_, _, err = store.EnqueueUnsendableMessages(
+			params.ctx,
+			[]common.Address{app1},
+			fmt.Sprintf("app1-session-%d", i),
+			[]byte(fmt.Sprintf("app1-message-%d", i)),
+		)
+		require.NoError(err)
+		// Small delay to ensure different timestamps
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	for i := 0; i < 5; i++ {
+		_, _, err = store.EnqueueUnsendableMessages(
+			params.ctx,
+			[]common.Address{app2},
+			fmt.Sprintf("app2-session-%d", i),
+			[]byte(fmt.Sprintf("app2-message-%d", i)),
+		)
+		require.NoError(err)
+	}
+
+	// Trim to max 7 per bot
+	// app1 has 10 -> should delete 3 (oldest)
+	// app2 has 5 -> should delete 0
+	deleted, err := store.TrimEnqueuedMessagesPerBot(params.ctx, 7)
+	require.NoError(err)
+	require.Equal(int64(3), deleted)
+
+	// Trim again to max 3 per bot
+	// app1 has 7 -> should delete 4
+	// app2 has 5 -> should delete 2
+	deleted, err = store.TrimEnqueuedMessagesPerBot(params.ctx, 3)
+	require.NoError(err)
+	require.Equal(int64(6), deleted)
+
+	// Trim again with same limit should delete nothing
+	deleted, err = store.TrimEnqueuedMessagesPerBot(params.ctx, 3)
+	require.NoError(err)
+	require.Equal(int64(0), deleted)
+}
+
+func TestGetEnqueuedMessagesCount(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// GetEnqueuedMessagesCountAprox uses pg_class statistics for performance.
+	// Stats are updated by ANALYZE/autovacuum, so we just verify:
+	// 1. The method doesn't error
+	// 2. Returns a non-negative value
+	count, err := store.GetEnqueuedMessagesCountAprox(params.ctx)
+	require.NoError(err)
+	require.GreaterOrEqual(count, int64(0))
+}

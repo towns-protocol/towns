@@ -54,6 +54,8 @@ type (
 		// Base chain components for app validation
 		baseChain           *crypto.Blockchain
 		appRegistryContract *auth.AppRegistryContract
+		// Cleanup job for enqueued messages
+		cleaner *EnqueuedMessagesCleaner
 	}
 )
 
@@ -139,6 +141,7 @@ func NewService(
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 		webhookStatusCache:            ttlcache.New(2*time.Second, 1*time.Minute),
+		cleaner:                       NewEnqueuedMessagesCleaner(store, cfg.EnqueuedMessageRetention, metrics),
 	}
 
 	// Initialize app registry contract if base chain is provided and configured
@@ -356,6 +359,9 @@ func (s *Service) Start(ctx context.Context) {
 			}
 		}
 	}()
+
+	// Start the enqueued messages cleanup job
+	go s.cleaner.Run(ctx)
 }
 
 func (s *Service) RotateSecret(
