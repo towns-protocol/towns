@@ -143,7 +143,7 @@ func (s *Service) debugTrimStream(
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
 	if len(req.Msg.GetDebug()) != 2 {
-		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a stream id")
+		return nil, RiverError(Err_DEBUG_ERROR, "trim_stream requires a stream id")
 	}
 
 	streamID, err := shared.StreamIdFromString(req.Msg.Debug[1])
@@ -224,7 +224,7 @@ func (s *Service) debugForceTrimStream(
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
 	if len(req.Msg.GetDebug()) != 3 {
-		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a stream id")
+		return nil, RiverError(Err_DEBUG_ERROR, "force_trim_stream requires a stream id")
 	}
 
 	streamID, err := shared.StreamIdFromString(req.Msg.Debug[1])
