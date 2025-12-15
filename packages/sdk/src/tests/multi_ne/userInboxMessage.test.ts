@@ -12,7 +12,7 @@ import { createRiverRegistry, LocalhostWeb3Provider } from '@towns-protocol/web3
 import { townsEnv } from '../../townsEnv'
 import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 
-const log = dlog('test:inboxMessage', { allowJest: true, defaultEnabled: true })
+const log = dlog('test:inboxMessage')
 
 describe('inboxMessageTest', () => {
     let bobsClient: Client
