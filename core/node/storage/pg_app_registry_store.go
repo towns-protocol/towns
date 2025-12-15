@@ -1477,20 +1477,10 @@ func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
 		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 			Message("failed to get device keys for trimming")
 	}
-	defer rows.Close()
-
-	var deviceKeys []string
-	for rows.Next() {
-		var deviceKey string
-		if err := rows.Scan(&deviceKey); err != nil {
-			return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to scan device key")
-		}
-		deviceKeys = append(deviceKeys, deviceKey)
-	}
-	if err := rows.Err(); err != nil {
+	deviceKeys, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
 		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to iterate device keys")
+			Message("failed to collect device keys")
 	}
 
 	// For each device, delete messages beyond the limit using the index efficiently.

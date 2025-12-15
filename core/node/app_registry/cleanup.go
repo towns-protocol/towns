@@ -82,23 +82,27 @@ func (c *EnqueuedMessagesCleaner) Run(ctx context.Context) {
 func (c *EnqueuedMessagesCleaner) cleanup(ctx context.Context) {
 	log := logging.FromCtx(ctx).With("component", "EnqueuedMessagesCleaner")
 
-	// 1. Delete messages older than TTL
-	threshold := time.Now().Add(-c.cfg.TTL)
-	expiredDeleted, err := c.store.DeleteExpiredEnqueuedMessages(ctx, threshold)
-	if err != nil {
-		log.Errorw("Failed to cleanup expired enqueued messages", "error", err)
-	} else if expiredDeleted > 0 {
-		log.Infow("Cleaned up expired enqueued messages", "count", expiredDeleted)
-		c.metrics.deletedByTTL.Add(float64(expiredDeleted))
+	// 1. Delete messages older than TTL (skip if TTL is 0 to avoid deleting all messages)
+	if c.cfg.TTL > 0 {
+		threshold := time.Now().Add(-c.cfg.TTL)
+		expiredDeleted, err := c.store.DeleteExpiredEnqueuedMessages(ctx, threshold)
+		if err != nil {
+			log.Errorw("Failed to cleanup expired enqueued messages", "error", err)
+		} else if expiredDeleted > 0 {
+			log.Infow("Cleaned up expired enqueued messages", "count", expiredDeleted)
+			c.metrics.deletedByTTL.Add(float64(expiredDeleted))
+		}
 	}
 
-	// 2. Trim per-bot queues exceeding the limit
-	trimmed, err := c.store.TrimEnqueuedMessagesPerBot(ctx, c.cfg.MaxMessagesPerBot)
-	if err != nil {
-		log.Errorw("Failed to trim per-bot message queues", "error", err)
-	} else if trimmed > 0 {
-		log.Infow("Trimmed per-bot message queues", "count", trimmed)
-		c.metrics.deletedByLimit.Add(float64(trimmed))
+	// 2. Trim per-bot queues exceeding the limit (skip if limit is 0 to avoid deleting all messages)
+	if c.cfg.MaxMessagesPerBot > 0 {
+		trimmed, err := c.store.TrimEnqueuedMessagesPerBot(ctx, c.cfg.MaxMessagesPerBot)
+		if err != nil {
+			log.Errorw("Failed to trim per-bot message queues", "error", err)
+		} else if trimmed > 0 {
+			log.Infow("Trimmed per-bot message queues", "count", trimmed)
+			c.metrics.deletedByLimit.Add(float64(trimmed))
+		}
 	}
 
 	// 3. Update total count metric

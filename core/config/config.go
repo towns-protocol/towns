@@ -102,7 +102,7 @@ func GetDefaultConfig() *Config {
 		AppRegistry: AppRegistryConfig{
 			EnqueuedMessageRetention: EnqueuedMessageRetentionConfig{
 				TTL:               24 * time.Hour,
-				MaxMessagesPerBot: 1000,
+				MaxMessagesPerBot: 10000,
 				CleanupInterval:   30 * time.Minute,
 			},
 		},
