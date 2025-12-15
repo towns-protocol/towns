@@ -116,17 +116,26 @@ Request users to sign transactions or messages from their wallets.
 Prompt users to execute transactions:
 
 ```ts
-import { hexToBytes } from 'viem'
+import { hexToBytes, encodeFunctionData } from 'viem'
 
 bot.onSlashCommand('send-usdc', async (handler, event) => {
   const usdcAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
   const recipient = '0x1234567890123456789012345678901234567890'
   const amount = '50000000' // 50 USDC (6 decimals)
   
-  // Encode ERC20 transfer: transfer(address,uint256)
-  const recipientPadded = recipient.slice(2).padStart(64, '0')
-  const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
-  const data = `0xa9059cbb${recipientPadded}${amountPadded}`
+  // Encode ERC20 transfer
+  const data = encodeFunctionData({
+    abi: [{
+      name: 'transfer',
+      type: 'function',
+      inputs: [
+        { name: 'to', type: 'address' },
+        { name: 'amount', type: 'uint256' }
+      ]
+    }],
+    functionName: 'transfer',
+    args: [recipient, BigInt(amount)]
+  })
   
   await handler.sendInteractionRequest(
     event.channelId,
