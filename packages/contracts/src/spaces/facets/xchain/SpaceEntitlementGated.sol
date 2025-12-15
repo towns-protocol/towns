@@ -10,7 +10,6 @@ import {MembershipJoin} from "../membership/join/MembershipJoin.sol";
 
 /// @title SpaceEntitlementGated
 /// @notice Handles entitlement-gated access to spaces and membership token issuance
-/// @dev Inherits from ISpaceEntitlementGatedBase, MembershipJoin, and EntitlementGated
 contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
     /// @notice Processes the result of an entitlement check
     /// @dev This function is called when the result of an entitlement check is posted

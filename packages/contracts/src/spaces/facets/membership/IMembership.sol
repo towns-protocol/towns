@@ -58,6 +58,9 @@ interface IMembershipBase {
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
 
+    /// @notice Error thrown when ETH is sent for ERC20 payment
+    error Membership__UnexpectedValue();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

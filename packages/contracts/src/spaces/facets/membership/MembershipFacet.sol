@@ -6,7 +6,9 @@ import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -15,6 +17,7 @@ import {MembershipJoin} from "./join/MembershipJoin.sol";
 
 contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            JOIN                            */
@@ -193,6 +196,10 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function revenue() external view returns (uint256) {
+        address currency = _getMembershipCurrency();
+        if (currency != CurrencyTransfer.NATIVE_TOKEN) {
+            return currency.balanceOf(address(this));
+        }
         return address(this).balance;
     }
 }

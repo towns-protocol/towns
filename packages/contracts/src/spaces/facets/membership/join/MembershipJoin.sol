@@ -10,9 +10,11 @@ import {IRolesBase} from "../../roles/IRoles.sol";
 import {IMembership} from "../IMembership.sol";
 
 // libraries
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {BasisPoints} from "../../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {MembershipStorage} from "../MembershipStorage.sol";
 import {Permissions} from "../../Permissions.sol";
 
 // contracts
@@ -44,6 +46,7 @@ abstract contract MembershipJoin is
     ERC721ABase
 {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
@@ -90,6 +93,10 @@ abstract contract MembershipJoin is
         (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            JOIN                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Handles the process of joining a space
     /// @param receiver The address that will receive the membership token
     function _joinSpace(address receiver) internal {
@@ -97,14 +104,22 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate payment if required
-        if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
-            Membership__InsufficientPayment.selector.revertWith();
+        // Validate and capture payment if required
+        uint256 capturedAmount;
+        if (joinDetails.shouldCharge) {
+            address currency = _getMembershipCurrency();
+            _validateAndCapturePayment(currency, joinDetails.amountDue);
+            // For ETH: capture full msg.value (excess refunded later)
+            // For ERC20: capture the required amount (already transferred)
+            capturedAmount = _getMembershipCurrency() == CurrencyTransfer.NATIVE_TOKEN
+                ? msg.value
+                : joinDetails.amountDue;
         }
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, ""),
+            capturedAmount
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -133,9 +148,16 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate payment if required
-        if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
-            Membership__InsufficientPayment.selector.revertWith();
+        // Validate and capture payment if required
+        uint256 capturedAmount;
+        if (joinDetails.shouldCharge) {
+            address currency = _getMembershipCurrency();
+            _validateAndCapturePayment(currency, joinDetails.amountDue);
+            // For ETH: capture full msg.value (excess refunded later)
+            // For ERC20: capture the required amount (already transferred)
+            capturedAmount = currency == CurrencyTransfer.NATIVE_TOKEN
+                ? msg.value
+                : joinDetails.amountDue;
         }
 
         _validateUserReferral(receiver, referral);
@@ -146,7 +168,8 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData),
+            capturedAmount
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -175,11 +198,53 @@ abstract contract MembershipJoin is
         emit MembershipTokenRejected(receiver);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         VALIDATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Validates and captures payment based on currency type
+    /// @dev For ETH: validates msg.value >= required amount
+    /// @dev For ERC20: transfers tokens from sender to this contract
+    /// @param currency The currency address (NATIVE_TOKEN for ETH, or ERC20 address)
+    /// @param amountRequired The required payment amount
+    /// @return capturedAmount The amount captured (for ERC20, handles fee-on-transfer tokens)
+    function _validateAndCapturePayment(
+        address currency,
+        uint256 amountRequired
+    ) internal returns (uint256 capturedAmount) {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+            // ETH payment: validate msg.value (captured later in _registerTransaction)
+            if (msg.value < amountRequired) {
+                Membership__InsufficientPayment.selector.revertWith();
+            }
+            return amountRequired;
+        }
+
+        // ERC20 payment: reject any ETH sent
+        if (msg.value != 0) revert Membership__UnexpectedValue();
+
+        // Transfer ERC20 tokens from sender to contract
+        uint256 balanceBefore = currency.balanceOf(address(this));
+        CurrencyTransfer.safeTransferERC20(currency, msg.sender, address(this), amountRequired);
+        uint256 balanceAfter = currency.balanceOf(address(this));
+
+        capturedAmount = balanceAfter - balanceBefore;
+        if (capturedAmount < amountRequired) {
+            Membership__InsufficientPayment.selector.revertWith();
+        }
+
+        return capturedAmount;
+    }
+
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
         if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
             Membership__InvalidAddress.selector.revertWith();
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         ENTITLEMENT                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Checks if a user is entitled to join the space and handles the entitlement process
     /// @dev This function checks both local and crosschain entitlements
@@ -420,6 +485,10 @@ abstract contract MembershipJoin is
         }
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       FEE COLLECTION                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Collects the referral fee if applicable
     /// @param payer The address of the payer
     /// @param referralCode The referral code used
@@ -490,42 +559,62 @@ abstract contract MembershipJoin is
 
         uint256 duration = _getMembershipDuration();
         uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        address currency = _getMembershipCurrency();
 
         // Handle free renewal
         if (basePrice == 0) {
-            // Refund any ETH sent
-            CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(),
-                address(this),
-                payer,
-                msg.value
-            );
+            // Refund any ETH sent (for ETH only)
+            if (currency == CurrencyTransfer.NATIVE_TOKEN && msg.value > 0) {
+                CurrencyTransfer.transferCurrency(currency, address(this), payer, msg.value);
+            }
             _renewSubscription(tokenId, uint64(duration));
             return;
         }
 
         (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
-        if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+            // ETH payment
+            if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-        // Collect protocol fee (transfers from payer)
-        uint256 protocolFee = _collectProtocolFee(payer, basePrice);
+            // Collect protocol fee (transfers from payer)
+            uint256 protocolFee = _collectProtocolFee(payer, basePrice);
 
-        // Calculate owner proceeds (what goes to space owner)
-        uint256 ownerProceeds = totalRequired - protocolFee;
+            // Calculate owner proceeds (what goes to space owner)
+            uint256 ownerProceeds = totalRequired - protocolFee;
 
-        // Transfer owner proceeds to contract
-        if (ownerProceeds > 0) _transferIn(payer, ownerProceeds);
+            // Transfer owner proceeds to contract
+            if (ownerProceeds > 0) _transferIn(payer, ownerProceeds);
 
-        // Handle excess payment
-        uint256 excess = msg.value - totalRequired;
-        if (excess > 0) {
-            CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(),
-                address(this),
-                payer,
-                excess
-            );
+            // Handle excess payment
+            uint256 excess = msg.value - totalRequired;
+            if (excess > 0) {
+                CurrencyTransfer.transferCurrency(currency, address(this), payer, excess);
+            }
+        } else {
+            // ERC20 payment: reject any ETH sent
+            if (msg.value != 0) revert Membership__UnexpectedValue();
+
+            // Transfer ERC20 from payer to contract for the full amount
+            uint256 balanceBefore = currency.balanceOf(address(this));
+            CurrencyTransfer.safeTransferERC20(currency, payer, address(this), totalRequired);
+            uint256 balanceAfter = currency.balanceOf(address(this));
+
+            if (balanceAfter - balanceBefore < totalRequired) {
+                Membership__InsufficientPayment.selector.revertWith();
+            }
+
+            // Collect protocol fee (transfers from contract since tokens are already here)
+            uint256 protocolFee = _collectProtocolFee(address(this), basePrice);
+
+            // Calculate owner proceeds (what goes to space owner)
+            uint256 ownerProceeds = totalRequired - protocolFee;
+
+            // For ERC20, owner proceeds are already in contract via _transferIn
+            if (ownerProceeds > 0) {
+                MembershipStorage.Layout storage $ = MembershipStorage.layout();
+                $.tokenBalance += ownerProceeds;
+            }
         }
 
         _mintMembershipPoints(receiver, totalRequired);
