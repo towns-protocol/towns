@@ -624,41 +624,46 @@ func (ctc *cacheTestContext) compareStreamStorage(
 		}
 	}
 
-	// Calculate the expected starting miniblock based on history window configuration.
-	// This ensures we only compare miniblocks that nodes are expected to have based on
-	// the configured retention policy, rather than accepting whatever each node has.
+	// Calculate the minimum required starting miniblock based on history window configuration.
+	// All nodes must have at least miniblocks from (lastMbNum - historyWindow).
 	lastMbNum := first.Miniblocks[len(first.Miniblocks)-1].Number
 	historyWindow := instances[0].params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(streamId.Type())
-	expectedFromInclusive := fromInclusive
+	minRequiredFrom := fromInclusive
 	if historyWindow > 0 {
 		historyStart := lastMbNum - int64(historyWindow)
-		if historyStart > expectedFromInclusive {
-			expectedFromInclusive = historyStart
+		if historyStart > minRequiredFrom {
+			minRequiredFrom = historyStart
 		}
 	}
 
-	// Verify each node has miniblocks starting from the expected point.
-	// This catches cases where a node is missing more miniblocks than the history window allows.
+	// Verify each node has at least the minimum required miniblocks, and find the
+	// earliest miniblock that ALL nodes have (to start comparison from there).
+	// Nodes may have more history than required, but we compare only what all nodes have.
+	actualFromInclusive := fromInclusive
 	for i, inst := range instances {
 		ranges, err := inst.cache.params.Storage.GetMiniblockNumberRanges(ctc.ctx, streamId)
 		ctc.require.NoError(err, "failed to get miniblock ranges for node %d %s", i, nodes[i])
 		ctc.require.NotEmpty(ranges, "node %d %s has no miniblocks for stream %s", i, nodes[i], streamId)
 		ctc.require.LessOrEqual(
 			ranges[0].StartInclusive,
-			expectedFromInclusive,
-			"node %d %s is missing miniblocks: has from %d but expected from %d (history window: %d, last mb: %d)",
-			i, nodes[i], ranges[0].StartInclusive, expectedFromInclusive, historyWindow, lastMbNum,
+			minRequiredFrom,
+			"node %d %s is missing miniblocks: has from %d but expected at least from %d (history window: %d, last mb: %d)",
+			i, nodes[i], ranges[0].StartInclusive, minRequiredFrom, historyWindow, lastMbNum,
 		)
+		// Track the maximum StartInclusive across all nodes - this is where we start comparison
+		if ranges[0].StartInclusive > actualFromInclusive {
+			actualFromInclusive = ranges[0].StartInclusive
+		}
 	}
 
 	toExclusive := first.Miniblocks[0].Number
-	for expectedFromInclusive < toExclusive {
+	for actualFromInclusive < toExclusive {
 		var first []*storage.MiniblockDescriptor
 		for i, inst := range instances {
 			miniblocks, err := inst.cache.params.Storage.ReadMiniblocks(
 				ctc.ctx,
 				streamId,
-				expectedFromInclusive,
+				actualFromInclusive,
 				toExclusive,
 				false,
 			)
@@ -669,7 +674,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 				ctc.require.Equal(first, miniblocks, "stream %s miniblocks are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
 			}
 		}
-		expectedFromInclusive += int64(len(first))
+		actualFromInclusive += int64(len(first))
 	}
 }
 
