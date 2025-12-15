@@ -148,6 +148,7 @@ type (
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
+		// TODO: Add unit test for this function.
 		ReadMiniblocks(
 			ctx context.Context,
 			streamId StreamId,

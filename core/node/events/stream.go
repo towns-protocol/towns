@@ -651,8 +651,13 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 // GetMiniblocks returns miniblock data directly from storage, bypassing the cache.
 // This is useful when we expect block data to be substantial and do not want to bust the cache.
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
-// terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
+// terminus:
+//   - true if fromIndex is 0
+//   - true if there is not enough blocks in the storage to fill the range because the stream is trimmed
+//   - true if there are no more blocks because they've been garbage collected
+//
 // GetMiniblocks is thread-safe.
+// TODO: Add unit tests to make sure terminus is set correctly.
 func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
@@ -679,7 +684,8 @@ func (s *Stream) GetMiniblocks(
 		}
 	}
 
-	terminus := fromInclusive == 0
+	terminus := fromInclusive == 0 || int64(len(blocks)) < toExclusive-fromInclusive
+
 	return miniblocks, terminus, nil
 }
 
