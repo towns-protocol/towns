@@ -338,9 +338,16 @@ func (s *Service) getMiniblocksImpl(
 				return nil, err
 			}
 		} else {
-			// Check if the response indicates trimmed miniblocks
-			if resp.Msg.Terminus && req.Msg.FromInclusive > 0 && resp.Msg.FromInclusive > req.Msg.FromInclusive {
-				// The range stored in the DB is not full - some miniblocks were trimmed.
+			// If local node has no miniblocks for the requested range, forward to remotes
+			if len(resp.Msg.Miniblocks) == 0 {
+				logging.FromCtx(ctx).Warnw("Local node has no miniblocks for requested range, forwarding to remotes",
+					"streamId", streamId,
+					"requestedFrom", req.Msg.FromInclusive,
+					"requestedTo", req.Msg.ToExclusive)
+				// Fall through to remote forwarding
+			} else if resp.Msg.Terminus && resp.Msg.FromInclusive > req.Msg.FromInclusive {
+				// Check if the response indicates trimmed miniblocks
+				// The range stored in the DB is not full - some miniblocks were trimmed or deleted.
 				// Calculate the expected trim point to determine if this is acceptable.
 				var trimAcceptable bool
 				trimAcceptable, err = s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive)
@@ -358,6 +365,7 @@ func (s *Service) getMiniblocksImpl(
 						"requestedFrom", req.Msg.FromInclusive,
 						"actualFrom", resp.Msg.FromInclusive)
 				}
+				// Fall through to remote forwarding
 			} else {
 				return resp, nil
 			}
