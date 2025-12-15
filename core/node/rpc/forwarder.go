@@ -343,7 +343,8 @@ func (s *Service) getMiniblocksImpl(
 				// The range stored in the DB is not full - some miniblocks were trimmed.
 				// Calculate the expected trim point to determine if this is acceptable.
 				var trimAcceptable bool
-				if trimAcceptable, err = s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive); err != nil {
+				trimAcceptable, err = s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive)
+				if err != nil {
 					logging.FromCtx(ctx).Warnw("Failed to check if trimmed range is acceptable",
 						"error", err, "streamId", streamId, "fromInclusive", resp.Msg.FromInclusive)
 				} else {
@@ -357,8 +358,9 @@ func (s *Service) getMiniblocksImpl(
 						"requestedFrom", req.Msg.FromInclusive,
 						"actualFrom", resp.Msg.FromInclusive)
 				}
+			} else {
+				return resp, nil
 			}
-			return resp, nil
 		}
 	}
 
