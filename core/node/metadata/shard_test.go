@@ -8,6 +8,7 @@ import (
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -17,13 +18,54 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	nodespkg "github.com/towns-protocol/towns/core/node/nodes"
 	prot "github.com/towns-protocol/towns/core/node/protocol"
+	protocolconnect "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
+
+type fakeNodeRegistry struct{}
+
+func (fakeNodeRegistry) GetNode(address common.Address) (*nodespkg.NodeRecord, error) {
+	b := address.Bytes()
+	if len(b) == 0 {
+		return nil, base.RiverError(prot.Err_INVALID_ARGUMENT, "empty address")
+	}
+	idx := int(b[len(b)-1])
+	return nodespkg.NewNodeRecordForTest(address, idx), nil
+}
+
+func (fakeNodeRegistry) GetNodeByPermanentIndex(index int32) (*nodespkg.NodeRecord, error) {
+	if index < 0 || index > 255 {
+		return nil, base.RiverError(prot.Err_INVALID_ARGUMENT, "index out of range", "index", index)
+	}
+	address := common.BytesToAddress(bytes.Repeat([]byte{byte(index)}, 20))
+	return nodespkg.NewNodeRecordForTest(address, int(index)), nil
+}
+
+func (fakeNodeRegistry) GetAllNodes() []*nodespkg.NodeRecord {
+	return nil
+}
+
+func (fakeNodeRegistry) GetStreamServiceClientForAddress(common.Address) (protocolconnect.StreamServiceClient, error) {
+	return nil, base.RiverError(prot.Err_INTERNAL, "not implemented")
+}
+
+func (fakeNodeRegistry) GetNodeToNodeClientForAddress(common.Address) (protocolconnect.NodeToNodeClient, error) {
+	return nil, base.RiverError(prot.Err_INTERNAL, "not implemented")
+}
+
+func (fakeNodeRegistry) GetValidNodeAddresses() []common.Address {
+	return nil
+}
+
+func (fakeNodeRegistry) IsOperator(common.Address) bool {
+	return false
+}
 
 type metadataTestEnv struct {
 	shard *MetadataShard
@@ -71,7 +113,12 @@ func setupMetadataShardTest(t *testing.T) metadataTestEnv {
 	)
 	require.NoError(t, err)
 
-	store, err := storage.NewPostgresMetadataShardStore(ctx, &streamStore.PostgresEventStore, 1)
+	store, err := storage.NewPostgresMetadataShardStore(
+		ctx,
+		&streamStore.PostgresEventStore,
+		1,
+		fakeNodeRegistry{},
+	)
 	require.NoError(t, err)
 
 	shard := &MetadataShard{

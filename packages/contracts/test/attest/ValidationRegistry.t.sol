@@ -9,6 +9,9 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {AppRegistryBaseTest} from "./AppRegistryBase.t.sol";
 
 contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase {
+    // Solady EnumerableSetLib uses this value as a sentinel - must exclude from fuzz tests
+    bytes32 internal constant ZERO_SENTINEL_BYTES32 = bytes32(uint256(0xfbb67fda52d4bfb8bf));
+
     // Default test data
     address internal DEFAULT_VALIDATOR;
     address internal SECOND_VALIDATOR;
@@ -246,6 +249,7 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
         bytes32 requestHash
     ) external givenSimpleAppIsRegistered givenAgentIsRegistered {
         vm.assume(bytes(uri).length > 0 && bytes(uri).length < 1000);
+        vm.assume(requestHash != bytes32(0) && requestHash != ZERO_SENTINEL_BYTES32);
 
         vm.prank(address(SIMPLE_APP));
         validationRegistry.validationRequest(DEFAULT_VALIDATOR, agentId, uri, requestHash);
@@ -523,7 +527,7 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
     function test_validationResponse_fuzzScore(
         uint8 score
     ) external givenSimpleAppIsRegistered givenAgentIsRegistered givenValidationRequestExists {
-        vm.assume(score <= 100);
+        score = uint8(bound(score, 0, 100));
 
         vm.prank(DEFAULT_VALIDATOR);
         validationRegistry.validationResponse(
@@ -1496,7 +1500,7 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
     function test_revertWhen_validationResponse_fuzzScoreAbove100(
         uint8 score
     ) external givenSimpleAppIsRegistered givenAgentIsRegistered givenValidationRequestExists {
-        vm.assume(score > 100);
+        score = uint8(bound(score, 101, type(uint8).max));
 
         vm.prank(DEFAULT_VALIDATOR);
         vm.expectRevert(ValidationRegistry__InvalidResponseScore.selector);

@@ -129,7 +129,7 @@ func (s *Service) addParsedEvent(
 		return nil, err
 	}
 
-	// TODO: REPLICATION: FIX: why canAddEvent exists? It doesn't seem to be correct to return nil, nil here.
+	// if no errors, but canAddEvent is false, return nil, nil - this was a no-op idempotent operation
 	if !canAddEvent {
 		return nil, nil
 	}

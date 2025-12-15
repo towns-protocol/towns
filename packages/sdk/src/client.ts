@@ -63,6 +63,7 @@ import {
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
     EncryptedDataVersion,
+    EventRef,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -2816,7 +2817,7 @@ export class Client
             tags?: PlainMessage<Tags>
             ephemeral?: boolean
         } = {},
-    ): Promise<{ eventId: string }> {
+    ): Promise<{ eventId: string; newEvents: EventRef[] }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -2840,7 +2841,7 @@ export class Client
             isDefined(prevMiniblockNum),
             'no prev miniblock num for stream ' + streamIdAsString(streamId),
         )
-        const { eventId } = await this.makeEventWithHashAndAddToStream(
+        const { eventId, newEvents } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
@@ -2851,7 +2852,7 @@ export class Client
             undefined, // retryCount
             options.ephemeral,
         )
-        return { eventId }
+        return { eventId, newEvents }
     }
 
     async makeEventWithHashAndAddToStream(
@@ -2864,7 +2865,7 @@ export class Client
         tags?: PlainMessage<Tags>,
         retryCount?: number,
         ephemeral?: boolean,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; newEvents: EventRef[] }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(
@@ -2889,7 +2890,7 @@ export class Client
         }
 
         try {
-            await this.rpcClient.addEvent({
+            const result = await this.rpcClient.addEvent({
                 streamId: streamIdAsBytes(streamId),
                 event,
             })
@@ -2897,7 +2898,7 @@ export class Client
                 const stream = this.streams.get(streamId)
                 stream?.updateLocalEvent(localId, eventId, 'sent')
             }
-            return { prevMiniblockHash, eventId }
+            return { prevMiniblockHash, eventId, newEvents: result.newEvents }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH

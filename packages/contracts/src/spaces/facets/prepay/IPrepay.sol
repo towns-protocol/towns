@@ -14,6 +14,7 @@ interface IPrepayBase {
     error Prepay__InvalidAmount();
     error Prepay__InvalidAddress();
     error Prepay__InvalidMembership();
+    error Prepay__NotAllowed();
 
     // =============================================================
     //                           EVENTS
