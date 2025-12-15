@@ -111,28 +111,6 @@ All operations succeed or all fail.
 To request users to sign transactions or messages, see [Interactions](/build/bots/interactions). This page focuses on bot-initiated blockchain operations.
 </Note>
 
-## Reference
-
-### Transaction Parameters
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier for matching responses |
-| `title` | string | Transaction title shown to user |
-| `subtitle` | string | Additional context |
-| `chainId` | string | Chain ID (e.g., `'8453'` for Base mainnet) |
-| `to` | address | Contract address |
-| `value` | string | ETH value in wei |
-| `data` | hex | Encoded function call |
-| `signerWallet` | address? | Restrict to specific wallet (optional) |
-
-### Signature Types
-
-| Type | Description |
-|------|-------------|
-| `TYPED_DATA` | EIP-712 structured data (recommended) |
-| `PERSONAL_SIGN` | Plain text message signature |
-
 ## Utility Functions
 
 ### getSmartAccountFromUserId
@@ -166,63 +144,10 @@ Returns `null` if no smart account exists.
 | Read contract state | `readContract` | - |
 | Bot sends transaction | `execute` | - |
 | Bot sends batch transactions | `execute` with multiple calls | - |
-| User sends transaction | `sendInteractionRequest` (transaction) | - |
-| User signs message | `sendInteractionRequest` (signature) | - |
-| User clicks button/form | `sendInteractionRequest` (form) | [Interactive Messages](/build/bots/interactive-messages) |
+| User sends transaction | `sendInteractionRequest` (transaction) | [Interactions](/build/bots/interactions) |
+| User signs message | `sendInteractionRequest` (signature) | [Interactions](/build/bots/interactions) |
+| User clicks button/form | `sendInteractionRequest` (form) | [Interactions](/build/bots/interactions) |
 | Bot's SimpleAccount operations | `writeContract` | - |
-
-## Best Practices
-
-### Error Handling
-
-Always check for errors in responses:
-
-```ts
-if (response.txHash) {
-  // Success
-} else if (response.error) {
-  // Handle error
-  await handler.sendMessage(channelId, `Error: ${response.error}`)
-}
-```
-
-### Targeting Users
-
-Target specific users for personal interactions:
-
-```ts
-await handler.sendInteractionRequest(
-  channelId,
-  payload,
-  hexToBytes(userId as `0x${string}`) // Only this user can interact
-)
-```
-
-Leave `undefined` for public interactions.
-
-### Unique IDs
-
-Use unique IDs for each interaction to match responses:
-
-```ts
-const id = `vote-${Date.now()}-${event.userId}`
-```
-
-### Gas Optimization
-
-Batch multiple operations when possible:
-
-```ts
-// Good: One transaction
-await execute(bot.viem, {
-  calls: [approve(), swap(), stake()]
-})
-
-// Bad: Three transactions
-await execute(bot.viem, { calls: [approve()] })
-await execute(bot.viem, { calls: [swap()] })
-await execute(bot.viem, { calls: [stake()] })
-```
 
 ## Next Steps
 
