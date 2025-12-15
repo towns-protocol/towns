@@ -6,6 +6,7 @@ import { safeEnv, SafeEnvOpts } from '@towns-protocol/utils'
 export interface BaseChainConfig {
     chainId: number
     addresses: {
+        accountModules: Address
         spaceFactory: Address
         spaceOwner: Address
         baseRegistry: Address
@@ -37,6 +38,7 @@ export interface Web3Deployment {
 const envKey: Record<string, string[]> = {
     RIVER_ENV: ['RIVER_ENV'],
     BASE_CHAIN_ID: ['BASE_CHAIN_ID'],
+    BASE_ADDRESSES_ACCOUNT_MODULES: ['BASE_ADDRESSES_ACCOUNT_MODULES', 'ACCOUNT_MODULES_ADDRESS'],
     BASE_ADDRESSES_APP_REGISTRY: ['BASE_ADDRESSES_APP_REGISTRY', 'BASE_REGISTRY_ADDRESS'],
     BASE_ADDRESSES_SPACE_FACTORY: ['BASE_ADDRESSES_SPACE_FACTORY', 'SPACE_FACTORY_ADDRESS'],
     BASE_ADDRESSES_SPACE_OWNER: ['BASE_ADDRESSES_SPACE_OWNER', 'SPACE_OWNER_ADDRESS'],
@@ -105,6 +107,7 @@ function makeWeb3Deployment(
         base: {
             chainId: parseInt(requiredEnv(envKey.BASE_CHAIN_ID)),
             addresses: {
+                accountModules: requiredEnv(envKey.BASE_ADDRESSES_ACCOUNT_MODULES) as Address,
                 baseRegistry: requiredEnv(envKey.BASE_ADDRESSES_APP_REGISTRY) as Address,
                 spaceFactory: requiredEnv(envKey.BASE_ADDRESSES_SPACE_FACTORY) as Address,
                 spaceOwner: requiredEnv(envKey.BASE_ADDRESSES_SPACE_OWNER) as Address,
