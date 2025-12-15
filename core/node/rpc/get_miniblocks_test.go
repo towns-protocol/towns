@@ -886,7 +886,11 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	require.NoError(err)
 	require.True(resp.Msg.Terminus, "Terminus should be true when stream is trimmed and requesting from 0")
 	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
-	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num+1-trimToMiniblock), "Should return miniblocks from trim point onwards")
+	require.Len(
+		resp.Msg.Miniblocks,
+		int(spaceLastMb.Num+1-trimToMiniblock),
+		"Should return miniblocks from trim point onwards",
+	)
 	testfmt.Logf(t, "After trim - Terminus: %v, FromInclusive: %d, Miniblocks: %d",
 		resp.Msg.Terminus, resp.Msg.FromInclusive, len(resp.Msg.Miniblocks))
 

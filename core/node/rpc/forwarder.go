@@ -332,8 +332,9 @@ func (s *Service) getMiniblocksImpl(
 		resp, err = s.localGetMiniblocks(ctx, req, stream)
 		if err != nil {
 			if IsOperationRetriableOnRemotes(err) {
-				logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
-					"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId, RiverNoForwardHeader, req.Header().Get(RiverNoForwardHeader))
+				logging.FromCtx(ctx).
+					Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
+						"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId, RiverNoForwardHeader, req.Header().Get(RiverNoForwardHeader))
 			} else {
 				return nil, err
 			}
