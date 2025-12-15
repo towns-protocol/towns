@@ -524,115 +524,44 @@ bot.onInteractionResponse(async (handler, event) => {
 
 ## Best Practices
 
-### Use Unique IDs
-
-Generate unique IDs to prevent conflicts:
-
-```ts
-// Good
-const id = `action-${Date.now()}-${event.userId}`
-
-// Bad
-const id = 'button'
-```
-
-### Clear Labels
-
-Make button labels descriptive:
-
-```ts
-// Good
-{ label: 'Accept Terms and Conditions' }
-{ label: 'Cancel' }
-
-// Bad
-{ label: 'OK' }
-{ label: 'Button' }
-```
-
-### Provide Context
-
-Always include helpful subtitles:
-
-```ts
-{
-  title: 'Delete Account',
-  subtitle: 'This action cannot be undone. Are you sure?',
-  // ...
-}
-```
-
-### Validate Input
-
-Always validate user input:
-
-```ts
-if (component.component.case === 'textInput') {
-  const value = component.component.value.value
-  
-  if (!value || value.trim().length === 0) {
-    await handler.sendMessage(event.channelId, 'Input cannot be empty')
-    return
-  }
-  
-  if (value.length > 500) {
-    await handler.sendMessage(event.channelId, 'Input too long (max 500 chars)')
-    return
-  }
-  
-  // Process valid input
-}
-```
-
-### Handle All Cases
-
-Check for all possible component types:
-
-```ts
-for (const component of form.components) {
-  if (component.component.case === 'button') {
-    // Handle buttons
-  }
-  
-  if (component.component.case === 'textInput') {
-    // Handle text inputs
-  }
-}
-```
-
-### Target Appropriately
-
-Use public vs targeted interactions:
-
-```ts
-// Public poll - anyone can vote
-await handler.sendInteractionRequest(channelId, pollPayload)
-
-// Personal action - only this user
-await handler.sendInteractionRequest(
-  channelId,
-  settingsPayload,
-  hexToBytes(event.userId as `0x${string}`)
-)
-```
+- Use button labels that are descriptive about the action
+- Provide context with subtitles to help users understand what will happen
+- Validate user text input before processing
+- Handle all component types (buttons, text inputs) in your response handler
+- Use targeted interactions for personal actions, public interactions for polls/votes
+- Always check for errors in transaction and signature responses
 
 ## Transaction Requests
 
 Request users to execute blockchain transactions from their wallets:
 
 ```ts
-import { hexToBytes, encodeFunctionData, erc20Abi } from 'viem'
+import { hexToBytes, encodeFunctionData, erc20Abi, parseUnits } from 'viem'
+import { getSmartAccountFromUserId } from '@towns-protocol/bot'
 
-bot.onSlashCommand('send-towns', async (handler, event) => {
-  const townsAddress = '0x4ed4e862860bed51a9570b96d89af5e1b0efefed' // Towns token
-  const recipient = '0x1234567890123456789012345678901234567890'
-  const amount = '50000000000000000000' // 50 TOWNS (18 decimals)
+bot.onSlashCommand('sendTowns', async (handler, event) => {
+  // Usage: /sendTowns @user 50
+  const townsAddress = '0x00000000a22c618fd6b4d7e9a335c4b96b189a38' // Towns token
+  
+  const mentionedUser = event.mentions[0]
+  if (!mentionedUser) {
+    await handler.sendMessage(event.channelId, 'Please mention a user')
+    return
+  }
+  
+  const recipient = await getSmartAccountFromUserId(bot, { userId: mentionedUser.userId })
+  if (!recipient) {
+    await handler.sendMessage(event.channelId, 'User does not have a smart account')
+    return
+  }
+  
+  const amount = parseUnits(event.args[0] || '0', 18)
   
   // Encode ERC20 transfer
   const data = encodeFunctionData({
     abi: erc20Abi,
     functionName: 'transfer',
-    args: [recipient, BigInt(amount)]
+    args: [recipient, amount]
   })
   
   await handler.sendInteractionRequest(
@@ -642,7 +571,7 @@ bot.onSlashCommand('send-towns', async (handler, event) => {
       value: {
         id: 'towns-transfer',
         title: 'Send TOWNS',
-        subtitle: 'Send 50 TOWNS tokens',
+        subtitle: `Send ${event.args[0]} TOWNS to ${mentionedUser.userId}`,
         content: {
           case: 'evm',
           value: {
