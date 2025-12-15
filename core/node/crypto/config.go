@@ -310,6 +310,12 @@ func DefaultOnChainSettings() *OnChainSettings {
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 		StreamTrimActivationFactor:         0, // 0 means snapshots trimming is disabled
 
+		StreamHistoryMiniblocks: StreamHistoryMiniblocks{
+			UserInbox:    5000,
+			UserSettings: 40,
+			Space:        400,
+		},
+
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
 
