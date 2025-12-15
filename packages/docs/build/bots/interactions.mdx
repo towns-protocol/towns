@@ -1,8 +1,8 @@
 ---
-title: Interactive Messages
+title: Interactions
 ---
 
-Interactive messages let your bot create buttons, text inputs, and forms for user interactions. These are UI elements that don't require blockchain transactions.
+Interactions let users interact with your bot through forms, buttons, text inputs, transaction requests, and signature requests.
 
 ## Overview
 
@@ -616,9 +616,172 @@ await handler.sendInteractionRequest(
 )
 ```
 
+## Transaction Requests
+
+Request users to execute blockchain transactions from their wallets:
+
+```ts
+import { hexToBytes, encodeFunctionData, erc20Abi } from 'viem'
+
+bot.onSlashCommand('send-towns', async (handler, event) => {
+  const townsAddress = '0x4ed4e862860bed51a9570b96d89af5e1b0efefed' // Towns token
+  const recipient = '0x1234567890123456789012345678901234567890'
+  const amount = '50000000000000000000' // 50 TOWNS (18 decimals)
+  
+  // Encode ERC20 transfer
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [recipient, BigInt(amount)]
+  })
+  
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'transaction',
+      value: {
+        id: 'towns-transfer',
+        title: 'Send TOWNS',
+        subtitle: 'Send 50 TOWNS tokens',
+        content: {
+          case: 'evm',
+          value: {
+            chainId: '8453',
+            to: townsAddress,
+            value: '0',
+            data: data,
+            signerWallet: undefined // User chooses wallet
+          }
+        }
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`) // Optional: target specific user
+  )
+})
+```
+
+## Signature Requests
+
+Request cryptographic signatures for authentication or permissions:
+
+```ts
+import { InteractionRequestPayload_Signature_SignatureType } from '@towns-protocol/proto'
+
+bot.onSlashCommand('sign', async (handler, event) => {
+  const typedData = {
+    domain: {
+      name: 'My Towns Bot',
+      version: '1',
+      chainId: 8453,
+      verifyingContract: '0x0000000000000000000000000000000000000000'
+    },
+    types: {
+      Message: [
+        { name: 'from', type: 'address' },
+        { name: 'content', type: 'string' },
+        { name: 'timestamp', type: 'uint256' }
+      ]
+    },
+    primaryType: 'Message',
+    message: {
+      from: event.userId,
+      content: 'I agree to the terms',
+      timestamp: Math.floor(Date.now() / 1000)
+    }
+  }
+  
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'signature',
+      value: {
+        id: 'agreement-signature',
+        title: 'Sign Agreement',
+        subtitle: `Sign: "${typedData.message.content}"`,
+        chainId: '8453',
+        data: JSON.stringify(typedData),
+        type: InteractionRequestPayload_Signature_SignatureType.TYPED_DATA,
+        signerWallet: undefined
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`)
+  )
+})
+```
+
+## Handling All Interaction Types
+
+Handle forms, transactions, and signatures in one response handler:
+
+```ts
+bot.onInteractionResponse(async (handler, event) => {
+  const { response } = event
+  
+  switch (response.payload.content?.case) {
+    case 'form':
+      const formData = response.payload.content.value
+      
+      // Handle button clicks
+      for (const component of formData.components) {
+        if (component.component.case === 'button') {
+          if (component.id === 'yes-button') {
+            await handler.sendMessage(event.channelId, 'You voted Yes!')
+          }
+        }
+        
+        // Handle text input
+        if (component.component.case === 'textInput') {
+          const value = component.component.value.value
+          await handler.sendMessage(event.channelId, `You entered: ${value}`)
+        }
+      }
+      break
+      
+    case 'transaction':
+      const txData = response.payload.content.value
+      
+      // Match response to original request
+      if (txData.requestId === 'towns-transfer') {
+        if (txData.txHash) {
+          await handler.sendMessage(
+            event.channelId,
+            `TOWNS transfer confirmed: ${txData.txHash}`
+          )
+        } else if (txData.error) {
+          await handler.sendMessage(
+            event.channelId,
+            `TOWNS transfer failed: ${txData.error}`
+          )
+        }
+      }
+      break
+      
+    case 'signature':
+      const signatureData = response.payload.content.value
+      
+      // Match response to original request
+      if (signatureData.requestId === 'agreement-signature') {
+        if (signatureData.signature) {
+          // Verify and process signature
+          await handler.sendMessage(
+            event.channelId,
+            `Agreement signed successfully`
+          )
+        } else if (signatureData.error) {
+          await handler.sendMessage(
+            event.channelId,
+            `Signature failed: ${signatureData.error}`
+          )
+        }
+      }
+      break
+  }
+})
+```
+
 ## Next Steps
 
-- Learn about [onchain integrations](/build/bots/onchain-integrations) for blockchain interactions
+- Learn about [onchain integrations](/build/bots/onchain-integrations) for bot blockchain operations
 - Explore [slash commands](/build/bots/slash-commands)
 - Read about [event handlers](/build/bots/events)
 - Check out [external integrations](/build/bots/external-interactions)

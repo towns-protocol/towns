@@ -153,7 +153,7 @@
               "build/bots/local-development",
               "build/bots/events",
               "build/bots/slash-commands",
-              "build/bots/interactive-messages",
+              "build/bots/interactions",
               "build/bots/onchain-integrations",
               "build/bots/external-interactions",
               "build/bots/roles",
