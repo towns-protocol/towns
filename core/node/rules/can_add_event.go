@@ -265,16 +265,14 @@ func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPay
 	case *DmChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember).
-			requireChainAuth(params.dmBotInstalledIfApplicable)
+			requireChainAuth(params.dmValidationChainAuth)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-// dmBotInstalledIfApplicable returns chain auth args to verify that if this DM
-// involves a bot, the bot is installed on the user's account.
-func (params *aeParams) dmBotInstalledIfApplicable() (*auth.ChainAuthArgs, error) {
+func (params *aeParams) dmValidationChainAuth() (*auth.ChainAuthArgs, error) {
 	inception, err := params.streamView.GetDMChannelInception()
 	if err != nil {
 		return nil, err
@@ -283,7 +281,7 @@ func (params *aeParams) dmBotInstalledIfApplicable() (*auth.ChainAuthArgs, error
 	firstPartyAddr := common.BytesToAddress(inception.FirstPartyAddress)
 	secondPartyAddr := common.BytesToAddress(inception.SecondPartyAddress)
 
-	return auth.NewChainAuthArgsForDmValidation(firstPartyAddr, secondPartyAddr, false), nil
+	return auth.NewChainAuthArgsForDmValidation(firstPartyAddr, secondPartyAddr), nil
 }
 
 func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilderAE {

@@ -98,16 +98,11 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 	}
 }
 
-func NewChainAuthArgsForDmValidation(
-	firstParty common.Address,
-	secondParty common.Address,
-	isStreamCreation bool,
-) *ChainAuthArgs {
+func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:             chainAuthKindDmValidation,
 		principal:        firstParty,
 		botClientAddress: secondParty,
-		isStreamCreation: isStreamCreation,
 	}
 }
 
@@ -203,9 +198,6 @@ type ChainAuthArgs struct {
 	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
 	// This is the address of the user stream that the bot owner is trying to write to.
 	botClientAddress common.Address
-
-	// isStreamCreation is true when validating DM stream creation (vs message sending)
-	isStreamCreation bool
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
