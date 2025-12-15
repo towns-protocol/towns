@@ -35,19 +35,27 @@ jobs:
               id: generate
               run: |
                   echo "Generating Bot SDK changelog..."
-                  bun run changelog || true  # Don't fail on exit code 1 (breaking changes)
+                  bun run changelog
+                  EXIT_CODE=$?
 
-                  # Check if changelog was actually generated/updated
-                  if [ -f packages/docs/build/bots/changelog.mdx ]; then
-                    echo "changelog_exists=true" >> $GITHUB_OUTPUT
-                  else
-                    echo "changelog_exists=false" >> $GITHUB_OUTPUT
+                  # Exit code 1 means breaking changes detected (expected)
+                  # Any other non-zero exit code is a real error
+                  if [ $EXIT_CODE -ne 0 ] && [ $EXIT_CODE -ne 1 ]; then
+                    echo "Error: Changelog generation failed with exit code $EXIT_CODE"
+                    exit $EXIT_CODE
                   fi
+
+                  echo "Changelog generation completed (exit code: $EXIT_CODE)"
 
             - name: Check for changes
               id: changes
               run: |
-                  git diff --quiet packages/docs/build/bots/changelog.mdx && echo "has_changes=false" >> $GITHUB_OUTPUT || echo "has_changes=true" >> $GITHUB_OUTPUT
+                  # Use git status to check for both tracked and untracked files
+                  if [ -n "$(git status --porcelain packages/docs/build/bots/changelog.mdx)" ]; then
+                    echo "has_changes=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "has_changes=false" >> $GITHUB_OUTPUT
+                  fi
 
             - name: Commit and push changelog
               if: steps.changes.outputs.has_changes == 'true'

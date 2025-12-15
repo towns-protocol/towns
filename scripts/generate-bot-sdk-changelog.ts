@@ -10,7 +10,7 @@ const CONFIG = {
     outputPath: 'packages/docs/build/bots/changelog.mdx',
     repoUrl: 'https://github.com/river-build/river',
     defaultCommitLimit: 100,
-    breakingKeywords: ['breaking change', 'breaking:', '!:', 'removed', 'deprecated'],
+    breakingKeywords: ['breaking change', 'breaking:', '!:', 'removed'],
 }
 
 enum ChangeType {

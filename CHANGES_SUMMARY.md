@@ -62,35 +62,65 @@ Automated system for tracking and documenting Bot SDK changes.
 ## Key Features
 
 ### Safety First
+
 - Never generates fake migration instructions
 - Requires manual verification for all migration guides
 - Shows affected files for transparency
 - Links to actual commit diffs
 
 ### Automatic Updates
+
 - Triggers on push to main with bot/SDK changes
 - Generates changelog from git history
 - Auto-commits to repository
 - No manual intervention needed
 
 ### Developer Friendly
+
 - Clear categorization (Breaking, Feature, Fix, Deprecation)
 - Direct links to review changes
 - Shows impact through affected files
 - Professional documentation format
 
+## Bug Fixes
+
+### Fixed Deprecation Misclassification
+
+- Removed 'deprecated' from breaking keywords array
+- Deprecation commits now properly categorized as DEPRECATION instead of BREAKING
+- Improved commit classification accuracy
+
+### Fixed Workflow First-Run Failure
+
+- Changed from `git diff --quiet` to `git status --porcelain`
+- Now properly detects newly generated untracked files
+- Ensures changelog is committed on first workflow run
+
+### Fixed Error Handling in Workflow
+
+- Replaced `|| true` with proper exit code checking
+- Only accepts exit code 1 (breaking changes) as non-error
+- Real errors (missing files, git failures) now properly reported
+- Better debugging when issues occur
+
+### Fixed Hardcoded Path in Documentation
+
+- Removed user-specific path `/Users/crisvond/Towns-protocol/towns`
+- Documentation now portable for all contributors
+- Uses generic "from repository root" instructions
+
 ## Statistics
 
-- Analyzes 1,567 total commits
+- Analyzes 1,568 total commits
 - Filters to 640 bot/SDK commits (41%)
-- Identifies 6 breaking changes
+- Identifies 5 breaking changes
 - Documents 38 new features
 - Lists 18 bug fixes
-- Tracks 1 deprecation
 
 ## Testing
 
 All tests pass:
+
 1. Script execution works correctly
 2. Changelog file generated (190 lines)
 3. Navigation updated
@@ -101,17 +131,20 @@ All tests pass:
 ## Usage
 
 ### Generate Changelog
+
 ```bash
 bun run changelog
 ```
 
 ### Add Migration Guide
+
 1. Edit `scripts/changelog-migration-guides.ts`
 2. Add verified guide with tested code examples
 3. Run `bun run changelog`
 4. Commit changes
 
 ### View Documentation
+
 Navigate to `/build/bots/changelog` in the documentation site.
 
 ## Next Steps
@@ -122,4 +155,3 @@ Navigate to `/build/bots/changelog` in the documentation site.
 4. Create PR to main
 5. Monitor first automation run
 6. Add verified migration guides as needed
-
