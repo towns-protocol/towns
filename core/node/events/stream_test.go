@@ -536,7 +536,7 @@ func TestStreamGetMiniblocks(t *testing.T) {
 		require.True(terminus, "terminus should be true when fewer blocks returned than requested")
 	})
 
-	t.Run("terminus is false when full range is returned and fromInclusive > 0", func(t *testing.T) {
+	t.Run("terminus is false when full range is returned and fromInclusive more than 0", func(t *testing.T) {
 		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
 		_ = tt.initCache(0, nil)
 		require := require.New(t)
@@ -565,7 +565,7 @@ func TestStreamGetMiniblocks(t *testing.T) {
 		require.False(terminus, "terminus should be false when full range is returned and fromInclusive > 0")
 	})
 
-	t.Run("terminus is true for empty result with fromInclusive > 0", func(t *testing.T) {
+	t.Run("terminus is true for empty result with fromInclusive more than 0", func(t *testing.T) {
 		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
 		_ = tt.initCache(0, nil)
 		require := require.New(t)
