@@ -39,8 +39,6 @@ const (
 	EntitlementResultReason_MISMATCHED_APP_ADDRESS
 	EntitlementResultReason_APP_ENTITLEMENTS
 	EntitlementResultReason_IS_NOT_BOT_OWNER
-	EntitlementResultReason_CREATOR_IS_APP
-	EntitlementResultReason_SECOND_PARTY_NOT_APP
 	EntitlementResultReason_APP_NOT_INSTALLED_ON_USER
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
@@ -59,8 +57,6 @@ var entitlementResultReasonDescriptions = []string{
 	"MISMATCHED_APP_ADDRESS",
 	"APP_ENTITLEMENTS",
 	"IS_NOT_BOT_OWNER",
-	"CREATOR_IS_APP",
-	"SECOND_PARTY_NOT_APP",
 	"APP_NOT_INSTALLED_ON_USER",
 }
 
