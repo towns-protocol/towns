@@ -709,7 +709,7 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 	}
 	require.Len(nodesWithStream, 3)
 	require.NotEqual(nodeWithoutStream, -1)
-	allNodes := append(nodesWithStream, nodeWithoutStream)
+	allNodes := slices.Concat(nodesWithStream, []int{nodeWithoutStream})
 
 	// Let's create clients in order: 0 - all minibocks, 1 - 0-24 deleted, 2 - 10-29 deleted, 3 - no stream
 	clientDescription := []string{"all minibocks", "0-24 deleted", "10-29 deleted", "no stream"}
