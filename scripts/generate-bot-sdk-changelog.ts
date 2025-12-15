@@ -8,7 +8,7 @@ import { MIGRATION_GUIDES } from './changelog-migration-guides.js'
 const CONFIG = {
     packages: ['packages/bot/', 'packages/sdk/', 'packages/towns-bot-cli/'],
     outputPath: 'packages/docs/build/bots/changelog.mdx',
-    repoUrl: 'https://github.com/river-build/river',
+    repoUrl: 'https://github.com/towns-protocol/towns',
     defaultCommitLimit: 100,
     breakingKeywords: ['breaking change', 'breaking:', '!:', 'removed'],
 }
@@ -397,5 +397,5 @@ Always review breaking changes carefully and test your bot after updating depend
 // Run the script
 main().catch((error) => {
     console.error('Error generating changelog:', error)
-    process.exit(1)
+    process.exit(2) // Exit code 2 for errors (1 is reserved for breaking changes)
 })

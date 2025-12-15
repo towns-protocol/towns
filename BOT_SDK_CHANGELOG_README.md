@@ -154,7 +154,18 @@ Uses conventional commit format:
 - `fix:` - Bug fix
 - `BREAKING CHANGE:` in commit body - Breaking change
 - `docs:` - Documentation only
-- Keywords like "deprecated", "removed" - Deprecation
+- Keywords "breaking change", "breaking:", "!:", "removed" - Breaking change
+- Keywords "deprecat" (deprecate, deprecated, deprecating) - Deprecation
+
+### Exit Codes
+
+The generator uses different exit codes for different outcomes:
+
+- **Exit 0**: Success, no breaking changes
+- **Exit 1**: Success with breaking changes detected (expected, not an error)
+- **Exit 2**: Error (missing files, git failures, parse errors, etc.)
+
+The GitHub Actions workflow accepts exit codes 0 and 1 as successful runs, and fails only on exit code 2.
 
 ## Testing
 
