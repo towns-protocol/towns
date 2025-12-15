@@ -648,7 +648,12 @@ func (ctc *cacheTestContext) compareStreamStorage(
 			ranges[0].StartInclusive,
 			minRequiredFrom,
 			"node %d %s is missing miniblocks: has from %d but expected at least from %d (history window: %d, last mb: %d)",
-			i, nodes[i], ranges[0].StartInclusive, minRequiredFrom, historyWindow, lastMbNum,
+			i,
+			nodes[i],
+			ranges[0].StartInclusive,
+			minRequiredFrom,
+			historyWindow,
+			lastMbNum,
 		)
 		// Track the maximum StartInclusive across all nodes - this is where we start comparison
 		if ranges[0].StartInclusive > actualFromInclusive {
