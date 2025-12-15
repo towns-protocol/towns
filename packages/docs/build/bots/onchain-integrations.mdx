@@ -213,7 +213,7 @@ bot.onSlashCommand('sign', async (handler, event) => {
 
 ### Handling Responses
 
-Handle transaction and signature responses:
+Match responses to original requests using the request ID:
 
 ```ts
 bot.onInteractionResponse(async (handler, event) => {
@@ -222,31 +222,40 @@ bot.onInteractionResponse(async (handler, event) => {
   switch (response.payload.content?.case) {
     case 'transaction':
       const txData = response.payload.content.value
-      if (txData.txHash) {
-        await handler.sendMessage(
-          event.channelId,
-          `Transaction confirmed: ${txData.txHash}`
-        )
-      } else if (txData.error) {
-        await handler.sendMessage(
-          event.channelId,
-          `Transaction failed: ${txData.error}`
-        )
+      
+      // Match response to original request
+      if (txData.requestId === 'usdc-transfer') {
+        if (txData.txHash) {
+          await handler.sendMessage(
+            event.channelId,
+            `USDC transfer confirmed: ${txData.txHash}`
+          )
+        } else if (txData.error) {
+          await handler.sendMessage(
+            event.channelId,
+            `USDC transfer failed: ${txData.error}`
+          )
+        }
       }
       break
       
     case 'signature':
       const signatureData = response.payload.content.value
-      if (signatureData.signature) {
-        await handler.sendMessage(
-          event.channelId,
-          `Signature received: ${signatureData.signature}`
-        )
-      } else if (signatureData.error) {
-        await handler.sendMessage(
-          event.channelId,
-          `Signature failed: ${signatureData.error}`
-        )
+      
+      // Match response to original request
+      if (signatureData.requestId === 'agreement-signature') {
+        if (signatureData.signature) {
+          // Verify and process signature
+          await handler.sendMessage(
+            event.channelId,
+            `Agreement signed successfully`
+          )
+        } else if (signatureData.error) {
+          await handler.sendMessage(
+            event.channelId,
+            `Signature failed: ${signatureData.error}`
+          )
+        }
       }
       break
   }
@@ -262,7 +271,7 @@ bot.onInteractionResponse(async (handler, event) => {
 | `id` | string | Unique identifier for matching responses |
 | `title` | string | Transaction title shown to user |
 | `subtitle` | string | Additional context |
-| `chainId` | string | Chain ID (Base mainnet: `'8453'`) |
+| `chainId` | string | Chain ID (e.g., `'8453'` for Base mainnet) |
 | `to` | address | Contract address |
 | `value` | string | ETH value in wei |
 | `data` | hex | Encoded function call |
@@ -274,14 +283,6 @@ bot.onInteractionResponse(async (handler, event) => {
 |------|-------------|
 | `TYPED_DATA` | EIP-712 structured data (recommended) |
 | `PERSONAL_SIGN` | Plain text message signature |
-
-### Common Token Addresses (Base Mainnet)
-
-| Token | Address |
-|-------|---------|
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| WETH | `0x4200000000000000000000000000000000000006` |
-| DAI | `0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb` |
 
 ## Utility Functions
 
