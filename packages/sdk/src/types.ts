@@ -49,7 +49,7 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
-import { addressFromUserId, streamIdAsBytes } from './id'
+import { addressFromUserId } from './id'
 import { DecryptionSessionError, EventSignatureBundle } from './decryptionExtensions'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
@@ -569,7 +569,6 @@ type DeprecatedMembership = {
     userId: string
     op: MembershipOp
     initiatorId: string
-    streamParentId?: string
 }
 
 export const make_MemberPayload_Membership2 = (
@@ -579,7 +578,6 @@ export const make_MemberPayload_Membership2 = (
         userAddress: addressFromUserId(value.userId),
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
-        streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
         reason: MembershipReason.MR_NONE,
     })
 }
