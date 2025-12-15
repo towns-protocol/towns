@@ -233,7 +233,7 @@ func (s *Service) getStreamExImpl(
 
 	allowNoQuorum := allowNoQuorum(req)
 	if !allowNoQuorum && nodes.IsLocalInQuorum() || allowNoQuorum && nodes.IsLocal() {
-		if err := s.localGetStreamEx(ctx, req, resp); err == nil {
+		if err = s.localGetStreamEx(ctx, req, resp); err == nil {
 			return nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes",
@@ -303,7 +303,7 @@ func (s *Service) GetMiniblocks(
 func (s *Service) getMiniblocksImpl(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
-) (*connect.Response[GetMiniblocksResponse], error) {
+) (resp *connect.Response[GetMiniblocksResponse], err error) {
 	if req.Msg.FromInclusive < 0 || req.Msg.ToExclusive <= req.Msg.FromInclusive {
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
@@ -329,7 +329,7 @@ func (s *Service) getMiniblocksImpl(
 
 	allowNoQuorum := allowNoQuorum(req)
 	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
-		resp, err := s.localGetMiniblocks(ctx, req, stream)
+		resp, err = s.localGetMiniblocks(ctx, req, stream)
 		if err != nil {
 			if IsOperationRetriableOnRemotes(err) {
 				logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
@@ -342,20 +342,21 @@ func (s *Service) getMiniblocksImpl(
 			if resp.Msg.Terminus && req.Msg.FromInclusive > 0 && resp.Msg.FromInclusive > req.Msg.FromInclusive {
 				// The range stored in the DB is not full - some miniblocks were trimmed.
 				// Calculate the expected trim point to determine if this is acceptable.
-				trimAcceptable, err := s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive)
-				if err != nil {
+				var trimAcceptable bool
+				if trimAcceptable, err = s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive); err != nil {
 					logging.FromCtx(ctx).Warnw("Failed to check if trimmed range is acceptable",
 						"error", err, "streamId", streamId, "fromInclusive", resp.Msg.FromInclusive)
-					// TODO: Try to fetch miniblocks from remotes
+				} else {
+					if trimAcceptable {
+						return resp, nil
+					}
+
+					// The trimmed range is not acceptable - query remotes for missing miniblocks
+					logging.FromCtx(ctx).Warnw("Trimmed range not acceptable, should query remotes",
+						"streamId", streamId,
+						"requestedFrom", req.Msg.FromInclusive,
+						"actualFrom", resp.Msg.FromInclusive)
 				}
-				if trimAcceptable {
-					return resp, nil
-				}
-				// TODO: The trimmed range is not acceptable - query remotes for missing miniblocks
-				logging.FromCtx(ctx).Warnw("Trimmed range not acceptable, should query remotes",
-					"streamId", streamId,
-					"requestedFrom", req.Msg.FromInclusive,
-					"actualFrom", resp.Msg.FromInclusive)
 			}
 			return resp, nil
 		}
@@ -444,7 +445,7 @@ func (s *Service) GetLastMiniblockHash(
 func (s *Service) getLastMiniblockHashImpl(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
-) (*connect.Response[GetLastMiniblockHashResponse], error) {
+) (resp *connect.Response[GetLastMiniblockHashResponse], err error) {
 	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
 		return nil, err
@@ -461,7 +462,7 @@ func (s *Service) getLastMiniblockHashImpl(
 	}
 
 	if view != nil {
-		if resp, err := s.localGetLastMiniblockHash(view); err == nil {
+		if resp, err = s.localGetLastMiniblockHash(view); err == nil {
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes",
