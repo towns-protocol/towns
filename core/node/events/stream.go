@@ -657,7 +657,6 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 //   - true if there are no more blocks because they've been garbage collected
 //
 // GetMiniblocks is thread-safe.
-// TODO: Add unit tests to make sure terminus is set correctly.
 func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
