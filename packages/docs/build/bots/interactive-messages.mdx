@@ -2,260 +2,623 @@
 title: Interactive Messages
 ---
 
-Interactive messages let your bot create buttons, request transactions, and get signatures from users.
+Interactive messages let your bot create buttons, text inputs, and forms for user interactions. These are UI elements that don't require blockchain transactions.
 
-## Forms with Buttons
+## Overview
 
-Create interactive UI elements like buttons for games, polls, and confirmations.
+Interactive messages enable:
+- **Buttons** - Clickable actions for menus, polls, confirmations
+- **Text inputs** - Collect user feedback, form data, settings
+- **Multi-step flows** - Build wizards and complex interactions
+
+## Quick Example
+
+Simple yes/no confirmation:
 
 ```ts
 import { hexToBytes } from 'viem'
 
-bot.onSlashCommand('play', async (handler, event) => {
+bot.onSlashCommand('vote', async (handler, event) => {
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'form',
+      value: {
+        id: 'vote-poll',
+        title: 'Community Vote',
+        subtitle: 'Choose your option:',
+        components: [
+          {
+            id: 'yes-button',
+            component: { case: 'button', value: { label: 'Yes' } }
+          },
+          {
+            id: 'no-button',
+            component: { case: 'button', value: { label: 'No' } }
+          }
+        ]
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`)
+  )
+})
+
+bot.onInteractionResponse(async (handler, event) => {
+  if (event.response.payload.content?.case !== 'form') return
+  
+  const form = event.response.payload.content.value
+  
+  for (const component of form.components) {
+    if (component.component.case === 'button') {
+      if (component.id === 'yes-button') {
+        await handler.sendMessage(event.channelId, 'You voted Yes!')
+      } else if (component.id === 'no-button') {
+        await handler.sendMessage(event.channelId, 'You voted No!')
+      }
+    }
+  }
+})
+```
+
+## Component Types
+
+### Button
+
+Clickable button for actions.
+
+**Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `label` | string | Yes | Button text displayed to user |
+| `style` | string | No | Visual style: `primary`, `secondary`, `destructive` |
+
+**Example:**
+
+```ts
+{
+  id: 'confirm-button',
+  component: {
+    case: 'button',
+    value: { label: 'Confirm', style: 'primary' }
+  }
+}
+```
+
+### Text Input
+
+Text field for user input.
+
+**Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `label` | string | Yes | Input field label |
+| `placeholder` | string | No | Placeholder text |
+| `multiline` | boolean | No | Enable multi-line input (default: false) |
+| `defaultValue` | string | No | Pre-filled value |
+| `required` | boolean | No | Whether input is required |
+
+**Example:**
+
+```ts
+{
+  id: 'feedback-input',
+  component: {
+    case: 'textInput',
+    value: {
+      label: 'Your feedback',
+      placeholder: 'Enter your thoughts...',
+      multiline: true,
+      required: true
+    }
+  }
+}
+```
+
+## Form Structure
+
+Every form interaction requires:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Unique identifier for matching responses |
+| `title` | string | Yes | Form title shown to user |
+| `subtitle` | string | No | Additional context or instructions |
+| `components` | array | Yes | List of components (buttons, inputs) |
+
+Each component requires:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Component identifier for routing responses |
+| `component` | object | Yes | Component definition with `case` and `value` |
+
+## Sending Interactions
+
+Use `handler.sendInteractionRequest()` to send interactive messages.
+
+### Syntax
+
+```ts
+await handler.sendInteractionRequest(
+  channelId,      // Where to send the message
+  payload,        // Interaction definition
+  recipient?      // Optional: target specific user
+)
+```
+
+### Public Interactions
+
+Anyone in the channel can interact:
+
+```ts
+await handler.sendInteractionRequest(
+  event.channelId,
+  {
+    case: 'form',
+    value: {
+      id: 'public-poll',
+      title: 'Community Poll',
+      components: [/* ... */]
+    }
+  }
+  // No recipient parameter = public
+)
+```
+
+### Targeted Interactions
+
+Only a specific user can interact:
+
+```ts
+import { hexToBytes } from 'viem'
+
+await handler.sendInteractionRequest(
+  event.channelId,
+  payload,
+  hexToBytes(event.userId as `0x${string}`)
+)
+```
+
+## Handling Responses
+
+Use `bot.onInteractionResponse()` to handle user interactions.
+
+### Basic Handler
+
+```ts
+bot.onInteractionResponse(async (handler, event) => {
+  if (event.response.payload.content?.case !== 'form') return
+  
+  const form = event.response.payload.content.value
+  
+  for (const component of form.components) {
+    if (component.component.case === 'button') {
+      // Handle button clicks
+      console.log('Button clicked:', component.id)
+    }
+    
+    if (component.component.case === 'textInput') {
+      // Handle text input
+      const value = component.component.value.value
+      console.log('Input received:', value)
+    }
+  }
+})
+```
+
+### Matching Responses to Requests
+
+Use the `id` field to match responses:
+
+```ts
+// Sending
+await handler.sendInteractionRequest(event.channelId, {
+  case: 'form',
+  value: {
+    id: 'feedback-form',  // Unique ID
+    // ...
+  }
+})
+
+// Handling
+bot.onInteractionResponse(async (handler, event) => {
+  const form = event.response.payload.content?.value
+  
+  if (form.id === 'feedback-form') {
+    // Handle this specific form
+  }
+})
+```
+
+### Button Responses
+
+```ts
+for (const component of form.components) {
+  if (component.component.case === 'button') {
+    if (component.id === 'confirm-button') {
+      await handler.sendMessage(event.channelId, 'Confirmed!')
+    } else if (component.id === 'cancel-button') {
+      await handler.sendMessage(event.channelId, 'Cancelled')
+    }
+  }
+}
+```
+
+### Text Input Responses
+
+```ts
+for (const component of form.components) {
+  if (component.component.case === 'textInput') {
+    const value = component.component.value.value
+    
+    if (component.id === 'name-input') {
+      await handler.sendMessage(
+        event.channelId,
+        `Hello, ${value}!`
+      )
+    }
+  }
+}
+```
+
+## Common Patterns
+
+### Confirmation Dialog
+
+```ts
+bot.onSlashCommand('delete', async (handler, event) => {
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'form',
+      value: {
+        id: `confirm-delete-${Date.now()}`,
+        title: 'Confirm Delete',
+        subtitle: 'This action cannot be undone.',
+        components: [
+          {
+            id: 'confirm',
+            component: { case: 'button', value: { label: 'Yes, delete' } }
+          },
+          {
+            id: 'cancel',
+            component: { case: 'button', value: { label: 'Cancel' } }
+          }
+        ]
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`)
+  )
+})
+```
+
+### Multiple Choice Menu
+
+```ts
+bot.onSlashCommand('menu', async (handler, event) => {
   await handler.sendInteractionRequest(
     event.channelId,
     {
       case: 'form',
       value: {
         id: 'game-menu',
-        title: '🎮 Game Menu',
+        title: 'Game Menu',
         subtitle: 'Choose your action:',
         components: [
           {
-            id: 'start-button',
-            component: {
-              case: 'button',
-              value: { label: '▶️ Start Game' }
-            }
+            id: 'start',
+            component: { case: 'button', value: { label: 'Start Game' } }
           },
           {
-            id: 'help-button',
-            component: {
-              case: 'button',
-              value: { label: '❓ Help' }
-            }
+            id: 'rules',
+            component: { case: 'button', value: { label: 'View Rules' } }
+          },
+          {
+            id: 'leaderboard',
+            component: { case: 'button', value: { label: 'Leaderboard' } }
           }
         ]
       }
     },
-    hexToBytes(event.userId as `0x${string}`)  // recipient
+    hexToBytes(event.userId as `0x${string}`)
   )
 })
 ```
 
-### Handling Button Clicks
+### Text Input Form
 
 ```ts
+bot.onSlashCommand('feedback', async (handler, event) => {
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'form',
+      value: {
+        id: 'feedback-form',
+        title: 'Submit Feedback',
+        subtitle: 'Tell us what you think:',
+        components: [
+          {
+            id: 'feedback-input',
+            component: {
+              case: 'textInput',
+              value: {
+                label: 'Your feedback',
+                placeholder: 'Enter your feedback here...',
+                multiline: true
+              }
+            }
+          },
+          {
+            id: 'submit',
+            component: { case: 'button', value: { label: 'Submit' } }
+          }
+        ]
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`)
+  )
+})
+
 bot.onInteractionResponse(async (handler, event) => {
   if (event.response.payload.content?.case !== 'form') return
   
-  const form = event.response.payload.content?.value
+  const form = event.response.payload.content.value
   
-  for (const component of form.components) {
-    if (component.component.case === 'button') {
-      if (component.id === 'start-button') {
-        await handler.sendMessage(event.channelId, '🎮 Starting game...')
-      } else if (component.id === 'help-button') {
-        await handler.sendMessage(event.channelId, '❓ Help...')
+  if (form.id === 'feedback-form') {
+    for (const component of form.components) {
+      if (component.component.case === 'textInput' && component.id === 'feedback-input') {
+        const feedback = component.component.value.value
+        await handler.sendMessage(
+          event.channelId,
+          `Thanks for your feedback: "${feedback}"`
+        )
       }
     }
   }
 })
 ```
 
-## Transaction Requests
-
-Prompt users to sign and execute blockchain transactions. Perfect for payments, NFT minting, token swaps, and contract interactions.
-
-**Any Wallet:**
+### Poll System
 
 ```ts
-bot.onSlashCommand('send-usdc', async (handler, event) => {
-  const usdcAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base
-  const recipient = '0x1234567890123456789012345678901234567890'
-  const amount = '50000000' // 50 USDC (6 decimals)
+const polls = new Map<string, { yes: number; no: number }>()
+
+bot.onSlashCommand('poll', async (handler, event) => {
+  const pollId = `poll-${Date.now()}`
+  const question = event.args.join(' ')
   
-  // Encode ERC20 transfer: transfer(address,uint256)
-  const recipientPadded = recipient.slice(2).padStart(64, '0')
-  const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
-  const data = `0xa9059cbb${recipientPadded}${amountPadded}`
+  polls.set(pollId, { yes: 0, no: 0 })
   
-  await handler.sendInteractionRequest(event.channelId, {
-    case: 'transaction',
-    value: {
-      id: 'usdc-transfer',
-      title: 'Send USDC',
-      subtitle: 'Send 50 USDC to recipient',
-      content: {
-        case: 'evm',
-        value: {
-          chainId: '8453',
-          to: usdcAddress,
-          value: '0',
-          data: data,
-          signerWallet: undefined // User chooses wallet
-        }
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'form',
+      value: {
+        id: pollId,
+        title: 'Poll',
+        subtitle: question,
+        components: [
+          { id: 'yes', component: { case: 'button', value: { label: 'Yes' } } },
+          { id: 'no', component: { case: 'button', value: { label: 'No' } } }
+        ]
       }
     }
-  })
+  )
+})
+
+bot.onInteractionResponse(async (handler, event) => {
+  if (event.response.payload.content?.case !== 'form') return
+  
+  const form = event.response.payload.content.value
+  const poll = polls.get(form.id)
+  
+  if (poll) {
+    for (const component of form.components) {
+      if (component.component.case === 'button') {
+        if (component.id === 'yes') poll.yes++
+        if (component.id === 'no') poll.no++
+      }
+    }
+    
+    await handler.sendMessage(
+      event.channelId,
+      `Results: Yes: ${poll.yes}, No: ${poll.no}`
+    )
+  }
 })
 ```
 
-**Restrict to Smart Account:**
+### Multi-Step Form
 
 ```ts
-import { getSmartAccountFromUserId } from '@towns-protocol/bot'
+const userState = new Map<string, { step: string; data: any }>()
 
-bot.onSlashCommand('send-usdc-sm', async (handler, event) => {
-  const smartAccount = await getSmartAccountFromUserId(bot, {
-    userId: event.userId
-  })
+bot.onSlashCommand('register', async (handler, event) => {
+  userState.set(event.userId, { step: 'name', data: {} })
   
-  if (!smartAccount) {
-    await handler.sendMessage(event.channelId, "No smart account found")
+  await handler.sendInteractionRequest(
+    event.channelId,
+    {
+      case: 'form',
+      value: {
+        id: 'register-step1',
+        title: 'Registration (Step 1/2)',
+        subtitle: 'Enter your name:',
+        components: [
+          {
+            id: 'name',
+            component: {
+              case: 'textInput',
+              value: { label: 'Full Name', placeholder: 'John Doe' }
+            }
+          },
+          { id: 'next', component: { case: 'button', value: { label: 'Next' } } }
+        ]
+      }
+    },
+    hexToBytes(event.userId as `0x${string}`)
+  )
+})
+
+bot.onInteractionResponse(async (handler, event) => {
+  if (event.response.payload.content?.case !== 'form') return
+  
+  const form = event.response.payload.content.value
+  const state = userState.get(event.userId)
+  
+  if (!state) return
+  
+  if (form.id === 'register-step1' && state.step === 'name') {
+    // Get name input
+    for (const component of form.components) {
+      if (component.component.case === 'textInput' && component.id === 'name') {
+        state.data.name = component.component.value.value
+      }
+    }
+    
+    // Move to step 2
+    state.step = 'email'
+    
+    await handler.sendInteractionRequest(
+      event.channelId,
+      {
+        case: 'form',
+        value: {
+          id: 'register-step2',
+          title: 'Registration (Step 2/2)',
+          subtitle: 'Enter your email:',
+          components: [
+            {
+              id: 'email',
+              component: {
+                case: 'textInput',
+                value: { label: 'Email', placeholder: 'you@example.com' }
+              }
+            },
+            { id: 'submit', component: { case: 'button', value: { label: 'Submit' } } }
+          ]
+        }
+      },
+      hexToBytes(event.userId as `0x${string}`)
+    )
+  } else if (form.id === 'register-step2' && state.step === 'email') {
+    // Get email and complete registration
+    for (const component of form.components) {
+      if (component.component.case === 'textInput' && component.id === 'email') {
+        state.data.email = component.component.value.value
+      }
+    }
+    
+    await handler.sendMessage(
+      event.channelId,
+      `Registration complete! Name: ${state.data.name}, Email: ${state.data.email}`
+    )
+    
+    userState.delete(event.userId)
+  }
+})
+```
+
+## Best Practices
+
+### Use Unique IDs
+
+Generate unique IDs to prevent conflicts:
+
+```ts
+// Good
+const id = `action-${Date.now()}-${event.userId}`
+
+// Bad
+const id = 'button'
+```
+
+### Clear Labels
+
+Make button labels descriptive:
+
+```ts
+// Good
+{ label: 'Accept Terms and Conditions' }
+{ label: 'Cancel' }
+
+// Bad
+{ label: 'OK' }
+{ label: 'Button' }
+```
+
+### Provide Context
+
+Always include helpful subtitles:
+
+```ts
+{
+  title: 'Delete Account',
+  subtitle: 'This action cannot be undone. Are you sure?',
+  // ...
+}
+```
+
+### Validate Input
+
+Always validate user input:
+
+```ts
+if (component.component.case === 'textInput') {
+  const value = component.component.value.value
+  
+  if (!value || value.trim().length === 0) {
+    await handler.sendMessage(event.channelId, 'Input cannot be empty')
     return
   }
   
-  // ... same transaction setup ...
-  
-  await handler.sendInteractionRequest(event.channelId, {
-    case: 'transaction',
-    value: {
-      // ...
-      content: {
-        case: 'evm',
-        value: {
-          // ...
-          signerWallet: smartAccount // Only this wallet can sign
-        }
-      }
-    }
-  })
-})
-```
-
-### Handle Transaction Response
-
-```ts
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === 'transaction') {
-    const txData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
-      `✅ Transaction Confirmed!
-
-Request ID: ${txData.requestId}
-Transaction Hash: \`${txData.txHash}\`
-
-View on explorer: https://basescan.org/tx/${txData.txHash}`
-    )
-  }
-})
-```
-
-## Signature Requests
-
-Request cryptographic signatures without executing transactions. Perfect for authentication, permissions, off-chain agreements, and gasless interactions.
-
-```ts
-import { InteractionRequestPayload_Signature_SignatureType } from '@towns-protocol/proto'
-
-bot.onSlashCommand('sign', async (handler, event) => {
-  // EIP-712 Typed Data Structure
-  const typedData = {
-    domain: {
-      name: 'My Towns Bot',
-      version: '1',
-      chainId: 8453,
-      verifyingContract: '0x0000000000000000000000000000000000000000'
-    },
-    types: {
-      Message: [
-        { name: 'from', type: 'address' },
-        { name: 'content', type: 'string' },
-        { name: 'timestamp', type: 'uint256' }
-      ]
-    },
-    primaryType: 'Message',
-    message: {
-      from: event.userId,
-      content: 'I agree to the terms',
-      timestamp: Math.floor(Date.now() / 1000)
-    }
+  if (value.length > 500) {
+    await handler.sendMessage(event.channelId, 'Input too long (max 500 chars)')
+    return
   }
   
-  await handler.sendInteractionRequest(event.channelId, {
-    case: 'signature',
-    value: {
-      id: 'message-signature',
-      title: 'Sign Message',
-      subtitle: `Sign: "${typedData.message.content}"`,
-      chainId: '8453',
-      data: JSON.stringify(typedData),
-      type: InteractionRequestPayload_Signature_SignatureType.TYPED_DATA,
-      signerWallet: undefined // User chooses wallet
-    }
-  })
-})
+  // Process valid input
+}
 ```
 
-### Handle Signature Response
+### Handle All Cases
+
+Check for all possible component types:
 
 ```ts
-bot.onInteractionResponse(async (handler, event) => {
-  if (event.response.payload.content?.case === 'signature') {
-    const signatureData = event.response.payload.content.value
-    
-    await handler.sendMessage(
-      event.channelId,
-      `✅ Signature Received!
-
-Request ID: ${signatureData.requestId}
-
-Signature:
-\`\`\`
-${signatureData.signature}
-\`\`\`
-
-You can now verify this signature on-chain or use it for authentication.`
-    )
+for (const component of form.components) {
+  if (component.component.case === 'button') {
+    // Handle buttons
   }
-})
-```
-
-## Complete Response Handler
-
-```ts
-bot.onInteractionResponse(async (handler, event) => {
-  const { response } = event
   
-  switch (response.payload.content?.case) {
-    case 'form':
-      const formData = response.payload.content.value
-      // Handle button clicks
-      for (const component of formData.components) {
-        if (component.component.case === 'button') {
-          // Route based on component.id
-        }
-      }
-      break
-      
-    case 'transaction':
-      const txData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
-        `Transaction confirmed: ${txData.txHash}`
-      )
-      break
-      
-    case 'signature':
-      const signatureData = response.payload.content.value
-      await handler.sendMessage(
-        event.channelId,
-        `Signature received: ${signatureData.signature}`
-      )
-      break
+  if (component.component.case === 'textInput') {
+    // Handle text inputs
   }
-})
+}
 ```
+
+### Target Appropriately
+
+Use public vs targeted interactions:
+
+```ts
+// Public poll - anyone can vote
+await handler.sendInteractionRequest(channelId, pollPayload)
+
+// Personal action - only this user
+await handler.sendInteractionRequest(
+  channelId,
+  settingsPayload,
+  hexToBytes(event.userId as `0x${string}`)
+)
+```
+
+## Next Steps
+
+- Learn about [onchain integrations](/build/bots/onchain-integrations) for blockchain interactions
+- Explore [slash commands](/build/bots/slash-commands)
+- Read about [event handlers](/build/bots/events)
+- Check out [external integrations](/build/bots/external-interactions)
