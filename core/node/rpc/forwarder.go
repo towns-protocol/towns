@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"math"
+	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -15,6 +17,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -326,13 +329,35 @@ func (s *Service) getMiniblocksImpl(
 
 	allowNoQuorum := allowNoQuorum(req)
 	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
-		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
-			return resp, nil
-		} else if IsOperationRetriableOnRemotes(err) {
-			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
-				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId, RiverNoForwardHeader, req.Header().Get(RiverNoForwardHeader))
+		resp, err := s.localGetMiniblocks(ctx, req, stream)
+		if err != nil {
+			if IsOperationRetriableOnRemotes(err) {
+				logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
+					"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId, RiverNoForwardHeader, req.Header().Get(RiverNoForwardHeader))
+			} else {
+				return nil, err
+			}
 		} else {
-			return nil, err
+			// Check if the response indicates trimmed miniblocks
+			if resp.Msg.Terminus && req.Msg.FromInclusive > 0 && resp.Msg.FromInclusive > req.Msg.FromInclusive {
+				// The range stored in the DB is not full - some miniblocks were trimmed.
+				// Calculate the expected trim point to determine if this is acceptable.
+				trimAcceptable, err := s.isTrimmedRangeAcceptable(ctx, streamId, resp.Msg.FromInclusive)
+				if err != nil {
+					logging.FromCtx(ctx).Warnw("Failed to check if trimmed range is acceptable",
+						"error", err, "streamId", streamId, "fromInclusive", resp.Msg.FromInclusive)
+					// TODO: Try to fetch miniblocks from remotes
+				}
+				if trimAcceptable {
+					return resp, nil
+				}
+				// TODO: The trimmed range is not acceptable - query remotes for missing miniblocks
+				logging.FromCtx(ctx).Warnw("Trimmed range not acceptable, should query remotes",
+					"streamId", streamId,
+					"requestedFrom", req.Msg.FromInclusive,
+					"actualFrom", resp.Msg.FromInclusive)
+			}
+			return resp, nil
 		}
 	}
 
@@ -356,6 +381,57 @@ func (s *Service) getMiniblocksImpl(
 		s.config.Network.NumRetries,
 		s.nodeRegistry,
 	)
+}
+
+// isTrimmedRangeAcceptable checks if the actual starting miniblock is within the expected
+// trim range based on the stream history window configuration.
+// Returns true if the trimmed range is acceptable (stream is just trimmed as expected).
+func (s *Service) isTrimmedRangeAcceptable(
+	ctx context.Context,
+	streamId shared.StreamId,
+	actualFromInclusive int64,
+) (bool, error) {
+	ranges, err := s.storage.GetMiniblockNumberRanges(ctx, streamId)
+	if err != nil {
+		return false, err
+	}
+
+	if len(ranges) == 0 {
+		return false, RiverError(Err_MINIBLOCKS_NOT_FOUND, "no miniblocks found for stream")
+	}
+
+	// Get the latest range
+	latestRange := ranges[len(ranges)-1]
+
+	// At least one snapshot miniblock must exist
+	if len(latestRange.SnapshotSeqNums) == 0 {
+		return false, RiverError(Err_MINIBLOCKS_NOT_FOUND, "no snapshot miniblocks found for stream")
+	}
+
+	historyWindow := s.chainConfig.Get().StreamHistoryMiniblocks.ForType(streamId.Type())
+	if historyWindow == 0 {
+		// No history window configured, trimming should not happen
+		return false, nil
+	}
+
+	lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
+	start := lastSnapshotMiniblock
+	if historyWindow >= math.MaxInt64 {
+		start -= math.MaxInt64
+	} else {
+		start -= int64(historyWindow)
+	}
+	if start < 0 {
+		// If the history window is larger than the stream, we can consider it as no trimming
+		return false, nil
+	}
+
+	// Find the closest snapshot miniblock to trim to
+	expectedTrimToMiniblock := storage.FindClosestSnapshotMiniblock(ranges, start)
+
+	// The trimmed range is acceptable if the actual starting miniblock is at or before
+	// the expected trim point
+	return actualFromInclusive <= expectedTrimToMiniblock, nil
 }
 
 func (s *Service) GetLastMiniblockHash(
