@@ -193,8 +193,6 @@ func createPgxPool(
 	}
 	poolConf.ConnConfig.RuntimeParams["application_name"] = name
 
-	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
-
 	if tracerProvider != nil {
 		poolConf.ConnConfig.Tracer = otelpgx.NewTracer(
 			otelpgx.WithTracerProvider(tracerProvider),
