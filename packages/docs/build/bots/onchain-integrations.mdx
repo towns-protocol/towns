@@ -118,10 +118,10 @@ Prompt users to execute transactions:
 ```ts
 import { hexToBytes, encodeFunctionData } from 'viem'
 
-bot.onSlashCommand('send-usdc', async (handler, event) => {
-  const usdcAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
+bot.onSlashCommand('send-towns', async (handler, event) => {
+  const townsAddress = '0x4ed4e862860bed51a9570b96d89af5e1b0efefed' // Towns token
   const recipient = '0x1234567890123456789012345678901234567890'
-  const amount = '50000000' // 50 USDC (6 decimals)
+  const amount = '50000000000000000000' // 50 TOWNS (18 decimals)
   
   // Encode ERC20 transfer
   const data = encodeFunctionData({
@@ -142,14 +142,14 @@ bot.onSlashCommand('send-usdc', async (handler, event) => {
     {
       case: 'transaction',
       value: {
-        id: 'usdc-transfer',
-        title: 'Send USDC',
-        subtitle: 'Send 50 USDC',
+        id: 'towns-transfer',
+        title: 'Send TOWNS',
+        subtitle: 'Send 50 TOWNS tokens',
         content: {
           case: 'evm',
           value: {
             chainId: '8453',
-            to: usdcAddress,
+            to: townsAddress,
             value: '0',
             data: data,
             signerWallet: undefined // User chooses wallet
@@ -224,16 +224,16 @@ bot.onInteractionResponse(async (handler, event) => {
       const txData = response.payload.content.value
       
       // Match response to original request
-      if (txData.requestId === 'usdc-transfer') {
+      if (txData.requestId === 'towns-transfer') {
         if (txData.txHash) {
           await handler.sendMessage(
             event.channelId,
-            `USDC transfer confirmed: ${txData.txHash}`
+            `TOWNS transfer confirmed: ${txData.txHash}`
           )
         } else if (txData.error) {
           await handler.sendMessage(
             event.channelId,
-            `USDC transfer failed: ${txData.error}`
+            `TOWNS transfer failed: ${txData.error}`
           )
         }
       }
