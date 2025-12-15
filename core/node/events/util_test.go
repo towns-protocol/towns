@@ -624,14 +624,27 @@ func (ctc *cacheTestContext) compareStreamStorage(
 		}
 	}
 
+	// Determine the actual starting miniblock by checking what each node has.
+	// When history window is configured, nodes may not have miniblocks from 0.
+	// Find the maximum starting miniblock across all nodes to ensure we only compare
+	// miniblocks that exist on all nodes.
+	actualFromInclusive := fromInclusive
+	for i, inst := range instances {
+		ranges, err := inst.cache.params.Storage.GetMiniblockNumberRanges(ctc.ctx, streamId)
+		ctc.require.NoError(err, "failed to get miniblock ranges for node %d %s", i, nodes[i])
+		if len(ranges) > 0 && ranges[0].StartInclusive > actualFromInclusive {
+			actualFromInclusive = ranges[0].StartInclusive
+		}
+	}
+
 	toExclusive := first.Miniblocks[0].Number
-	for fromInclusive < toExclusive {
+	for actualFromInclusive < toExclusive {
 		var first []*storage.MiniblockDescriptor
 		for i, inst := range instances {
 			miniblocks, err := inst.cache.params.Storage.ReadMiniblocks(
 				ctc.ctx,
 				streamId,
-				fromInclusive,
+				actualFromInclusive,
 				toExclusive,
 				false,
 			)
@@ -642,7 +655,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 				ctc.require.Equal(first, miniblocks, "stream %s miniblocks are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
 			}
 		}
-		fromInclusive += int64(len(first))
+		actualFromInclusive += int64(len(first))
 	}
 }
 
