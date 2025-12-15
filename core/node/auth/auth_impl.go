@@ -88,13 +88,6 @@ func NewChainAuthArgsForApp(userId common.Address, appContractAddress common.Add
 	}
 }
 
-func NewChainAuthArgsForIsNotApp(userId common.Address) *ChainAuthArgs {
-	return &ChainAuthArgs{
-		kind:      chainAuthKindIsNotApp,
-		principal: userId,
-	}
-}
-
 // NewChainAuthArgsForIsBotOwner creates chain auth args to check if the principal (userId)
 // is the owner of the bot whose client address is botClientAddress.
 func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
@@ -102,6 +95,19 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 		kind:             chainAuthKindIsBotOwner,
 		principal:        userId,
 		botClientAddress: botClientAddress,
+	}
+}
+
+func NewChainAuthArgsForDmValidation(
+	firstParty common.Address,
+	secondParty common.Address,
+	isStreamCreation bool,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:             chainAuthKindDmValidation,
+		principal:        firstParty,
+		botClientAddress: secondParty,
+		isStreamCreation: isStreamCreation,
 	}
 }
 
@@ -173,6 +179,7 @@ const (
 	chainAuthKindIsApp
 	chainAuthKindIsNotApp
 	chainAuthKindIsBotOwner
+	chainAuthKindDmValidation
 )
 
 type ChainAuthArgs struct {
@@ -196,6 +203,9 @@ type ChainAuthArgs struct {
 	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
 	// This is the address of the user stream that the bot owner is trying to write to.
 	botClientAddress common.Address
+
+	// isStreamCreation is true when validating DM stream creation (vs message sending)
+	isStreamCreation bool
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -295,6 +305,7 @@ type chainAuth struct {
 	spaceContract           SpaceContract
 	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
+	userAccountContract     UserAccountContract
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
 	entitlementCache        *entitlementCache
@@ -347,6 +358,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	userAccountContract, err := NewUserAccountContract(blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
 	entitlementCache, err := newEntitlementCache(ctx, blockchain.Config)
 	if err != nil {
 		return nil, err
@@ -384,6 +400,7 @@ func NewChainAuth(
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
 		appRegistryContract:     appRegistryContract,
+		userAccountContract:     userAccountContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
@@ -1178,7 +1195,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner || args.kind == chainAuthKindDmValidation {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
@@ -1266,7 +1283,92 @@ func (ca *chainAuth) checkIsApp(
 		return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
 	}
 
+	if args.kind == chainAuthKindDmValidation {
+		return ca.checkDmValidation(ctx, cfg, args)
+	}
+
 	return nil, nil
+}
+
+func (ca *chainAuth) checkDmValidation(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	firstPartyIsApp, firstPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	if err != nil {
+		return nil, err
+	}
+
+	secondPartyIsApp, secondPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(
+		ctx,
+		args.botClientAddress,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// User-to-user: always allow
+	if !firstPartyIsApp && !secondPartyIsApp {
+		log.Debugw(
+			"checkDmValidation: user-to-user DM",
+			"firstParty", args.principal,
+			"secondParty", args.botClientAddress,
+		)
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+
+	// Bot involved: check if the user has the bot installed
+	if firstPartyIsApp {
+		return ca.checkAppInstalledOnUser(ctx, cfg, args.botClientAddress, firstPartyAppContract)
+	}
+	return ca.checkAppInstalledOnUser(ctx, cfg, args.principal, secondPartyAppContract)
+}
+
+func (ca *chainAuth) checkAppInstalledOnUser(
+	ctx context.Context,
+	cfg *config.Config,
+	userAddress common.Address,
+	appContractAddress common.Address,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	userArgs := &ChainAuthArgs{principal: userAddress}
+	wallets, err := ca.getLinkedWallets(ctx, cfg, userArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, wallet := range wallets {
+		isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, wallet, appContractAddress)
+		if err != nil {
+			log.Debugw(
+				"checkAppInstalledOnUser: IsAppInstalled check failed, trying next wallet",
+				"wallet", wallet,
+				"error", err,
+			)
+			continue
+		}
+		if isInstalled {
+			log.Debugw(
+				"checkAppInstalledOnUser: app installed",
+				"userAddress", userAddress,
+				"appContract", appContractAddress,
+				"installedOnWallet", wallet,
+			)
+			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+		}
+	}
+
+	log.Debugw(
+		"checkAppInstalledOnUser: app not installed on any linked wallet",
+		"userAddress", userAddress,
+		"appContract", appContractAddress,
+		"walletsChecked", len(wallets),
+	)
+	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 }
 
 // checkAppMembership validates that the app is a member of the space. If the app
