@@ -154,11 +154,6 @@ describe('inboxMessageTest', () => {
             max: miniblockInfoBeforeTrim.max.toString(),
         })
 
-        // Verify we have exactly 14 miniblocks (0-14, so max=14)
-        // Genesis miniblock is 0, then we created 14 more (1-14)
-        //expect(miniblockInfoBeforeTrim.max).toBe(14n)
-        //expect(miniblockInfoBeforeTrim.min).toBe(0n)
-
         // UserInbox streams generate snapshots every 10 events.
         // With 14 messages, we should have snapshots at miniblock 0 (genesis) and miniblock 10.
         // We'll fetch miniblocks 0-14 and find the latest one with a snapshot.
