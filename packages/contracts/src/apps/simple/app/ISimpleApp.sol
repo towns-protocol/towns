@@ -64,6 +64,18 @@ interface ISimpleAppBase {
     /// @param owner The owner of the app
     /// @param agentId The ID of the agent
     event AgentPromoted(address indexed owner, uint256 indexed agentId);
+
+    /// @notice Emitted when a voucher is requested
+    /// @param voucherId The ID of the voucher
+    /// @param token The token that was requested
+    /// @param amount The amount of tokens requested
+    event VoucherRequested(bytes32 indexed voucherId, address indexed token, uint256 amount);
+
+    /// @notice Emitted when funds are received
+    /// @param sender The address that sent the funds
+    /// @param token The token that was received
+    /// @param amount The amount of tokens received
+    event FundsReceived(address indexed sender, address indexed token, uint256 amount);
 }
 
 interface ISimpleApp is ISimpleAppBase {
@@ -75,6 +87,11 @@ interface ISimpleApp is ISimpleAppBase {
         string calldata agentUri,
         IIdentityRegistryBase.MetadataEntry[] calldata metadata
     ) external returns (uint256 agentId);
+
+    /// @notice Requests funds from the treasury
+    /// @param token The token to request funds for
+    /// @param amount The amount of tokens to request
+    function requestFunds(address token, uint256 amount) external;
 
     /// @notice Withdraws the ETH balance of the app to the recipient
     /// @param recipient The address to withdraw the ETH to

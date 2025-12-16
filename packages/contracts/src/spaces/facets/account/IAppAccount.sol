@@ -15,6 +15,7 @@ interface IAppAccountBase {
     error AppAlreadyInstalled();
     error UnauthorizedApp(address app);
     error InvalidCaller();
+    error AppNotExecuting();
 
     event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
     event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
