@@ -66,6 +66,9 @@ type MetadataShard struct {
 	// which CometBFT invokes sequentially, so no mutex is required.
 	lastBlockHeight int64
 	lastAppHash     []byte
+
+	pendingTxs    []*MetadataTx
+	pendingHeight int64
 }
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
@@ -286,21 +289,37 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	height := m.lastBlockHeight
-	if height == 0 && m.node != nil {
-		height = m.node.BlockStore().Height()
+	height := m.pendingHeight
+	if height == 0 {
+		height = m.lastBlockHeight
+		if height == 0 && m.node != nil {
+			height = m.node.BlockStore().Height()
+		}
 	}
+
+	if len(m.pendingTxs) > 0 {
+		if err := m.store.ApplyMetadataTxBatch(ctx, m.opts.ShardID, height, m.pendingTxs); err != nil {
+			return nil, AsRiverError(err).Func("Commit.ApplyMetadataTxBatch")
+		}
+	}
+
 	appHash := m.lastAppHash
 	if appHash == nil {
 		var err error
 		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID, height)
 		if err != nil {
-			return nil, AsRiverError(err).Func("Commit")
+			return nil, AsRiverError(err).Func("Commit.ComputeAppHash")
 		}
+		m.lastAppHash = appHash
 	}
+
 	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
 	}
+
+	m.pendingTxs = nil
+	m.pendingHeight = 0
+
 	return &abci.CommitResponse{}, nil
 }
 
@@ -555,37 +574,72 @@ func (m *MetadataShard) FinalizeBlock(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
-	txs := make([]*abci.ExecTxResult, len(req.Txs))
+	m.pendingTxs = nil
+	m.pendingHeight = 0
+
+	txResults := make([]*abci.ExecTxResult, len(req.Txs))
+	decodedTxs := make([]*MetadataTx, len(req.Txs))
+
 	for i, txBytes := range req.Txs {
 		metaTx, err := decodeMetadataTx(txBytes)
 		if err != nil {
 			res := &abci.ExecTxResult{}
 			setError(res, err)
-			txs[i] = res
+			txResults[i] = res
 			continue
 		}
 		if err := m.validateTx(metaTx); err != nil {
 			res := &abci.ExecTxResult{}
 			setError(res, err)
-			txs[i] = res
+			txResults[i] = res
 			continue
 		}
-		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
-			res := &abci.ExecTxResult{}
-			setError(res, err)
-			txs[i] = res
-			continue
-		}
-		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
+		decodedTxs[i] = metaTx
 	}
+
+	validationErrs, err := m.store.ValidateMetadataTxs(ctx, m.opts.ShardID, decodedTxs)
+	if err != nil {
+		return nil, AsRiverError(err).Func("FinalizeBlock.ValidateMetadataTxs")
+	}
+
+	pending := make([]*MetadataTx, 0, len(req.Txs))
+	for i := range decodedTxs {
+		if txResults[i] != nil && txResults[i].Code != 0 {
+			continue
+		}
+		if decodedTxs[i] == nil {
+			if txResults[i] == nil {
+				res := &abci.ExecTxResult{}
+				setError(res, RiverError(Err_INVALID_ARGUMENT, "tx is required"))
+				txResults[i] = res
+			}
+			continue
+		}
+
+		if validationErrs[i] != nil {
+			res := txResults[i]
+			if res == nil {
+				res = &abci.ExecTxResult{}
+			}
+			setError(res, validationErrs[i])
+			txResults[i] = res
+			continue
+		}
+
+		txResults[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
+		pending = append(pending, decodedTxs[i])
+	}
+
 	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID, req.Height)
 	if err != nil {
 		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
 	}
 	m.lastBlockHeight = req.Height
 	m.lastAppHash = appHash
+	m.pendingTxs = pending
+	m.pendingHeight = req.Height
 	return &abci.FinalizeBlockResponse{
-		TxResults: txs,
+		TxResults: txResults,
 		AppHash:   appHash,
 	}, nil
 }

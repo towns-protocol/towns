@@ -55,6 +55,8 @@ type MetadataStore interface {
 	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
 	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
 	ApplyMetadataTx(ctx context.Context, shardId uint64, height int64, tx *MetadataTx) error
+	ApplyMetadataTxBatch(ctx context.Context, shardId uint64, height int64, txs []*MetadataTx) error
+	ValidateMetadataTxs(ctx context.Context, shardId uint64, txs []*MetadataTx) ([]error, error)
 	ComputeAppHash(ctx context.Context, shardId uint64, height int64) ([]byte, error)
 }
 
@@ -192,6 +194,39 @@ func validateHash(hash []byte, field string) error {
 	return nil
 }
 
+func cloneBytes(in []byte) []byte {
+	if in == nil {
+		return nil
+	}
+	out := make([]byte, len(in))
+	copy(out, in)
+	return out
+}
+
+func cloneByteSlices(in [][]byte) [][]byte {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([][]byte, 0, len(in))
+	for _, b := range in {
+		out = append(out, cloneBytes(b))
+	}
+	return out
+}
+
+func cloneStreamMetadata(record *StreamMetadata) *StreamMetadata {
+	if record == nil {
+		return nil
+	}
+	cp := *record
+	cp.StreamId = cloneBytes(record.StreamId)
+	cp.GenesisMiniblockHash = cloneBytes(record.GenesisMiniblockHash)
+	cp.GenesisMiniblock = cloneBytes(record.GenesisMiniblock)
+	cp.LastMiniblockHash = cloneBytes(record.LastMiniblockHash)
+	cp.Nodes = cloneByteSlices(record.Nodes)
+	return &cp
+}
+
 func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEmpty bool) ([]int32, error) {
 	if len(nodes) == 0 {
 		if allowEmpty {
@@ -246,32 +281,192 @@ func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]b
 	return addrs, nil
 }
 
-func (s *PostgresMetadataShardStore) CreateStream(
-	ctx context.Context,
-	shardID uint64,
-	height int64,
-	txData *CreateStreamTx,
-) (*StreamMetadata, error) {
-	_ = height
+type metadataBlockState struct {
+	store   *PostgresMetadataShardStore
+	shardID uint64
+	streams map[string]*StreamMetadata
+}
 
-	if txData == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "create stream payload is required")
+func newMetadataBlockState(store *PostgresMetadataShardStore, shardID uint64) *metadataBlockState {
+	return &metadataBlockState{
+		store:   store,
+		shardID: shardID,
+		streams: make(map[string]*StreamMetadata),
 	}
-	if err := validateStreamID(txData.StreamId); err != nil {
-		return nil, err
+}
+
+func (s *metadataBlockState) streamKey(streamID []byte) string {
+	return string(streamID)
+}
+
+func (s *metadataBlockState) getStream(ctx context.Context, streamID []byte) (*StreamMetadata, error) {
+	key := s.streamKey(streamID)
+	if cached, ok := s.streams[key]; ok {
+		return cached, nil
 	}
-	if err := validateHash(txData.GenesisMiniblockHash, "genesis_miniblock_hash"); err != nil {
-		return nil, err
-	}
-	nodeIndexes, err := s.nodeIndexesForAddrs(txData.Nodes, false)
+	id, err := shared.StreamIdFromBytes(streamID)
 	if err != nil {
 		return nil, err
 	}
+	record, err := s.store.GetStream(ctx, s.shardID, id)
+	if err != nil {
+		return nil, err
+	}
+	cloned := cloneStreamMetadata(record)
+	s.streams[key] = cloned
+	return cloned, nil
+}
+
+func (s *metadataBlockState) applyCreateStream(ctx context.Context, create *CreateStreamTx) error {
+	record, _, _, err := s.store.buildCreateStreamRecord(create)
+	if err != nil {
+		return err
+	}
+	key := s.streamKey(create.StreamId)
+	if _, ok := s.streams[key]; ok {
+		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", create.StreamId)
+	}
+	streamID, err := shared.StreamIdFromBytes(create.StreamId)
+	if err != nil {
+		return err
+	}
+	if _, err := s.store.GetStream(ctx, s.shardID, streamID); err == nil {
+		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", create.StreamId)
+	} else if AsRiverError(err).Code != Err_NOT_FOUND {
+		return err
+	}
+	s.streams[key] = cloneStreamMetadata(record)
+	return nil
+}
+
+func (s *metadataBlockState) applyMiniblockUpdate(ctx context.Context, update *MiniblockUpdate) error {
+	stream, err := s.getStream(ctx, update.StreamId)
+	if err != nil {
+		return err
+	}
+
+	if stream.Sealed {
+		return RiverError(Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId)
+	}
+
+	if !bytes.Equal(stream.LastMiniblockHash, update.PrevMiniblockHash) {
+		return RiverError(
+			Err_FAILED_PRECONDITION,
+			"prev_miniblock_hash mismatch",
+			"streamId", update.StreamId,
+		)
+	}
+
+	if update.LastMiniblockNum > math.MaxInt64 {
+		return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
+	}
+
+	nextNum := int64(update.LastMiniblockNum)
+	if nextNum != stream.LastMiniblockNum+1 {
+		return RiverError(
+			Err_FAILED_PRECONDITION,
+			"last_miniblock_num must increase by 1",
+			"streamId", update.StreamId,
+			"current", stream.LastMiniblockNum,
+			"proposed", nextNum,
+		)
+	}
+
+	stream.LastMiniblockHash = cloneBytes(update.LastMiniblockHash)
+	stream.LastMiniblockNum = nextNum
+	stream.Sealed = stream.Sealed || update.Sealed
+	return nil
+}
+
+func (s *metadataBlockState) applyUpdateStreamNodesAndReplication(
+	ctx context.Context,
+	update *UpdateStreamNodesAndReplicationTx,
+) error {
+	nodeIndexes, err := s.store.prepareUpdateStreamNodesAndReplication(update)
+	if err != nil {
+		return err
+	}
+
+	stream, err := s.getStream(ctx, update.StreamId)
+	if err != nil {
+		return err
+	}
+
+	currentIndexes, err := s.store.nodeIndexesForAddrs(stream.Nodes, false)
+	if err != nil {
+		return err
+	}
+
+	newReplication := stream.ReplicationFactor
+	newNodes := stream.Nodes
+
+	switch {
+	case update.ReplicationFactor > 0 && len(nodeIndexes) > 0:
+		newReplication = update.ReplicationFactor
+		newNodes = update.Nodes
+	case update.ReplicationFactor > 0:
+		if int(update.ReplicationFactor) > len(currentIndexes) {
+			return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
+		newReplication = update.ReplicationFactor
+	case len(nodeIndexes) > 0:
+		if len(nodeIndexes) < int(stream.ReplicationFactor) {
+			return RiverError(Err_INVALID_ARGUMENT, "nodes cannot be less than replication_factor")
+		}
+		newNodes = update.Nodes
+	}
+
+	stream.ReplicationFactor = newReplication
+	stream.Nodes = cloneByteSlices(newNodes)
+	return nil
+}
+
+func (s *metadataBlockState) applyTx(ctx context.Context, metaTx *MetadataTx) error {
+	if metaTx == nil || metaTx.Op == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
+	}
+
+	switch op := metaTx.Op.(type) {
+	case *MetadataTx_CreateStream:
+		return s.applyCreateStream(ctx, op.CreateStream)
+	case *MetadataTx_SetStreamLastMiniblockBatch:
+		if err := validateMiniblockUpdates(op.SetStreamLastMiniblockBatch.Miniblocks); err != nil {
+			return err
+		}
+		for _, update := range op.SetStreamLastMiniblockBatch.Miniblocks {
+			if err := s.applyMiniblockUpdate(ctx, update); err != nil {
+				return err
+			}
+		}
+		return nil
+	case *MetadataTx_UpdateStreamNodesAndReplication:
+		return s.applyUpdateStreamNodesAndReplication(ctx, op.UpdateStreamNodesAndReplication)
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
+	}
+}
+
+func (s *PostgresMetadataShardStore) buildCreateStreamRecord(
+	txData *CreateStreamTx,
+) (*StreamMetadata, []byte, []int32, error) {
+	if txData == nil {
+		return nil, nil, nil, RiverError(Err_INVALID_ARGUMENT, "create stream payload is required")
+	}
+	if err := validateStreamID(txData.StreamId); err != nil {
+		return nil, nil, nil, err
+	}
+	if err := validateHash(txData.GenesisMiniblockHash, "genesis_miniblock_hash"); err != nil {
+		return nil, nil, nil, err
+	}
+	nodeIndexes, err := s.nodeIndexesForAddrs(txData.Nodes, false)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	if txData.ReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
+		return nil, nil, nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
 	}
 	if int(txData.ReplicationFactor) > len(nodeIndexes) {
-		return nil, RiverError(
+		return nil, nil, nil, RiverError(
 			Err_INVALID_ARGUMENT,
 			"replication_factor cannot exceed number of nodes",
 			"replicationFactor", txData.ReplicationFactor,
@@ -279,7 +474,7 @@ func (s *PostgresMetadataShardStore) CreateStream(
 		)
 	}
 	if txData.LastMiniblockNum > math.MaxInt64 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
+		return nil, nil, nil, RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
 	}
 
 	var (
@@ -294,10 +489,10 @@ func (s *PostgresMetadataShardStore) CreateStream(
 
 	if txData.LastMiniblockNum == 0 {
 		if len(txData.GenesisMiniblock) == 0 {
-			return nil, RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
+			return nil, nil, nil, RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
 		}
 		if len(txData.LastMiniblockHash) > 0 && !bytes.Equal(txData.LastMiniblockHash, txData.GenesisMiniblockHash) {
-			return nil, RiverError(
+			return nil, nil, nil, RiverError(
 				Err_INVALID_ARGUMENT,
 				"last_miniblock_hash must match genesis_miniblock_hash when last_miniblock_num is 0",
 			)
@@ -305,7 +500,7 @@ func (s *PostgresMetadataShardStore) CreateStream(
 		lastMiniblockHash = txData.GenesisMiniblockHash
 	} else {
 		if err := validateHash(txData.LastMiniblockHash, "last_miniblock_hash"); err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 		lastMiniblockHash = txData.LastMiniblockHash
 	}
@@ -320,6 +515,23 @@ func (s *PostgresMetadataShardStore) CreateStream(
 		Sealed:               txData.Sealed,
 		GenesisMiniblock:     genesisMiniblock,
 	}
+
+	return record, genesisMiniblock, nodeIndexes, nil
+}
+
+func (s *PostgresMetadataShardStore) CreateStream(
+	ctx context.Context,
+	shardID uint64,
+	height int64,
+	txData *CreateStreamTx,
+) (*StreamMetadata, error) {
+	_ = height
+
+	record, genesisMiniblock, nodeIndexes, err := s.buildCreateStreamRecord(txData)
+	if err != nil {
+		return nil, err
+	}
+
 	return record, s.store.txRunner(
 		ctx,
 		"MetadataShard.CreateStream",
@@ -381,6 +593,29 @@ func (s *PostgresMetadataShardStore) ApplyMiniblockBatch(
 	height int64,
 	updates []*MiniblockUpdate,
 ) error {
+	if err := validateMiniblockUpdates(updates); err != nil {
+		return err
+	}
+
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.ApplyMiniblockBatch",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			for _, update := range updates {
+				if err := s.applyMiniblockUpdateTx(ctx, tx, shardID, height, update); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		nil,
+		"shardId", shardID,
+		"numUpdates", len(updates),
+	)
+}
+
+func validateMiniblockUpdates(updates []*MiniblockUpdate) error {
 	if len(updates) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "no miniblock updates provided")
 	}
@@ -401,23 +636,7 @@ func (s *PostgresMetadataShardStore) ApplyMiniblockBatch(
 			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be greater than 0")
 		}
 	}
-
-	return s.store.txRunner(
-		ctx,
-		"MetadataShard.ApplyMiniblockBatch",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			for _, update := range updates {
-				if err := s.applyMiniblockUpdateTx(ctx, tx, shardID, height, update); err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-		nil,
-		"shardId", shardID,
-		"numUpdates", len(updates),
-	)
+	return nil
 }
 
 func (s *PostgresMetadataShardStore) applyMiniblockUpdateTx(
@@ -498,16 +717,7 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 	height int64,
 	update *UpdateStreamNodesAndReplicationTx,
 ) (*StreamMetadata, error) {
-	if update == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "update payload is required")
-	}
-	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "nothing to update:nodes or replication_factor are required")
-	}
-	if err := validateStreamID(update.StreamId); err != nil {
-		return nil, err
-	}
-	nodeIndexes, err := s.nodeIndexesForAddrs(update.Nodes, true)
+	nodeIndexes, err := s.prepareUpdateStreamNodesAndReplication(update)
 	if err != nil {
 		return nil, err
 	}
@@ -538,6 +748,21 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 		"streamId", update.StreamId,
 	)
 	return result, err
+}
+
+func (s *PostgresMetadataShardStore) prepareUpdateStreamNodesAndReplication(
+	update *UpdateStreamNodesAndReplicationTx,
+) ([]int32, error) {
+	if update == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "update payload is required")
+	}
+	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "nothing to update:nodes or replication_factor are required")
+	}
+	if err := validateStreamID(update.StreamId); err != nil {
+		return nil, err
+	}
+	return s.nodeIndexesForAddrs(update.Nodes, true)
 }
 
 func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
@@ -1077,6 +1302,99 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 	return records, err
 }
 
+func (s *PostgresMetadataShardStore) ValidateMetadataTxs(
+	ctx context.Context,
+	shardId uint64,
+	txs []*MetadataTx,
+) ([]error, error) {
+	state := newMetadataBlockState(s, shardId)
+	errs := make([]error, len(txs))
+	for i, tx := range txs {
+		if tx == nil {
+			continue
+		}
+		if err := state.applyTx(ctx, tx); err != nil {
+			errs[i] = err
+		}
+	}
+	return errs, nil
+}
+
+func (s *PostgresMetadataShardStore) ApplyMetadataTxBatch(
+	ctx context.Context,
+	shardId uint64,
+	height int64,
+	txs []*MetadataTx,
+) error {
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.ApplyMetadataTxBatch",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			for _, metaTx := range txs {
+				if metaTx == nil {
+					return RiverError(Err_INVALID_ARGUMENT, "tx is required")
+				}
+				if err := s.applyMetadataTxTx(ctx, tx, shardId, height, metaTx); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		nil,
+		"shardId", shardId,
+		"numTxs", len(txs),
+	)
+}
+
+func (s *PostgresMetadataShardStore) applyMetadataTxTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	height int64,
+	metaTx *MetadataTx,
+) error {
+	if metaTx == nil || metaTx.Op == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
+	}
+
+	switch op := metaTx.Op.(type) {
+	case *MetadataTx_CreateStream:
+		record, genesisMiniblock, nodeIndexes, err := s.buildCreateStreamRecord(op.CreateStream)
+		if err != nil {
+			return err
+		}
+		return s.createStreamTx(ctx, tx, shardId, record, genesisMiniblock, nodeIndexes)
+	case *MetadataTx_SetStreamLastMiniblockBatch:
+		if err := validateMiniblockUpdates(op.SetStreamLastMiniblockBatch.Miniblocks); err != nil {
+			return err
+		}
+		for _, update := range op.SetStreamLastMiniblockBatch.Miniblocks {
+			if err := s.applyMiniblockUpdateTx(ctx, tx, shardId, height, update); err != nil {
+				return err
+			}
+		}
+		return nil
+	case *MetadataTx_UpdateStreamNodesAndReplication:
+		nodeIndexes, err := s.prepareUpdateStreamNodesAndReplication(op.UpdateStreamNodesAndReplication)
+		if err != nil {
+			return err
+		}
+		_, err = s.updateStreamNodesAndReplicationTx(
+			ctx,
+			tx,
+			shardId,
+			height,
+			op.UpdateStreamNodesAndReplication.StreamId,
+			op.UpdateStreamNodesAndReplication.ReplicationFactor,
+			nodeIndexes,
+		)
+		return err
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
+	}
+}
+
 func (s *PostgresMetadataShardStore) ApplyMetadataTx(
 	ctx context.Context,
 	shardId uint64,
@@ -1086,18 +1404,7 @@ func (s *PostgresMetadataShardStore) ApplyMetadataTx(
 	if tx == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
 	}
-	switch op := tx.Op.(type) {
-	case *MetadataTx_CreateStream:
-		_, err := s.CreateStream(ctx, shardId, height, op.CreateStream)
-		return err
-	case *MetadataTx_SetStreamLastMiniblockBatch:
-		return s.ApplyMiniblockBatch(ctx, shardId, height, op.SetStreamLastMiniblockBatch.Miniblocks)
-	case *MetadataTx_UpdateStreamNodesAndReplication:
-		_, err := s.UpdateStreamNodesAndReplication(ctx, shardId, height, op.UpdateStreamNodesAndReplication)
-		return err
-	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
-	}
+	return s.ApplyMetadataTxBatch(ctx, shardId, height, []*MetadataTx{tx})
 }
 
 func (s *PostgresMetadataShardStore) ComputeAppHash(

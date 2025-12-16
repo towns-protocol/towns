@@ -31,8 +31,8 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 - `NewMetadataShard` derives the chain id (`metadata-shard-<hex>`), writes the genesis doc, configures CometBFT for local-friendly defaults (no RPC listener, tighter consensus timeouts), and ensures shard tables exist.
 - `SubmitTx` feeds bytes into the mempool `CheckTx`. `Height` reflects the Comet block store height when the node is running.
-- `FinalizeBlock` decodes and validates each tx, applies it via `ApplyMetadataTx` (serially inside a tx runner), computes the (temporary) app hash, and caches `{height, appHash}` for `Commit`.
-- `Commit` writes `last_height`/`last_app_hash` into the shared `metadata` table using the cached app hash (or recomputing if missing).
+- `FinalizeBlock` decodes and validates each tx, performs stateful validation against Postgres without writing, batches valid txs in memory, computes the (temporary) app hash, and caches `{height, appHash, txs}` for `Commit`.
+- `Commit` applies all cached txs in a single Postgres transaction and writes `last_height`/`last_app_hash` into the shared `metadata` table using the cached app hash (or recomputing if missing).
 - Query endpoints:
   - `/stream/<hex>` (or `req.Data`): returns a single `StreamMetadata` as protojson.
   - `/streams?offset=&limit=`: returns streams ordered by `stream_id` plus count/offset/limit.
@@ -56,7 +56,7 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 # TODO
 
 - [x] Update database to use single table for streams data using int array and GIN index for nodes (instead of putting nodes in a separate table).
-- [ ] Collect block state in memory and only commit when Commit is called in a single transaction.
+- [x] Collect block state in memory and only commit when Commit is called in a single transaction.
 - [ ] Replace temporary fake app_hash with fixed depth sparse merkle tree with pg backing.
 - [ ] Implement snapshotting/export functionality.
 - [ ] Add restart, replica change and replica recovery tests.
