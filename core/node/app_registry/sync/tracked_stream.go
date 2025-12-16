@@ -169,12 +169,19 @@ func NewTrackedStreamForAppRegistryService(
 }
 
 // shouldPersistCookie determines if this stream's cookie should be persisted.
-// Only channel streams with bot members need cookie persistence to ensure message
-// delivery guarantees. User inbox streams don't need persistence since session keys
-// are already stored in the database and re-processing is idempotent.
+// User inbox streams need cookie persistence to avoid reprocessing historical
+// GroupEncryptionSessions events on service restart (which would cause duplicate
+// session key inserts). Channel streams with bot members need cookie persistence
+// to ensure message delivery guarantees.
 // TODO yoni: optimize this by caching the result and track join/leave events
 func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
 	streamId := view.StreamId()
+
+	// Persist cookies for user inbox streams to avoid reprocessing session keys on restart.
+	// Note: only user inbox streams of registered bots are tracked (see TrackStream in streams_tracker.go)
+	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
+		return true
+	}
 
 	// Only persist cookies for channel streams with bot members
 	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
