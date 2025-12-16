@@ -96,7 +96,6 @@ describe('streamRpcClient using v2 sync', () => {
             alicesContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                spaceId: spaceId,
             }),
         )
         const event = await makeEvent(
@@ -200,7 +199,6 @@ describe('streamRpcClient using v2 sync', () => {
             alicesContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                spaceId: spaceId,
             }),
         )
         let event = await makeEvent(
@@ -209,7 +207,6 @@ describe('streamRpcClient using v2 sync', () => {
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
-                streamParentId: spaceIdStr,
             }),
         )
         const alicesChannel = await alice.createStream({
@@ -242,7 +239,6 @@ describe('streamRpcClient using v2 sync', () => {
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: channelId,
-                streamParentId: spaceId,
             }),
             bobsUserStream.stream?.miniblocks.at(-1)?.header?.hash,
         )

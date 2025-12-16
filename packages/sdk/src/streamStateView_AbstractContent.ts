@@ -3,7 +3,6 @@ import { EncryptedData } from '@towns-protocol/proto'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { streamIdToBytes } from './id'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -58,17 +57,5 @@ export abstract class StreamStateView_AbstractContent {
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         //
-    }
-
-    getStreamParentId(): string | undefined {
-        return undefined
-    }
-
-    getStreamParentIdAsBytes(): Uint8Array | undefined {
-        const streamParentId = this.getStreamParentId()
-        if (streamParentId === undefined) {
-            return undefined
-        }
-        return streamIdToBytes(streamParentId)
     }
 }
