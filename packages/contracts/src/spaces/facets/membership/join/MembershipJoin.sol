@@ -31,7 +31,18 @@ import {MembershipBase} from "../MembershipBase.sol";
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
 /// processing
-/// @dev Inherits from multiple base contracts to provide comprehensive membership functionality
+/// @dev Join Flow:
+/// 1. Payment captured upfront via `_validateAndCapturePayment` (ETH held, ERC20 transferred in)
+/// 2. Entitlement check determines sync vs async path:
+///    - Sync (local entitlements): immediate token issuance or rejection
+///    - Async (crosschain entitlements): payment held in dispatcher, resolved via callback
+/// 3. On success: fees distributed from contract via `_pay*` functions, token issued
+/// 4. On failure: full refund via `_refundBalance`
+///
+/// Payment Handling:
+/// - ETH: received via payable, excess refunded after fees
+/// - ERC20: exact amount transferred in, no refund needed
+/// - All fee payments use `address(this)` as source since funds are already in contract
 abstract contract MembershipJoin is
     IRolesBase,
     IPartnerRegistryBase,
@@ -107,13 +118,10 @@ abstract contract MembershipJoin is
         // Validate and capture payment if required
         uint256 capturedAmount;
         if (joinDetails.shouldCharge) {
-            address currency = _getMembershipCurrency();
-            _validateAndCapturePayment(currency, joinDetails.amountDue);
-            // For ETH: capture full msg.value (excess refunded later)
-            // For ERC20: capture the required amount (already transferred)
-            capturedAmount = _getMembershipCurrency() == CurrencyTransfer.NATIVE_TOKEN
-                ? msg.value
-                : joinDetails.amountDue;
+            capturedAmount = _validateAndCapturePayment(
+                _getMembershipCurrency(),
+                joinDetails.amountDue
+            );
         }
 
         bytes32 transactionId = _registerTransaction(
@@ -151,13 +159,10 @@ abstract contract MembershipJoin is
         // Validate and capture payment if required
         uint256 capturedAmount;
         if (joinDetails.shouldCharge) {
-            address currency = _getMembershipCurrency();
-            _validateAndCapturePayment(currency, joinDetails.amountDue);
-            // For ETH: capture full msg.value (excess refunded later)
-            // For ERC20: capture the required amount (already transferred)
-            capturedAmount = currency == CurrencyTransfer.NATIVE_TOKEN
-                ? msg.value
-                : joinDetails.amountDue;
+            capturedAmount = _validateAndCapturePayment(
+                _getMembershipCurrency(),
+                joinDetails.amountDue
+            );
         }
 
         _validateUserReferral(receiver, referral);
@@ -203,37 +208,30 @@ abstract contract MembershipJoin is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Validates and captures payment based on currency type
-    /// @dev For ETH: validates msg.value >= required amount
+    /// @dev For ETH: validates msg.value >= required amount, returns msg.value for refund handling
     /// @dev For ERC20: transfers tokens from sender to this contract
     /// @param currency The currency address (NATIVE_TOKEN for ETH, or ERC20 address)
     /// @param amountRequired The required payment amount
-    /// @return capturedAmount The amount captured (for ERC20, handles fee-on-transfer tokens)
+    /// @return The amount to capture (msg.value for ETH, amountRequired for ERC20)
     function _validateAndCapturePayment(
         address currency,
         uint256 amountRequired
-    ) internal returns (uint256 capturedAmount) {
+    ) internal returns (uint256) {
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            // ETH payment: validate msg.value (captured later in _registerTransaction)
+            // ETH payment: validate msg.value, return full amount for refund handling
             if (msg.value < amountRequired) {
                 Membership__InsufficientPayment.selector.revertWith();
             }
-            return amountRequired;
+            return msg.value;
         }
 
         // ERC20 payment: reject any ETH sent
         if (msg.value != 0) revert Membership__UnexpectedValue();
 
         // Transfer ERC20 tokens from sender to contract
-        uint256 balanceBefore = currency.balanceOf(address(this));
-        CurrencyTransfer.safeTransferERC20(currency, msg.sender, address(this), amountRequired);
-        uint256 balanceAfter = currency.balanceOf(address(this));
+        _transferIn(currency, msg.sender, amountRequired);
 
-        capturedAmount = balanceAfter - balanceBefore;
-        if (capturedAmount < amountRequired) {
-            Membership__InsufficientPayment.selector.revertWith();
-        }
-
-        return capturedAmount;
+        return amountRequired;
     }
 
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
@@ -356,7 +354,7 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         PricingDetails memory joinDetails
     ) internal {
-        (bytes4 selector, address sender, address receiver, ) = abi.decode(
+        (bytes4 selector, , address receiver, ) = abi.decode(
             _getCapturedData(transactionId),
             (bytes4, address, address, bytes)
         );
@@ -365,16 +363,9 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
-        uint256 ownerProceeds = joinDetails.amountDue - protocolFee;
+        _payProtocolFee(_getMembershipCurrency(), joinDetails.basePrice);
 
-        _afterChargeForJoinSpace(
-            transactionId,
-            sender,
-            receiver,
-            joinDetails.amountDue,
-            ownerProceeds
-        );
+        _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
 
     /// @notice Processes the charge for joining a space with referral
@@ -395,45 +386,31 @@ abstract contract MembershipJoin is
 
         ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
 
-        uint256 ownerProceeds;
-        {
-            uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
-
-            uint256 partnerFee = _collectPartnerFee(
-                sender,
-                referral.partner,
-                joinDetails.basePrice
-            );
-
-            uint256 referralFee = _collectReferralCodeFee(
-                sender,
-                referral.userReferral,
-                referral.referralCode,
-                joinDetails.basePrice
-            );
-
-            ownerProceeds = joinDetails.amountDue - protocolFee - partnerFee - referralFee;
-        }
-
-        _afterChargeForJoinSpace(
-            transactionId,
+        address currency = _getMembershipCurrency();
+        _payProtocolFee(currency, joinDetails.basePrice);
+        _payPartnerFee(currency, referral.partner, joinDetails.basePrice);
+        _payReferralFee(
+            currency,
             sender,
-            receiver,
-            joinDetails.amountDue,
-            ownerProceeds
+            referral.userReferral,
+            referral.referralCode,
+            joinDetails.basePrice
         );
+
+        _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
 
+    /// @notice Finalizes the charge after fees have been paid
+    /// @dev Releases `paymentRequired` from captured value (leaving excess for refund),
+    /// cleans up transaction data, and mints points. Called by both sync and async flows.
+    /// @param transactionId The unique identifier for this join transaction
+    /// @param receiver The address receiving the membership
+    /// @param paymentRequired The amount consumed for payment (fees + owner proceeds)
     function _afterChargeForJoinSpace(
         bytes32 transactionId,
-        address payer,
         address receiver,
-        uint256 paymentRequired,
-        uint256 ownerProceeds
+        uint256 paymentRequired
     ) internal {
-        // account for owner's proceeds
-        if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
-
         _releaseCapturedValue(transactionId, paymentRequired);
         _deleteCapturedData(transactionId);
 
@@ -486,68 +463,78 @@ abstract contract MembershipJoin is
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       FEE COLLECTION                       */
+    /*                      FEE DISTRIBUTION                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Collects the referral fee if applicable
-    /// @param payer The address of the payer
+    /// @notice Pays the protocol fee to the platform fee recipient
+    /// @param currency The currency to pay in
+    /// @param membershipPrice The price of the membership
+    /// @return protocolFee The amount of protocol fee paid
+    function _payProtocolFee(
+        address currency,
+        uint256 membershipPrice
+    ) internal returns (uint256 protocolFee) {
+        protocolFee = _getProtocolFee(membershipPrice);
+
+        CurrencyTransfer.transferCurrency(
+            currency,
+            address(this),
+            _getPlatformRequirements().getFeeRecipient(),
+            protocolFee
+        );
+    }
+
+    /// @notice Pays the referral fee if applicable
+    /// @param currency The currency to pay in
+    /// @param sender The original sender address (used for self-referral check)
+    /// @param userReferral The user referral address
     /// @param referralCode The referral code used
     /// @param membershipPrice The price of the membership
-    /// @return referralFee The amount of referral fee collected
-    function _collectReferralCodeFee(
-        address payer,
+    function _payReferralFee(
+        address currency,
+        address sender,
         address userReferral,
         string memory referralCode,
         uint256 membershipPrice
-    ) internal returns (uint256 referralFee) {
+    ) internal {
         if (bytes(referralCode).length != 0) {
             Referral memory referral = _referralInfo(referralCode);
 
-            if (referral.recipient == address(0) || referral.basisPoints == 0) return 0;
+            if (referral.recipient == address(0) || referral.basisPoints == 0) return;
 
-            referralFee = BasisPoints.calculate(membershipPrice, referral.basisPoints);
+            uint256 referralFee = BasisPoints.calculate(membershipPrice, referral.basisPoints);
 
             CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(),
-                payer,
+                currency,
+                address(this),
                 referral.recipient,
                 referralFee
             );
         } else if (userReferral != address(0)) {
-            if (userReferral == payer) return 0;
+            if (userReferral == sender) return;
 
-            referralFee = BasisPoints.calculate(membershipPrice, _defaultBpsFee());
+            uint256 referralFee = BasisPoints.calculate(membershipPrice, _defaultBpsFee());
 
-            CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(),
-                payer,
-                userReferral,
-                referralFee
-            );
+            CurrencyTransfer.transferCurrency(currency, address(this), userReferral, referralFee);
         }
     }
 
-    /// @notice Collects the partner fee if applicable
-    /// @param payer The address of the payer
+    /// @notice Pays the partner fee if applicable
+    /// @param currency The currency to pay in
     /// @param partner The address of the partner
     /// @param membershipPrice The price of the membership
-    /// @return partnerFee The amount of partner fee collected
-    function _collectPartnerFee(
-        address payer,
-        address partner,
-        uint256 membershipPrice
-    ) internal returns (uint256 partnerFee) {
-        if (partner == address(0)) return 0;
+    function _payPartnerFee(address currency, address partner, uint256 membershipPrice) internal {
+        if (partner == address(0)) return;
 
         Partner memory partnerInfo = IPartnerRegistry(_getSpaceFactory()).partnerInfo(partner);
 
-        if (partnerInfo.fee == 0) return 0;
+        if (partnerInfo.fee == 0) return;
 
-        partnerFee = BasisPoints.calculate(membershipPrice, partnerInfo.fee);
+        uint256 partnerFee = BasisPoints.calculate(membershipPrice, partnerInfo.fee);
 
         CurrencyTransfer.transferCurrency(
-            _getMembershipCurrency(),
-            payer,
+            currency,
+            address(this),
             partnerInfo.recipient,
             partnerFee
         );
@@ -574,17 +561,10 @@ abstract contract MembershipJoin is
         (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            // ETH payment
+            // ETH payment: validate msg.value
             if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-            // Collect protocol fee (transfers from payer)
-            uint256 protocolFee = _collectProtocolFee(payer, basePrice);
-
-            // Calculate owner proceeds (what goes to space owner)
-            uint256 ownerProceeds = totalRequired - protocolFee;
-
-            // Transfer owner proceeds to contract
-            if (ownerProceeds > 0) _transferIn(payer, ownerProceeds);
+            _payProtocolFee(currency, basePrice);
 
             // Handle excess payment
             uint256 excess = msg.value - totalRequired;
@@ -595,26 +575,10 @@ abstract contract MembershipJoin is
             // ERC20 payment: reject any ETH sent
             if (msg.value != 0) revert Membership__UnexpectedValue();
 
-            // Transfer ERC20 from payer to contract for the full amount
-            uint256 balanceBefore = currency.balanceOf(address(this));
-            CurrencyTransfer.safeTransferERC20(currency, payer, address(this), totalRequired);
-            uint256 balanceAfter = currency.balanceOf(address(this));
+            // Transfer ERC20 from payer to contract
+            _transferIn(currency, payer, totalRequired);
 
-            if (balanceAfter - balanceBefore < totalRequired) {
-                Membership__InsufficientPayment.selector.revertWith();
-            }
-
-            // Collect protocol fee (transfers from contract since tokens are already here)
-            uint256 protocolFee = _collectProtocolFee(address(this), basePrice);
-
-            // Calculate owner proceeds (what goes to space owner)
-            uint256 ownerProceeds = totalRequired - protocolFee;
-
-            // For ERC20, owner proceeds are already in contract via _transferIn
-            if (ownerProceeds > 0) {
-                MembershipStorage.Layout storage $ = MembershipStorage.layout();
-                $.tokenBalance += ownerProceeds;
-            }
+            _payProtocolFee(currency, basePrice);
         }
 
         _mintMembershipPoints(receiver, totalRequired);
@@ -622,11 +586,13 @@ abstract contract MembershipJoin is
     }
 
     /// @notice Mints points to a member based on their paid amount
-    /// @dev This function handles point minting for both new joins and renewals
+    /// @dev Only mints points for ETH payments. ERC20 support requires oracle integration.
     /// @param receiver The address receiving the points
     /// @param paidAmount The amount paid for membership
     function _mintMembershipPoints(address receiver, uint256 paidAmount) internal {
-        // calculate points and credit them
+        // TODO: Add ERC20 support - requires price oracle to convert token amount to points
+        if (_getMembershipCurrency() != CurrencyTransfer.NATIVE_TOKEN) return;
+
         address airdropDiamond = _getAirdropDiamond();
         uint256 points = _getPoints(
             airdropDiamond,
@@ -635,5 +601,22 @@ abstract contract MembershipJoin is
         );
         _mintPoints(airdropDiamond, receiver, points);
         _mintPoints(airdropDiamond, _owner(), points);
+    }
+
+    /// @notice Transfers tokens from an address to this contract
+    /// @param currency The currency address (NATIVE_TOKEN for ETH, or ERC20 address)
+    /// @param from The address to transfer from
+    /// @param amount The amount to transfer
+    function _transferIn(address currency, address from, uint256 amount) internal {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) return;
+
+        // Handle ERC20 tokens with fee-on-transfer check
+        uint256 balanceBefore = currency.balanceOf(address(this));
+        currency.safeTransferFrom(from, address(this), amount);
+        uint256 balanceAfter = currency.balanceOf(address(this));
+
+        if (balanceAfter - balanceBefore < amount) {
+            Membership__InsufficientPayment.selector.revertWith();
+        }
     }
 }

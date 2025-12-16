@@ -50,21 +50,6 @@ abstract contract MembershipBase is IMembershipBase {
     /*                         MEMBERSHIP                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _collectProtocolFee(
-        address payer,
-        uint256 membershipPrice
-    ) internal returns (uint256 protocolFee) {
-        protocolFee = _getProtocolFee(membershipPrice);
-
-        // transfer the platform fee to the platform fee recipient
-        CurrencyTransfer.transferCurrency(
-            _getMembershipCurrency(),
-            payer, // from
-            _getPlatformRequirements().getFeeRecipient(), // to
-            protocolFee
-        );
-    }
-
     function _getMembershipPrice(
         uint256 totalSupply
     ) internal view virtual returns (uint256 membershipPrice) {
@@ -86,40 +71,7 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 membershipPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
-        if (membershipPrice == 0) return (protocolFee, protocolFee);
-        return (membershipPrice + protocolFee, protocolFee);
-    }
-
-    function _transferIn(address from, uint256 amount) internal returns (uint256) {
-        MembershipStorage.Layout storage $ = MembershipStorage.layout();
-
-        // get the currency being used for membership
-        address currency = _getMembershipCurrency();
-
-        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            $.tokenBalance += amount;
-            return amount;
-        }
-
-        // handle erc20 tokens
-        uint256 balanceBefore = currency.balanceOf(address(this));
-        CurrencyTransfer.safeTransferERC20(currency, from, address(this), amount);
-        uint256 balanceAfter = currency.balanceOf(address(this));
-
-        // Calculate the amount of tokens transferred
-        uint256 finalAmount = balanceAfter - balanceBefore;
-        if (finalAmount != amount) Membership__InsufficientPayment.selector.revertWith();
-
-        $.tokenBalance += finalAmount;
-        return finalAmount;
-    }
-
-    function _getCreatorBalance() internal view returns (uint256) {
-        return MembershipStorage.layout().tokenBalance;
-    }
-
-    function _setCreatorBalance(uint256 newBalance) internal {
-        MembershipStorage.layout().tokenBalance = newBalance;
+        totalRequired = membershipPrice + protocolFee;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
