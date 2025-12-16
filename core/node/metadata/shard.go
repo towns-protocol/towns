@@ -315,10 +315,26 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	height := m.lastBlockHeight
-	if height == 0 && m.node != nil {
-		height = m.node.BlockStore().Height()
+	// Validate that FinalizeBlock was called
+	if m.pendingBlock == nil {
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"Commit called without FinalizeBlock",
+			"lastBlockHeight", m.lastBlockHeight,
+		)
 	}
+
+	// Validate pending block height matches lastBlockHeight
+	if m.pendingBlock.height != m.lastBlockHeight {
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"pending block height mismatch",
+			"pendingHeight", m.pendingBlock.height,
+			"lastBlockHeight", m.lastBlockHeight,
+		)
+	}
+
+	height := m.lastBlockHeight
 	appHash := m.lastAppHash
 	if appHash == nil {
 		var err error
@@ -329,10 +345,7 @@ func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abc
 	}
 
 	// Apply all pending operations and update shard state atomically
-	var operations []*storage.CommitOperation
-	if m.pendingBlock != nil {
-		operations = m.pendingBlock.operations
-	}
+	operations := m.pendingBlock.operations
 
 	if err := m.store.CommitBlock(ctx, m.opts.ShardID, height, appHash, operations); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
@@ -595,6 +608,29 @@ func (m *MetadataShard) FinalizeBlock(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
+	// Validate that previous FinalizeBlock was committed
+	if m.pendingBlock != nil {
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"FinalizeBlock called without committing previous block",
+			"pendingHeight", m.pendingBlock.height,
+			"newHeight", req.Height,
+		)
+	}
+
+	// Validate block height is sequential
+	// Height 1 is the first block after genesis (height 0)
+	expectedHeight := m.lastBlockHeight + 1
+	if req.Height != expectedHeight {
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"block height mismatch",
+			"expected", expectedHeight,
+			"got", req.Height,
+			"lastBlockHeight", m.lastBlockHeight,
+		)
+	}
+
 	// Initialize pending block state
 	m.pendingBlock = &pendingBlockState{
 		height:     req.Height,
