@@ -36,7 +36,6 @@ struct Layout {
     // Global mappings
     EnumerableSetLib.AddressSet currencies;
     mapping(address currency => Stats stats) currencyStats;
-    mapping(address account => Stats stats) accountStats;
     mapping(address account => mapping(address currency => Stats stats)) accountStatsByCurrency;
 }
 
@@ -105,10 +104,6 @@ function processTip(
     stats.total += 1;
 
     // Update account-specific stats
-    Stats storage accountStats = $.accountStats[receiver];
-    accountStats.amount += amount;
-    accountStats.total += 1;
-
     Stats storage accountStatsByCurrency = $.accountStatsByCurrency[receiver][currency];
     accountStatsByCurrency.amount += amount;
     accountStatsByCurrency.total += 1;
