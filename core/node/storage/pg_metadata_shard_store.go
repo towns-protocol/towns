@@ -25,6 +25,40 @@ type MetadataShardState struct {
 	LastAppHash []byte
 }
 
+// CommitOperation represents an operation to be committed atomically in Commit.
+type CommitOperation struct {
+	CreateStream    *CommitCreateStreamOp
+	UpdateMiniblock *CommitUpdateMiniblockOp
+	UpdateNodes     *CommitUpdateNodesOp
+}
+
+// CommitCreateStreamOp contains data for creating a new stream.
+type CommitCreateStreamOp struct {
+	StreamId             []byte
+	GenesisMiniblockHash []byte
+	GenesisMiniblock     []byte
+	LastMiniblockHash    []byte
+	LastMiniblockNum     int64
+	ReplicationFactor    uint32
+	Sealed               bool
+	NodeIndexes          []int32
+}
+
+// CommitUpdateMiniblockOp contains data for updating a stream's miniblock pointer.
+type CommitUpdateMiniblockOp struct {
+	StreamId          []byte
+	LastMiniblockHash []byte
+	LastMiniblockNum  int64
+	Sealed            bool
+}
+
+// CommitUpdateNodesOp contains data for updating a stream's nodes and/or replication.
+type CommitUpdateNodesOp struct {
+	StreamId          []byte
+	ReplicationFactor uint32  // 0 means don't update
+	NodeIndexes       []int32 // nil means don't update
+}
+
 type PostgresMetadataShardStore struct {
 	store    *PostgresEventStore
 	registry nodespkg.NodeRegistry
@@ -32,14 +66,6 @@ type PostgresMetadataShardStore struct {
 
 type MetadataStore interface {
 	EnsureShardStorage(ctx context.Context, shardId uint64) error
-	CreateStream(ctx context.Context, shardId uint64, height int64, tx *CreateStreamTx) (*StreamMetadata, error)
-	ApplyMiniblockBatch(ctx context.Context, shardId uint64, height int64, updates []*MiniblockUpdate) error
-	UpdateStreamNodesAndReplication(
-		ctx context.Context,
-		shardId uint64,
-		height int64,
-		update *UpdateStreamNodesAndReplicationTx,
-	) (*StreamMetadata, error)
 	GetStream(ctx context.Context, shardId uint64, streamId shared.StreamId) (*StreamMetadata, error)
 	ListStreams(ctx context.Context, shardId uint64, offset int64, limit int32) ([]*StreamMetadata, error)
 	ListStreamsByNode(
@@ -51,11 +77,23 @@ type MetadataStore interface {
 	) ([]*StreamMetadata, error)
 	CountStreams(ctx context.Context, shardId uint64) (int64, error)
 	CountStreamsByNode(ctx context.Context, shardId uint64, node common.Address) (int64, error)
-	SetShardState(ctx context.Context, shardId uint64, height int64, appHash []byte) error
 	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
 	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
-	ApplyMetadataTx(ctx context.Context, shardId uint64, height int64, tx *MetadataTx) error
 	ComputeAppHash(ctx context.Context, shardId uint64, height int64) ([]byte, error)
+
+	// ResolveNodeAddresses converts node addresses to permanent indexes.
+	// Used during FinalizeBlock validation.
+	ResolveNodeAddresses(nodes [][]byte) ([]int32, error)
+
+	// CommitBlock atomically applies all operations and updates shard state.
+	// This is called during Commit to persist all changes from FinalizeBlock.
+	CommitBlock(
+		ctx context.Context,
+		shardId uint64,
+		height int64,
+		appHash []byte,
+		operations []*CommitOperation,
+	) error
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -244,6 +282,12 @@ func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]b
 		addrs = append(addrs, cp)
 	}
 	return addrs, nil
+}
+
+// ResolveNodeAddresses converts node addresses to permanent indexes.
+// This is used during FinalizeBlock validation to pre-resolve node addresses.
+func (s *PostgresMetadataShardStore) ResolveNodeAddresses(nodes [][]byte) ([]int32, error) {
+	return s.nodeIndexesForAddrs(nodes, true)
 }
 
 func (s *PostgresMetadataShardStore) CreateStream(
@@ -1077,26 +1121,152 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 	return records, err
 }
 
-func (s *PostgresMetadataShardStore) ApplyMetadataTx(
+// CommitBlock atomically applies all operations and updates shard state.
+// This is called during Commit to persist all changes from FinalizeBlock.
+// All operations are applied in order within a single transaction.
+func (s *PostgresMetadataShardStore) CommitBlock(
 	ctx context.Context,
 	shardId uint64,
 	height int64,
-	tx *MetadataTx,
+	appHash []byte,
+	operations []*CommitOperation,
 ) error {
-	if tx == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
+	if appHash == nil {
+		appHash = []byte{}
 	}
-	switch op := tx.Op.(type) {
-	case *MetadataTx_CreateStream:
-		_, err := s.CreateStream(ctx, shardId, height, op.CreateStream)
+
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.CommitBlock",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			// Apply each operation in order
+			for _, op := range operations {
+				if op.CreateStream != nil {
+					if err := s.commitCreateStreamTx(ctx, tx, shardId, op.CreateStream); err != nil {
+						return err
+					}
+				}
+				if op.UpdateMiniblock != nil {
+					if err := s.commitUpdateMiniblockTx(ctx, tx, shardId, op.UpdateMiniblock); err != nil {
+						return err
+					}
+				}
+				if op.UpdateNodes != nil {
+					if err := s.commitUpdateNodesTx(ctx, tx, shardId, op.UpdateNodes); err != nil {
+						return err
+					}
+				}
+			}
+
+			// Update shard state
+			updateSQL := `UPDATE metadata SET last_height = $1, last_app_hash = $2, updated_at = NOW() WHERE shard_id = $3`
+			if _, err := tx.Exec(ctx, updateSQL, height, appHash, int64(shardId)); err != nil {
+				return err
+			}
+
+			return nil
+		},
+		nil,
+		"shardId", shardId,
+		"height", height,
+		"numOps", len(operations),
+	)
+}
+
+// commitCreateStreamTx inserts a new stream record within a transaction.
+// Validation has already been done in FinalizeBlock.
+func (s *PostgresMetadataShardStore) commitCreateStreamTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	op *CommitCreateStreamOp,
+) error {
+	insertSQL := s.sqlForShard(`
+INSERT INTO {{streams}}
+    (stream_id, genesis_miniblock_hash, genesis_miniblock, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, shardId)
+
+	_, err := tx.Exec(
+		ctx,
+		insertSQL,
+		op.StreamId,
+		op.GenesisMiniblockHash,
+		op.GenesisMiniblock,
+		op.LastMiniblockHash,
+		op.LastMiniblockNum,
+		op.ReplicationFactor,
+		op.Sealed,
+		op.NodeIndexes,
+	)
+	return err
+}
+
+// commitUpdateMiniblockTx updates a stream's miniblock pointer within a transaction.
+// Validation has already been done in FinalizeBlock.
+func (s *PostgresMetadataShardStore) commitUpdateMiniblockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	op *CommitUpdateMiniblockOp,
+) error {
+	updateSQL := s.sqlForShard(`
+UPDATE {{streams}}
+SET last_miniblock_hash = $2,
+    last_miniblock_num = $3,
+    sealed = $4
+WHERE stream_id = $1`, shardId)
+
+	_, err := tx.Exec(
+		ctx,
+		updateSQL,
+		op.StreamId,
+		op.LastMiniblockHash,
+		op.LastMiniblockNum,
+		op.Sealed,
+	)
+	return err
+}
+
+// commitUpdateNodesTx updates a stream's nodes and/or replication factor within a transaction.
+// Validation has already been done in FinalizeBlock.
+func (s *PostgresMetadataShardStore) commitUpdateNodesTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	op *CommitUpdateNodesOp,
+) error {
+	switch {
+	case op.ReplicationFactor > 0 && len(op.NodeIndexes) > 0:
+		// Update both replication and nodes
+		updateSQL := s.sqlForShard(`
+UPDATE {{streams}}
+SET replication_factor = $2, nodes = $3
+WHERE stream_id = $1`, shardId)
+		_, err := tx.Exec(ctx, updateSQL, op.StreamId, op.ReplicationFactor, op.NodeIndexes)
 		return err
-	case *MetadataTx_SetStreamLastMiniblockBatch:
-		return s.ApplyMiniblockBatch(ctx, shardId, height, op.SetStreamLastMiniblockBatch.Miniblocks)
-	case *MetadataTx_UpdateStreamNodesAndReplication:
-		_, err := s.UpdateStreamNodesAndReplication(ctx, shardId, height, op.UpdateStreamNodesAndReplication)
+
+	case op.ReplicationFactor > 0:
+		// Update only replication
+		updateSQL := s.sqlForShard(`
+UPDATE {{streams}}
+SET replication_factor = $2
+WHERE stream_id = $1`, shardId)
+		_, err := tx.Exec(ctx, updateSQL, op.StreamId, op.ReplicationFactor)
 		return err
+
+	case len(op.NodeIndexes) > 0:
+		// Update only nodes
+		updateSQL := s.sqlForShard(`
+UPDATE {{streams}}
+SET nodes = $2
+WHERE stream_id = $1`, shardId)
+		_, err := tx.Exec(ctx, updateSQL, op.StreamId, op.NodeIndexes)
+		return err
+
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
+		// Nothing to update
+		return nil
 	}
 }
 

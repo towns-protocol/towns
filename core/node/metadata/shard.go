@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -41,6 +42,30 @@ const (
 
 var _ abci.Application = (*MetadataShard)(nil)
 
+// pendingStreamState tracks the in-memory state of a stream during FinalizeBlock.
+// It mirrors the DB state and is updated as operations are validated.
+type pendingStreamState struct {
+	exists            bool
+	lastMiniblockHash []byte
+	lastMiniblockNum  int64
+	sealed            bool
+	replicationFactor uint32
+	nodeIndexes       []int32
+
+	// Only set for newly created streams
+	isNew                bool
+	genesisMiniblockHash []byte
+	genesisMiniblock     []byte
+}
+
+// pendingBlockState holds all pending operations and state for a block being finalized.
+type pendingBlockState struct {
+	height     int64
+	appHash    []byte
+	streams    map[string]*pendingStreamState // key: hex(streamId)
+	operations []*storage.CommitOperation
+}
+
 type MetadataShardOpts struct {
 	ShardID         uint64
 	P2PPort         int
@@ -66,6 +91,10 @@ type MetadataShard struct {
 	// which CometBFT invokes sequentially, so no mutex is required.
 	lastBlockHeight int64
 	lastAppHash     []byte
+
+	// pendingBlock holds operations collected during FinalizeBlock to be applied in Commit.
+	// Set during FinalizeBlock, cleared after Commit.
+	pendingBlock *pendingBlockState
 }
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
@@ -298,9 +327,20 @@ func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abc
 			return nil, AsRiverError(err).Func("Commit")
 		}
 	}
-	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
+
+	// Apply all pending operations and update shard state atomically
+	var operations []*storage.CommitOperation
+	if m.pendingBlock != nil {
+		operations = m.pendingBlock.operations
+	}
+
+	if err := m.store.CommitBlock(ctx, m.opts.ShardID, height, appHash, operations); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
 	}
+
+	// Clear pending state
+	m.pendingBlock = nil
+
 	return &abci.CommitResponse{}, nil
 }
 
@@ -555,6 +595,13 @@ func (m *MetadataShard) FinalizeBlock(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
+	// Initialize pending block state
+	m.pendingBlock = &pendingBlockState{
+		height:     req.Height,
+		streams:    make(map[string]*pendingStreamState),
+		operations: make([]*storage.CommitOperation, 0),
+	}
+
 	txs := make([]*abci.ExecTxResult, len(req.Txs))
 	for i, txBytes := range req.Txs {
 		metaTx, err := decodeMetadataTx(txBytes)
@@ -564,26 +611,65 @@ func (m *MetadataShard) FinalizeBlock(
 			txs[i] = res
 			continue
 		}
+
+		// Format validation
 		if err := m.validateTx(metaTx); err != nil {
 			res := &abci.ExecTxResult{}
 			setError(res, err)
 			txs[i] = res
 			continue
 		}
-		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
+
+		// State validation and operation collection (reads DB but doesn't write)
+		var ops []*storage.CommitOperation
+		switch op := metaTx.Op.(type) {
+		case *MetadataTx_CreateStream:
+			commitOp, err := m.processCreateStream(ctx, op.CreateStream)
+			if err != nil {
+				res := &abci.ExecTxResult{}
+				setError(res, err)
+				txs[i] = res
+				continue
+			}
+			ops = []*storage.CommitOperation{commitOp}
+		case *MetadataTx_SetStreamLastMiniblockBatch:
+			batchOps, err := m.processSetMiniblockBatch(ctx, op.SetStreamLastMiniblockBatch)
+			if err != nil {
+				res := &abci.ExecTxResult{}
+				setError(res, err)
+				txs[i] = res
+				continue
+			}
+			ops = batchOps
+		case *MetadataTx_UpdateStreamNodesAndReplication:
+			commitOp, err := m.processUpdateNodes(ctx, op.UpdateStreamNodesAndReplication)
+			if err != nil {
+				res := &abci.ExecTxResult{}
+				setError(res, err)
+				txs[i] = res
+				continue
+			}
+			ops = []*storage.CommitOperation{commitOp}
+		default:
 			res := &abci.ExecTxResult{}
-			setError(res, err)
+			setError(res, RiverError(Err_INVALID_ARGUMENT, "unknown op"))
 			txs[i] = res
 			continue
 		}
+
+		// Add operations to pending block
+		m.pendingBlock.operations = append(m.pendingBlock.operations, ops...)
 		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
 	}
+
 	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID, req.Height)
 	if err != nil {
 		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
 	}
+	m.pendingBlock.appHash = appHash
 	m.lastBlockHeight = req.Height
 	m.lastAppHash = appHash
+
 	return &abci.FinalizeBlockResponse{
 		TxResults: txs,
 		AppHash:   appHash,
@@ -684,6 +770,233 @@ func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicat
 		}
 	}
 	return nil
+}
+
+// getStreamState retrieves stream state from pending state or DB.
+// Returns nil (not error) if stream doesn't exist.
+func (m *MetadataShard) getStreamState(ctx context.Context, streamId []byte) (*pendingStreamState, error) {
+	streamKey := hex.EncodeToString(streamId)
+
+	// Check pending state first
+	if m.pendingBlock != nil {
+		if state, ok := m.pendingBlock.streams[streamKey]; ok {
+			return state, nil
+		}
+	}
+
+	// Read from DB
+	sid, err := shared.StreamIdFromBytes(streamId)
+	if err != nil {
+		return nil, err
+	}
+	record, err := m.store.GetStream(ctx, m.opts.ShardID, sid)
+	if err != nil {
+		riverErr := AsRiverError(err)
+		if riverErr.Code == Err_NOT_FOUND {
+			return nil, nil // Stream doesn't exist
+		}
+		return nil, err
+	}
+
+	// Convert to pending state and resolve node indexes
+	nodeIndexes, err := m.store.ResolveNodeAddresses(record.Nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	state := &pendingStreamState{
+		exists:               true,
+		lastMiniblockHash:    record.LastMiniblockHash,
+		lastMiniblockNum:     record.LastMiniblockNum,
+		sealed:               record.Sealed,
+		replicationFactor:    record.ReplicationFactor,
+		nodeIndexes:          nodeIndexes,
+		isNew:                false,
+		genesisMiniblockHash: record.GenesisMiniblockHash,
+		genesisMiniblock:     record.GenesisMiniblock,
+	}
+
+	// Cache in pending state
+	if m.pendingBlock != nil {
+		m.pendingBlock.streams[streamKey] = state
+	}
+
+	return state, nil
+}
+
+// processCreateStream validates a CreateStream tx against pending state + DB
+// and returns the commit operation if valid.
+func (m *MetadataShard) processCreateStream(ctx context.Context, cs *CreateStreamTx) (*storage.CommitOperation, error) {
+	// Check if stream already exists
+	state, err := m.getStreamState(ctx, cs.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	if state != nil && state.exists {
+		return nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", cs.StreamId)
+	}
+
+	// Resolve node addresses to indexes
+	nodeIndexes, err := m.store.ResolveNodeAddresses(cs.Nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine last miniblock hash
+	var lastMiniblockHash []byte
+	if cs.LastMiniblockNum == 0 {
+		lastMiniblockHash = cs.GenesisMiniblockHash
+	} else {
+		lastMiniblockHash = cs.LastMiniblockHash
+	}
+
+	genesisMiniblock := cs.GenesisMiniblock
+	if genesisMiniblock == nil {
+		genesisMiniblock = []byte{}
+	}
+
+	// Create pending state for this stream
+	streamKey := hex.EncodeToString(cs.StreamId)
+	newState := &pendingStreamState{
+		exists:               true,
+		lastMiniblockHash:    lastMiniblockHash,
+		lastMiniblockNum:     int64(cs.LastMiniblockNum),
+		sealed:               cs.Sealed,
+		replicationFactor:    cs.ReplicationFactor,
+		nodeIndexes:          nodeIndexes,
+		isNew:                true,
+		genesisMiniblockHash: cs.GenesisMiniblockHash,
+		genesisMiniblock:     genesisMiniblock,
+	}
+	m.pendingBlock.streams[streamKey] = newState
+
+	return &storage.CommitOperation{
+		CreateStream: &storage.CommitCreateStreamOp{
+			StreamId:             cs.StreamId,
+			GenesisMiniblockHash: cs.GenesisMiniblockHash,
+			GenesisMiniblock:     genesisMiniblock,
+			LastMiniblockHash:    lastMiniblockHash,
+			LastMiniblockNum:     int64(cs.LastMiniblockNum),
+			ReplicationFactor:    cs.ReplicationFactor,
+			Sealed:               cs.Sealed,
+			NodeIndexes:          nodeIndexes,
+		},
+	}, nil
+}
+
+// processSetMiniblockBatch validates a SetStreamLastMiniblockBatchTx against pending state + DB
+// and returns commit operations for each update if valid.
+func (m *MetadataShard) processSetMiniblockBatch(
+	ctx context.Context,
+	batch *SetStreamLastMiniblockBatchTx,
+) ([]*storage.CommitOperation, error) {
+	ops := make([]*storage.CommitOperation, 0, len(batch.Miniblocks))
+
+	for _, mb := range batch.Miniblocks {
+		state, err := m.getStreamState(ctx, mb.StreamId)
+		if err != nil {
+			return nil, err
+		}
+		if state == nil || !state.exists {
+			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", mb.StreamId)
+		}
+		if state.sealed {
+			return nil, RiverError(Err_FAILED_PRECONDITION, "stream is sealed", "streamId", mb.StreamId)
+		}
+		if !bytes.Equal(state.lastMiniblockHash, mb.PrevMiniblockHash) {
+			return nil, RiverError(
+				Err_FAILED_PRECONDITION,
+				"prev_miniblock_hash mismatch",
+				"streamId", mb.StreamId,
+			)
+		}
+		nextNum := int64(mb.LastMiniblockNum)
+		if nextNum != state.lastMiniblockNum+1 {
+			return nil, RiverError(
+				Err_FAILED_PRECONDITION,
+				"last_miniblock_num must increase by 1",
+				"streamId", mb.StreamId,
+				"current", state.lastMiniblockNum,
+				"proposed", nextNum,
+			)
+		}
+
+		// Update pending state
+		state.lastMiniblockHash = mb.LastMiniblockHash
+		state.lastMiniblockNum = nextNum
+		state.sealed = state.sealed || mb.Sealed
+
+		ops = append(ops, &storage.CommitOperation{
+			UpdateMiniblock: &storage.CommitUpdateMiniblockOp{
+				StreamId:          mb.StreamId,
+				LastMiniblockHash: mb.LastMiniblockHash,
+				LastMiniblockNum:  nextNum,
+				Sealed:            state.sealed,
+			},
+		})
+	}
+
+	return ops, nil
+}
+
+// processUpdateNodes validates an UpdateStreamNodesAndReplicationTx against pending state + DB
+// and returns the commit operation if valid.
+func (m *MetadataShard) processUpdateNodes(
+	ctx context.Context,
+	update *UpdateStreamNodesAndReplicationTx,
+) (*storage.CommitOperation, error) {
+	state, err := m.getStreamState(ctx, update.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	if state == nil || !state.exists {
+		return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", update.StreamId)
+	}
+
+	var newNodeIndexes []int32
+	newReplicationFactor := update.ReplicationFactor
+
+	if len(update.Nodes) > 0 {
+		newNodeIndexes, err = m.store.ResolveNodeAddresses(update.Nodes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Validate constraints
+	switch {
+	case newReplicationFactor > 0 && len(newNodeIndexes) > 0:
+		// Both changing: validate new replication against new nodes
+		if int(newReplicationFactor) > len(newNodeIndexes) {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
+	case newReplicationFactor > 0:
+		// Only replication changing: validate against current nodes
+		if int(newReplicationFactor) > len(state.nodeIndexes) {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
+	case len(newNodeIndexes) > 0:
+		// Only nodes changing: validate against current replication
+		if len(newNodeIndexes) < int(state.replicationFactor) {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "nodes cannot be less than replication_factor")
+		}
+	}
+
+	// Update pending state
+	if newReplicationFactor > 0 {
+		state.replicationFactor = newReplicationFactor
+	}
+	if len(newNodeIndexes) > 0 {
+		state.nodeIndexes = newNodeIndexes
+	}
+
+	return &storage.CommitOperation{
+		UpdateNodes: &storage.CommitUpdateNodesOp{
+			StreamId:          update.StreamId,
+			ReplicationFactor: newReplicationFactor,
+			NodeIndexes:       newNodeIndexes,
+		},
+	}, nil
 }
 
 type cometZapLogger struct {
