@@ -304,17 +304,26 @@ func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
 
 ### Webhook failure drops
 - Enhance `SubmitMessages` to persist in-flight deliveries so transient webhook
-  failures don’t drop messages. Two possible approaches:
+  failures don't drop messages. Two possible approaches:
   1. Only delete `enqueued_messages` rows after the webhook responds 200; if the
      HTTP call fails, leave the row so the message will be retried automatically.
-  2. Or, add a separate “in-flight” table keyed by event hash/device. Insert
+  2. Or, add a separate "in-flight" table keyed by event hash/device. Insert
      before sending and delete on success; on failure, requeue into
      `enqueued_messages`.
-- Either approach ensures webhook timeouts or 5xx responses don’t cause loss.
+- Either approach ensures webhook timeouts or 5xx responses don't cause loss.
   (We can combine this with the cookie persistence work since both involve more
   durable bookkeeping around delivery.)
 - We will limit the number of events in the queue, and the time they remain in
   the queue, to avoid unbounded growth.
+
+### Enqueued messages race condition
+- When sending messages that are enqueued in `enqueued_messages` (via `PublishSessionKeys`),
+  we first delete the messages from the database, then send them to the webhook.
+- **Race condition**: If the service crashes after deleting but before sending, those
+  messages are lost forever. Similarly, if the webhook is temporarily unavailable
+  (timeout, 5xx), the messages are already deleted and won't be retried.
+- This is the same class of problem as "Webhook failure drops" above - the fix is
+  to only delete after successful webhook delivery, or use an "in-flight" table.
 
 ### Unbounded backlog for offline bots
 - Introduce TTL-based retention for `enqueued_messages`:
