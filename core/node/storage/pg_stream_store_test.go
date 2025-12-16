@@ -1815,7 +1815,7 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(15), result[5].Number)
 
 		// Read across the gap - should return error due to consistency violation
-		result, err = store.ReadMiniblocks(ctx, streamId, 0, 16, false)
+		_, err = store.ReadMiniblocks(ctx, streamId, 0, 16, false)
 		require.Error(t, err)
 		require.True(t, IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND))
 	})
