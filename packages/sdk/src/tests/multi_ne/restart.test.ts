@@ -145,7 +145,6 @@ const createNewChannelAndPostHello = async (
         bobsContext,
         make_ChannelPayload_Inception({
             streamId: channelId,
-            spaceId: spacedStreamId,
         }),
     )
     const channelJoinEvent = await makeEvent(

@@ -312,6 +312,12 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		GetMiniblocksMaxPageSize: 200,
 
+		StreamHistoryMiniblocks: StreamHistoryMiniblocks{
+			UserInbox:    5000,
+			UserSettings: 40,
+			Space:        400,
+		},
+
 		StreamMiniblockRegistrationFrequency: 1,
 
 		MembershipLimits: MembershipLimitsSettings{
