@@ -9,6 +9,7 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 //mocks
 
@@ -33,24 +34,24 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         assertEq(revenue, MEMBERSHIP_PRICE);
 
         vm.prank(founder);
-        treasury.withdraw(multisig);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, multisig);
 
         assertEq(multisig.balance, MEMBERSHIP_PRICE);
     }
 
     function test_revertWhen_withdrawNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
-        treasury.withdraw(alice);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, alice);
     }
 
     function test_revertWhen_withdrawInvalidAddress() external givenFounderIsCaller {
         vm.expectRevert(Membership__InvalidAddress.selector);
-        treasury.withdraw(address(0));
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, address(0));
     }
 
     function test_revertWhen_withdrawZeroBalance() external givenFounderIsCaller {
         vm.expectRevert(Membership__InsufficientPayment.selector);
-        treasury.withdraw(founder);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, founder);
     }
 
     // Integration
@@ -61,7 +62,7 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         givenAliceHasPaidMembership
     {
         vm.prank(founder);
-        treasury.withdraw(founder);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, founder);
 
         // With fee-added model, founder receives full base price
         assertEq(founder.balance, MEMBERSHIP_PRICE);
@@ -76,7 +77,7 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         vm.stopPrank();
 
         vm.prank(founder);
-        treasury.withdraw(founder);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, founder);
 
         assertEq(founder.balance, MEMBERSHIP_PRICE * 2);
     }

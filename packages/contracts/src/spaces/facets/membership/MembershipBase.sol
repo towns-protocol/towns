@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPricingModules} from "../../../factory/facets/architect/pricing/IPricingModules.sol";
 import {IMembershipBase} from "./IMembership.sol";
@@ -10,21 +11,24 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 // libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
 abstract contract MembershipBase is IMembershipBase {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
+    /// @dev USDC address on Base mainnet
+    address internal constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
+
     function __MembershipBase_init(Membership memory info, address spaceFactory) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
         $.spaceFactory = spaceFactory;
         $.pricingModule = info.pricingModule;
-        $.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
+        $.membershipCurrency = info.currency;
         $.membershipMaxSupply = info.maxSupply;
 
         if (info.freeAllocation > 0) {
@@ -60,11 +64,17 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     function _getProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
-        IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 baseFee = platform.getMembershipFee();
-        if (membershipPrice == 0) return baseFee;
-        uint256 bpsFee = BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
-        return FixedPointMathLib.max(bpsFee, baseFee);
+        bytes32 feeType = _getMembershipFeeType(_getMembershipCurrency());
+        return
+            IFeeManager(_getSpaceFactory()).calculateFee(feeType, address(0), membershipPrice, "");
+    }
+
+    /// @notice Returns the fee type for the membership currency
+    /// @dev Reverts for unsupported currencies
+    function _getMembershipFeeType(address currency) internal pure returns (bytes32) {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) return FeeTypesLib.MEMBERSHIP;
+        if (currency == USDC) return FeeTypesLib.MEMBERSHIP_USDC;
+        Membership__UnsupportedCurrency.selector.revertWith();
     }
 
     function _getTotalMembershipPayment(
@@ -186,8 +196,10 @@ abstract contract MembershipBase is IMembershipBase {
     /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getMembershipCurrency() internal view returns (address) {
-        return MembershipStorage.layout().membershipCurrency;
+    function _getMembershipCurrency() internal view returns (address currency) {
+        currency = MembershipStorage.layout().membershipCurrency;
+        // Normalize address(0) to NATIVE_TOKEN for backwards compatibility
+        if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

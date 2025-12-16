@@ -11,6 +11,7 @@ import {IEntitlementGated, IEntitlementGatedBase} from "src/spaces/facets/gated/
 
 // libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
@@ -135,7 +136,7 @@ contract MembershipJoinSpaceTest is
         address withdrawAddress = _randomAddress();
         vm.prank(founder);
         vm.expectRevert(Membership__InsufficientPayment.selector);
-        treasury.withdraw(withdrawAddress);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, withdrawAddress);
 
         assertEq(withdrawAddress.balance, 0);
         assertEq(address(membership).balance, 0);

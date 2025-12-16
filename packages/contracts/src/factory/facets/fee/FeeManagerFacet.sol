@@ -116,13 +116,23 @@ contract FeeManagerFacet is
             true
         );
 
-        // membership fee
+        // membership fee (ETH)
         _setFeeConfig(
             FeeTypesLib.MEMBERSHIP,
             protocolRecipient,
             FeeCalculationMethod.HYBRID,
             1000, // 10%
             0.0005 ether,
+            true
+        );
+
+        // membership fee (USDC)
+        _setFeeConfig(
+            FeeTypesLib.MEMBERSHIP_USDC,
+            protocolRecipient,
+            FeeCalculationMethod.HYBRID,
+            1000, // 10%
+            1_500_000, // $1.50 (6 decimals)
             true
         );
 

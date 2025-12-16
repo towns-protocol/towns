@@ -61,6 +61,9 @@ interface IMembershipBase {
     /// @notice Error thrown when ETH is sent for ERC20 payment
     error Membership__UnexpectedValue();
 
+    /// @notice Error thrown when currency is not supported for fees
+    error Membership__UnsupportedCurrency();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -70,7 +73,7 @@ interface IMembershipBase {
     event MembershipCurrencyUpdated(address indexed currency);
     event MembershipFeeRecipientUpdated(address indexed recipient);
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
-    event MembershipWithdrawal(address indexed recipient, uint256 amount);
+    event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
     event MembershipTokenRejected(address indexed recipient);
 }

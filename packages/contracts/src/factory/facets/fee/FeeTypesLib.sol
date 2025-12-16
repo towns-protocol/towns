@@ -5,8 +5,11 @@ pragma solidity ^0.8.29;
 /// @notice Library defining fee type constants for the FeeManager system
 /// @dev Uses keccak256 for gas-efficient constant generation
 library FeeTypesLib {
-    /// @notice Fee for space membership purchases
+    /// @notice Fee for space membership purchases (ETH)
     bytes32 internal constant MEMBERSHIP = keccak256("FEE_TYPE.MEMBERSHIP");
+
+    /// @notice Fee for space membership purchases (USDC)
+    bytes32 internal constant MEMBERSHIP_USDC = keccak256("FEE_TYPE.MEMBERSHIP_USDC");
 
     /// @notice Fee for app installations
     bytes32 internal constant APP_INSTALL = keccak256("FEE_TYPE.APP_INSTALL");
