@@ -302,7 +302,7 @@ func (sr *streamReconciler) tryPromoteLocalCandidate(mbNum int64, mbHash common.
 // and import it locally. Used when the stream registry indicates miniblock 0 and peers may not have
 // the genesis due to original node leaving the network.
 func (sr *streamReconciler) reconcileFromRegistryGenesisBlock() error {
-	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	streamID := sr.stream.StreamId()
@@ -327,7 +327,7 @@ func (sr *streamReconciler) reconcileFromRegistryGenesisBlock() error {
 
 func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) error {
 	// TODO: configurable timeouts through this file
-	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	lastMb, err := sr.cache.params.RemoteMiniblockProvider.GetLastMiniblockHash(ctx, remote, sr.stream.streamId)
@@ -371,7 +371,7 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 	sr.stats.reinitializeAttempted++
 
 	// TODO: configurable timeouts through this file
-	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
@@ -477,7 +477,7 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 ) (int64, error) {
 	sr.stats.backfillPagesAttempted++
 
-	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	mbs, err := sr.cache.params.RemoteMiniblockProvider.GetMbs(
@@ -573,7 +573,7 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 ) (int64, error) {
 	sr.stats.forwardPagesAttempted++
 
-	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	mbs, err := sr.cache.params.RemoteMiniblockProvider.GetMbs(
