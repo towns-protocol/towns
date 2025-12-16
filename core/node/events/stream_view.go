@@ -18,6 +18,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	. "github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 type StreamViewStats struct {
@@ -34,6 +35,9 @@ func MakeStreamView(
 	streamId StreamId,
 	streamData *storage.ReadStreamFromLastSnapshotResult,
 ) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "events.MakeStreamView")
+	defer func() { timing.End(ctx, nil) }()
+
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -1023,6 +1027,9 @@ func (r *StreamView) GetStreamSince(
 	addr common.Address,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
+	ctx = timing.StartSpan(ctx, "GetStreamSince")
+	defer func() { timing.End(ctx, nil) }()
+
 	if cookie.MinipoolGen == r.minipool.generation {
 		envelopes := make([]*Envelope, r.minipool.events.Len())
 		for i, e := range r.minipool.events.Values {

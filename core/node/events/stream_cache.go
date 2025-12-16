@@ -547,11 +547,15 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 
 // GetStreamWaitForLocal is a transitional method to support existing GetStream API before block number are wired through APIs.
 func (s *StreamCache) GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error) {
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
+	defer func() { timing.End(ctx, nil) }()
 	return s.getStreamImpl(ctx, streamId, true)
 }
 
 // GetStreamNoWait is a transitional method to support existing GetStream API before block number are wired through APIs.
 func (s *StreamCache) GetStreamNoWait(ctx context.Context, streamId StreamId) (*Stream, error) {
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
+	defer func() { timing.End(ctx, nil) }()
 	return s.getStreamImpl(ctx, streamId, false)
 }
 
@@ -581,7 +585,7 @@ func (s *StreamCache) ForceFlushAll(ctx context.Context) {
 func (s *StreamCache) GetLoadedViews(ctx context.Context) []*StreamView {
 	var result []*StreamView
 	s.cache.Range(func(streamID StreamId, stream *Stream) bool {
-		view, _ := stream.tryGetView(true)
+		view, _ := stream.tryGetView(ctx, true)
 		if view != nil {
 			result = append(result, view)
 		}

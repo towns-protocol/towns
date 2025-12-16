@@ -95,7 +95,7 @@ func TestReconciler(t *testing.T) {
 
 	stream, ok = tc.instances[2].cache.cache.Load(streamId)
 	require.True(ok)
-	view, _ := stream.tryGetView(false)
+	view, _ := stream.tryGetView(ctx, false)
 	require.NotNil(view)
 	require.Equal(prevMb.Num, view.LastBlock().Ref.Num)
 
@@ -175,7 +175,7 @@ func TestReconciler_SmallGapForward(t *testing.T) {
 	// View should be up-to-date with the last produced miniblock
 	stream, ok := inst.cache.cache.Load(streamId)
 	require.True(ok)
-	view, _ := stream.tryGetView(false)
+	view, _ := stream.tryGetView(ctx, false)
 	require.NotNil(view)
 	require.Equal(prevMb.Num, view.LastBlock().Ref.Num)
 }
@@ -445,7 +445,7 @@ func TestReconciler_ForwardOnly(t *testing.T) {
 
 	stream, ok := inst.cache.cache.Load(streamId)
 	require.True(ok)
-	view, _ := stream.tryGetView(false)
+	view, _ := stream.tryGetView(ctx, false)
 	require.NotNil(view)
 	require.Equal(prevMb.Num, view.LastBlock().Ref.Num)
 }
@@ -542,7 +542,7 @@ func TestReconciler_ImportGenesisFromRegistry(t *testing.T) {
 
 	stream, ok := inst.cache.cache.Load(streamId)
 	require.True(ok)
-	view, _ := stream.tryGetView(false)
+	view, _ := stream.tryGetView(ctx, false)
 	require.NotNil(view)
 	require.Equal(int64(0), view.LastBlock().Ref.Num)
 }

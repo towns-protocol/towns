@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -20,12 +21,13 @@ func (s *Service) AllocateEphemeralStream(
 	ctx context.Context,
 	req *connect.Request[AllocateEphemeralStreamRequest],
 ) (*connect.Response[AllocateEphemeralStreamResponse], error) {
-	timer := timing.NewTimer("AllocateEphemeralStream")
+	timer := timing.NewTimer("rpc.Service.AllocateEphemeralStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("AllocateEphemeralStream slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("AllocateEphemeralStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -79,12 +81,13 @@ func (s *Service) SaveEphemeralMiniblock(
 	ctx context.Context,
 	req *connect.Request[SaveEphemeralMiniblockRequest],
 ) (*connect.Response[SaveEphemeralMiniblockResponse], error) {
-	timer := timing.NewTimer("SaveEphemeralMiniblock")
+	timer := timing.NewTimer("rpc.Service.SaveEphemeralMiniblock")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("SaveEphemeralMiniblock slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("SaveEphemeralMiniblock slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -135,12 +138,13 @@ func (s *Service) SealEphemeralStream(
 	ctx context.Context,
 	req *connect.Request[SealEphemeralStreamRequest],
 ) (*connect.Response[SealEphemeralStreamResponse], error) {
-	timer := timing.NewTimer("SealEphemeralStream")
+	timer := timing.NewTimer("rpc.Service.SealEphemeralStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("SealEphemeralStream slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("SealEphemeralStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)

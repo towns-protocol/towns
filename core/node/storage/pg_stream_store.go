@@ -30,6 +30,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 const (
@@ -1405,14 +1406,16 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	fromInclusive int64,
 	toExclusive int64,
 	omitSnapshot bool,
-) ([]*MiniblockDescriptor, error) {
+) (miniblocks []*MiniblockDescriptor, err error) {
+	ctx = timing.StartSpan(ctx, "storage.PostgresStreamStore.ReadMiniblocks")
+	defer func() { timing.End(ctx, err) }()
+
 	var (
 		lockStreamResult *LockStreamResult
 		miniblockParts   []external.MiniblockDescriptor
-		miniblocks       []*MiniblockDescriptor
 	)
 
-	if err := s.txRunner(
+	if err = s.txRunner(
 		ctx,
 		"ReadMiniblocks",
 		pgx.ReadWrite,
@@ -1448,7 +1451,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		return miniblocks, nil
 	}
 
-	miniblocks, err := s.downloadAndDecodeExternalMiniblocks(ctx, streamId, miniblockParts)
+	miniblocks, err = s.downloadAndDecodeExternalMiniblocks(ctx, streamId, miniblockParts)
 	if err != nil {
 		return nil, err
 	}

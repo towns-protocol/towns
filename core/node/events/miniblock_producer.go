@@ -240,9 +240,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := p.streamCache.GetStreamWaitForLocal(ctx, streamId)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -286,9 +284,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 		}
 	}
 
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
-	timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -416,9 +412,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) && !job.skipPromotion {
 			go func() {
-				spanCtx := timing.StartSpan(ctx, "ApplyMiniblock")
-				err := job.stream.ApplyMiniblock(spanCtx, job.candidate)
-				timing.End(spanCtx, err)
+				err := job.stream.ApplyMiniblock(ctx, job.candidate)
 				if err != nil {
 					log.Errorw(
 						"processMiniblockProposalBatch: Error applying miniblock",
@@ -481,9 +475,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 
 		committedLocalCandidateRef := stream.LastMb()
 
-		spanCtx = timing.StartSpan(ctx, "promoteCandidate")
-		err = job.stream.promoteCandidate(spanCtx, committedLocalCandidateRef)
-		timing.End(spanCtx, err)
+		err = job.stream.promoteCandidate(ctx, committedLocalCandidateRef)
 		if err == nil {
 			log.Infow("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,

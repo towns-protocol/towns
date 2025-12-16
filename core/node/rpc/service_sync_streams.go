@@ -33,11 +33,11 @@ func (s *Service) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
-	timer := timing.NewTimer("SyncStreams")
+	timer := timing.NewTimer("rpc.Service.SyncStreams")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("SyncStreams slow", "timing", report)
 		}
 	}()
@@ -69,11 +69,11 @@ func (s *Service) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	timer := timing.NewTimer("AddStreamToSync")
+	timer := timing.NewTimer("rpc.Service.AddStreamToSync")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("AddStreamToSync slow", "timing", report)
 		}
 	}()
@@ -96,11 +96,11 @@ func (s *Service) ModifySync(
 	ctx context.Context,
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
-	timer := timing.NewTimer("ModifySync")
+	timer := timing.NewTimer("rpc.Service.ModifySync")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("ModifySync slow", "timing", report)
 		}
 	}()
@@ -123,11 +123,11 @@ func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
-	timer := timing.NewTimer("RemoveStreamFromSync")
+	timer := timing.NewTimer("rpc.Service.RemoveStreamFromSync")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("RemoveStreamFromSync slow", "timing", report)
 		}
 	}()
@@ -150,11 +150,11 @@ func (s *Service) CancelSync(
 	ctx context.Context,
 	req *connect.Request[CancelSyncRequest],
 ) (*connect.Response[CancelSyncResponse], error) {
-	timer := timing.NewTimer("CancelSync")
+	timer := timing.NewTimer("rpc.Service.CancelSync")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("CancelSync slow", "timing", report)
 		}
 	}()
@@ -177,11 +177,11 @@ func (s *Service) PingSync(
 	ctx context.Context,
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
-	timer := timing.NewTimer("PingSync")
+	timer := timing.NewTimer("rpc.Service.PingSync")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("PingSync slow", "timing", report)
 		}
 	}()

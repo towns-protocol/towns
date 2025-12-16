@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
+	"connectrpc.com/connect"
+
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/timing"
-
-	"connectrpc.com/connect"
 )
 
 type remoteStream struct {
@@ -22,10 +21,7 @@ type remoteStream struct {
 var _ ViewStream = (*remoteStream)(nil)
 
 func (s *Service) loadStream(ctx context.Context, streamId StreamId) (ViewStream, error) {
-	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
-	ctx = timing.End(ctx, err)
-	_ = ctx
 	if err != nil {
 		return nil, err
 	}

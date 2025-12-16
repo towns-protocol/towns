@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -21,12 +22,13 @@ func (s *Service) AllocateStream(
 	ctx context.Context,
 	req *connect.Request[AllocateStreamRequest],
 ) (*connect.Response[AllocateStreamResponse], error) {
-	timer := timing.NewTimer("AllocateStream")
+	timer := timing.NewTimer("rpc.Service.AllocateStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("AllocateStream slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("AllocateStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -54,17 +56,12 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
-	ctx = timing.End(ctx, err)
-	_ = ctx
 	if err != nil {
 		return nil, err
 	}
@@ -78,12 +75,13 @@ func (s *Service) NewEventReceived(
 	ctx context.Context,
 	req *connect.Request[NewEventReceivedRequest],
 ) (*connect.Response[NewEventReceivedResponse], error) {
-	timer := timing.NewTimer("NewEventReceived")
+	timer := timing.NewTimer("rpc.Service.NewEventReceived")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("NewEventReceived slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("NewEventReceived slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -118,16 +116,12 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetViewIfLocal")
 	view, err := stream.GetViewIfLocal(ctx)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -158,12 +152,13 @@ func (s *Service) ProposeMiniblock(
 	ctx context.Context,
 	req *connect.Request[ProposeMiniblockRequest],
 ) (*connect.Response[ProposeMiniblockResponse], error) {
-	timer := timing.NewTimer("ProposeMiniblock")
+	timer := timing.NewTimer("rpc.Service.ProposeMiniblock")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("ProposeMiniblock slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("ProposeMiniblock slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -190,16 +185,12 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -220,12 +211,13 @@ func (s *Service) SaveMiniblockCandidate(
 	ctx context.Context,
 	req *connect.Request[SaveMiniblockCandidateRequest],
 ) (*connect.Response[SaveMiniblockCandidateResponse], error) {
-	timer := timing.NewTimer("SaveMiniblockCandidate")
+	timer := timing.NewTimer("rpc.Service.SaveMiniblockCandidate")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("SaveMiniblockCandidate slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("SaveMiniblockCandidate slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -254,9 +246,7 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -282,12 +272,13 @@ func (s *Service) GetMiniblocksByIds(
 	req *connect.Request[GetMiniblocksByIdsRequest],
 	resp *connect.ServerStream[GetMiniblockResponse],
 ) error {
-	timer := timing.NewTimer("GetMiniblocksByIds")
+	timer := timing.NewTimer("rpc.Service.GetMiniblocksByIds")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
-			logging.FromCtx(ctx).Warnw("GetMiniblocksByIds slow", "timing", report)
+		if report.Took > 20*time.Second {
+			logging.FromCtx(ctx).
+				Warnw("GetMiniblocksByIds slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)

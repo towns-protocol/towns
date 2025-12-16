@@ -352,7 +352,7 @@ func (sr *streamReconciler) reconcileBackward() error {
 	}
 
 	// Reinitialize should create new view.
-	view, _ := sr.stream.tryGetView(true)
+	view, _ := sr.stream.tryGetView(sr.ctx, true)
 	if view == nil {
 		return RiverError(Err_INTERNAL, "reinitializeStreamFromSinglePeer: view is nil")
 	}

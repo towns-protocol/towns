@@ -70,9 +70,7 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum blockchain.BlockNum
 		return nil
 	}
 
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -198,9 +196,7 @@ func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *Strea
 }
 
 func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
-	timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -216,9 +212,7 @@ func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView
 }
 
 func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *StreamView, error) {
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -236,9 +230,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	ctx = timing.End(ctx, quorumErr)
 
 	// Get view again and bug out if stream advanced in the meantime.
-	ctx = timing.StartSpan(ctx, "GetView")
 	view, err = j.stream.GetView(ctx)
-	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -272,9 +264,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 			if _, ok := added[parsed.Hash]; !ok {
 				added[parsed.Hash] = true
 				if !view.minipool.events.Has(parsed.Hash) {
-					spanCtx := timing.StartSpan(ctx, "addEvent")
-					newView, err := j.stream.addEvent(spanCtx, parsed, true)
-					timing.End(spanCtx, err)
+					newView, err := j.stream.addEvent(ctx, parsed, true)
 					if err == nil {
 						view = newView
 					} else {

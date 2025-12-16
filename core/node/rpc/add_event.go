@@ -16,7 +16,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 func (s *Service) localAddEvent(
@@ -98,9 +97,7 @@ func (s *Service) ensureStreamIsUpToDate(
 			return nil, err
 		}
 
-		spanCtx := timing.StartSpan(ctx, "GetViewIfLocal")
-		streamView, err = localStream.GetViewIfLocal(spanCtx)
-		timing.End(spanCtx, err)
+		streamView, err = localStream.GetViewIfLocal(ctx)
 		if err != nil {
 			return nil, err
 		}

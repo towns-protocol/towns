@@ -218,6 +218,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (context.Context, *Strea
 // loadViewNoReconcileLocked should be called with a lock held.
 // Returns nil view and nil error if stream is not local.
 func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "events.Stream.loadViewNoReconcileLocked")
+	defer func() { timing.End(ctx, nil) }()
+
 	if s.local == nil {
 		return nil, nil
 	}
@@ -229,7 +232,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
-	ctx = timing.StartSpan(ctx, "ReadStreamFromLastSnapshot")
+	ctx = timing.StartSpan(ctx, "storage.Storage.ReadStreamFromLastSnapshot")
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
@@ -240,9 +243,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 		return nil, err
 	}
 
-	ctx = timing.StartSpan(ctx, "MakeStreamView")
 	view, err := MakeStreamView(ctx, s.streamId, streamData)
-	timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -254,6 +255,9 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 // ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
 // ApplyMiniblock is thread-safe.
 func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
+	ctx = timing.StartSpan(ctx, "ApplyMiniblock")
+	defer func() { timing.End(ctx, nil) }()
+
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
@@ -433,6 +437,9 @@ func (s *Stream) applyMiniblockImplLocked(
 
 // promoteCandidate is thread-safe.
 func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
+	ctx = timing.StartSpan(ctx, "promoteCandidate")
+	defer func() { timing.End(ctx, nil) }()
+
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
@@ -565,7 +572,10 @@ func (s *Stream) initFromGenesisLocked(
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // GetViewIfLocalEx is thread-safe.
 func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*StreamView, error) {
-	view, isLocal := s.tryGetView(allowNoQuorum)
+	ctx = timing.StartSpan(ctx, "GetViewIfLocalEx")
+	defer func() { timing.End(ctx, nil) }()
+
+	view, isLocal := s.tryGetView(ctx, allowNoQuorum)
 	if !isLocal {
 		return nil, nil
 	}
@@ -595,6 +605,8 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 // If local storage is not initialized, it will wait for it to be initialized.
 // GetViewIfLocal is thread-safe.
 func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "GetViewIfLocal")
+	defer func() { timing.End(ctx, nil) }()
 	return s.GetViewIfLocalEx(ctx, false)
 }
 
@@ -602,7 +614,9 @@ func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 // If local storage is not initialized, it will wait for it to be initialized.
 // GetView is thread-safe.
 func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := s.GetViewIfLocal(ctx)
+	timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -616,7 +630,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 // The second return value is true if the view is local.
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // tryGetView is thread-safe.
-func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
+func (s *Stream) tryGetView(ctx context.Context, allowNoQuorum bool) (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.local == nil {
@@ -775,6 +789,9 @@ func (s *Stream) notifySubscribersLocked(
 }
 
 func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "addEvent")
+	defer func() { timing.End(ctx, nil) }()
+
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
@@ -932,9 +949,7 @@ func (s *Stream) UpdatesSinceCookie(
 		return err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetStreamSince")
 	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
-	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -988,9 +1003,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 		return err
 	}
 
-	ctx = timing.StartSpan(ctx, "GetStreamSince")
 	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
-	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}

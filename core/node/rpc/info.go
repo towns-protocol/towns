@@ -28,11 +28,11 @@ func (s *Service) Info(
 	ctx context.Context,
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
-	timer := timing.NewTimer("Info")
+	timer := timing.NewTimer("rpc.Service.Info")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 30*time.Second {
+		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).Warnw("Info slow", "timing", report)
 		}
 	}()
