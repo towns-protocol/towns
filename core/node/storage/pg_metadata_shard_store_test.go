@@ -318,6 +318,63 @@ func TestMetadataShardSealedAllowsNodeChange(t *testing.T) {
 	require.Equal(t, [][]byte{bytes.Repeat([]byte{0x02}, 20)}, fetched.Nodes)
 }
 
+func TestMetadataShardStagingAndCommit(t *testing.T) {
+	store, ctx := setupMetadataShardStoreTest(t)
+	const shardID = 1
+
+	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	genesisHash := bytes.Repeat([]byte{0x0f}, 32)
+	nodes := [][]byte{bytes.Repeat([]byte{0x01}, 20)}
+
+	createTx := &prot.MetadataTx{
+		Op: &prot.MetadataTx_CreateStream{
+			CreateStream: &prot.CreateStreamTx{
+				StreamId:             streamID[:],
+				GenesisMiniblockHash: genesisHash,
+				GenesisMiniblock:     []byte("genesis"),
+				Nodes:                nodes,
+				ReplicationFactor:    1,
+			},
+		},
+	}
+	require.NoError(t, store.ApplyMetadataTx(ctx, shardID, 1, createTx))
+
+	nextHash := bytes.Repeat([]byte{0xaa}, 32)
+	mbTx := &prot.MetadataTx{
+		Op: &prot.MetadataTx_SetStreamLastMiniblockBatch{
+			SetStreamLastMiniblockBatch: &prot.SetStreamLastMiniblockBatchTx{
+				Miniblocks: []*prot.MiniblockUpdate{{
+					StreamId:          streamID[:],
+					PrevMiniblockHash: genesisHash,
+					LastMiniblockHash: nextHash,
+					LastMiniblockNum:  1,
+					Sealed:            true,
+				}},
+			},
+		},
+	}
+	require.NoError(t, store.ApplyMetadataTx(ctx, shardID, 1, mbTx))
+
+	_, err := store.GetStream(ctx, shardID, streamID)
+	require.Error(t, err)
+	require.Equal(t, prot.Err_NOT_FOUND, base.AsRiverError(err).Code)
+
+	appHash, err := store.ComputeAppHash(ctx, shardID, 1)
+	require.NoError(t, err)
+	require.NoError(t, store.CommitMetadata(ctx, shardID, 1, appHash))
+
+	record, err := store.GetStream(ctx, shardID, streamID)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, record.LastMiniblockNum)
+	require.EqualValues(t, nextHash, record.LastMiniblockHash)
+	require.True(t, record.Sealed)
+
+	state, err := store.GetShardState(ctx, shardID)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, state.LastHeight)
+	require.Equal(t, appHash, state.LastAppHash)
+}
+
 func TestMetadataShardCountsAndState(t *testing.T) {
 	store, ctx := setupMetadataShardStoreTest(t)
 	const shardID = 1

@@ -298,7 +298,7 @@ func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abc
 			return nil, AsRiverError(err).Func("Commit")
 		}
 	}
-	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
+	if err := m.store.CommitMetadata(ctx, m.opts.ShardID, height, appHash); err != nil {
 		return nil, AsRiverError(err).Func("Commit")
 	}
 	return &abci.CommitResponse{}, nil
