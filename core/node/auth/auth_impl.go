@@ -1190,6 +1190,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 // TODO: it may be valuable to cache this in the future.
 func (ca *chainAuth) checkIsApp(
 	ctx context.Context,
+	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
 	if args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
@@ -1230,24 +1231,38 @@ func (ca *chainAuth) checkIsApp(
 	}
 
 	if args.kind == chainAuthKindIsBotOwner {
-		isOwner, err := ca.appRegistryContract.IsUserBotOwner(ctx, args.principal, args.botClientAddress)
+		log := logging.FromCtx(ctx)
+
+		appOwner, err := ca.appRegistryContract.GetAppOwnerByClient(ctx, args.botClientAddress)
 		if err != nil {
 			return nil, err
 		}
 
-		logging.FromCtx(ctx).
-			Debugw(
-				"checkIsBotOwner",
-				"principal", args.principal,
-				"botClientAddress", args.botClientAddress,
-				"isOwner", isOwner,
-			)
-
-		if isOwner {
-			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
-		} else {
+		zeroAddress := common.Address{}
+		if appOwner == zeroAddress {
 			return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
 		}
+
+		wallets, err := ca.getLinkedWallets(ctx, cfg, args)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debugw(
+			"checkIsBotOwner",
+			"principal", args.principal,
+			"botClientAddress", args.botClientAddress,
+			"appOwner", appOwner,
+			"wallets", wallets,
+		)
+
+		for _, wallet := range wallets {
+			if wallet == appOwner {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+			}
+		}
+
+		return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
 	}
 
 	return nil, nil
@@ -1486,7 +1501,7 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult{false, reason}, nil
 	}
 
-	isAppResult, err := ca.checkIsApp(ctx, args)
+	isAppResult, err := ca.checkIsApp(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	} else if isAppResult != nil {
