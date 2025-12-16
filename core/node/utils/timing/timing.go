@@ -136,7 +136,7 @@ func (s *Span) writeSummary(w io.Writer, depth int, totalDuration time.Duration)
 type SpanReport struct {
 	Name       string        `json:"name"`
 	Duration   string        `json:"duration"`
-	Took       time.Duration `json:"took"`
+	Took       time.Duration `json:"-"`
 	Percentage float64       `json:"percentage"`
 	Error      string        `json:"error,omitempty"`
 	Children   []*SpanReport `json:"children,omitempty"`

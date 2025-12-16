@@ -80,10 +80,12 @@ func MakeStreamView(
 	var snapshot *Snapshot
 	firstMbNum := streamData.Miniblocks[0].Number
 	opts := NewParsedMiniblockInfoOpts()
+	ctx = timing.StartSpan(ctx, "events.MakeStreamView.parseMiniblocks")
 	for i, mb := range streamData.Miniblocks {
 		opts = opts.WithExpectedBlockNumber(firstMbNum + int64(i))
 		miniblock, err := NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 		if err != nil {
+			timing.End(ctx, err)
 			return nil, AsRiverError(
 				err,
 				Err_BAD_BLOCK,
@@ -96,6 +98,7 @@ func MakeStreamView(
 			snapshotIndex = i
 		}
 	}
+	ctx = timing.End(ctx, nil)
 
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
@@ -114,18 +117,22 @@ func MakeStreamView(
 			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
+	ctx = timing.StartSpan(ctx, "events.MakeStreamView.parseMinipoolEnvelopes")
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
 	for _, e := range streamData.MinipoolEnvelopes {
 		var env Envelope
 		err := proto.Unmarshal(e, &env)
 		if err != nil {
+			timing.End(ctx, err)
 			return nil, err
 		}
 		parsed, err := ParseEvent(&env)
 		if err != nil {
+			timing.End(ctx, err)
 			return nil, err
 		}
 		if !minipoolEvents.Set(parsed.Hash, parsed) {
+			timing.End(ctx, nil)
 			return nil, RiverError(
 				Err_DATA_LOSS,
 				"duplicate event found in saved stream minipool",
@@ -133,6 +140,8 @@ func MakeStreamView(
 				Tags("streamId", streamId, "event", parsed.ShortDebugStr())
 		}
 	}
+	ctx = timing.End(ctx, nil)
+	_ = ctx
 
 	lastBlockHeader := miniblocks[len(miniblocks)-1].Header()
 	generation := lastBlockHeader.MiniblockNum + 1
