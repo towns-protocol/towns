@@ -139,26 +139,37 @@ func (s *Stream) setViewLocked(view *StreamView) {
 // In this case stream is scheduled for reconciliation and function waits for initialization to complete.
 // mu is always locked on return, even if error is returned.
 // Return nil view and nil error if stream is not local.
-func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
+// Returns a context with an open "mu.Held" span that should be ended when the lock is released.
+func (s *Stream) lockMuAndLoadView(ctx context.Context) (context.Context, *StreamView, error) {
+	ctx = timing.StartSpan(ctx, "mu.Lock")
 	s.mu.Lock()
+	ctx = timing.End(ctx, nil)
+
+	// Start the "mu.Held" span that the caller should end when releasing the lock
+	ctx = timing.StartSpan(ctx, "mu.Held")
+
 	if s.local == nil {
-		return nil, nil
+		return ctx, nil, nil
 	}
 
 	if s.getViewLocked() != nil {
 		s.lastAccessedTime = time.Now()
-		return s.getViewLocked(), nil
+		return ctx, s.getViewLocked(), nil
 	}
 
+	ctx = timing.StartSpan(ctx, "loadViewNoReconcileLocked")
 	view, err := s.loadViewNoReconcileLocked(ctx)
+	ctx = timing.End(ctx, err)
 	if err == nil {
-		return view, nil
+		return ctx, view, nil
 	}
 
 	if !IsRiverErrorCode(err, Err_NOT_FOUND) {
-		return nil, err
+		return ctx, nil, err
 	}
 
+	// End the "mu.Held" span before unlocking
+	ctx = timing.End(ctx, nil)
 	s.mu.Unlock()
 	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
@@ -171,21 +182,35 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	for {
+		spanCtx := timing.StartSpan(ctx, "mu.Lock")
 		s.mu.Lock()
+		spanCtx = timing.End(spanCtx, nil)
+
+		// Start the "mu.Held" span
+		spanCtx = timing.StartSpan(spanCtx, "mu.Held")
+
 		if s.local == nil {
-			return nil, nil
+			return spanCtx, nil, nil
 		}
 		// importMiniblocks initializes view, so there is no need for loading it from the storage.
 		if s.getViewLocked() != nil {
 			s.lastAccessedTime = time.Now()
-			return s.getViewLocked(), nil
+			return spanCtx, s.getViewLocked(), nil
 		}
+
+		// End the "mu.Held" span before unlocking
+		timing.End(spanCtx, nil)
 		s.mu.Unlock()
 
 		err := backoff.Wait(ctx, nil)
 		if err != nil {
+			spanCtx := timing.StartSpan(ctx, "mu.Lock")
 			s.mu.Lock()
-			return nil, err
+			spanCtx = timing.End(spanCtx, nil)
+
+			// Start the "mu.Held" span
+			spanCtx = timing.StartSpan(spanCtx, "mu.Held")
+			return spanCtx, nil, err
 		}
 	}
 }
@@ -204,16 +229,20 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
+	ctx = timing.StartSpan(ctx, "ReadStreamFromLastSnapshot")
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
 		streamRecencyConstraintsGenerations,
 	)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "MakeStreamView")
 	view, err := MakeStreamView(ctx, s.streamId, streamData)
+	timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -226,9 +255,12 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 // ApplyMiniblock is thread-safe.
 func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	_, err := s.lockMuAndLoadView(ctx)
+	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -402,9 +434,12 @@ func (s *Stream) applyMiniblockImplLocked(
 // promoteCandidate is thread-safe.
 func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	_, err := s.lockMuAndLoadView(ctx)
+	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -539,10 +574,12 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	view, err := s.lockMuAndLoadView(ctx)
+	ctx, view, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	_ = ctx
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -739,9 +776,12 @@ func (s *Stream) notifySubscribersLocked(
 
 func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	_, err := s.lockMuAndLoadView(ctx)
+	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -882,9 +922,12 @@ func (s *Stream) UpdatesSinceCookie(
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	view, err := s.lockMuAndLoadView(ctx)
+	ctx, view, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -935,9 +978,12 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	view, err := s.lockMuAndLoadView(ctx)
+	ctx, view, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -973,9 +1019,12 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	_, err := s.lockMuAndLoadView(ctx)
-	timing.End(ctx, err)
-	defer s.mu.Unlock()
+	ctx, _, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -1099,10 +1148,12 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
 	// try to apply the candidate
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	_, err := s.lockMuAndLoadView(ctx)
+	ctx, _, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
-	_ = ctx
-	defer s.mu.Unlock()
+	defer func() {
+		timing.End(ctx, nil) // End "mu.Held" span
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return false, err
 	}
@@ -1199,15 +1250,17 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	view, err := s.lockMuAndLoadView(ctx)
+	ctx, view, err := s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
 	if err != nil {
+		timing.End(ctx, nil) // End "mu.Held" span
 		s.mu.Unlock()
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
 	if view == nil {
+		timing.End(ctx, nil) // End "mu.Held" span
 		s.mu.Unlock()
 		return // stream is not local, no need to apply miniblock updates
 	}
@@ -1245,6 +1298,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	s.lastAppliedBlockNum = blockNum
+	timing.End(ctx, nil) // End "mu.Held" span
 	s.mu.Unlock()
 
 	if needsSyncTask {

@@ -2,6 +2,7 @@ package syncv3
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
@@ -9,11 +10,13 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 // Service defines the behavior of the sync V3 service.
@@ -66,14 +69,27 @@ func (s *serviceImpl) SyncStreams(
 	streams []*SyncCookie,
 	rec handler.Receiver,
 ) error {
+	timer := timing.NewTimer("SyncStreams")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("SyncStreams slow", "timing", report)
+		}
+	}()
+
+	ctx = timing.StartSpan(ctx, "handlerRegistry.New")
 	h, err := s.handlerRegistry.New(ctx, syncID, rec)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
 	defer s.handlerRegistry.Remove(syncID)
 
 	if len(streams) > 0 {
+		ctx = timing.StartSpan(ctx, "handler.Modify")
 		res, err := h.Modify(ctx, &ModifySyncRequest{SyncId: syncID, AddStreams: streams})
+		ctx = timing.End(ctx, err)
 		if err != nil {
 			return err
 		}
@@ -87,28 +103,64 @@ func (s *serviceImpl) SyncStreams(
 		}
 	}
 
-	return h.Run()
+	ctx = timing.StartSpan(ctx, "handler.Run")
+	err = h.Run()
+	timing.End(ctx, err)
+	return err
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
+	timer := timing.NewTimer("ModifySync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("ModifySync slow", "timing", report)
+		}
+	}()
+
 	h, ok := s.handlerRegistry.Get(req.GetSyncId())
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
 
-	return h.Modify(ctx, req)
+	ctx = timing.StartSpan(ctx, "handler.Modify")
+	res, err := h.Modify(ctx, req)
+	timing.End(ctx, err)
+	return res, err
 }
 
 func (s *serviceImpl) CancelSync(ctx context.Context, syncID string) error {
+	timer := timing.NewTimer("CancelSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("CancelSync slow", "timing", report)
+		}
+	}()
+
 	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
 
-	return h.Cancel(ctx)
+	ctx = timing.StartSpan(ctx, "handler.Cancel")
+	err := h.Cancel(ctx)
+	timing.End(ctx, err)
+	return err
 }
 
 func (s *serviceImpl) PingSync(ctx context.Context, syncID, nonce string) error {
+	timer := timing.NewTimer("PingSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("PingSync slow", "timing", report)
+		}
+	}()
+
 	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
@@ -120,10 +172,22 @@ func (s *serviceImpl) PingSync(ctx context.Context, syncID, nonce string) error 
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, syncID string, streamID StreamId) error {
+	timer := timing.NewTimer("DebugDropStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("DebugDropStream slow", "timing", report)
+		}
+	}()
+
 	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
 
-	return h.DebugDropStream(ctx, streamID)
+	ctx = timing.StartSpan(ctx, "handler.DebugDropStream")
+	err := h.DebugDropStream(ctx, streamID)
+	timing.End(ctx, err)
+	return err
 }
