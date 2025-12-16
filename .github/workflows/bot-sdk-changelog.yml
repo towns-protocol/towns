@@ -1,0 +1,71 @@
+name: Update Bot SDK Changelog
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'packages/bot/**'
+            - 'packages/sdk/**'
+            - 'packages/towns-bot-cli/**'
+            - 'lerna.json'
+    workflow_dispatch: # Allow manual trigger
+
+jobs:
+    update-changelog:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write # Need write permission to push changes
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Full history needed for changelog generation
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v1
+              with:
+                  bun-version: latest
+
+            - name: Install dependencies
+              run: bun install
+
+            - name: Generate changelog
+              id: generate
+              run: |
+                  echo "Generating Bot SDK changelog..."
+                  bun run changelog
+                  EXIT_CODE=$?
+
+                  # Exit code 1 means breaking changes detected (expected)
+                  # Any other non-zero exit code is a real error
+                  if [ $EXIT_CODE -ne 0 ] && [ $EXIT_CODE -ne 1 ]; then
+                    echo "Error: Changelog generation failed with exit code $EXIT_CODE"
+                    exit $EXIT_CODE
+                  fi
+
+                  echo "Changelog generation completed (exit code: $EXIT_CODE)"
+
+            - name: Check for changes
+              id: changes
+              run: |
+                  # Use git status to check for both tracked and untracked files
+                  if [ -n "$(git status --porcelain packages/docs/build/bots/changelog.mdx)" ]; then
+                    echo "has_changes=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "has_changes=false" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Commit and push changelog
+              if: steps.changes.outputs.has_changes == 'true'
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add packages/docs/build/bots/changelog.mdx
+                  git commit -m "docs: auto-update bot SDK changelog [skip ci]"
+                  git push
+
+            - name: No changes detected
+              if: steps.changes.outputs.has_changes == 'false'
+              run: echo "No changes to changelog detected. Skipping commit."
