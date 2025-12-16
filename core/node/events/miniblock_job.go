@@ -9,12 +9,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/towns-protocol/towns/core/node/crypto"
-
 	"github.com/towns-protocol/towns/core/blockchain"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 // mbJos tracks single miniblock production attempt for a single stream.
@@ -70,16 +70,20 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum blockchain.BlockNum
 		return nil
 	}
 
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetMiniblockCandidateCount")
 	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(
 		ctx,
 		j.stream.StreamId(),
 		view.minipool.generation,
 	)
+	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -103,7 +107,9 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum blockchain.BlockNum
 }
 
 func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockNumber) error {
+	ctx = timing.StartSpan(ctx, "shouldContinue")
 	err := j.shouldContinue(ctx, blockNum)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -119,7 +125,9 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 			Tag("streamId", j.stream.streamId)
 	}
 
+	ctx = timing.StartSpan(ctx, "makeCandidate")
 	err = j.makeCandidate(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -127,7 +135,10 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 		return nil
 	}
 
-	if err := j.saveCandidate(ctx); err != nil {
+	ctx = timing.StartSpan(ctx, "saveCandidate")
+	err = j.saveCandidate(ctx)
+	timing.End(ctx, err)
+	if err != nil {
 		return err
 	}
 
@@ -139,9 +150,13 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 	var view *StreamView
 	var err error
 	if j.replicated {
+		ctx = timing.StartSpan(ctx, "makeReplicatedProposal")
 		prop, view, err = j.makeReplicatedProposal(ctx)
+		ctx = timing.End(ctx, err)
 	} else {
+		ctx = timing.StartSpan(ctx, "makeLocalProposal")
 		prop, view, err = j.makeLocalProposal(ctx)
+		ctx = timing.End(ctx, err)
 	}
 	if err != nil {
 		return err
@@ -150,7 +165,9 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 		return nil
 	}
 
+	ctx = timing.StartSpan(ctx, "makeMiniblockCandidate")
 	j.candidate, err = view.makeMiniblockCandidate(ctx, j.cache.Params(), prop)
+	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -160,7 +177,9 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 
 func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
 	// retrieve remote proposals
+	ctx = timing.StartSpan(ctx, "processRemoteProposals")
 	proposals, view, err := j.processRemoteProposals(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -179,7 +198,9 @@ func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *Strea
 }
 
 func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
+	timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -195,7 +216,9 @@ func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView
 }
 
 func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *StreamView, error) {
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := j.stream.GetView(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -208,10 +231,14 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		LocalEventHashes:   view.minipool.eventHashesAsBytes(),
 	}
 
+	ctx = timing.StartSpan(ctx, "gatherRemoteProposals")
 	proposals, quorumErr := j.gatherRemoteProposals(ctx, request)
+	ctx = timing.End(ctx, quorumErr)
 
 	// Get view again and bug out if stream advanced in the meantime.
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err = j.stream.GetView(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -245,7 +272,9 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 			if _, ok := added[parsed.Hash]; !ok {
 				added[parsed.Hash] = true
 				if !view.minipool.events.Has(parsed.Hash) {
-					newView, err := j.stream.addEvent(ctx, parsed, true)
+					spanCtx := timing.StartSpan(ctx, "addEvent")
+					newView, err := j.stream.addEvent(spanCtx, parsed, true)
+					timing.End(spanCtx, err)
 					if err == nil {
 						view = newView
 					} else {
@@ -416,7 +445,9 @@ func (j *mbJob) gatherRemoteProposals(
 	qp.AddNodeTasks(
 		remoteQuorumNodes,
 		func(ctx context.Context, node common.Address) error {
-			proposal, err := j.cache.Params().RemoteMiniblockProvider.GetMbProposal(ctx, node, request)
+			spanCtx := timing.StartSpan(ctx, "GetMbProposal")
+			proposal, err := j.cache.Params().RemoteMiniblockProvider.GetMbProposal(spanCtx, node, request)
+			timing.End(spanCtx, err)
 			if err != nil {
 				return err
 			}
@@ -438,7 +469,9 @@ func (j *mbJob) gatherRemoteProposals(
 		},
 	)
 
+	ctx = timing.StartSpan(ctx, "QuorumPool.Wait")
 	err := qp.Wait()
+	timing.End(ctx, err)
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -466,7 +499,10 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 			return err
 		}
 
-		return j.cache.Params().Storage.WriteMiniblockCandidate(ctx, j.stream.streamId, mb)
+		spanCtx := timing.StartSpan(ctx, "WriteMiniblockCandidate")
+		err = j.cache.Params().Storage.WriteMiniblockCandidate(spanCtx, j.stream.streamId, mb)
+		timing.End(spanCtx, err)
+		return err
 	})
 
 	quorumNodes := slices.DeleteFunc(slices.Clone(j.quorumNodes), func(node common.Address) bool {
@@ -474,7 +510,10 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	qp.AddNodeTasks(quorumNodes, func(ctx context.Context, node common.Address) error {
-		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate)
+		spanCtx := timing.StartSpan(ctx, "SaveMbCandidate")
+		err := j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(spanCtx, node, j.stream.streamId, j.candidate)
+		timing.End(spanCtx, err)
+		return err
 	})
 
 	// save the candidate to the nodes that are not in the quorum but participating in the stream.
@@ -489,7 +528,9 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 		}()
 	}
 
+	ctx = timing.StartSpan(ctx, "QuorumPool.Wait")
 	err := qp.Wait()
+	timing.End(ctx, err)
 	if err != nil {
 		logging.FromCtx(ctx).
 			Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)

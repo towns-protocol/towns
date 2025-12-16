@@ -10,8 +10,10 @@ import (
 	"go.uber.org/zap"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 func runWithLabels(
@@ -31,6 +33,14 @@ func (s *Service) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
+	timer := timing.NewTimer("SyncStreams")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("SyncStreams slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	startTime := time.Now()
 	syncId := GenNanoid()
@@ -59,6 +69,14 @@ func (s *Service) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
+	timer := timing.NewTimer("AddStreamToSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("AddStreamToSync slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	var res *connect.Response[AddStreamToSyncResponse]
 	var err error
@@ -78,6 +96,14 @@ func (s *Service) ModifySync(
 	ctx context.Context,
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
+	timer := timing.NewTimer("ModifySync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("ModifySync slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
@@ -97,6 +123,14 @@ func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
+	timer := timing.NewTimer("RemoveStreamFromSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("RemoveStreamFromSync slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	var res *connect.Response[RemoveStreamFromSyncResponse]
 	var err error
@@ -116,6 +150,14 @@ func (s *Service) CancelSync(
 	ctx context.Context,
 	req *connect.Request[CancelSyncRequest],
 ) (*connect.Response[CancelSyncResponse], error) {
+	timer := timing.NewTimer("CancelSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("CancelSync slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	res := connect.NewResponse(&CancelSyncResponse{})
 	var err error
@@ -135,6 +177,14 @@ func (s *Service) PingSync(
 	ctx context.Context,
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
+	timer := timing.NewTimer("PingSync")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("PingSync slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	res := connect.NewResponse(&PingSyncResponse{})
 	var err error

@@ -20,6 +20,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 var _ nodes.StreamNodes = (*Stream)(nil)
@@ -224,13 +225,18 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 // ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
 // ApplyMiniblock is thread-safe.
 func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	_, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
 	}
 
-	return s.applyMiniblockImplLocked(ctx, miniblock, nil)
+	ctx = timing.StartSpan(ctx, "applyMiniblockImplLocked")
+	err = s.applyMiniblockImplLocked(ctx, miniblock, nil)
+	timing.End(ctx, err)
+	return err
 }
 
 // importMiniblocks imports the given miniblocks.
@@ -245,7 +251,10 @@ func (s *Stream) importMiniblocks(
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.importMiniblocksLocked(ctx, miniblocks)
+	ctx = timing.StartSpan(ctx, "importMiniblocksLocked")
+	err := s.importMiniblocksLocked(ctx, miniblocks)
+	timing.End(ctx, err)
+	return err
 }
 
 // importMiniblocksLocked should be called with a lock held.
@@ -392,12 +401,17 @@ func (s *Stream) applyMiniblockImplLocked(
 
 // promoteCandidate is thread-safe.
 func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	_, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
 	}
-	return s.promoteCandidateLocked(ctx, mb)
+	ctx = timing.StartSpan(ctx, "promoteCandidateLocked")
+	err = s.promoteCandidateLocked(ctx, mb)
+	timing.End(ctx, err)
+	return err
 }
 
 // promoteCandidateLocked should be called with a lock held.
@@ -524,7 +538,10 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 		return view, nil
 	}
 
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	view, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	defer s.mu.Unlock()
 	if err != nil {
 		return nil, err
@@ -659,7 +676,10 @@ func (s *Stream) GetMiniblocks(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
+	ctx = timing.StartSpan(ctx, "ReadMiniblocks")
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	if err != nil {
 		return nil, false, err
 	}
@@ -718,13 +738,18 @@ func (s *Stream) notifySubscribersLocked(
 }
 
 func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	_, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return nil, err
 	}
 
-	return s.addEventLocked(ctx, event, relaxDuplicateCheck)
+	ctx = timing.StartSpan(ctx, "addEventLocked")
+	view, err := s.addEventLocked(ctx, event, relaxDuplicateCheck)
+	timing.End(ctx, err)
+	return view, err
 }
 
 // addEventLocked adds an event to the stream.
@@ -856,13 +881,17 @@ func (s *Stream) UpdatesSinceCookie(
 		)
 	}
 
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	view, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamSince")
 	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -905,13 +934,17 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 		)
 	}
 
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	view, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamSince")
 	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -939,7 +972,9 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 		)
 	}
 
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	_, err := s.lockMuAndLoadView(ctx)
+	timing.End(ctx, err)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -1034,7 +1069,9 @@ func (s *Stream) getStatus() *streamImplStatus {
 // Note: saving the candidate itself, without applying it, does not modify the stream's in-memory
 // cached state at all.
 func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *MiniblockInfo) error {
+	ctx = timing.StartSpan(ctx, "tryApplyCandidate")
 	applied, err := s.tryApplyCandidate(ctx, candidate)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -1048,7 +1085,10 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 		return err
 	}
 
-	return s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
+	ctx = timing.StartSpan(ctx, "WriteMiniblockCandidate")
+	err = s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
+	timing.End(ctx, err)
+	return err
 }
 
 // tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply if
@@ -1058,7 +1098,10 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 // tryApplyCandidate is thread-safe.
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
 	// try to apply the candidate
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	_, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	defer s.mu.Unlock()
 	if err != nil {
 		return false, err
@@ -1138,7 +1181,10 @@ func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error)
 		return view.LastBlock().Ref.Num, nil
 	}
 
-	return s.params.Storage.GetLastMiniblockNumber(ctx, s.streamId)
+	ctx = timing.StartSpan(ctx, "GetLastMiniblockNumber")
+	num, err := s.params.Storage.GetLastMiniblockNumber(ctx, s.streamId)
+	timing.End(ctx, err)
+	return num, err
 }
 
 // applyStreamMiniblockUpdates applies the list miniblock updates to the stream.
@@ -1152,7 +1198,9 @@ func (s *Stream) applyStreamMiniblockUpdates(
 		return
 	}
 
+	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
 	view, err := s.lockMuAndLoadView(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		s.mu.Unlock()
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
@@ -1268,6 +1316,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 	s.unsubAllLocked()
 
 	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num
+	ctx = timing.StartSpan(ctx, "ReinitializeStreamStorage")
 	err = s.params.Storage.ReinitializeStreamStorage(
 		ctx,
 		s.streamId,
@@ -1275,6 +1324,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 		lastSnapshotMiniblockNum,
 		updateExisting,
 	)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}

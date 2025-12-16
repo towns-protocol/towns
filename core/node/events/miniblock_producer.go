@@ -15,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 const (
@@ -147,7 +148,9 @@ func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum blockchain.
 func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum blockchain.BlockNumber) []*mbJob {
 	log := logging.FromCtx(ctx)
 
+	ctx = timing.StartSpan(ctx, "GetMbCandidateStreams")
 	candidates := p.streamCache.GetMbCandidateStreams(ctx)
+	ctx = timing.End(ctx, nil)
 
 	var scheduled []*mbJob
 
@@ -237,7 +240,9 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := p.streamCache.GetStreamWaitForLocal(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +286,9 @@ func (p *miniblockProducer) TestMakeMiniblock(
 		}
 	}
 
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
+	timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +302,9 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum blo
 		return
 	}
 
+	ctx = timing.StartSpan(ctx, "produceCandidate")
 	err := j.produceCandidate(ctx, blockNum)
+	timing.End(ctx, err)
 	if err != nil {
 		logging.FromCtx(ctx).
 			Warnw(
@@ -380,8 +389,9 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 			)
 		}
 
-		var err error
+		ctx = timing.StartSpan(ctx, "SetStreamLastMiniblockBatch")
 		successRegistered, invalid, failed, err := p.streamCache.Params().Registry.SetStreamLastMiniblockBatch(ctx, mbs)
+		ctx = timing.End(ctx, err)
 		if err == nil {
 			success = append(success, successRegistered...)
 			invalidProposals = append(invalidProposals, invalid...)
@@ -406,7 +416,9 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) && !job.skipPromotion {
 			go func() {
-				err := job.stream.ApplyMiniblock(ctx, job.candidate)
+				spanCtx := timing.StartSpan(ctx, "ApplyMiniblock")
+				err := job.stream.ApplyMiniblock(spanCtx, job.candidate)
+				timing.End(spanCtx, err)
 				if err != nil {
 					log.Errorw(
 						"processMiniblockProposalBatch: Error applying miniblock",
@@ -425,7 +437,10 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		}
 	}
 
-	if err := p.promoteConfirmedCandidates(ctx, streamsNeedingReconciliation); err != nil {
+	ctx = timing.StartSpan(ctx, "promoteConfirmedCandidates")
+	err := p.promoteConfirmedCandidates(ctx, streamsNeedingReconciliation)
+	timing.End(ctx, err)
+	if err != nil {
 		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "error", err)
 	}
 }
@@ -440,18 +455,22 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	log := logging.FromCtx(ctx)
 	registry := p.streamCache.Params().Registry
 
+	ctx = timing.StartSpan(ctx, "BlockNumber")
 	headNum, err := p.streamCache.Params().RiverChain.Client.BlockNumber(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Message("Unable to determine River Chain block number")
 	}
 
 	for _, job := range jobs {
+		spanCtx := timing.StartSpan(ctx, "GetStreamOnBlock")
 		stream, err := registry.StreamRegistry.GetStreamOnBlock(
-			ctx,
+			spanCtx,
 			job.stream.streamId,
 			blockchain.BlockNumber(headNum),
 		)
+		timing.End(spanCtx, err)
 		if err != nil {
 			log.Errorw("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "error", err)
@@ -462,7 +481,10 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 
 		committedLocalCandidateRef := stream.LastMb()
 
-		if err := job.stream.promoteCandidate(ctx, committedLocalCandidateRef); err == nil {
+		spanCtx = timing.StartSpan(ctx, "promoteCandidate")
+		err = job.stream.promoteCandidate(spanCtx, committedLocalCandidateRef)
+		timing.End(spanCtx, err)
+		if err == nil {
 			log.Infow("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,
 				"mb", committedLocalCandidateRef)

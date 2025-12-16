@@ -9,15 +9,25 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 func (s *Service) AllocateEphemeralStream(
 	ctx context.Context,
 	req *connect.Request[AllocateEphemeralStreamRequest],
 ) (*connect.Response[AllocateEphemeralStreamResponse], error) {
+	timer := timing.NewTimer("AllocateEphemeralStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("AllocateEphemeralStream slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
@@ -69,6 +79,14 @@ func (s *Service) SaveEphemeralMiniblock(
 	ctx context.Context,
 	req *connect.Request[SaveEphemeralMiniblockRequest],
 ) (*connect.Response[SaveEphemeralMiniblockResponse], error) {
+	timer := timing.NewTimer("SaveEphemeralMiniblock")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("SaveEphemeralMiniblock slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
 	defer cancel()
@@ -117,6 +135,14 @@ func (s *Service) SealEphemeralStream(
 	ctx context.Context,
 	req *connect.Request[SealEphemeralStreamRequest],
 ) (*connect.Response[SealEphemeralStreamResponse], error) {
+	timer := timing.NewTimer("SealEphemeralStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("SealEphemeralStream slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()

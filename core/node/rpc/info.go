@@ -20,6 +20,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
@@ -27,6 +28,14 @@ func (s *Service) Info(
 	ctx context.Context,
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
+	timer := timing.NewTimer("Info")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("Info slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 
 	log.Debugw("Info ENTER", "request", req.Msg)
@@ -289,7 +298,10 @@ func (s *Service) debugInfoMakeMiniblock(
 		lastKnownMiniblockNum,
 	)
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	if err != nil {
 		return nil, err
 	}

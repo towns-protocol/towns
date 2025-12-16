@@ -9,16 +9,26 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 func (s *Service) AllocateStream(
 	ctx context.Context,
 	req *connect.Request[AllocateStreamRequest],
 ) (*connect.Response[AllocateStreamResponse], error) {
+	timer := timing.NewTimer("AllocateStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("AllocateStream slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
@@ -44,12 +54,17 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +78,14 @@ func (s *Service) NewEventReceived(
 	ctx context.Context,
 	req *connect.Request[NewEventReceivedRequest],
 ) (*connect.Response[NewEventReceivedResponse], error) {
+	timer := timing.NewTimer("NewEventReceived")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("NewEventReceived slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
 	defer cancel()
@@ -95,12 +118,16 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetViewIfLocal")
 	view, err := stream.GetViewIfLocal(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +158,14 @@ func (s *Service) ProposeMiniblock(
 	ctx context.Context,
 	req *connect.Request[ProposeMiniblockRequest],
 ) (*connect.Response[ProposeMiniblockResponse], error) {
+	timer := timing.NewTimer("ProposeMiniblock")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("ProposeMiniblock slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("ProposeMiniblock ENTER")
 	r, e := s.proposeMiniblock(ctx, req.Msg)
@@ -155,12 +190,16 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetView")
 	view, err := stream.GetView(ctx)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +220,14 @@ func (s *Service) SaveMiniblockCandidate(
 	ctx context.Context,
 	req *connect.Request[SaveMiniblockCandidateRequest],
 ) (*connect.Response[SaveMiniblockCandidateResponse], error) {
+	timer := timing.NewTimer("SaveMiniblockCandidate")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("SaveMiniblockCandidate slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
 	defer cancel()
@@ -207,7 +254,9 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamWaitForLocal")
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -233,6 +282,14 @@ func (s *Service) GetMiniblocksByIds(
 	req *connect.Request[GetMiniblocksByIdsRequest],
 	resp *connect.ServerStream[GetMiniblockResponse],
 ) error {
+	timer := timing.NewTimer("GetMiniblocksByIds")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("GetMiniblocksByIds slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("GetMiniblocksByIds ENTER")
 	if err := s.streamMiniblocksByIds(ctx, req.Msg, resp); err != nil {

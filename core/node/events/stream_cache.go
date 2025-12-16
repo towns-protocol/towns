@@ -25,6 +25,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 type Scrubber interface {
@@ -287,7 +288,9 @@ func (s *StreamCache) onStreamAllocated(
 		return
 	}
 
+	ctx = timing.StartSpan(ctx, "readGenesisAndCreateLocalStream")
 	_, err := s.readGenesisAndCreateLocalStream(ctx, event.Stream.StreamId(), blockNum)
+	timing.End(ctx, err)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream", "error", err)
 	}
@@ -372,7 +375,10 @@ func (s *StreamCache) loadStreamRecord(
 
 	defer prometheus.NewTimer(s.loadStreamRecordDuration).ObserveDuration()
 
+	ctx = timing.StartSpan(ctx, "loadStreamRecordImpl")
 	stream, err := s.loadStreamRecordImpl(ctx, streamId, waitForLocal)
+	ctx = timing.End(ctx, err)
+	_ = ctx
 	if err != nil {
 		s.loadStreamRecordCounter.IncFail()
 	} else {
@@ -433,9 +439,13 @@ func (s *StreamCache) loadStreamRecordImpl(
 	var blockNum blockchain.BlockNumber
 	var record *river.Stream
 	for {
-		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
+		spanCtx := timing.StartSpan(ctx, "GetBlockNumber")
+		blockNum, err := s.params.RiverChain.GetBlockNumber(spanCtx)
+		timing.End(spanCtx, err)
 		if err == nil {
-			record, err = s.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+			spanCtx = timing.StartSpan(ctx, "GetStreamOnBlock")
+			record, err = s.params.Registry.StreamRegistry.GetStreamOnBlock(spanCtx, streamId, blockNum)
+			timing.End(spanCtx, err)
 			if err == nil {
 				break
 			}
@@ -472,7 +482,11 @@ func (s *StreamCache) loadStreamRecordImpl(
 		return s.insertEmptyLocalStream(river.NewStreamWithId(streamId, record), blockNum, true), nil
 	}
 
-	return s.readGenesisAndCreateLocalStream(ctx, streamId, blockNum)
+	ctx = timing.StartSpan(ctx, "readGenesisAndCreateLocalStream")
+	stream, err := s.readGenesisAndCreateLocalStream(ctx, streamId, blockNum)
+	ctx = timing.End(ctx, err)
+	_ = ctx
+	return stream, err
 }
 
 func (s *StreamCache) readGenesisAndCreateLocalStream(
@@ -486,7 +500,9 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamWithGenesis")
 	recordNoId, _, mb, err := s.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, streamId, blockNum)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -510,11 +526,13 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
+	ctx = timing.StartSpan(ctx, "CreateStreamStorage")
 	err = s.params.Storage.CreateStreamStorage(
 		ctx,
 		streamId,
 		&storage.MiniblockDescriptor{Data: mb, HasLegacySnapshot: true},
 	)
+	timing.End(ctx, err)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			logging.FromCtx(ctx).
@@ -544,7 +562,11 @@ func (s *StreamCache) getStreamImpl(
 ) (*Stream, error) {
 	stream, _ := s.cache.Load(streamId)
 	if stream == nil {
-		return s.loadStreamRecord(ctx, streamId, waitForLocal)
+		ctx = timing.StartSpan(ctx, "loadStreamRecord")
+		stream, err := s.loadStreamRecord(ctx, streamId, waitForLocal)
+		ctx = timing.End(ctx, err)
+		_ = ctx
+		return stream, err
 	}
 	return stream, nil
 }

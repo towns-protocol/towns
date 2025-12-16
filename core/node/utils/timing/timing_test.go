@@ -93,7 +93,13 @@ func checkPercentage(t *testing.T, summary, spanName string, min, max float64) {
 	}
 
 	if percentage < min || percentage > max {
-		t.Errorf("expected percentage for %q to be between %.2f%% and %.2f%%, but got %.2f%%", spanName, min, max, percentage)
+		t.Errorf(
+			"expected percentage for %q to be between %.2f%% and %.2f%%, but got %.2f%%",
+			spanName,
+			min,
+			max,
+			percentage,
+		)
 	}
 }
 

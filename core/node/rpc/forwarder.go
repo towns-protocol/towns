@@ -16,6 +16,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/node/utils/timing"
 )
 
 func checkNoForward[T any](req *connect.Request[T], baseErr error) error {
@@ -87,6 +88,14 @@ func (s *Service) CreateStream(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
+	timer := timing.NewTimer("CreateStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("CreateStream slow", "timing", report)
+		}
+	}()
 	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
 	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.createStreamImpl, "CreateStream")
@@ -96,6 +105,14 @@ func (s *Service) CreateMediaStream(
 	ctx context.Context,
 	req *connect.Request[CreateMediaStreamRequest],
 ) (*connect.Response[CreateMediaStreamResponse], error) {
+	timer := timing.NewTimer("CreateMediaStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("CreateMediaStream slow", "timing", report)
+		}
+	}()
 	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
 	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.createMediaStreamImpl, "CreateMediaStream")
@@ -105,6 +122,14 @@ func (s *Service) GetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
+	timer := timing.NewTimer("GetStream")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("GetStream slow", "timing", report)
+		}
+	}()
 	return executeConnectHandler(ctx, req, s, s.getStreamImpl, "GetStream")
 }
 
@@ -113,6 +138,14 @@ func (s *Service) GetStreamEx(
 	req *connect.Request[GetStreamExRequest],
 	resp *connect.ServerStream[GetStreamExResponse],
 ) error {
+	timer := timing.NewTimer("GetStreamEx")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("GetStreamEx slow", "timing", report)
+		}
+	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
@@ -136,7 +169,9 @@ func (s *Service) getStreamImpl(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		if req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
 			return connect.NewResponse(&GetStreamResponse{}), nil
@@ -146,7 +181,9 @@ func (s *Service) getStreamImpl(
 	}
 
 	// Check that stream is marked as accessed in this case (i.e. timestamp is set)
+	ctx = timing.StartSpan(ctx, "GetViewIfLocalEx")
 	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +260,9 @@ func (s *Service) getStreamExImpl(
 		return err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	nodes, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return err
 	}
@@ -294,6 +333,14 @@ func (s *Service) GetMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
+	timer := timing.NewTimer("GetMiniblocks")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("GetMiniblocks slow", "timing", report)
+		}
+	}()
 	return executeConnectHandler(ctx, req, s, s.getMiniblocksImpl, "GetMiniblocks")
 }
 
@@ -319,7 +366,9 @@ func (s *Service) getMiniblocksImpl(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -362,6 +411,14 @@ func (s *Service) GetLastMiniblockHash(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
+	timer := timing.NewTimer("GetLastMiniblockHash")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("GetLastMiniblockHash slow", "timing", report)
+		}
+	}()
 	return executeConnectHandler(ctx, req, s, s.getLastMiniblockHashImpl, "GetLastMiniblockHash")
 }
 
@@ -374,12 +431,16 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetViewIfLocalEx")
 	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +460,8 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
-	return utils.PeerNodeRequestWithRetries(
+	ctx = timing.StartSpan(ctx, "PeerNodeRequestWithRetries")
+	resp, err := utils.PeerNodeRequestWithRetries(
 		ctx,
 		stream,
 		func(ctx context.Context, stub StreamServiceClient, addr common.Address) (*connect.Response[GetLastMiniblockHashResponse], error) {
@@ -415,12 +477,23 @@ func (s *Service) getLastMiniblockHashImpl(
 		s.config.Network.NumRetries,
 		s.nodeRegistry,
 	)
+	ctx = timing.End(ctx, err)
+	_ = ctx
+	return resp, err
 }
 
 func (s *Service) AddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
 ) (*connect.Response[AddEventResponse], error) {
+	timer := timing.NewTimer("AddEvent")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("AddEvent slow", "timing", report)
+		}
+	}()
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.addEventImpl, "AddEvent")
@@ -435,12 +508,16 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetStreamNoWait")
 	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
 
+	ctx = timing.StartSpan(ctx, "GetViewIfLocalEx")
 	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
+	ctx = timing.End(ctx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -484,6 +561,14 @@ func (s *Service) AddMediaEvent(
 	ctx context.Context,
 	req *connect.Request[AddMediaEventRequest],
 ) (*connect.Response[AddMediaEventResponse], error) {
+	timer := timing.NewTimer("AddMediaEvent")
+	ctx = timer.Start(ctx)
+	defer func() {
+		report := timer.Report()
+		if report.Took > 30*time.Second {
+			logging.FromCtx(ctx).Warnw("AddMediaEvent slow", "timing", report)
+		}
+	}()
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.addMediaEventImpl, "AddMediaEvent")
