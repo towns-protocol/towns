@@ -7,6 +7,7 @@ import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 // libraries
 import "./AccountTippingMod.sol" as AccountTipping;
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -14,6 +15,8 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 
 contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
+    using CustomRevert for bytes4;
+
     function __AccountTippingFacet_init() external onlyInitializing {
         _addInterface(type(ITipping).interfaceId);
     }
@@ -28,7 +31,7 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
 
     /// @inheritdoc ITipping
     function tip(TipRequest calldata) external payable {
-        revert Deprecated();
+        CustomRevert.revertWith(Deprecated.selector);
     }
 
     /// @inheritdoc ITipping
@@ -49,7 +52,7 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
 
     /// @inheritdoc ITipping
     function tipsByCurrencyAndTokenId(uint256, address) external pure returns (uint256) {
-        revert Deprecated();
+        CustomRevert.revertWith(Deprecated.selector);
     }
 
     /// @inheritdoc ITipping
