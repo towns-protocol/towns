@@ -124,6 +124,7 @@ function processTip(
 /// @param amount The amount of the tip
 function validateTip(address sender, address receiver, address currency, uint256 amount) view {
     if (currency == address(0)) ITippingBase.CurrencyIsZero.selector.revertWith();
+    if (receiver == address(0)) ITippingBase.InvalidAddressInput.selector.revertWith();
     if (amount == 0) ITippingBase.AmountIsZero.selector.revertWith();
     if (sender != msg.sender) ITippingBase.NotSenderOfTip.selector.revertWith();
     if (sender == receiver) ITippingBase.CannotTipSelf.selector.revertWith();

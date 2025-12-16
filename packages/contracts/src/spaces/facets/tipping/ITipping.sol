@@ -82,6 +82,7 @@ interface ITippingBase {
     error UnexpectedETH();
     error NotSenderOfTip();
     error Deprecated();
+    error InvalidAddressInput();
 }
 
 interface ITipping is ITippingBase {

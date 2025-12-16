@@ -158,6 +158,27 @@ contract AccountTippingTest is ERC6900Setup, ITippingBase {
         tipping.sendTip{value: amount}(TipRecipientType.Any, abi.encode(params));
     }
 
+    function test_sendTip_revertWhen_InvalidAddressInput(address user, uint96 amount) external {
+        address receiver = address(0);
+
+        vm.assume(user != receiver);
+        vm.assume(amount > 0);
+
+        ModularAccount account = _createAccount(user, amount);
+
+        AnyTipParams memory params = AnyTipParams({
+            currency: CurrencyTransfer.NATIVE_TOKEN,
+            sender: address(account),
+            receiver: receiver,
+            amount: amount,
+            data: ""
+        });
+
+        vm.prank(address(account));
+        vm.expectRevert(InvalidAddressInput.selector);
+        tipping.sendTip{value: amount}(TipRecipientType.Any, abi.encode(params));
+    }
+
     function test_sendTip_revertWhen_SenderIsReceiver(address user, uint96 amount) external {
         vm.assume(amount > 0);
 
