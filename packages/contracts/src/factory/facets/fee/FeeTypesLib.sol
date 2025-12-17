@@ -8,9 +8,6 @@ library FeeTypesLib {
     /// @notice Fee for space membership purchases (ETH)
     bytes32 internal constant MEMBERSHIP = keccak256("FEE_TYPE.MEMBERSHIP");
 
-    /// @notice Fee for space membership purchases (USDC)
-    bytes32 internal constant MEMBERSHIP_USDC = keccak256("FEE_TYPE.MEMBERSHIP_USDC");
-
     /// @notice Fee for app installations
     bytes32 internal constant APP_INSTALL = keccak256("FEE_TYPE.APP_INSTALL");
 
@@ -28,4 +25,11 @@ library FeeTypesLib {
 
     /// @notice Fee for bot actions
     bytes32 internal constant BOT_ACTION = keccak256("FEE_TYPE.BOT_ACTION");
+
+    /// @notice Generates fee type for membership based on currency
+    /// @param currency The payment currency address
+    /// @return The fee type identifier for the given currency
+    function membership(address currency) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("FEE_TYPE.MEMBERSHIP", currency));
+    }
 }

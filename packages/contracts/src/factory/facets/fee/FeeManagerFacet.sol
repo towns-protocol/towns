@@ -126,16 +126,6 @@ contract FeeManagerFacet is
             true
         );
 
-        // membership fee (USDC)
-        _setFeeConfig(
-            FeeTypesLib.MEMBERSHIP_USDC,
-            protocolRecipient,
-            FeeCalculationMethod.HYBRID,
-            1000, // 10%
-            1_500_000, // $1.50 (6 decimals)
-            true
-        );
-
         // app installation fee
         _setFeeConfig(
             FeeTypesLib.APP_INSTALL,

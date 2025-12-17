@@ -197,6 +197,10 @@ interface IMembership is IMembershipBase {
     /// @return The membership currency
     function getMembershipCurrency() external view returns (address);
 
+    /// @notice Set the membership currency
+    /// @param currency The new membership currency address
+    function setMembershipCurrency(address currency) external;
+
     /// @notice Get the space factory
     /// @return The space factory
     function getSpaceFactory() external view returns (address);

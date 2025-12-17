@@ -14,21 +14,19 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
+import {FeeConfig} from "../../../factory/facets/fee/FeeManagerStorage.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
 abstract contract MembershipBase is IMembershipBase {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
-    /// @dev USDC address on Base mainnet
-    address internal constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
-
     function __MembershipBase_init(Membership memory info, address spaceFactory) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
         $.spaceFactory = spaceFactory;
         $.pricingModule = info.pricingModule;
-        $.membershipCurrency = info.currency;
+        _setMembershipCurrency(info.currency);
         $.membershipMaxSupply = info.maxSupply;
 
         if (info.freeAllocation > 0) {
@@ -70,11 +68,10 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     /// @notice Returns the fee type for the membership currency
-    /// @dev Reverts for unsupported currencies
+    /// @dev Uses dynamic fee type for non-native currencies
     function _getMembershipFeeType(address currency) internal pure returns (bytes32) {
         if (currency == CurrencyTransfer.NATIVE_TOKEN) return FeeTypesLib.MEMBERSHIP;
-        if (currency == USDC) return FeeTypesLib.MEMBERSHIP_USDC;
-        Membership__UnsupportedCurrency.selector.revertWith();
+        return FeeTypesLib.membership(currency);
     }
 
     function _getTotalMembershipPayment(
@@ -164,7 +161,6 @@ abstract contract MembershipBase is IMembershipBase {
     function _setMembershipFreeAllocation(uint256 newAllocation) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
         ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
-        emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
     function _getMembershipFreeAllocation() internal view returns (uint256) {
@@ -195,6 +191,16 @@ abstract contract MembershipBase is IMembershipBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _setMembershipCurrency(address currency) internal {
+        // Validate fee type is configured (skip for native token - always supported)
+        if (!(currency == address(0) || currency == CurrencyTransfer.NATIVE_TOKEN)) {
+            bytes32 feeType = FeeTypesLib.membership(currency);
+            FeeConfig memory config = IFeeManager(_getSpaceFactory()).getFeeConfig(feeType);
+            if (!config.enabled) Membership__UnsupportedCurrency.selector.revertWith();
+        }
+        MembershipStorage.layout().membershipCurrency = currency;
+    }
 
     function _getMembershipCurrency() internal view returns (address currency) {
         currency = MembershipStorage.layout().membershipCurrency;

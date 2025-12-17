@@ -144,6 +144,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
         _verifyFreeAllocation(newAllocation);
         _setMembershipFreeAllocation(newAllocation);
+        emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
     /// @inheritdoc IMembership
@@ -181,13 +182,23 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          GETTERS                           */
+    /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IMembership
+    function setMembershipCurrency(address currency) external onlyOwner {
+        _setMembershipCurrency(currency);
+        emit MembershipCurrencyUpdated(currency);
+    }
 
     /// @inheritdoc IMembership
     function getMembershipCurrency() external view returns (address) {
         return _getMembershipCurrency();
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
     function getSpaceFactory() external view returns (address) {
