@@ -697,12 +697,12 @@ func (s *PostgresMetadataShardStore) preparePendingBlockTx(
 			return nil
 		})
 
-	for i, tx := range pendingBlock.Txs {
-		if tx == nil {
+	for i, blockTx := range pendingBlock.Txs {
+		if blockTx == nil {
 			continue
 		}
 
-		switch op := tx.Op.(type) {
+		switch op := blockTx.Op.(type) {
 		case *MetadataTx_CreateStream:
 			s.batchValidateCreateStreamTx(batch, shardId, pendingBlock, i, op.CreateStream)
 		case *MetadataTx_SetStreamLastMiniblockBatch:
@@ -712,7 +712,7 @@ func (s *PostgresMetadataShardStore) preparePendingBlockTx(
 		case *MetadataTx_UpdateStreamNodesAndReplication:
 			s.batchValidateUpdateStreamNodesAndReplicationTx(batch, shardId, pendingBlock, i, op.UpdateStreamNodesAndReplication)
 		default:
-			return RiverError(Err_INTERNAL, "unknown operation, should not happen", "operation", tx.Op)
+			return RiverError(Err_INTERNAL, "unknown operation, should not happen", "operation", blockTx.Op)
 		}
 	}
 
