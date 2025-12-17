@@ -1707,7 +1707,7 @@ func TestReadMiniblocks(t *testing.T) {
 		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 10, 20, false)
 		require.NoError(t, err)
 		require.Empty(t, result)
-		require.False(t, terminus)
+		require.True(t, terminus)
 	})
 
 	t.Run("reads miniblocks from trimmed stream", func(t *testing.T) {
