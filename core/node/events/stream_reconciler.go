@@ -113,9 +113,9 @@ func (sr *streamReconciler) reconcileAndTrim(ctx context.Context) (err error) {
 }
 
 // trim runs stream history and snapshot trimming process.
-func (sr *streamReconciler) trim(ctx context.Context) error {
+func (sr *streamReconciler) trim(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.trim")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	var cancel context.CancelFunc
 	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
@@ -124,7 +124,7 @@ func (sr *streamReconciler) trim(ctx context.Context) error {
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
 	// such as backward/forwards reconciliation, gaps filling.
 	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO in "reconcile" function.
-	err := sr.loadRanges(ctx)
+	err = sr.loadRanges(ctx)
 	if err != nil {
 		return err
 	}
@@ -180,9 +180,9 @@ func (sr *streamReconciler) trim(ctx context.Context) error {
 
 // reconcile runs single stream reconciliation attempt.
 // TODO: instead of re-loading ranges in the end, modify them during reconciliation process without querying DB.
-func (sr *streamReconciler) reconcile(ctx context.Context) error {
+func (sr *streamReconciler) reconcile(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcile")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	var cancel context.CancelFunc
 	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
@@ -239,7 +239,7 @@ func (sr *streamReconciler) reconcile(ctx context.Context) error {
 
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
 	// such as backward/forwards reconciliation, gaps filling.
-	err := sr.loadRanges(ctx)
+	err = sr.loadRanges(ctx)
 	if err != nil {
 		return err
 	}
@@ -305,9 +305,9 @@ func (sr *streamReconciler) tryPromoteLocalCandidate(
 	ctx context.Context,
 	mbNum int64,
 	mbHash common.Hash,
-) (bool, error) {
+) (promoted bool, err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.tryPromoteLocalCandidate")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	candidate, err := sr.cache.params.Storage.ReadMiniblockCandidate(
 		sr.ctx, sr.stream.StreamId(), mbHash, mbNum)
@@ -337,9 +337,9 @@ func (sr *streamReconciler) tryPromoteLocalCandidate(
 // reconcileFromRegistryGenesisBlock attempts to load the genesis miniblock from the stream registry
 // and import it locally. Used when the stream registry indicates miniblock 0 and peers may not have
 // the genesis due to original node leaving the network.
-func (sr *streamReconciler) reconcileFromRegistryGenesisBlock(ctx context.Context) error {
+func (sr *streamReconciler) reconcileFromRegistryGenesisBlock(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcileFromRegistryGenesisBlock")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
@@ -364,9 +364,9 @@ func (sr *streamReconciler) reconcileFromRegistryGenesisBlock(ctx context.Contex
 	return sr.stream.importMiniblocks(ctx, []*MiniblockInfo{genesisBlock})
 }
 
-func (sr *streamReconciler) setExpectedLastMbFromRemote(ctx context.Context, remote common.Address) error {
+func (sr *streamReconciler) setExpectedLastMbFromRemote(ctx context.Context, remote common.Address) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.setExpectedLastMbFromRemote")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	// TODO: configurable timeouts through this file
 	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
@@ -385,13 +385,13 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(ctx context.Context, rem
 // reconcileBackward reconciles the stream backwards from the last expected miniblock.
 // First reinitialize the stream.
 // If after that stream doesn't have miniblocks to that last expected, run forward reconciliation from this point.
-func (sr *streamReconciler) reconcileBackward(ctx context.Context) error {
+func (sr *streamReconciler) reconcileBackward(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcileBackward")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.backwardCalled = true
 
-	err := sr.remotes.execute(func(remote common.Address) error {
+	err = sr.remotes.execute(func(remote common.Address) error {
 		return sr.reinitializeStreamFromSinglePeer(ctx, remote)
 	})
 	if err != nil {
@@ -414,9 +414,9 @@ func (sr *streamReconciler) reconcileBackward(ctx context.Context) error {
 	return nil
 }
 
-func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context, remote common.Address) error {
+func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context, remote common.Address) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reinitializeStreamFromSinglePeer")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.reinitializeAttempted++
 
@@ -425,7 +425,8 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context
 	defer cancel()
 
 	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
-	resp, err := sr.cache.params.RemoteMiniblockProvider.GetStream(
+	var resp *GetStreamResponse
+	resp, err = sr.cache.params.RemoteMiniblockProvider.GetStream(
 		ctx,
 		remote,
 		&GetStreamRequest{
@@ -447,9 +448,9 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context
 	return nil
 }
 
-func (sr *streamReconciler) backfillGaps(ctx context.Context) error {
+func (sr *streamReconciler) backfillGaps(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.backfillGaps")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.backfillCalled = true
 
@@ -478,9 +479,9 @@ func (sr *streamReconciler) backfillGaps(ctx context.Context) error {
 	return nil
 }
 
-func (sr *streamReconciler) backfillRange(ctx context.Context, missingRange storage.MiniblockRange) error {
+func (sr *streamReconciler) backfillRange(ctx context.Context, missingRange storage.MiniblockRange) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.backfillRange")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	pageSize := sr.cache.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
@@ -504,14 +505,13 @@ func (sr *streamReconciler) backfillRange(ctx context.Context, missingRange stor
 	return nil
 }
 
-func (sr *streamReconciler) backfillPage(ctx context.Context, curRange storage.MiniblockRange) error {
+func (sr *streamReconciler) backfillPage(ctx context.Context, curRange storage.MiniblockRange) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.backfillPage")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	fromInclusive := curRange.StartInclusive
 	toExclusive := curRange.EndInclusive + 1
 
-	var err error
 	err = sr.remotes.execute(func(remote common.Address) error {
 		fromInclusive, err = sr.backfillPageFromSinglePeer(ctx, remote, fromInclusive, toExclusive)
 		if err != nil {
@@ -534,9 +534,9 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 	remote common.Address,
 	fromInclusive int64,
 	toExclusive int64,
-) (int64, error) {
+) (_ int64, err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.backfillPageFromSinglePeer")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.backfillPagesAttempted++
 
@@ -580,16 +580,15 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 	return fromInclusive + int64(len(mbs)), nil
 }
 
-func (sr *streamReconciler) reconcileForward(ctx context.Context) error {
+func (sr *streamReconciler) reconcileForward(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcileForward")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.forwardCalled = true
 
 	fromInclusive := sr.localLastMbInclusive + 1
 	toExclusive := sr.expectedLastMbInclusive + 1
 
-	var err error
 	err = sr.remotes.execute(func(remote common.Address) error {
 		fromInclusive, err = sr.reconcileForwardFromSinglePeer(ctx, remote, fromInclusive, toExclusive)
 		if err != nil {
@@ -614,15 +613,14 @@ func (sr *streamReconciler) reconcileForwardFromSinglePeer(
 	remote common.Address,
 	fromInclusive int64,
 	toExclusive int64,
-) (int64, error) {
+) (_ int64, err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcileForwardFromSinglePeer")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	pageSize := sr.cache.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
 		pageSize = defaultGetMiniblocksPageSize
 	}
-	var err error
 	for fromInclusive < toExclusive {
 		fromInclusive, err = sr.reconcilePageForwardFromSinglePeer(
 			ctx,
@@ -642,9 +640,9 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	remote common.Address,
 	fromInclusive int64,
 	toExclusive int64,
-) (int64, error) {
+) (_ int64, err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.reconcilePageForwardFromSinglePeer")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	sr.stats.forwardPagesAttempted++
 
@@ -679,11 +677,9 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	return fromInclusive + int64(len(mbs)), nil
 }
 
-func (sr *streamReconciler) loadRanges(ctx context.Context) error {
+func (sr *streamReconciler) loadRanges(ctx context.Context) (err error) {
 	ctx = timing.StartSpan(ctx, "events.streamReconciler.loadRanges")
-	defer func() { timing.End(ctx, nil) }()
-
-	var err error
+	defer func() { timing.End(ctx, err) }()
 	sr.presentRanges, err = sr.cache.params.Storage.GetMiniblockNumberRanges(sr.ctx, sr.stream.streamId)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {

@@ -571,9 +571,9 @@ func (s *Stream) initFromGenesisLocked(
 // If local storage is not initialized, it will wait for it to be initialized.
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // GetViewIfLocalEx is thread-safe.
-func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*StreamView, error) {
+func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (viewe *StreamView, err error) {
 	ctx = timing.StartSpan(ctx, "GetViewIfLocalEx")
-	defer func() { timing.End(ctx, nil) }()
+	defer func() { timing.End(ctx, err) }()
 
 	view, isLocal := s.tryGetView(ctx, allowNoQuorum)
 	if !isLocal {
@@ -584,7 +584,7 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 	}
 
 	ctx = timing.StartSpan(ctx, "lockMuAndLoadView")
-	ctx, view, err := s.lockMuAndLoadView(ctx)
+	ctx, view, err = s.lockMuAndLoadView(ctx)
 	ctx = timing.End(ctx, err)
 	defer func() {
 		timing.End(ctx, nil) // End "mu.Held" span

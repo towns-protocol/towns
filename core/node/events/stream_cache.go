@@ -148,6 +148,8 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	return s
 }
 
+var targetStreamID, _ = StreamIdFromString("a195c7ea56c119e7aa5710a04654d82830a8fdc1480000000000000000000000")
+
 func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) error {
 	s.mbProducer = newMiniblockProducer(ctx, s, opts)
 
@@ -177,6 +179,9 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 			local:               &localStreamState{},
 		}
 		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
+		if streamRecord.StreamId() == targetStreamID {
+			logging.FromCtx(ctx).Info("Loaded stream into stream cache on start", "stream", streamRecord.StreamId())
+		}
 		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitReconcileStreamTaskToPool(

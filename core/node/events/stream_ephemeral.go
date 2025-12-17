@@ -43,6 +43,9 @@ func (s *StreamCache) onStreamCreated(
 		}
 
 		// Cache the stream
+		if stream.streamId == targetStreamID {
+			logging.FromCtx(ctx).Info("Loaded stream into stream cache onStreamCreated", "stream", stream.streamId)
+		}
 		s.cache.Store(stream.streamId, stream)
 	}()
 }
