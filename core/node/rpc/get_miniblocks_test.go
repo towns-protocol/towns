@@ -861,7 +861,7 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReq.FromInclusive = 5
 	resp, err = alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	require.False(resp.Msg.Terminus, "Terminus should be false when full range is returned")
+	require.False(resp.Msg.Terminus)
 	require.Equal(int64(5), resp.Msg.FromInclusive, "FromInclusive should match request")
 
 	// Trim the stream - remove early miniblocks
@@ -884,7 +884,7 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.True(resp.Msg.Terminus, "Terminus should be true when stream is trimmed and requesting from 0")
+	require.True(resp.Msg.Terminus)
 	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
 	require.Len(
 		resp.Msg.Miniblocks,
@@ -903,7 +903,7 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from before trim point")
+	require.True(resp.Msg.Terminus)
 	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
 
 	// Test Case 3: Request from exactly the trim point should return terminus=true
@@ -932,7 +932,7 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.False(resp.Msg.Terminus, "Terminus should be false when requesting from after trim point")
+	require.False(resp.Msg.Terminus)
 	require.Equal(trimToMiniblock+5, resp.Msg.FromInclusive, "FromInclusive should match request")
 
 	// Test Case 5: Request from 0 should always return terminus=true
@@ -944,7 +944,7 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from 0")
+	require.True(resp.Msg.Terminus)
 }
 
 func TestGetMiniblocksTerminusForwardingToRemotes(t *testing.T) {
