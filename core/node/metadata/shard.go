@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"

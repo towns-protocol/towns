@@ -162,29 +162,6 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 	return nil
 }
 
-func validateStreamID(streamId []byte) error {
-	if len(streamId) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
-	}
-	return nil
-}
-
-func validateHash(hash []byte, field string) error {
-	if len(hash) != 32 {
-		return RiverError(
-			Err_INVALID_ARGUMENT,
-			"hash length invalid",
-			"field",
-			field,
-			"expectedLen",
-			32,
-			"actualLen",
-			len(hash),
-		)
-	}
-	return nil
-}
-
 func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEmpty bool) ([]int32, error) {
 	if len(nodes) == 0 {
 		if allowEmpty {
@@ -780,7 +757,7 @@ func (s *PostgresMetadataShardStore) batchValidateCreateStreamTx(
 				WHERE stream_id = $1
 			) AS stream_exists`,
 			shardId),
-		streamId,
+		streamId[:],
 	).QueryRow(func(row pgx.Row) error {
 		var streamExists bool
 		if err := row.Scan(&streamExists); err != nil {
@@ -815,12 +792,14 @@ func (s *PostgresMetadataShardStore) batchValidateMbUpdateTx(
 	}
 
 	batch.Queue(
-		`SELECT last_miniblock_hash,
+		s.sqlForShard(
+			`SELECT last_miniblock_hash,
                 last_miniblock_num,
-                sealed,
+                sealed
          FROM {{streams}}
          WHERE stream_id = $1`,
-		streamId,
+			shardId),
+		streamId[:],
 	).QueryRow(func(row pgx.Row) error {
 		var prevHash []byte
 		var prevNum uint64
@@ -899,13 +878,13 @@ func (s *PostgresMetadataShardStore) batchValidateUpdateStreamNodesAndReplicatio
 
 	batch.Queue(
 		s.sqlForShard(
-			`SELECT 
-			  replication_factor, 
-			  LENGTH(nodes) AS num_nodes
+			`SELECT
+			  replication_factor,
+			  array_length(nodes, 1) AS num_nodes
 			FROM {{streams}}
 			WHERE stream_id = $1`,
 			shardId),
-		streamId,
+		streamId[:],
 	).QueryRow(func(row pgx.Row) error {
 		var prevRepl uint32
 		var prevNumNodes int
@@ -916,20 +895,27 @@ func (s *PostgresMetadataShardStore) batchValidateUpdateStreamNodesAndReplicatio
 			}
 			return err
 		}
+
 		switch {
 		case op.ReplicationFactor > 0 && len(op.Nodes) > 0:
-			if int(op.ReplicationFactor) < len(op.Nodes) {
+			if int(op.ReplicationFactor) > len(op.Nodes) {
 				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
 			}
 		case op.ReplicationFactor > 0:
 			if int(op.ReplicationFactor) > prevNumNodes {
 				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
 			}
 		case len(op.Nodes) > 0:
 			if len(op.Nodes) < int(prevRepl) {
 				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
 			}
 		}
+
+		pendingBlock.UpdatedStreams[streamId] = op
+		pendingBlock.SetSuccess(txIndex)
 		return nil
 	})
 }
@@ -1014,6 +1000,13 @@ func (s *PostgresMetadataShardStore) batchCreateStreamTx(
 	if err != nil {
 		return err
 	}
+
+	// For new streams (last_miniblock_num = 0), use genesis_miniblock_hash as last_miniblock_hash
+	lastMiniblockHash := op.LastMiniblockHash
+	if op.LastMiniblockNum == 0 {
+		lastMiniblockHash = op.GenesisMiniblockHash
+	}
+
 	batch.Queue(
 		s.sqlForShard(
 			`INSERT INTO {{streams}} (stream_id, genesis_miniblock_hash, genesis_miniblock, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
@@ -1022,7 +1015,7 @@ func (s *PostgresMetadataShardStore) batchCreateStreamTx(
 		op.StreamId,
 		op.GenesisMiniblockHash,
 		op.GenesisMiniblock,
-		op.LastMiniblockHash,
+		lastMiniblockHash,
 		op.LastMiniblockNum,
 		op.ReplicationFactor,
 		op.Sealed,
@@ -1092,7 +1085,7 @@ func (s *PostgresMetadataShardStore) batchUpdateMiniblockTx(
 			s.sqlForShard(
 				`UPDATE {{streams}}
 				SET last_miniblock_hash = $2,
-					last_miniblock_num = $3
+					last_miniblock_num = $3,
 					sealed = $4
 				WHERE stream_id = $1`,
 				shardId,
