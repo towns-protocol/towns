@@ -1,6 +1,7 @@
 package mdstate
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -46,7 +47,7 @@ func (p *PendingBlockState) SetMbErrorEvent(txIndex int, mbIndex int, streamId S
 	event.Type = "mberr"
 	event.Attributes = append(event.Attributes, abci.EventAttribute{
 		Key:   "sid",
-		Value: string(streamId.Bytes()),
+		Value: streamId.String(),
 	})
 	event.Attributes = append(event.Attributes, abci.EventAttribute{
 		Key:   "code",
@@ -74,15 +75,15 @@ func (p *PendingBlockState) SetMbStatusEvent(
 	event.Type = "mbok"
 	event.Attributes = append(event.Attributes, abci.EventAttribute{
 		Key:   "sid",
-		Value: string(streamId.Bytes()),
+		Value: streamId.String(),
 	})
 	event.Attributes = append(event.Attributes, abci.EventAttribute{
-		Key:   "height",
+		Key:   "n",
 		Value: fmt.Sprintf("%d", mbHeight),
 	})
 	event.Attributes = append(event.Attributes, abci.EventAttribute{
-		Key:   "hash",
-		Value: string(mbHash),
+		Key:   "h",
+		Value: hex.EncodeToString(mbHash),
 	})
 	if sealed {
 		event.Attributes = append(event.Attributes, abci.EventAttribute{
