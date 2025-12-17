@@ -14,6 +14,7 @@ import {
     makeUniqueChannelStreamId,
     addressFromUserId,
     makeUniqueMediaStreamId,
+    streamIdToBytes,
 } from '../../id'
 import {
     makeDonePromise,
@@ -49,6 +50,7 @@ import {
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
+    make_UserInboxPayload_GroupEncryptionSessions,
 } from '../../types'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
@@ -328,6 +330,55 @@ describe('clientTest', () => {
         expect(
             bobsAnotherClient.streams.get(makeUserMetadataStreamId(bobsClient.userId)),
         ).toBeDefined()
+    })
+
+    test('bobCanSendGroupEncryptionSessions', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+        expect(bobsClient.userInboxStreamId).toBeDefined()
+
+        // send it to yourself, works for now...
+        const fakeStreamId = makeUniqueSpaceStreamId()
+        const deviceId = 'd1'
+        const payload = make_UserInboxPayload_GroupEncryptionSessions({
+            streamId: streamIdToBytes(fakeStreamId),
+            senderKey: bobsClient.userId,
+            sessionIds: ['123'],
+            ciphertexts: {
+                [deviceId]: 'ciphertext',
+            },
+            algorithm: GroupEncryptionAlgorithmId.GroupEncryption,
+        })
+
+        const result1 = await bobsClient.makeEventAndAddToStream(
+            bobsClient.userInboxStreamId!,
+            payload,
+        )
+        // we added one event
+        expect(result1.newEvents).toHaveLength(1)
+
+        // sending the same one again should work, but nothing gets added
+        const result2 = await bobsClient.makeEventAndAddToStream(
+            bobsClient.userInboxStreamId!,
+            payload,
+        )
+        expect(result2.newEvents).toHaveLength(0)
+        // but with another id it should work
+        const payload2 = make_UserInboxPayload_GroupEncryptionSessions({
+            streamId: streamIdToBytes(fakeStreamId),
+            senderKey: bobsClient.userId,
+            sessionIds: ['123', '456'],
+            ciphertexts: {
+                [deviceId]: 'ciphertext',
+            },
+            algorithm: GroupEncryptionAlgorithmId.GroupEncryption,
+        })
+
+        const result3 = await bobsClient.makeEventAndAddToStream(
+            bobsClient.userInboxStreamId!,
+            payload2,
+        )
+        expect(result3.newEvents).toHaveLength(1)
     })
 
     test('bobCanSendMemberPayload', async () => {

@@ -6,7 +6,6 @@ import {ITippingBase} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";

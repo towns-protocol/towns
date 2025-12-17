@@ -24,6 +24,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/infra/analytics"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -53,6 +54,8 @@ type (
 		// Base chain components for app validation
 		baseChain           *crypto.Blockchain
 		appRegistryContract *auth.AppRegistryContract
+		// Cleanup job for enqueued messages
+		cleaner *EnqueuedMessagesCleaner
 	}
 )
 
@@ -107,12 +110,11 @@ func NewService(
 	}
 
 	if listener == nil {
-		listener = NewAppMessageProcessor(ctx, cache)
+		analyticsClient := analytics.New(cfg.MixpanelToken)
+		listener = NewAppMessageProcessor(ctx, cache, analyticsClient)
 	}
 
-	// TODO: Cookie persistence is disabled until we fix the sync session runner to handle
-	// non-reset responses when resuming from a persisted cookie position.
-	// cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
+	cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
 
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
@@ -123,7 +125,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
-		nil, // cookieStore disabled
+		cookieStore,
 		otelTracer,
 	)
 	if err != nil {
@@ -139,6 +141,7 @@ func NewService(
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 		webhookStatusCache:            ttlcache.New(2*time.Second, 1*time.Minute),
+		cleaner:                       NewEnqueuedMessagesCleaner(store, cfg.EnqueuedMessageRetention, metrics),
 	}
 
 	// Initialize app registry contract if base chain is provided and configured
@@ -356,6 +359,9 @@ func (s *Service) Start(ctx context.Context) {
 			}
 		}
 	}()
+
+	// Start the enqueued messages cleanup job
+	go s.cleaner.Run(ctx)
 }
 
 func (s *Service) RotateSecret(

@@ -66,12 +66,12 @@ func TestValidateModifySync(t *testing.T) {
 		},
 		{
 			name: "duplicate add stream",
-			req: &protocol.ModifySyncRequest{
-				AddStreams: func() []*protocol.SyncCookie {
-					sid := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
-					return []*protocol.SyncCookie{toCookie(sid), toCookie(sid)}
-				}(),
-			},
+			req: func() *protocol.ModifySyncRequest {
+				sid := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+				return &protocol.ModifySyncRequest{
+					AddStreams: []*protocol.SyncCookie{toCookie(sid), toCookie(sid)},
+				}
+			}(),
 			wantErr: true,
 			msg:     "Duplicate stream in add list",
 		},

@@ -14,7 +14,6 @@ export interface UserMembership {
     streamId: string
     op: MembershipOp
     inviter?: string
-    streamParentId?: string
 }
 
 export interface UserMembershipsModel {
@@ -108,8 +107,5 @@ function toUserMembership(payload: UserPayload_UserMembership): UserMembership {
         streamId,
         op,
         inviter: payload.inviter ? userIdFromAddress(payload.inviter) : undefined,
-        streamParentId: payload.streamParentId
-            ? streamIdFromBytes(payload.streamParentId)
-            : undefined,
     } satisfies UserMembership
 }

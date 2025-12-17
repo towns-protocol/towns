@@ -105,8 +105,8 @@ func TestPersistAndGetStreamCookie(t *testing.T) {
 	}
 
 	// Persist the cookie
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
-	require.NoError(err, "PersistSyncCookie should succeed")
+	err := params.cookieStore.WriteSyncCookie(params.ctx, streamId, cookie)
+	require.NoError(err, "WriteSyncCookie should succeed")
 
 	// Retrieve the cookie
 	retrieved, updatedAt, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
@@ -132,7 +132,7 @@ func TestPersistStreamCookie_Update(t *testing.T) {
 		PrevMiniblockHash: []byte{1, 1, 1, 1},
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie1)
+	err := params.cookieStore.WriteSyncCookie(params.ctx, streamId, cookie1)
 	require.NoError(err)
 
 	// Update with new values
@@ -142,7 +142,7 @@ func TestPersistStreamCookie_Update(t *testing.T) {
 		PrevMiniblockHash: []byte{2, 2, 2, 2},
 	}
 
-	err = params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie2)
+	err = params.cookieStore.WriteSyncCookie(params.ctx, streamId, cookie2)
 	require.NoError(err)
 
 	// Verify updated values
@@ -166,7 +166,7 @@ func TestDeleteStreamCookie(t *testing.T) {
 		PrevMiniblockHash: []byte{5, 5, 5, 5},
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
+	err := params.cookieStore.WriteSyncCookie(params.ctx, streamId, cookie)
 	require.NoError(err)
 
 	// Verify it exists
@@ -213,7 +213,7 @@ func TestGetAllStreamCookies(t *testing.T) {
 			MinipoolGen:       int64(i + 1),
 			PrevMiniblockHash: []byte{byte(i), byte(i), byte(i), byte(i)},
 		}
-		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie)
+		err := params.cookieStore.WriteSyncCookie(params.ctx, streamIds[i], cookie)
 		require.NoError(err)
 	}
 
@@ -247,7 +247,7 @@ func TestMultipleStreams(t *testing.T) {
 		}
 		copy(cookie.PrevMiniblockHash, streamIds[i][:])
 
-		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie)
+		err := params.cookieStore.WriteSyncCookie(params.ctx, streamIds[i], cookie)
 		require.NoError(err)
 	}
 
@@ -304,7 +304,7 @@ func TestLargePrevMiniblockHash(t *testing.T) {
 		PrevMiniblockHash: largeHash,
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
+	err := params.cookieStore.WriteSyncCookie(params.ctx, streamId, cookie)
 	require.NoError(err)
 
 	retrieved, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)

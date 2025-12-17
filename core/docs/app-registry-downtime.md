@@ -137,8 +137,8 @@ The `updated_at` timestamp enables future cleanup of stale cookies if needed.
 
 Add to `AppRegistryStore` interface:
 ```go
-// PersistSyncCookie stores or updates the sync cookie for a stream
-PersistSyncCookie(ctx context.Context, streamID shared.StreamId,
+// WriteSyncCookie stores or updates the sync cookie for a stream
+WriteSyncCookie(ctx context.Context, streamID shared.StreamId,
     minipoolGen int64, prevMiniblockHash []byte) error
 
 // GetStreamSyncCookies loads all stored cookies on startup
@@ -169,7 +169,7 @@ if shouldPersistCookie(streamID, hadBotMembers) {
     if cookie != nil {
         // Fire-and-forget style persistence
         go func() {
-            if err := s.store.PersistSyncCookie(context.Background(),
+            if err := s.store.WriteSyncCookie(context.Background(),
                 streamID, cookie.MinipoolGen, cookie.PrevMiniblockHash); err != nil {
                 log.Warnw("failed to persist sync cookie",
                     "stream_id", streamID, "error", err)
@@ -276,7 +276,7 @@ func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
 ##### 6. Testing strategy
 
 **Unit tests** (`core/node/storage/pg_app_registry_store_test.go`):
-- Test `PersistSyncCookie()` - insert and update cases
+- Test `WriteSyncCookie()` - insert and update cases
 - Test `GetStreamSyncCookies()` - load multiple cookies
 - Test `DeleteStreamSyncCookie()` - removal
 - Test upsert behavior (same stream_id multiple times)
@@ -317,14 +317,26 @@ func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
   the queue, to avoid unbounded growth.
 
 ### Unbounded backlog for offline bots
-- Introduce retention/quotas for `enqueued_messages`:
+- Introduce TTL-based retention for `enqueued_messages`:
   - Track `created_at` per row and add a cleanup job that deletes rows older than
-    N days (configurable) to avoid infinite growth.
-  - Optionally add per-bot item limits; once a bot exceeds `M` pending messages,
-    stop enqueueing and surface an alarm so operators know the backlog needs
-    intervention.
+    N days (configurable, default 7 days) to avoid infinite growth.
+  - **Note**: We intentionally avoid per-bot quotas or suspension mechanisms because a single
+    bot can be installed in multiple channels. One channel failing key solicitation shouldn't
+    penalize the bot's operation in other channels where it's working correctly.
 - Pair this with better visibility (metrics/alerts) so we know when bots are
   falling behind.
+
+### Webhook failure tracking
+- Currently, webhook failures are only logged (`app_dispatcher.go:166` has a `// TODO: retry logic?` comment).
+  A bot can register a webhook, go offline forever, and never respond to key solicitations.
+  Messages accumulate in `enqueued_messages` indefinitely.
+- The TTL/quota solution above mitigates unbounded growth, but doesn't address bots that
+  have session keys and receive immediate delivery attempts that consistently fail.
+- Potential enhancement: track consecutive webhook failures per bot. After N failures
+  (e.g., 10), mark the bot as `suspended`. This prevents wasting resources on bots that
+  are permanently offline while still allowing transient failures.
+- Alternative: implement retry with exponential backoff before giving up on a message.
+  This handles transient outages but doesn't help with permanently dead bots.
 
 ### Cold streams for App Registry
 - Add `ColdStreamsEnabled` to `AppRegistryConfig` (mirroring notifications).

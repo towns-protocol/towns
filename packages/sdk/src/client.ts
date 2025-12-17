@@ -63,6 +63,7 @@ import {
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
     EncryptedDataVersion,
+    EventRef,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -121,6 +122,7 @@ import {
     STREAM_ID_STRING_LENGTH,
     contractAddressFromSpaceId,
     isUserId,
+    spaceIdFromChannelId,
 } from './id'
 import {
     makeEvent,
@@ -844,15 +846,18 @@ export class Client
 
     async createChannel(
         spaceId: string | Uint8Array,
-        channelName: string,
-        channelTopic: string,
+        _channelName: string,
+        _channelTopic: string,
         inChannelId: string | Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
         channelSettings?: PlainMessage<SpacePayload_ChannelSettings>,
     ): Promise<{ streamId: string }> {
-        const oChannelId = inChannelId
-        const channelId = streamIdAsBytes(oChannelId)
+        const channelId = streamIdAsBytes(inChannelId)
+        const channelIdStr = streamIdAsString(inChannelId)
+        const spaceIdstr = streamIdAsString(spaceId)
         this.logCall('createChannel', channelId, spaceId)
+        const derivedSpaceId = spaceIdFromChannelId(channelIdStr)
+        assert(derivedSpaceId === spaceIdstr, 'derivedSpaceId must be the same as spaceId')
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
@@ -861,7 +866,6 @@ export class Client
             this.signerContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                spaceId: streamIdAsBytes(spaceId),
                 settings: streamSettings,
                 channelSettings: channelSettings,
             }),
@@ -2296,7 +2300,6 @@ export class Client
     }
 
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
-        const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         const { eventId } = await this.makeEventAndAddToStream(
             this.userStreamId,
@@ -2304,7 +2307,6 @@ export class Client
                 op: MembershipOp.SO_JOIN,
                 userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
-                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'joinUser' },
         )
@@ -2345,7 +2347,6 @@ export class Client
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: streamIdAsBytes(streamId),
-                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'joinStream' },
         )
@@ -2555,22 +2556,24 @@ export class Client
         opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
-        try {
-            for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
-                const miniblock = await this.persistenceStore.getMiniblock(
-                    streamIdAsString(streamId),
-                    i,
-                )
-                if (miniblock) {
-                    cachedMiniblocks.push(miniblock)
-                    toExclusive = i
-                } else {
-                    break
+        if (!opts?.skipPersistence) {
+            try {
+                for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
+                    const miniblock = await this.persistenceStore.getMiniblock(
+                        streamIdAsString(streamId),
+                        i,
+                    )
+                    if (miniblock) {
+                        cachedMiniblocks.push(miniblock)
+                        toExclusive = i
+                    } else {
+                        break
+                    }
                 }
+                cachedMiniblocks.reverse()
+            } catch (error) {
+                this.logError('error getting miniblocks', error)
             }
-            cachedMiniblocks.reverse()
-        } catch (error) {
-            this.logError('error getting miniblocks', error)
         }
 
         // Apply exclusion filtering to cached miniblocks if filters are provided
@@ -2814,7 +2817,7 @@ export class Client
             tags?: PlainMessage<Tags>
             ephemeral?: boolean
         } = {},
-    ): Promise<{ eventId: string }> {
+    ): Promise<{ eventId: string; newEvents: EventRef[] }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -2838,7 +2841,7 @@ export class Client
             isDefined(prevMiniblockNum),
             'no prev miniblock num for stream ' + streamIdAsString(streamId),
         )
-        const { eventId } = await this.makeEventWithHashAndAddToStream(
+        const { eventId, newEvents } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
@@ -2849,7 +2852,7 @@ export class Client
             undefined, // retryCount
             options.ephemeral,
         )
-        return { eventId }
+        return { eventId, newEvents }
     }
 
     async makeEventWithHashAndAddToStream(
@@ -2862,7 +2865,7 @@ export class Client
         tags?: PlainMessage<Tags>,
         retryCount?: number,
         ephemeral?: boolean,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; newEvents: EventRef[] }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(
@@ -2887,7 +2890,7 @@ export class Client
         }
 
         try {
-            await this.rpcClient.addEvent({
+            const result = await this.rpcClient.addEvent({
                 streamId: streamIdAsBytes(streamId),
                 event,
             })
@@ -2895,7 +2898,7 @@ export class Client
                 const stream = this.streams.get(streamId)
                 stream?.updateLocalEvent(localId, eventId, 'sent')
             }
-            return { prevMiniblockHash, eventId }
+            return { prevMiniblockHash, eventId, newEvents: result.newEvents }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH

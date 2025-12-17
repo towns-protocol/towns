@@ -650,7 +650,7 @@ func createMediaStreamAndAddChunks(
 
 	miniblocks := []*storage.MiniblockDescriptor{genesisMiniblockDescriptor}
 	mbRef := *genesisMiniblock.Ref
-	for i := range chunks {
+	for i := 0; i < chunks; i++ {
 		miniblock := makeMediaStreamChunk(t, nodeWallet, mbRef, i, chunkSize)
 		mbBytes, err := proto.Marshal(miniblock)
 		require.NoError(err)
@@ -717,6 +717,52 @@ func compareExternallyFetchedMiniblocks(
 	if len(miniblocks) != len(readMiniblocks) {
 		collect.Errorf(
 			"unexpected number of miniblocks in ReadMiniblocks: %d != %d",
+			len(miniblocks),
+			len(readMiniblocks),
+		)
+		return
+	}
+
+	for i := range miniblocks {
+		if !cmp.Equal(miniblocks[i].Number, readMiniblocks[i].Number) {
+			collect.Errorf("unexpected miniblock number %d != %d",
+				miniblocks[i].Number, readMiniblocks[i].Number)
+		}
+		if diff := cmp.Diff(miniblocks[i].Data, readMiniblocks[i].Data); diff != "" {
+			collect.Errorf("unexpected miniblock data %s", diff)
+		}
+		if !cmp.Equal(miniblocks[i].Snapshot, readMiniblocks[i].Snapshot) {
+			collect.Errorf("unexpected miniblock snapshot")
+		}
+	}
+
+	// ensure that store.ReadStreamFromLastSnapshot returns the correct miniblocks
+	readStreamFromLastSnapshotResult, err := store.ReadStreamFromLastSnapshot(ctx, streamID, chunks+1)
+	if err != nil {
+		collect.Errorf("unable to read miniblocks from last snapshot: %v", err)
+		return
+	}
+
+	if len(readStreamFromLastSnapshotResult.MinipoolEnvelopes) != 0 {
+		collect.Errorf(
+			"expected no minipool events, but got %d events",
+			len(readStreamFromLastSnapshotResult.MinipoolEnvelopes))
+	}
+
+	readMiniblocks = readStreamFromLastSnapshotResult.Miniblocks
+
+	if int(lastMbNum)+1 != len(miniblocks) {
+		collect.Errorf(
+			"unexpected last number of miniblocks in ReadStreamFromLastSnapshot: %d != %d",
+			lastMbNum,
+			len(miniblocks),
+		)
+		return
+	}
+
+	if len(miniblocks) != len(readMiniblocks) {
+		collect.Errorf(
+			"unexpected number of miniblocks in ReadStreamFromLastSnapshot: %d != %d",
 			len(miniblocks),
 			len(readMiniblocks),
 		)

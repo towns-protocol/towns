@@ -2,24 +2,25 @@
 pragma solidity ^0.8.23;
 
 interface ITippingBase {
-    // =============================================================
-    //                           Enums
-    // =============================================================
-
     enum TipRecipientType {
         Member, // Tips to token holders
         Bot, // Tips to bot wallets
-        Pool // Tips to pool wallets
+        Any // Tips to any address
     }
-
-    // =============================================================
-    //                           Structs
-    // =============================================================
 
     struct TipMetadata {
         bytes32 messageId;
         bytes32 channelId;
         bytes data; // Extensible metadata
+    }
+
+    /// @notice Params for any tip
+    struct AnyTipParams {
+        address currency;
+        address sender;
+        address receiver;
+        uint256 amount;
+        bytes data;
     }
 
     /// @notice Params for Member tips (includes tokenId)
@@ -50,10 +51,6 @@ interface ITippingBase {
         bytes32 channelId;
     }
 
-    // =============================================================
-    //                           Events
-    // =============================================================
-
     event TipSent(
         address indexed sender,
         address indexed receiver,
@@ -74,10 +71,6 @@ interface ITippingBase {
         bytes32 channelId
     );
 
-    // =============================================================
-    //                           Errors
-    // =============================================================
-
     error InvalidRecipientType();
     error InvalidTipData();
     error TokenDoesNotExist();
@@ -87,6 +80,9 @@ interface ITippingBase {
     error CurrencyIsZero();
     error MsgValueMismatch();
     error UnexpectedETH();
+    error NotSenderOfTip();
+    error Deprecated();
+    error InvalidAddressInput();
 }
 
 interface ITipping is ITippingBase {
@@ -94,9 +90,8 @@ interface ITipping is ITippingBase {
     /// @param recipientType The type of recipient (Member, Wallet, Bot, Pool)
     /// @param data ABI-encoded tip params based on recipientType:
     ///   - Member: abi.encode(MembershipTipParams)
-    ///   - Wallet: abi.encode(WalletTipParams)
     ///   - Bot: abi.encode(BotTipParams)
-    ///   - Pool: Reserved for future implementation
+    ///   - Any: abi.encode(AnyTipParams)
     function sendTip(TipRecipientType recipientType, bytes calldata data) external payable;
 
     /// @notice Sends a tip to a space member (legacy)
