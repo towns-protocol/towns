@@ -221,7 +221,7 @@ func createMultiblockChannelStream(
 	require.NoError(err)
 	require.Equal(int64(2), b2ref.Num)
 
-	blocks, err := store.ReadMiniblocks(ctx, channelId, 0, 3, false)
+	blocks, _, err := store.ReadMiniblocks(ctx, channelId, 0, 3, false)
 	require.NoError(err)
 	require.Len(blocks, 3)
 

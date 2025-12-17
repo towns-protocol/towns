@@ -699,7 +699,7 @@ func compareExternallyFetchedMiniblocks(
 	}
 
 	// ensure that store.ReadMiniblocks returns the correct miniblocks
-	readMiniblocks, err := store.ReadMiniblocks(ctx, streamID, 0, int64(chunks)+1, true)
+	readMiniblocks, _, err := store.ReadMiniblocks(ctx, streamID, 0, int64(chunks)+1, true)
 	if err != nil {
 		collect.Errorf("unable to read miniblocks: %v", err)
 		return
@@ -809,7 +809,7 @@ func rangeReadTest(
 			{fromInclusive: 3, toExclusive: int64(chunks + 1)},
 		} {
 			expNumberOfMiniblocks := int(tst.toExclusive - tst.fromInclusive)
-			gotMiniblocks, err := store.ReadMiniblocks(ctx, streamID, tst.fromInclusive, tst.toExclusive, true)
+			gotMiniblocks, _, err := store.ReadMiniblocks(ctx, streamID, tst.fromInclusive, tst.toExclusive, true)
 			if err != nil {
 				collect.Errorf("unable to read miniblocks: %v", err)
 				return

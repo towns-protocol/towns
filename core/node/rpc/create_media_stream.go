@@ -296,7 +296,7 @@ func (s *Service) getEphemeralStreamMbHash(
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		miniblocks, err := s.storage.ReadMiniblocks(
+		miniblocks, _, err := s.storage.ReadMiniblocks(
 			ctx,
 			streamId,
 			num,

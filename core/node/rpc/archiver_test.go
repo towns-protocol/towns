@@ -158,7 +158,7 @@ func compareStreamMiniblocks(
 		)
 	}
 
-	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
+	miniblocks, _, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
 	if err != nil {
 		return err
 	}

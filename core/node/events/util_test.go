@@ -483,7 +483,7 @@ func (ctc *cacheTestContext) GetMiniblocksByIds(
 	var data []*GetMiniblockResponse
 
 	for _, mbRange := range miniblockRanges {
-		miniblocks, err := inst.params.Storage.ReadMiniblocks(
+		miniblocks, _, err := inst.params.Storage.ReadMiniblocks(
 			ctx,
 			streamId,
 			mbRange.StartInclusive,
@@ -665,7 +665,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 	for actualFromInclusive < toExclusive {
 		var first []*storage.MiniblockDescriptor
 		for i, inst := range instances {
-			miniblocks, err := inst.cache.params.Storage.ReadMiniblocks(
+			miniblocks, _, err := inst.cache.params.Storage.ReadMiniblocks(
 				ctc.ctx,
 				streamId,
 				actualFromInclusive,

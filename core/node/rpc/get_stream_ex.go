@@ -32,7 +32,7 @@ func (s *Service) localGetStreamEx(
 	toExclusive := lastMiniblockNum + 1
 
 	for start := int64(0); start < toExclusive; start += pageSize {
-		miniblockDescriptors, err := s.storage.ReadMiniblocks(
+		miniblockDescriptors, _, err := s.storage.ReadMiniblocks(
 			ctx, streamId, start, min(start+pageSize, toExclusive), req.Msg.GetOmitSnapshot())
 		if err != nil {
 			return err

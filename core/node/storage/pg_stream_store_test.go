@@ -1058,7 +1058,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		),
 	)
 
-	_, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4, true)
+	_, _, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4, true)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Miniblocks consistency violation")
@@ -1583,7 +1583,7 @@ func TestReadMiniblocks(t *testing.T) {
 	t.Run("returns error for non-existent stream", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
-		miniblocks, err := store.ReadMiniblocks(ctx, streamId, 0, 10, false)
+		miniblocks, _, err := store.ReadMiniblocks(ctx, streamId, 0, 10, false)
 		require.Error(t, err)
 		require.True(t, IsRiverErrorCode(err, Err_NOT_FOUND))
 		require.Nil(t, miniblocks)
@@ -1609,7 +1609,7 @@ func TestReadMiniblocks(t *testing.T) {
 		}
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
 
-		result, err := store.ReadMiniblocks(ctx, streamId, 0, 5, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 5, false)
 		require.NoError(t, err)
 		require.Len(t, result, 5)
 
@@ -1647,7 +1647,7 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
 
 		// Read only miniblocks 2-4 (exclusive)
-		result, err := store.ReadMiniblocks(ctx, streamId, 2, 4, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 2, 4, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		require.Equal(t, int64(2), result[0].Number)
@@ -1672,7 +1672,7 @@ func TestReadMiniblocks(t *testing.T) {
 		}
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0))
 
-		result, err := store.ReadMiniblocks(ctx, streamId, 0, 3, true) // omitSnapshot = true
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 3, true) // omitSnapshot = true
 		require.NoError(t, err)
 		require.Len(t, result, 3)
 
@@ -1701,7 +1701,7 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0))
 
 		// Request range beyond existing miniblocks
-		result, err := store.ReadMiniblocks(ctx, streamId, 10, 20, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 10, 20, false)
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
@@ -1738,7 +1738,7 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(5), ranges[0].EndInclusive)
 
 		// Read miniblocks from the trimmed range - should return only existing miniblocks
-		result, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
 		require.NoError(t, err)
 		// Should return miniblocks 2-5 (4 total), not 0-5
 		require.Len(t, result, 4)
@@ -1746,12 +1746,12 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(5), result[3].Number)
 
 		// Read only existing range
-		result, err = store.ReadMiniblocks(ctx, streamId, 2, 6, false)
+		result, _, err = store.ReadMiniblocks(ctx, streamId, 2, 6, false)
 		require.NoError(t, err)
 		require.Len(t, result, 4)
 
 		// Read partial existing range
-		result, err = store.ReadMiniblocks(ctx, streamId, 3, 5, false)
+		result, _, err = store.ReadMiniblocks(ctx, streamId, 3, 5, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		require.Equal(t, int64(3), result[0].Number)
@@ -1801,21 +1801,21 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(15), ranges[1].EndInclusive)
 
 		// Read from first range
-		result, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
 		require.NoError(t, err)
 		require.Len(t, result, 3)
 		require.Equal(t, int64(0), result[0].Number)
 		require.Equal(t, int64(2), result[2].Number)
 
 		// Read from second range
-		result, err = store.ReadMiniblocks(ctx, streamId, 10, 16, false)
+		result, _, err = store.ReadMiniblocks(ctx, streamId, 10, 16, false)
 		require.NoError(t, err)
 		require.Len(t, result, 6)
 		require.Equal(t, int64(10), result[0].Number)
 		require.Equal(t, int64(15), result[5].Number)
 
 		// Read across the gap - should return error due to consistency violation
-		_, err = store.ReadMiniblocks(ctx, streamId, 0, 16, false)
+		_, _, err = store.ReadMiniblocks(ctx, streamId, 0, 16, false)
 		require.Error(t, err)
 		require.True(t, IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND))
 	})
@@ -1839,22 +1839,162 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, err)
 
 		// Request miniblocks from 0 - should return empty since stream starts at 100
-		result, err := store.ReadMiniblocks(ctx, streamId, 0, 50, false)
+		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 50, false)
 		require.NoError(t, err)
 		require.Empty(t, result)
 
 		// Request miniblocks from 100
-		result, err = store.ReadMiniblocks(ctx, streamId, 100, 103, false)
+		result, _, err = store.ReadMiniblocks(ctx, streamId, 100, 103, false)
 		require.NoError(t, err)
 		require.Len(t, result, 3)
 		require.Equal(t, int64(100), result[0].Number)
 		require.Equal(t, int64(102), result[2].Number)
 
 		// Request partial range
-		result, err = store.ReadMiniblocks(ctx, streamId, 101, 103, false)
+		result, _, err = store.ReadMiniblocks(ctx, streamId, 101, 103, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		require.Equal(t, int64(101), result[0].Number)
 		require.Equal(t, int64(102), result[1].Number)
+	})
+
+	t.Run("terminus is true when fromInclusive is 0", func(t *testing.T) {
+		data := newDataMaker()
+		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+		genesis := data.mb(0, true)
+		require.NoError(t, store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+			Number:   0,
+			Hash:     genesis.Hash,
+			Data:     genesis.Data,
+			Snapshot: genesis.Snapshot,
+		}))
+
+		miniblocks := []*MiniblockDescriptor{
+			data.mb(1, false),
+			data.mb(2, true),
+		}
+		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0))
+
+		// Request from 0 - terminus should always be true
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.True(t, terminus, "Terminus should be true when requesting from 0")
+	})
+
+	t.Run("terminus is false when preceding miniblock exists", func(t *testing.T) {
+		data := newDataMaker()
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		genesis := data.mb(0, true)
+		require.NoError(t, store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+			Number:   0,
+			Hash:     genesis.Hash,
+			Data:     genesis.Data,
+			Snapshot: genesis.Snapshot,
+		}))
+
+		miniblocks := []*MiniblockDescriptor{
+			data.mb(1, false),
+			data.mb(2, true),
+			data.mb(3, false),
+			data.mb(4, true),
+		}
+		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
+
+		// Request from 2 - miniblock 1 exists, so terminus should be false
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 2, 5, false)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(2), result[0].Number)
+		require.False(t, terminus, "Terminus should be false when preceding miniblock exists")
+
+		// Request from 1 - miniblock 0 exists, so terminus should be false
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 1, 5, false)
+		require.NoError(t, err)
+		require.Len(t, result, 4)
+		require.Equal(t, int64(1), result[0].Number)
+		require.False(t, terminus, "Terminus should be false when preceding miniblock exists")
+	})
+
+	t.Run("terminus is true when stream is trimmed", func(t *testing.T) {
+		data := newDataMaker()
+		streamId := testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN)
+
+		genesis := data.mb(0, true)
+		require.NoError(t, store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+			Number:   0,
+			Hash:     genesis.Hash,
+			Data:     genesis.Data,
+			Snapshot: genesis.Snapshot,
+		}))
+
+		miniblocks := []*MiniblockDescriptor{
+			data.mb(1, false),
+			data.mb(2, true),
+			data.mb(3, false),
+			data.mb(4, true),
+			data.mb(5, false),
+		}
+		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 6, [][]byte{}, 1, 0))
+
+		// Trim the stream to miniblock 3
+		require.NoError(t, store.TrimStream(ctx, streamId, 3, nil))
+
+		// Request from trim point (3) - miniblock 2 doesn't exist, so terminus should be true
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 3, 6, false)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(3), result[0].Number)
+		require.True(t, terminus, "Terminus should be true when requesting from trim point")
+
+		// Request from after trim point (4) - miniblock 3 exists, so terminus should be false
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 4, 6, false)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		require.Equal(t, int64(4), result[0].Number)
+		require.False(t, terminus, "Terminus should be false when preceding miniblock exists after trim point")
+	})
+
+	t.Run("terminus is true when stream starts at non-zero miniblock", func(t *testing.T) {
+		data := newDataMaker()
+		streamId := testutils.FakeStreamId(STREAM_USER_BIN)
+
+		// Create stream starting at miniblock 50
+		err := store.ReinitializeStreamStorage(
+			ctx,
+			streamId,
+			[]*MiniblockDescriptor{
+				data.mb(50, true),
+				data.mb(51, false),
+				data.mb(52, true),
+			},
+			50,
+			false,
+		)
+		require.NoError(t, err)
+
+		// Request from 0 - terminus should be true (we're at the beginning)
+		// Returns miniblocks 50-52 since those are the only ones in the range
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 53, false)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(50), result[0].Number)
+		require.True(t, terminus, "Terminus should be true when requesting from 0")
+
+		// Request from 50 (first available) - miniblock 49 doesn't exist, so terminus should be true
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 50, 53, false)
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(50), result[0].Number)
+		require.True(t, terminus, "Terminus should be true when requesting from first available miniblock")
+
+		// Request from 51 - miniblock 50 exists, so terminus should be false
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 51, 53, false)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		require.Equal(t, int64(51), result[0].Number)
+		require.False(t, terminus, "Terminus should be false when preceding miniblock exists")
 	})
 }

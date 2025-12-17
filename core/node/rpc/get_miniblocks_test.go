@@ -906,7 +906,8 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from before trim point")
 	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
 
-	// Test Case 3: Request from exactly the trim point should return terminus=false (full range available)
+	// Test Case 3: Request from exactly the trim point should return terminus=true
+	// (this is the beginning of available stream data since preceding miniblock was trimmed)
 	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      spaceId[:],
 		FromInclusive: trimToMiniblock,
@@ -915,10 +916,14 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.False(resp.Msg.Terminus, "Terminus should be false when requesting from trim point (full range available)")
+	require.True(
+		resp.Msg.Terminus,
+		"Terminus should be true when requesting from trim point (beginning of available data)",
+	)
 	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should match the trim point")
 
 	// Test Case 4: Request from after trim point should return terminus=false
+	// (preceding miniblock exists, so there's more history available)
 	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      spaceId[:],
 		FromInclusive: trimToMiniblock + 5,
@@ -930,14 +935,14 @@ func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
 	require.False(resp.Msg.Terminus, "Terminus should be false when requesting from after trim point")
 	require.Equal(trimToMiniblock+5, resp.Msg.FromInclusive, "FromInclusive should match request")
 
-	// Test Case 5: Request beyond available miniblocks should return terminus=true
+	// Test Case 5: Request from 0 should always return terminus=true
 	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      spaceId[:],
-		FromInclusive: trimToMiniblock,
-		ToExclusive:   spaceLastMb.Num + 100, // Request more than available
+		FromInclusive: 0,
+		ToExclusive:   spaceLastMb.Num + 1,
 	})
 	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
 	require.NoError(err)
-	require.True(resp.Msg.Terminus, "Terminus should be true when requesting beyond available miniblocks")
+	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from 0")
 }

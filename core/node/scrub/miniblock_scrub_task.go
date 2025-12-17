@@ -206,7 +206,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 	// If the miniblock is block 0, an empty options is fine.
 	opts := events.NewParsedMiniblockInfoOpts()
 	if blockNum > 0 {
-		prevBlock, err := m.store.ReadMiniblocks(ctx, streamId, blockNum-1, blockNum, false)
+		prevBlock, _, err := m.store.ReadMiniblocks(ctx, streamId, blockNum-1, blockNum, false)
 		if err != nil || len(prevBlock) < 1 {
 			if len(prevBlock) < 1 {
 				err = fmt.Errorf("previous miniblock was not available")
@@ -249,7 +249,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 
 	for blockNum <= latest {
 		toExclusive := min(blockNum+int64(maxBlocksPerScan), latest+1)
-		blocks, err := m.store.ReadMiniblocks(ctx, streamId, blockNum, toExclusive, false)
+		blocks, _, err := m.store.ReadMiniblocks(ctx, streamId, blockNum, toExclusive, false)
 		if err != nil {
 			return newErrorReport(
 				streamId,

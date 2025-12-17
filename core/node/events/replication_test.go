@@ -146,7 +146,7 @@ func mbProductionWithEventMaxSizeCheck(
 		return
 	}
 
-	dbMiniblocks, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 1, 100, false)
+	dbMiniblocks, _, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 1, 100, false)
 	if err != nil {
 		collect.Errorf("read miniblocks failed %s", err)
 		return
@@ -215,14 +215,14 @@ func TestReplicatedMbProduction(t *testing.T) {
 		10*time.Millisecond,
 	)
 
-	leaderMBs, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
+	leaderMBs, _, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
 	require.NoError(err)
 	require.Len(leaderMBs, 2)
 
 	for _, n := range streamNodes[1:] {
 		require.EventuallyWithT(
 			func(tt *assert.CollectT) {
-				mbs, err := tc.instancesByAddr[n].params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
+				mbs, _, err := tc.instancesByAddr[n].params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
 				_ = assert.NoError(tt, err) && assert.Len(tt, mbs, 2) && assert.EqualValues(tt, leaderMBs, mbs)
 			},
 			5*time.Second,

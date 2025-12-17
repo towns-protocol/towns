@@ -663,7 +663,7 @@ func (s *Stream) GetMiniblocks(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
-	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
+	blocks, terminus, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
 	}
@@ -682,8 +682,6 @@ func (s *Stream) GetMiniblocks(
 			return nil, false, err
 		}
 	}
-
-	terminus := fromInclusive == 0 || int64(len(blocks)) < toExclusive-fromInclusive
 
 	return miniblocks, terminus, nil
 }

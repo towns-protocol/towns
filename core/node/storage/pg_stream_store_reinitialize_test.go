@@ -134,13 +134,13 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	require.GreaterOrEqual(len(result.Miniblocks), 2) // At least miniblocks 2 and 3
 
 	// Find miniblock 0 to verify it wasn't changed
-	mb0, err := store.ReadMiniblocks(ctx, streamId, 0, 1, false)
+	mb0, _, err := store.ReadMiniblocks(ctx, streamId, 0, 1, false)
 	require.NoError(err)
 	require.Len(mb0, 1)
 	require.Equal([]byte("genesis miniblock"), mb0[0].Data) // Original data preserved
 
 	// Verify only new miniblocks 2 and 3 were added (0 and 1 already existed)
-	allMbs, err := store.ReadMiniblocks(ctx, streamId, 0, 4, false)
+	allMbs, _, err := store.ReadMiniblocks(ctx, streamId, 0, 4, false)
 	require.NoError(err)
 	require.Len(allMbs, 4) // 0, 1, 2, 3
 	require.Equal([]byte("genesis miniblock"), allMbs[0].Data)
@@ -453,7 +453,7 @@ func TestReinitializeStreamStorage_LargeDataSet(t *testing.T) {
 	require.GreaterOrEqual(len(result.Miniblocks), 10)
 
 	// Read all miniblocks to verify
-	allMiniblocks, err := store.ReadMiniblocks(ctx, streamId, 0, 150, false)
+	allMiniblocks, _, err := store.ReadMiniblocks(ctx, streamId, 0, 150, false)
 	require.NoError(err)
 	require.Len(allMiniblocks, 150)
 }
@@ -598,7 +598,7 @@ func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
 	require.NoError(err)
 
 	// Verify stream was created correctly
-	allMiniblocks, err := store.ReadMiniblocks(ctx, streamId, 10, 14, false)
+	allMiniblocks, _, err := store.ReadMiniblocks(ctx, streamId, 10, 14, false)
 	require.NoError(err)
 	require.Len(allMiniblocks, 4)
 
@@ -642,7 +642,7 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	require.NoError(err)
 
 	// Verify all miniblocks
-	allMiniblocks, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
+	allMiniblocks, _, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
 	require.NoError(err)
 	require.Len(allMiniblocks, 6)
 
