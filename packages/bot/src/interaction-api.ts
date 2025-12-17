@@ -77,16 +77,20 @@ export type FlattenedFormRequest = FlattenedRequestBase & {
         components: FlattenedFormComponent[]
     }
 
-// Flatten transaction: assume EVM only, flatten nested content
-// Note: Future versions may need discriminator for other blockchain types
+// Extract EVM content from transaction payload
 type EVMContentValue = Extract<ContentValue<'transaction'>['content'], { case: 'evm' }>['value']
 
+// EVM transaction type - future versions may add other chain types
+export type EVMTransaction = Omit<PlainMessage<EVMContentValue>, 'to' | 'signerWallet'> & {
+    to: Address
+    signerWallet?: Address
+}
+
+// Flatten transaction: nest EVM fields under `tx` for clarity and future extensibility
 export type FlattenedTransactionRequest = FlattenedRequestBase & {
     type: 'transaction'
-} & Omit<PlainMessage<ContentValue<'transaction'>>, 'content'> &
-    Omit<PlainMessage<EVMContentValue>, 'signerWallet' | 'to'> & {
-        signerWallet?: Address
-        to: Address
+} & Omit<PlainMessage<ContentValue<'transaction'>>, 'content'> & {
+        tx: EVMTransaction
     }
 
 export type FlattenedInteractionRequest =
@@ -163,7 +167,7 @@ export function flattenedToPayloadContent(
             }
         }
         case 'transaction': {
-            const { type, id, title, subtitle, recipient, to, signerWallet, ...evmRest } = payload
+            const { type, id, title, subtitle, recipient, tx } = payload
             return {
                 case: 'transaction',
                 value: {
@@ -172,11 +176,7 @@ export function flattenedToPayloadContent(
                     subtitle,
                     content: {
                         case: 'evm',
-                        value: {
-                            ...evmRest,
-                            to,
-                            signerWallet,
-                        },
+                        value: tx,
                     },
                 },
             }

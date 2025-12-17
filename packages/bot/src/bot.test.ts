@@ -1918,11 +1918,13 @@ describe('Bot', { sequential: true }, () => {
             id: requestId,
             title: 'Send USDC',
             subtitle: 'Send 50 USDC to recipient',
-            chainId: '8453',
-            to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
-            value: '0',
-            data: '0xa9059cbb', // transfer function selector
-            signerWallet: botClientAddress,
+            tx: {
+                chainId: '8453',
+                to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+                value: '0',
+                data: '0xa9059cbb', // transfer function selector
+                signerWallet: botClientAddress,
+            },
         })
 
         await waitFor(() =>
