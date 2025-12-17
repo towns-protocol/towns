@@ -1609,9 +1609,10 @@ func TestReadMiniblocks(t *testing.T) {
 		}
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
 
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 5, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 5, false)
 		require.NoError(t, err)
 		require.Len(t, result, 5)
+		require.True(t, terminus)
 
 		// Verify all miniblocks are returned in order
 		for i, mb := range result {
@@ -1647,9 +1648,10 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
 
 		// Read only miniblocks 2-4 (exclusive)
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 2, 4, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 2, 4, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
+		require.False(t, terminus)
 		require.Equal(t, int64(2), result[0].Number)
 		require.Equal(t, int64(3), result[1].Number)
 	})
@@ -1672,9 +1674,10 @@ func TestReadMiniblocks(t *testing.T) {
 		}
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0))
 
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 3, true) // omitSnapshot = true
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 3, true) // omitSnapshot = true
 		require.NoError(t, err)
 		require.Len(t, result, 3)
+		require.True(t, terminus)
 
 		// All snapshots should be nil when omitted
 		for _, mb := range result {
@@ -1701,9 +1704,10 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0))
 
 		// Request range beyond existing miniblocks
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 10, 20, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 10, 20, false)
 		require.NoError(t, err)
 		require.Empty(t, result)
+		require.False(t, terminus)
 	})
 
 	t.Run("reads miniblocks from trimmed stream", func(t *testing.T) {
@@ -1738,22 +1742,25 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(5), ranges[0].EndInclusive)
 
 		// Read miniblocks from the trimmed range - should return only existing miniblocks
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
 		require.NoError(t, err)
 		// Should return miniblocks 2-5 (4 total), not 0-5
 		require.Len(t, result, 4)
+		require.True(t, terminus)
 		require.Equal(t, int64(2), result[0].Number)
 		require.Equal(t, int64(5), result[3].Number)
 
 		// Read only existing range
-		result, _, err = store.ReadMiniblocks(ctx, streamId, 2, 6, false)
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 2, 6, false)
 		require.NoError(t, err)
 		require.Len(t, result, 4)
+		require.True(t, terminus)
 
 		// Read partial existing range
-		result, _, err = store.ReadMiniblocks(ctx, streamId, 3, 5, false)
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 3, 5, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
+		require.False(t, terminus)
 		require.Equal(t, int64(3), result[0].Number)
 		require.Equal(t, int64(4), result[1].Number)
 	})
@@ -1801,16 +1808,18 @@ func TestReadMiniblocks(t *testing.T) {
 		require.Equal(t, int64(15), ranges[1].EndInclusive)
 
 		// Read from first range
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
 		require.NoError(t, err)
 		require.Len(t, result, 3)
+		require.True(t, terminus)
 		require.Equal(t, int64(0), result[0].Number)
 		require.Equal(t, int64(2), result[2].Number)
 
 		// Read from second range
-		result, _, err = store.ReadMiniblocks(ctx, streamId, 10, 16, false)
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 10, 16, false)
 		require.NoError(t, err)
 		require.Len(t, result, 6)
+		require.True(t, terminus)
 		require.Equal(t, int64(10), result[0].Number)
 		require.Equal(t, int64(15), result[5].Number)
 
@@ -1839,21 +1848,24 @@ func TestReadMiniblocks(t *testing.T) {
 		require.NoError(t, err)
 
 		// Request miniblocks from 0 - should return empty since stream starts at 100
-		result, _, err := store.ReadMiniblocks(ctx, streamId, 0, 50, false)
+		result, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 50, false)
 		require.NoError(t, err)
 		require.Empty(t, result)
+		require.True(t, terminus)
 
 		// Request miniblocks from 100
-		result, _, err = store.ReadMiniblocks(ctx, streamId, 100, 103, false)
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 100, 103, false)
 		require.NoError(t, err)
 		require.Len(t, result, 3)
+		require.True(t, terminus)
 		require.Equal(t, int64(100), result[0].Number)
 		require.Equal(t, int64(102), result[2].Number)
 
 		// Request partial range
-		result, _, err = store.ReadMiniblocks(ctx, streamId, 101, 103, false)
+		result, terminus, err = store.ReadMiniblocks(ctx, streamId, 101, 103, false)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
+		require.False(t, terminus)
 		require.Equal(t, int64(101), result[0].Number)
 		require.Equal(t, int64(102), result[1].Number)
 	})
