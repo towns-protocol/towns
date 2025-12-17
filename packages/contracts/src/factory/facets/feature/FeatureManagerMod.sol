@@ -63,8 +63,8 @@ struct FeatureCondition {
     address checker;
     bool active;
     uint256 threshold;
-    ConditionType conditionType;
     bytes extraData;
+    ConditionType conditionType;
 }
 
 // keccak256(abi.encode(uint256(keccak256("factory.facets.feature.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
