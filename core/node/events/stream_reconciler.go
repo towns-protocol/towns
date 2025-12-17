@@ -91,7 +91,8 @@ func (sr *streamReconciler) reconcileAndTrim(ctx context.Context) (err error) {
 	defer func() {
 		report := timer.Report()
 		if report.Took > 3*time.Minute || err != nil {
-			logging.FromCtx(ctx).Warnw("reconcileAndTrim slow or error", "timing", report, "error", err)
+			logging.FromCtx(ctx).Warnw("reconcileAndTrim slow or error",
+				"timing", report, "error", err, "stream", sr.stream.streamId)
 		}
 	}()
 
