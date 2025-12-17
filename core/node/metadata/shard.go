@@ -283,23 +283,6 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 	return resp, nil
 }
 
-func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	if m.pendingBlock == nil {
-		return nil, RiverError(
-			Err_FAILED_PRECONDITION,
-			"Commit called without FinalizeBlock",
-		)
-	}
-
-	err := m.store.CommitPendingBlock(ctx, m.opts.ShardID, m.pendingBlock)
-	m.pendingBlock = nil
-	if err != nil {
-		return nil, AsRiverError(err).Func("Commit")
-	}
-
-	return &abci.CommitResponse{}, nil
-}
-
 func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abci.QueryResponse, error) {
 	resp := &abci.QueryResponse{Code: abci.CodeTypeOK}
 
@@ -521,7 +504,7 @@ func (m *MetadataShard) ProcessProposal(
 		"height",
 		req.Height,
 		"blockHash",
-		hex.EncodeToString(req.Hash),
+		req.Hash,
 		"txs",
 		len(req.Txs),
 	)
@@ -558,22 +541,20 @@ func (m *MetadataShard) FinalizeBlock(
 	if err != nil {
 		m.log.Errorw(
 			"failed to finalize block",
-			"err",
-			err,
-			"height",
-			req.Height,
-			"blockHash",
-			hex.EncodeToString(req.Hash),
-		)
-	} else {
-		m.log.Infow(
-			"finalized block",
+			"err", err,
 			"height", req.Height,
-			"blockHash", hex.EncodeToString(req.Hash),
-			"txs", len(req.Txs),
-			"appHash", hex.EncodeToString(resp.AppHash),
+			"blockHash", req.Hash,
 		)
+		return nil, err
 	}
+
+	m.log.Infow(
+		"finalized block",
+		"height", req.Height,
+		"blockHash", req.Hash,
+		"txs", len(req.Txs),
+		"appHash", resp.AppHash,
+	)
 	return resp, nil
 }
 
@@ -593,6 +574,7 @@ func (m *MetadataShard) finalizeBlockImpl(
 
 	pendingBlock := &PendingBlockState{
 		Height:            req.Height,
+		BlockHash:         req.Hash,
 		Txs:               make([]*MetadataTx, len(req.Txs)),
 		TxResults:         make([]*abci.ExecTxResult, len(req.Txs)),
 		CreatedStreams:    make(map[StreamId]*CreateStreamTx),
@@ -636,6 +618,44 @@ func (m *MetadataShard) finalizeBlockImpl(
 		TxResults: pendingBlock.TxResults,
 		AppHash:   pendingBlock.AppHash,
 	}, nil
+}
+
+func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
+	if m.pendingBlock == nil {
+		m.log.Errorw("commit called without finalize block")
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"Commit called without FinalizeBlock",
+		)
+	}
+
+	err := m.store.CommitPendingBlock(ctx, m.opts.ShardID, m.pendingBlock)
+
+	if err == nil {
+		m.log.Infow(
+			"committed block",
+			"height", m.pendingBlock.Height,
+			"blockHash", m.pendingBlock.BlockHash,
+			"appHash", m.pendingBlock.AppHash,
+		)
+	} else {
+		m.log.Errorw(
+			"failed to commit block",
+			"err", err,
+			"height", m.pendingBlock.Height,
+			"blockHash", m.pendingBlock.BlockHash,
+			"appHash", m.pendingBlock.AppHash,
+		)
+	}
+
+	// Drop pending state even if commit fails. This allows FinalizeBlock to be retried.
+	m.pendingBlock = nil
+
+	if err != nil {
+		return nil, AsRiverError(err).Func("Commit")
+	}
+
+	return &abci.CommitResponse{}, nil
 }
 
 type cometZapLogger struct {

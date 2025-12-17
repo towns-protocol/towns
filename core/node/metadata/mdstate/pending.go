@@ -14,8 +14,9 @@ import (
 // PendingBlockState holds all pending operations and state for a block being finalized.
 type PendingBlockState struct {
 	// Parsed state
-	Height int64
-	Txs    []*MetadataTx
+	Height    int64
+	BlockHash []byte
+	Txs       []*MetadataTx
 
 	// Prepared response state
 	TxResults []*abci.ExecTxResult
