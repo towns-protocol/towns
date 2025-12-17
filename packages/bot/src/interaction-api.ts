@@ -104,7 +104,11 @@ export function signatureMethodToEnum(
 ): InteractionRequestPayload_Signature_SignatureType {
     const key =
         method.toUpperCase() as keyof typeof InteractionRequestPayload_Signature_SignatureType
-    return InteractionRequestPayload_Signature_SignatureType[key]
+    const result = InteractionRequestPayload_Signature_SignatureType[key]
+    if (result === undefined) {
+        throw new Error(`Invalid signature method: ${method}`)
+    }
+    return result
 }
 
 export function signatureValidationToEnum(
@@ -112,7 +116,11 @@ export function signatureValidationToEnum(
 ): InteractionRequestPayload_Signature_SignatureValidation {
     const key =
         validation.toUpperCase() as keyof typeof InteractionRequestPayload_Signature_SignatureValidation
-    return InteractionRequestPayload_Signature_SignatureValidation[key]
+    const result = InteractionRequestPayload_Signature_SignatureValidation[key]
+    if (result === undefined) {
+        throw new Error(`Invalid signature validation: ${validation}`)
+    }
+    return result
 }
 
 // Type guard to detect flattened vs original format
