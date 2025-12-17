@@ -215,6 +215,7 @@ function validateVotingInterface(FeatureCondition calldata condition) view {
 
 function validateStakingInterface(FeatureCondition calldata condition) view {
     if (condition.checker == address(0)) InvalidToken.selector.revertWith();
+    if (condition.threshold > type(uint96).max) InvalidThreshold.selector.revertWith();
 
     address self = getSelf();
     (bool success, bool exceededMaxCopy, bytes memory data) = LibCall.tryStaticCall(
