@@ -103,7 +103,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     function test_setStakingPowerFeatureCondition(
         bytes32 featureId,
         address to,
-        uint256 amount
+        uint96 amount
     ) external givenStakingPowerFeatureCondition(featureId, to, amount) {
         FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
             featureId
@@ -121,7 +121,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     ) external givenTokenFeatureCondition(featureId, to, amount) {
         FeatureCondition memory newCondition = FeatureCondition({
             checker: address(rewardsDistributionFacet),
-            threshold: amount,
+            threshold: 20 ether,
             active: true,
             extraData: "",
             conditionType: ConditionType.StakingPower
