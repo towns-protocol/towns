@@ -120,6 +120,8 @@ Before committing any Go code changes:
    - The linter runs both `golangci-lint` and `staticcheck`
    - Fix any issues reported before committing
 
+Do not run ./fmt.sh and ./lint.sh at once, run them as separate commands.
+
 ### Error Handling
 
 - Use `RiverError` type from `node/base/error.go` for structured errors

@@ -738,9 +738,9 @@ func TestMetadataShardDuplicateMiniblockUpdateInSameBlock(t *testing.T) {
 	err := store.PreparePendingBlock(ctx, shardID, pendingBlock)
 	require.NoError(t, err)
 
-	// First update should succeed, second should fail due to duplicate
-	require.Equal(t, "", pendingBlock.TxResults[0].Events[0].Type, "first update should have no error event")
-	require.Equal(t, "mberr", pendingBlock.TxResults[0].Events[1].Type, "second update should have error event")
+	// First update should succeed with mbok, second should fail due to duplicate
+	require.Equal(t, "mbok", pendingBlock.TxResults[0].Events[0].Type, "first update should have mbok event")
+	require.Equal(t, "mberr", pendingBlock.TxResults[0].Events[1].Type, "second update should have mberr event")
 }
 
 func TestMetadataShardMultipleTxTypesInBlock(t *testing.T) {

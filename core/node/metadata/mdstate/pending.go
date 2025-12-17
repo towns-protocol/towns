@@ -61,3 +61,33 @@ func (p *PendingBlockState) SetMbErrorEvent(txIndex int, mbIndex int, streamId S
 		Value: msg,
 	})
 }
+
+func (p *PendingBlockState) SetMbStatusEvent(
+	txIndex int,
+	mbIndex int,
+	streamId StreamId,
+	mbHeight uint64,
+	mbHash []byte,
+	sealed bool,
+) {
+	event := &p.TxResults[txIndex].Events[mbIndex]
+	event.Type = "mbok"
+	event.Attributes = append(event.Attributes, abci.EventAttribute{
+		Key:   "sid",
+		Value: string(streamId.Bytes()),
+	})
+	event.Attributes = append(event.Attributes, abci.EventAttribute{
+		Key:   "height",
+		Value: fmt.Sprintf("%d", mbHeight),
+	})
+	event.Attributes = append(event.Attributes, abci.EventAttribute{
+		Key:   "hash",
+		Value: string(mbHash),
+	})
+	if sealed {
+		event.Attributes = append(event.Attributes, abci.EventAttribute{
+			Key:   "sealed",
+			Value: "true",
+		})
+	}
+}

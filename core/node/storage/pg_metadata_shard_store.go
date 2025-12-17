@@ -853,6 +853,7 @@ func (s *PostgresMetadataShardStore) batchValidateMbUpdateTx(
 		}
 
 		pendingBlock.UpdatedMiniblocks[streamId] = op
+		pendingBlock.SetMbStatusEvent(txIndex, mbIndex, streamId, op.LastMiniblockNum, op.LastMiniblockHash, op.Sealed)
 		return nil
 	})
 }

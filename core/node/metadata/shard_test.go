@@ -194,9 +194,22 @@ func TestMetadataShardFinalizeBlockAndQuery(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	genesisHash := bytes.Repeat([]byte{0xaa}, 32)
+
+	// Block 1: Create the stream
 	createTxBytes, err := proto.Marshal(buildCreateStreamTx(streamID, genesisHash))
 	require.NoError(t, err)
 
+	resp, err := env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
+		Height: 1,
+		Txs:    [][]byte{createTxBytes},
+	})
+	require.NoError(t, err)
+	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code)
+
+	_, err = env.shard.Commit(env.ctx, &abci.CommitRequest{})
+	require.NoError(t, err)
+
+	// Block 2: Update the stream
 	updatedHash := bytes.Repeat([]byte{0xbb}, 32)
 	updateTx := &prot.MetadataTx{
 		Op: &prot.MetadataTx_SetStreamLastMiniblockBatch{
@@ -214,21 +227,23 @@ func TestMetadataShardFinalizeBlockAndQuery(t *testing.T) {
 	updateTxBytes, err := proto.Marshal(updateTx)
 	require.NoError(t, err)
 
-	resp, err := env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
-		Height: 1,
-		Txs:    [][]byte{createTxBytes, updateTxBytes},
+	resp, err = env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
+		Height: 2,
+		Txs:    [][]byte{updateTxBytes},
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.TxResults, 2)
+	require.Len(t, resp.TxResults, 1)
 	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code)
-	require.Equal(t, abci.CodeTypeOK, resp.TxResults[1].Code)
+	// Verify successful update has "mbok" event
+	require.Len(t, resp.TxResults[0].Events, 1)
+	require.Equal(t, "mbok", resp.TxResults[0].Events[0].Type)
 
 	_, err = env.shard.Commit(env.ctx, &abci.CommitRequest{})
 	require.NoError(t, err)
 
 	info, err := env.shard.Info(env.ctx, &abci.InfoRequest{})
 	require.NoError(t, err)
-	require.EqualValues(t, 1, info.LastBlockHeight)
+	require.EqualValues(t, 2, info.LastBlockHeight)
 	require.NotEmpty(t, info.LastBlockAppHash)
 
 	queryResp, err := env.shard.Query(env.ctx, &abci.QueryRequest{Path: "/stream/" + streamID.String()})
@@ -322,7 +337,7 @@ func TestMetadataShardFinalizeBlockWrongHeight(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.True(t, base.IsRiverErrorCode(err, prot.Err_FAILED_PRECONDITION))
-	require.Contains(t, err.Error(), "block height mismatch")
+	require.Contains(t, err.Error(), "height mismatch")
 }
 
 func TestMetadataShardCommitWithoutFinalizeBlock(t *testing.T) {
@@ -480,9 +495,11 @@ func TestMetadataShardUpdateNonExistentStream(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.TxResults, 1)
 
-	// Should fail with NOT_FOUND
-	require.NotEqual(t, abci.CodeTypeOK, resp.TxResults[0].Code)
-	require.Equal(t, uint32(prot.Err_NOT_FOUND), resp.TxResults[0].Code)
+	// Batch updates report errors through events, tx code is OK
+	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code)
+	// Should have error event with NOT_FOUND
+	require.Len(t, resp.TxResults[0].Events, 1)
+	require.Equal(t, "mberr", resp.TxResults[0].Events[0].Type, "should have error event")
 }
 
 func TestMetadataShardMultipleUpdatesInSameBlock(t *testing.T) {
@@ -544,6 +561,10 @@ func TestMetadataShardMultipleUpdatesInSameBlock(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code)
+	// Verify both updates have "mbok" events
+	require.Len(t, resp.TxResults[0].Events, 2)
+	require.Equal(t, "mbok", resp.TxResults[0].Events[0].Type, "first update should have mbok event")
+	require.Equal(t, "mbok", resp.TxResults[0].Events[1].Type, "second update should have mbok event")
 
 	_, err = env.shard.Commit(env.ctx, &abci.CommitRequest{})
 	require.NoError(t, err)
@@ -575,10 +596,21 @@ func TestMetadataShardConsecutiveUpdatesToSameStreamInSameBlock(t *testing.T) {
 	hash1 := bytes.Repeat([]byte{0xbb}, 32)
 	hash2 := bytes.Repeat([]byte{0xcc}, 32)
 
+	// Block 1: Create the stream
 	createTxBytes, err := proto.Marshal(buildCreateStreamTx(streamID, genesisHash))
 	require.NoError(t, err)
 
-	// Two consecutive updates to the same stream in same block
+	resp, err := env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
+		Height: 1,
+		Txs:    [][]byte{createTxBytes},
+	})
+	require.NoError(t, err)
+	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code, "create should succeed")
+
+	_, err = env.shard.Commit(env.ctx, &abci.CommitRequest{})
+	require.NoError(t, err)
+
+	// Block 2: Two consecutive updates to the same stream - second should fail
 	update1Tx := &prot.MetadataTx{
 		Op: &prot.MetadataTx_SetStreamLastMiniblockBatch{
 			SetStreamLastMiniblockBatch: &prot.SetStreamLastMiniblockBatchTx{
@@ -609,29 +641,33 @@ func TestMetadataShardConsecutiveUpdatesToSameStreamInSameBlock(t *testing.T) {
 	update2TxBytes, err := proto.Marshal(update2Tx)
 	require.NoError(t, err)
 
-	// All three transactions in a single block
-	resp, err := env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
-		Height: 1,
-		Txs:    [][]byte{createTxBytes, update1TxBytes, update2TxBytes},
+	resp, err = env.shard.FinalizeBlock(env.ctx, &abci.FinalizeBlockRequest{
+		Height: 2,
+		Txs:    [][]byte{update1TxBytes, update2TxBytes},
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.TxResults, 3)
+	require.Len(t, resp.TxResults, 2)
 
-	// All should succeed because pending state is tracked
-	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code, "create should succeed")
-	require.Equal(t, abci.CodeTypeOK, resp.TxResults[1].Code, "update1 should succeed")
-	require.Equal(t, abci.CodeTypeOK, resp.TxResults[2].Code, "update2 should succeed")
+	// Batch updates report status through events, tx code is OK
+	require.Equal(t, abci.CodeTypeOK, resp.TxResults[0].Code, "update1 tx code should be OK")
+	require.Equal(t, abci.CodeTypeOK, resp.TxResults[1].Code, "update2 tx code should be OK")
+	// First update should succeed with "mbok" event
+	require.Len(t, resp.TxResults[0].Events, 1)
+	require.Equal(t, "mbok", resp.TxResults[0].Events[0].Type, "update1 should have mbok event")
+	// Second update should fail because it updates the same stream twice in same block
+	require.Len(t, resp.TxResults[1].Events, 1)
+	require.Equal(t, "mberr", resp.TxResults[1].Events[0].Type, "update2 should have mberr event")
 
 	_, err = env.shard.Commit(env.ctx, &abci.CommitRequest{})
 	require.NoError(t, err)
 
-	// Verify final state
+	// Verify final state - only first update should be applied
 	queryResp, err := env.shard.Query(env.ctx, &abci.QueryRequest{Path: "/stream/" + streamID.String()})
 	require.NoError(t, err)
 	require.Equal(t, abci.CodeTypeOK, queryResp.Code)
 
 	var metadata prot.StreamMetadata
 	require.NoError(t, protojson.Unmarshal(queryResp.Value, &metadata))
-	require.Equal(t, hash2, metadata.LastMiniblockHash)
-	require.EqualValues(t, 2, metadata.LastMiniblockNum)
+	require.Equal(t, hash1, metadata.LastMiniblockHash)
+	require.EqualValues(t, 1, metadata.LastMiniblockNum)
 }
