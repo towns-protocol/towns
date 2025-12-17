@@ -432,7 +432,7 @@ func (s *Service) isTrimmedRangeAcceptable(
 	lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
 	start := lastSnapshotMiniblock
 	if historyWindow >= math.MaxInt64 {
-		start -= -1
+		start = -1
 	} else {
 		start -= int64(historyWindow)
 	}
