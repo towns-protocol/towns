@@ -43,12 +43,16 @@ func (m *mixpanelAnalytics) Track(
 	event string,
 	properties map[string]any,
 ) {
+	log := logging.FromCtx(ctx).With("func", "Track")
+	log.Infow("creating new event", "accountId", accountId.Hex(), "event", event, "properties", properties)
 	e := m.client.NewEvent(event, accountId.Hex(), properties)
+	log.Infow("created event", "event", e)
 	// Use context.WithoutCancel to decouple from parent context cancellation,
 	// then add a timeout to prevent goroutine accumulation if Mixpanel is unreachable.
 	trackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), trackTimeout)
 	go func() {
 		defer cancel()
+		log.Infow("sending event to Mixpanel", "event", e)
 		if err := m.client.Track(trackCtx, []*mixpanel.Event{e}); err != nil {
 			log := logging.FromCtx(trackCtx)
 			log.Errorw("Failed to track analytics event", "event", event, "error", err)

@@ -163,6 +163,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	}
 
 	// Track message posted event
+	log.Infow("Message posted event", "creatorAddress", creator.Hex(), "channelId", channelId, "isBot", isApp)
 	p.analytics.Track(ctx, creator, "posted message", map[string]any{
 		"isBot": isApp,
 	})

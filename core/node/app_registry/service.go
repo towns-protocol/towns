@@ -75,6 +75,7 @@ func NewService(
 	appRegistryContractConfig *config.ContractConfig,
 	otelTracer trace.Tracer,
 ) (*Service, error) {
+	log := logging.FromCtx(ctx).With("func", "AppRegistryService.Start")
 	if len(nodes) < 1 {
 		return nil, base.RiverError(
 			Err_INVALID_ARGUMENT,
@@ -109,7 +110,9 @@ func NewService(
 			Message("Unable to create CachedEncryptedMessageQueue")
 	}
 
+	log.Infow("listener", listener)
 	if listener == nil {
+		log.Infow("creating analytics client", "mixpanelToken", cfg.MixpanelToken)
 		analyticsClient := analytics.New(cfg.MixpanelToken)
 		listener = NewAppMessageProcessor(ctx, cache, analyticsClient)
 	}
