@@ -50,7 +50,9 @@ func NewTimer(rootName string) *Timer {
 // Start creates the root span and embeds it in the context.
 // The root span is automatically ended when the entire context is summarized.
 func (t *Timer) Start(ctx context.Context) context.Context {
+	t.lock.Lock()
 	t.root.StartTime = time.Now()
+	t.lock.Unlock()
 	return context.WithValue(ctx, timerKey, t.root)
 }
 
@@ -79,6 +81,8 @@ func End(ctx context.Context, err ...error) context.Context {
 	if !ok || current.parent == nil { // Cannot end the root span manually.
 		return ctx
 	}
+
+	current.lock.Lock()
 	current.Duration = time.Since(current.StartTime)
 
 	// Record the first non-nil error passed.
@@ -90,6 +94,7 @@ func End(ctx context.Context, err ...error) context.Context {
 			}
 		}
 	}
+	current.lock.Unlock()
 
 	return context.WithValue(ctx, timerKey, current.parent)
 }
@@ -111,23 +116,28 @@ func (t *Timer) String() string {
 
 func (s *Span) writeSummary(w io.Writer, depth int, totalDuration time.Duration) {
 	s.lock.Lock()
-	defer s.lock.Unlock()
+	name := s.Name
+	duration := s.Duration
+	err := s.Error
+	children := make([]*Span, len(s.Children))
+	copy(children, s.Children)
+	s.lock.Unlock()
 
 	indent := strings.Repeat("  ", depth)
 	percentage := 0.0
 	if totalDuration > 0 {
-		percentage = (float64(s.Duration) / float64(totalDuration)) * 100
+		percentage = (float64(duration) / float64(totalDuration)) * 100
 	}
 
-	fmt.Fprintf(w, "%s- %s: %s (%.2f%%)\n", indent, s.Name, s.Duration, percentage)
+	fmt.Fprintf(w, "%s- %s: %s (%.2f%%)\n", indent, name, duration, percentage)
 
 	// If there is an error, print it.
-	if s.Error != nil {
+	if err != nil {
 		errorIndent := strings.Repeat("  ", depth+1)
-		fmt.Fprintf(w, "%sERROR: %v\n", errorIndent, s.Error)
+		fmt.Fprintf(w, "%sERROR: %v\n", errorIndent, err)
 	}
 
-	for _, child := range s.Children {
+	for _, child := range children {
 		child.writeSummary(w, depth+1, totalDuration)
 	}
 }
@@ -158,29 +168,34 @@ func (t *Timer) Report() *SpanReport {
 // toReport converts a Span and its children to a SpanReport for serialization.
 func (s *Span) toReport(totalDuration time.Duration) *SpanReport {
 	s.lock.Lock()
-	defer s.lock.Unlock()
+	name := s.Name
+	duration := s.Duration
+	err := s.Error
+	children := make([]*Span, len(s.Children))
+	copy(children, s.Children)
+	s.lock.Unlock()
 
 	percentage := 0.0
 	if totalDuration > 0 {
-		percentage = (float64(s.Duration) / float64(totalDuration)) * 100
+		percentage = (float64(duration) / float64(totalDuration)) * 100
 	}
 	// Round to 2 decimal places
 	percentage = math.Round(percentage*100) / 100
 
 	report := &SpanReport{
-		Name:       s.Name,
-		Duration:   s.Duration.String(),
-		Took:       s.Duration,
+		Name:       name,
+		Duration:   duration.String(),
+		Took:       duration,
 		Percentage: percentage,
 	}
 
-	if s.Error != nil {
-		report.Error = s.Error.Error()
+	if err != nil {
+		report.Error = err.Error()
 	}
 
-	if len(s.Children) > 0 {
-		report.Children = make([]*SpanReport, 0, len(s.Children))
-		for _, child := range s.Children {
+	if len(children) > 0 {
+		report.Children = make([]*SpanReport, 0, len(children))
+		for _, child := range children {
 			report.Children = append(report.Children, child.toReport(totalDuration))
 		}
 	}
