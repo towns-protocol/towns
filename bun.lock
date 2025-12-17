@@ -11,6 +11,7 @@
         "@arethetypeswrong/cli": "^0.15.3",
         "@types/node": "^20.14.8",
         "dotenv": "^17.2.3",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-prettier": "^5.2.6",
@@ -41,7 +42,7 @@
     },
     "packages/bot": {
       "name": "@towns-protocol/bot",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
@@ -85,7 +86,7 @@
     },
     "packages/contracts": {
       "name": "@towns-protocol/contracts",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
         "@ethereum-attestation-service/eas-contracts": "^1.8.0",
@@ -117,7 +118,7 @@
     },
     "packages/create-towns-protocol-app": {
       "name": "create-towns-protocol-app",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "jsonc-parser": "^3.3.1",
@@ -144,7 +145,7 @@
     },
     "packages/encryption": {
       "name": "@towns-protocol/encryption",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/olm": "3.2.28",
@@ -174,7 +175,7 @@
     },
     "packages/eslint-config": {
       "name": "@towns-protocol/eslint-config",
-      "version": "0.0.439",
+      "version": "0.0.440",
     },
     "packages/examples/bot-quickstart": {
       "name": "@towns-protocol/example-bot-quickstart",
@@ -201,7 +202,7 @@
     },
     "packages/generated": {
       "name": "@towns-protocol/generated",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@ethersproject/abi": "^5.8.0",
         "@ethersproject/providers": "^5.8.0",
@@ -308,7 +309,7 @@
     },
     "packages/prettier-config": {
       "name": "@towns-protocol/prettier-config",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "prettier-plugin-solidity": "^1.4.2",
       },
@@ -318,7 +319,7 @@
     },
     "packages/proto": {
       "name": "@towns-protocol/proto",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
       },
@@ -335,7 +336,7 @@
     },
     "packages/react-sdk": {
       "name": "@towns-protocol/react-sdk",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -370,7 +371,7 @@
     },
     "packages/rpc-connector": {
       "name": "@towns-protocol/rpc-connector",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@connectrpc/connect": "^2.1.0",
       },
@@ -400,7 +401,7 @@
     },
     "packages/sdk": {
       "name": "@towns-protocol/sdk",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect": "^2.1.0",
@@ -447,7 +448,7 @@
     },
     "packages/sdk-crypto": {
       "name": "@towns-protocol/sdk-crypto",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
@@ -584,7 +585,7 @@
     },
     "packages/towns-bot-cli": {
       "name": "towns-bot",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -618,7 +619,7 @@
     },
     "packages/utils": {
       "name": "@towns-protocol/utils",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@ethereumjs/util": "^10.0.0",
@@ -641,7 +642,7 @@
     },
     "packages/web3": {
       "name": "@towns-protocol/web3",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
         "@towns-protocol/generated": "workspace:^",
@@ -669,7 +670,7 @@
     },
     "packages/xchain-monitor": {
       "name": "@towns-protocol/xchain-monitor",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
@@ -3068,7 +3069,7 @@
 
     "dotenv-cli": ["dotenv-cli@10.0.0", "", { "dependencies": { "cross-spawn": "^7.0.6", "dotenv": "^17.1.0", "dotenv-expand": "^11.0.0", "minimist": "^1.2.6" }, "bin": { "dotenv": "cli.js" } }, "sha512-lnOnttzfrzkRx2echxJHQRB6vOAMSCzzZg79IxpC00tU42wZPuZkQxNNrrwVAxaQZIIh001l4PxVlCrBxngBzA=="],
 
-    "dotenv-expand": ["dotenv-expand@10.0.0", "", {}, "sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A=="],
+    "dotenv-expand": ["dotenv-expand@11.0.7", "", { "dependencies": { "dotenv": "^16.4.5" } }, "sha512-zIHwmZPRshsCdpMDyVsqGmgyP0yT8GAgXUnkdAoJisxvf33k7yO6OuoKmcTGuXPWSsm8Oh88nZicRLA9Y0rUeA=="],
 
     "drizzle-orm": ["drizzle-orm@0.41.0", "", { "peerDependencies": { "@aws-sdk/client-rds-data": ">=3", "@cloudflare/workers-types": ">=4", "@electric-sql/pglite": ">=0.2.0", "@libsql/client": ">=0.10.0", "@libsql/client-wasm": ">=0.10.0", "@neondatabase/serverless": ">=0.10.0", "@op-engineering/op-sqlite": ">=2", "@opentelemetry/api": "^1.4.1", "@planetscale/database": ">=1", "@prisma/client": "*", "@tidbcloud/serverless": "*", "@types/better-sqlite3": "*", "@types/pg": "*", "@types/sql.js": "*", "@vercel/postgres": ">=0.8.0", "@xata.io/client": "*", "better-sqlite3": ">=7", "bun-types": "*", "expo-sqlite": ">=14.0.0", "gel": ">=2", "knex": "*", "kysely": "*", "mysql2": ">=2", "pg": ">=8", "postgres": ">=3", "sql.js": ">=1", "sqlite3": ">=5" }, "optionalPeers": ["@aws-sdk/client-rds-data", "@cloudflare/workers-types", "@electric-sql/pglite", "@libsql/client", "@libsql/client-wasm", "@neondatabase/serverless", "@op-engineering/op-sqlite", "@opentelemetry/api", "@planetscale/database", "@prisma/client", "@tidbcloud/serverless", "@types/better-sqlite3", "@types/pg", "@types/sql.js", "@vercel/postgres", "@xata.io/client", "better-sqlite3", "bun-types", "expo-sqlite", "gel", "knex", "kysely", "mysql2", "pg", "postgres", "sql.js", "sqlite3"] }, "sha512-7A4ZxhHk9gdlXmTdPj/lREtP+3u8KvZ4yEN6MYVxBzZGex5Wtdc+CWSbu7btgF6TB0N+MNPrvW7RKBbxJchs/Q=="],
 
@@ -5780,8 +5781,6 @@
 
     "@stoplight/yaml/@stoplight/types": ["@stoplight/types@14.1.1", "", { "dependencies": { "@types/json-schema": "^7.0.4", "utility-types": "^3.10.0" } }, "sha512-/kjtr+0t0tjKr+heVfviO9FrU/uGLc+QNX3fHJc19xsCNYqU7lVhaXxDmEID9BZTjG+/r9pK9xP/xU02XGg65g=="],
 
-    "@towns-protocol/diamond/forge-std": ["forge-std@github:foundry-rs/forge-std#8bbcf6e", {}, "foundry-rs-forge-std-8bbcf6e"],
-
     "@ts-morph/common/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
     "@ts-morph/common/tinyglobby": ["tinyglobby@0.2.15", "", { "dependencies": { "fdir": "^6.5.0", "picomatch": "^4.0.3" } }, "sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ=="],
@@ -5803,6 +5802,8 @@
     "@wagmi/cli/dedent": ["dedent@0.7.0", "", {}, "sha512-Q6fKUPqnAHAyhiUgFU7BUzLiv0kd8saH9al7tnu5Q/okj6dnupxyTgFIBjVzJATdfIAm9NAsvXNzjaKa+bxVyA=="],
 
     "@wagmi/cli/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
+
+    "@wagmi/cli/dotenv-expand": ["dotenv-expand@10.0.0", "", {}, "sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A=="],
 
     "@wagmi/cli/pathe": ["pathe@1.1.2", "", {}, "sha512-whLdWMYL2TwI08hn8/ZqAbrVemu0LNaNNJZX73O6qaIdCTfXutsLhMkjdENX0qhsQ9uIimo4/aQOmXkoon2nDQ=="],
 
@@ -5968,7 +5969,7 @@
 
     "dotenv-cli/dotenv": ["dotenv@17.2.2", "", {}, "sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q=="],
 
-    "dotenv-cli/dotenv-expand": ["dotenv-expand@11.0.7", "", { "dependencies": { "dotenv": "^16.4.5" } }, "sha512-zIHwmZPRshsCdpMDyVsqGmgyP0yT8GAgXUnkdAoJisxvf33k7yO6OuoKmcTGuXPWSsm8Oh88nZicRLA9Y0rUeA=="],
+    "dotenv-expand/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "elliptic/bn.js": ["bn.js@4.12.2", "", {}, "sha512-n4DSx829VRTRByMRGdjQ9iqsN0Bh4OolPsFnaZBLcbi8iXcB+kJ9s7EnRt4wILZNV3kPLHkRVfOc/HvhC3ovDw=="],
 
@@ -6265,8 +6266,6 @@
     "number-to-bn/bn.js": ["bn.js@4.11.6", "", {}, "sha512-XWwnNNFCuuSQ0m3r3C4LE3EiORltHd9M05pq6FOlVeiophzRbMo50Sbz1ehl8K3Z+jw9+vmgnXefY1hz8X+2wA=="],
 
     "nx/dotenv": ["dotenv@16.4.7", "", {}, "sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ=="],
-
-    "nx/dotenv-expand": ["dotenv-expand@11.0.7", "", { "dependencies": { "dotenv": "^16.4.5" } }, "sha512-zIHwmZPRshsCdpMDyVsqGmgyP0yT8GAgXUnkdAoJisxvf33k7yO6OuoKmcTGuXPWSsm8Oh88nZicRLA9Y0rUeA=="],
 
     "nx/enquirer": ["enquirer@2.3.6", "", { "dependencies": { "ansi-colors": "^4.1.1" } }, "sha512-yjNnPr315/FjS4zIsUxYguYUPP2e1NK4d7E7ZOLiyYCcbFBiTMyID+2wvm2w6+pZ/odMA7cRkjhsPbltwBOrLg=="],
 
@@ -6862,8 +6861,6 @@
 
     "detect-package-manager/execa/npm-run-path": ["npm-run-path@4.0.1", "", { "dependencies": { "path-key": "^3.0.0" } }, "sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw=="],
 
-    "dotenv-cli/dotenv-expand/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
-
     "engine.io-client/debug/ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
 
     "engine.io/debug/ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
@@ -7069,8 +7066,6 @@
     "node-gyp/glob/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
     "node-gyp/which/isexe": ["isexe@3.1.1", "", {}, "sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ=="],
-
-    "nx/dotenv-expand/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "nx/minimatch/brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ=="],
 
