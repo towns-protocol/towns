@@ -45,8 +45,8 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         tipper = _randomAddress();
         tipReceiver = _randomAddress();
 
-        // Deploy mock USDC token (18 decimals)
-        mockUSDC = new MockERC20("USD Coin", "USDC");
+        // Deploy mock USDC token (6 decimals)
+        mockUSDC = new MockERC20("USD Coin", "USDC", 6);
 
         // Deploy staking exemption hook
         stakingHook = new StakingExemptionHook(baseRegistry, deployer);

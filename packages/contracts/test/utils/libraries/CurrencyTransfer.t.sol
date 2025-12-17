@@ -9,7 +9,7 @@ import {MockERC20} from "test/mocks/MockERC20.sol";
 
 contract CurrencyTransferTest is Test, TestUtils {
     CurrencyTransferTestHarness internal harness = new CurrencyTransferTestHarness();
-    MockERC20 internal token = new MockERC20("Test Token", "TEST");
+    MockERC20 internal token = new MockERC20("Test Token", "TEST", 18);
     WETH internal weth = new WETH();
     RejectETH internal rejectETH = new RejectETH();
 
