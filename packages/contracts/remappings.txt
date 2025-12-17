@@ -12,3 +12,4 @@ crypto-lib/=node_modules/crypto-lib/src/
 @layerzerolabs/=node_modules/@layerzerolabs/
 modular-account/=node_modules/modular-account/
 @eth-infinitism/account-abstraction/=node_modules/account-abstraction/contracts/
+@ensdomains/ens-contracts/=node_modules/ens-contracts/contracts/

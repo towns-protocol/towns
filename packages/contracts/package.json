@@ -25,6 +25,7 @@
     "account-abstraction": "github:eth-infinitism/account-abstraction#v0.7.0",
     "crypto-lib": "github:towns-protocol/crypto-lib#v1.0.1",
     "modular-account": "github:towns-protocol/modular-account#v1.0.0",
+    "ens-contracts": "github:ensdomains/ens-contracts#v1.6.0",
     "solady": "^0.1.24"
   },
   "devDependencies": {
