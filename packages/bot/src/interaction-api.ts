@@ -7,6 +7,7 @@ import {
     InteractionRequestPayload_Form_Component,
     type PlainMessage,
 } from '@towns-protocol/proto'
+import { checkNever } from '@towns-protocol/sdk'
 
 // Extract string keys from enum (exclude numeric reverse-mapping keys)
 type EnumStringKeys<E> = Exclude<keyof E, number>
@@ -142,7 +143,10 @@ export function flattenedComponentToPayload(
     if (type === 'button') {
         return { id, component: { case: 'button', value: { label: component.label } } }
     }
-    return { id, component: { case: 'textInput', value: { placeholder: component.placeholder } } }
+    if (type === 'textInput') {
+        return { id, component: { case: 'textInput', value: { placeholder: component.placeholder } } }
+    }
+    checkNever(type, `Unknown component type: ${type}`)
 }
 
 // Convert flattened request to payload content
@@ -189,5 +193,7 @@ export function flattenedToPayloadContent(
                 },
             }
         }
+        default:
+            checkNever(payload, `Unknown request type: ${(payload as { type: string }).type}`)
     }
 }
