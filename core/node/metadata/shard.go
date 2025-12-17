@@ -123,12 +123,15 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	nodeKey := &p2p.NodeKey{PrivKey: privKey}
 
+	log := logging.FromCtx(ctx).Named("md").With("shardId", opts.ShardID)
+	ctx = logging.CtxWithLog(ctx, log)
+
 	shard := &MetadataShard{
 		opts:      opts,
 		serverCtx: ctx,
 		chainID:   chainID,
 		store:     opts.Store,
-		log:       logging.FromCtx(ctx),
+		log:       log,
 	}
 
 	// Save genenis doc
@@ -513,6 +516,15 @@ func (m *MetadataShard) ProcessProposal(
 	_ context.Context,
 	req *abci.ProcessProposalRequest,
 ) (*abci.ProcessProposalResponse, error) {
+	m.log.Infow(
+		"processing proposal",
+		"height",
+		req.Height,
+		"blockHash",
+		hex.EncodeToString(req.Hash),
+		"txs",
+		len(req.Txs),
+	)
 	for _, tx := range req.Txs {
 		metaTx, err := decodeMetadataTx(tx)
 		if err != nil {
@@ -539,6 +551,33 @@ func (m *MetadataShard) VerifyVoteExtension(
 }
 
 func (m *MetadataShard) FinalizeBlock(
+	ctx context.Context,
+	req *abci.FinalizeBlockRequest,
+) (*abci.FinalizeBlockResponse, error) {
+	resp, err := m.finalizeBlockImpl(ctx, req)
+	if err != nil {
+		m.log.Errorw(
+			"failed to finalize block",
+			"err",
+			err,
+			"height",
+			req.Height,
+			"blockHash",
+			hex.EncodeToString(req.Hash),
+		)
+	} else {
+		m.log.Infow(
+			"finalized block",
+			"height", req.Height,
+			"blockHash", hex.EncodeToString(req.Hash),
+			"txs", len(req.Txs),
+			"appHash", hex.EncodeToString(resp.AppHash),
+		)
+	}
+	return resp, nil
+}
+
+func (m *MetadataShard) finalizeBlockImpl(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {

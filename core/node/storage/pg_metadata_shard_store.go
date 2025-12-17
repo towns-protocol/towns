@@ -897,6 +897,11 @@ func (s *PostgresMetadataShardStore) batchValidateUpdateStreamNodesAndReplicatio
 			return err
 		}
 
+		if pendingBlock.UpdatedStreams[streamId] != nil {
+			pendingBlock.SetTxErrorCode(txIndex, Err_FAILED_PRECONDITION)
+			return nil
+		}
+
 		switch {
 		case op.ReplicationFactor > 0 && len(op.Nodes) > 0:
 			if int(op.ReplicationFactor) > len(op.Nodes) {
