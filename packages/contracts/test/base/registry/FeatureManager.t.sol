@@ -2,10 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IFeatureManagerFacetBase} from "src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureCondition} from "src/factory/facets/feature/FeatureManagerStorage.sol";
+import {FeatureCondition, FeatureConditionSet, FeatureConditionDisabled, FeatureNotActive, FeatureAlreadyExists, InvalidToken, InvalidInterface, InvalidTotalSupply, InvalidThreshold, ConditionType} from "src/factory/facets/feature/FeatureManagerMod.sol";
 
 // contracts
 import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFacet.sol";
@@ -16,7 +15,7 @@ import {BaseRegistryTest} from "test/base/registry/BaseRegistry.t.sol";
 // mocks
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
-contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacetBase {
+contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     FeatureManagerFacet featureManagerFacet;
 
     uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
@@ -36,17 +35,17 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         featureManagerFacet = FeatureManagerFacet(spaceFactory);
     }
 
-    modifier givenFeatureConditionIsSet(
-        bytes32 featureId,
-        FeatureCondition memory condition,
-        address to,
-        uint256 amount
-    ) {
-        amount = bound(amount, 1, type(uint256).max);
-        condition.threshold = bound(condition.threshold, 1, amount);
+    modifier givenFeatureConditionIsSet(bytes32 featureId, address to, uint256 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
+        amount = bound(amount, 1, type(uint256).max);
 
-        condition.token = address(townsToken);
+        FeatureCondition memory condition = FeatureCondition({
+            checker: address(townsToken),
+            threshold: amount,
+            active: true,
+            extraData: "",
+            conditionType: ConditionType.VotingPower
+        });
 
         vm.prank(bridge);
         towns.mint(to, amount);
@@ -67,31 +66,30 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
     function test_setFeatureCondition(
         bytes32 featureId,
-        FeatureCondition memory condition,
         address to,
         uint256 amount
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+    ) external givenFeatureConditionIsSet(featureId, to, amount) {
         FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
             featureId
         );
-        assertEq(currentCondition.token, address(townsToken));
-        assertEq(currentCondition.threshold, condition.threshold);
-        assertEq(currentCondition.active, condition.active);
+        assertEq(currentCondition.checker, address(townsToken));
+        assertEq(uint8(currentCondition.conditionType), uint8(ConditionType.VotingPower));
+        assertEq(currentCondition.active, true);
+        assertEq(currentCondition.extraData, "");
     }
 
     function test_updateFeatureCondition(
         bytes32 featureId,
-        FeatureCondition memory condition,
         address to,
         uint256 amount
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+    ) external givenFeatureConditionIsSet(featureId, to, amount) {
         FeatureCondition memory newCondition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: amount,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
-
         vm.prank(deployer);
         vm.expectEmit(address(featureManagerFacet));
         emit FeatureConditionSet(featureId, newCondition);
@@ -107,10 +105,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         featureManagerFacet.updateFeatureCondition(
             TEST_FEATURE_ID,
             FeatureCondition({
-                token: address(townsToken),
+                checker: address(townsToken),
                 threshold: TEST_THRESHOLD,
                 active: false,
-                extraData: ""
+                extraData: "",
+                conditionType: ConditionType.VotingPower
             })
         );
     }
@@ -128,10 +127,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
         for (uint256 i; i < length; i++) {
             conditions[i] = FeatureCondition({
-                token: address(townsToken),
+                checker: address(townsToken),
                 threshold: 0,
                 active: true,
-                extraData: ""
+                extraData: "",
+                conditionType: ConditionType.VotingPower
             });
 
             vm.prank(deployer);
@@ -142,7 +142,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
         for (uint256 i; i < currentConditions.length; i++) {
             FeatureCondition memory currentCondition = currentConditions[i];
-            assertEq(currentCondition.token, address(townsToken));
+            assertEq(currentCondition.checker, address(townsToken));
             assertEq(currentCondition.threshold, 0);
             assertEq(currentCondition.active, true);
         }
@@ -153,10 +153,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         givenTokensAreMinted(deployer, TEST_THRESHOLD)
     {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: 0,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -169,10 +170,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
     function test_revertWith_setFeatureCondition_invalidToken() external {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(0),
+            checker: address(0),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -184,10 +186,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(mockToken),
+            checker: address(mockToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -197,10 +200,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
     function test_revertWith_setFeatureCondition_invalidTotalSupply() external {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -213,10 +217,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         givenTokensAreMinted(deployer, TEST_THRESHOLD - 10 ether)
     {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -299,10 +304,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         vm.assume(space != address(0));
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: 0,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(bridge);
@@ -319,10 +325,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         vm.assume(to != deployer);
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(bridge);
@@ -345,9 +352,9 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     {
         uint256 depositId;
         uint96 amount = 10 ether; // 10 $TOWN
-        address depositor = _randomAddress(); // Towns token holder
+        address depositor = _randomAddress(); // Towns checker holder
 
-        // Mint tokens to depositor via bridge (simulates cross-chain token bridging)
+        // Mint tokens to depositor via bridge (simulates cross-chain checker bridging)
         bridgeTokensForUser(depositor, amount);
 
         // Configure space to delegate rewards to the operator
@@ -355,10 +362,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
         // Create a feature condition requiring exactly the staked amount (10 TOWN)
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: amount, // 10 TOWN threshold
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         // Set the feature condition for the test feature
