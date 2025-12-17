@@ -7,20 +7,6 @@
         "build": "turbo build",
         "clean": "./scripts/yarn-clean.sh",
         "csb:build": "turbo build --filter @towns-protocol/sdk",
-        "csb:cb": "bun run csb:clean && bun run csb:build",
-        "csb:clean": "bun run csb:command run clean",
-        "csb:command": "bash -c 'for pkg in $(bun run csb:list); do echo \"Running in $pkg\"; bun run --filter $pkg $@; done'",
-        "csb:list": "bun pm ls | grep '^├\\|^└' | grep packages | cut -d'@' -f1 | sed 's/^[├└]── //'",
-        "csb:list:exclude:filter": "bun run csb:list | xargs -I arg echo -n \"--filter=!arg \"",
-        "csb:list:filter": "bun run csb:list | xargs -I arg echo -n \"--filter arg \"",
-        "csb:list:filter-without-sdk": "bun run csb:list | grep -v sdk | xargs -I arg echo -n \"--filter arg \"",
-        "csb:list:include": "bun run csb:list | xargs -I arg echo -n \"--include arg \"",
-        "csb:prettier:check": "prettier --check ./packages",
-        "csb:prettier:fix": "prettier --write ./packages",
-        "csb:test": "bun run csb:command run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
-        "csb:test-remote": "bun run --filter @towns-protocol/sdk test",
-        "csb:turbo": "bash -c 'bun run turbo run build test:ci $(bun run csb:list:filter)'",
-        "csb:turbo-no-sdk": "bash -c 'bun run turbo run build test:ci $(bun run csb:list:filter-without-sdk)'",
         "lint": "turbo lint",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
@@ -28,7 +14,10 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:build": "turbo test:build",
-        "test:unit": "turbo test:unit -- --silent"
+        "test:unit": "turbo test:unit -- --silent",
+        "test:ci:multi:ent": "turbo test:ci:multi:ent -- --silent",
+        "test:ci:multi:ne": "turbo test:ci:multi:ne -- --silent",
+        "test:ci:multi:ent:legacy": "turbo test:ci:multi:ent:legacy -- --silent"
     },
     "dependencies": {
         "pino-pretty": "^13.0.0"
