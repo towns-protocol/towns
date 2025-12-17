@@ -428,7 +428,7 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
 
         hoax(sender, amount);
         vm.expectRevert(InvalidRecipientType.selector);
-        tipping.sendTip{value: amount}(TipRecipientType.Pool, abi.encode(params));
+        tipping.sendTip{value: amount}(TipRecipientType.Any, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
