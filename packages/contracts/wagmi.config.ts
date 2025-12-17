@@ -22,7 +22,6 @@ export default defineConfig({
         "**/Roles.sol/*.json",
         "**/Channels.sol/*.json",
         "**/TokenPausableFacet.sol/*.json",
-        "**/PrepayFacet.sol/*.json",
         "**/ReferralsFacet.sol/*.json",
         "**/ReviewFacet.sol/*.json",
         "**/SpaceEntitlementGated.sol/*.json",

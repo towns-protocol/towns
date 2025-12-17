@@ -13,7 +13,7 @@ library DeployMembership {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(22);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(25);
 
         // Funds
         arr.p(IMembership.revenue.selector);

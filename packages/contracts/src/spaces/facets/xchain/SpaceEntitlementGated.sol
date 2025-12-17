@@ -4,8 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMembership} from "../membership/IMembership.sol";
 
-// libraries
-
 // contracts
 import {EntitlementGated} from "../gated/EntitlementGated.sol";
 import {MembershipJoin} from "../membership/join/MembershipJoin.sol";

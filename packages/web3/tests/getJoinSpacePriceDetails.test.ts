@@ -3,7 +3,6 @@ import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '../src/test-helpers/LocalhostWeb3Provider'
 import { SpaceDapp } from '../src/space-dapp/SpaceDapp'
 import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
-import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
 import { web3Env } from '../src/utils/web3Env'
 
@@ -35,7 +34,6 @@ describe('getJoinSpacePriceDetails', () => {
 
         const priceDetails = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)
         expect(priceDetails.price.toBigInt()).toBe(0n)
-        expect(priceDetails.prepaidSupply.toBigInt()).toBe(0n)
         expect(priceDetails.remainingFreeSupply.toBigInt()).toBe(999n)
     })
 
@@ -67,25 +65,12 @@ describe('getJoinSpacePriceDetails', () => {
         if (!spaceAddress) {
             throw new Error('Space address not found')
         }
-        const spaceId = SpaceIdFromSpaceAddress(spaceAddress)
 
         const priceDetails = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)
         const protocolFee = priceDetails.protocolFee
         const totalPrice = price.add(protocolFee)
 
         expect(priceDetails.price.toBigInt()).toBe(totalPrice.toBigInt())
-        expect(priceDetails.prepaidSupply.toBigInt()).toBe(0n)
         expect(priceDetails.remainingFreeSupply.toBigInt()).toBe(0n)
-
-        const prepaidTx = await spaceDapp.prepayMembership(spaceId, 1, baseProvider.signer)
-        await prepaidTx.wait()
-        const prepaidSupply = await spaceDapp.getPrepaidMembershipSupply(spaceAddress)
-        expect(prepaidSupply.toBigInt()).toBe(1n)
-
-        const priceDetails2 = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)
-
-        expect(priceDetails2.price.toBigInt()).toBe(0n)
-        expect(priceDetails2.prepaidSupply.toBigInt()).toBe(1n)
-        expect(priceDetails2.remainingFreeSupply.toBigInt()).toBe(1n)
     })
 })

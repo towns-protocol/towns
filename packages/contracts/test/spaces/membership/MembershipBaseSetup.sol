@@ -13,7 +13,6 @@ import {IWalletLink, IWalletLinkBase} from "src/factory/facets/wallet-link/IWall
 import {IEntitlement, IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementsManager, IEntitlementsManagerBase} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembership, IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
@@ -48,7 +47,6 @@ contract MembershipBaseSetup is
     IERC721AQueryable internal membershipTokenQueryable;
     IPlatformRequirements internal platformReqs;
     IPartnerRegistry internal partnerRegistry;
-    IPrepay prepayFacet;
     IReferrals internal referrals;
     ITreasury internal treasury;
     // entitled user
@@ -113,7 +111,6 @@ contract MembershipBaseSetup is
         membershipToken = IERC721A(userSpace);
         membershipTokenQueryable = IERC721AQueryable(userSpace);
         freeMembership = IMembership(freeSpace);
-        prepayFacet = IPrepay(userSpace);
         referrals = IReferrals(userSpace);
         treasury = ITreasury(userSpace);
         platformReqs = IPlatformRequirements(spaceFactory);
