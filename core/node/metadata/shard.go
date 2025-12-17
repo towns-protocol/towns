@@ -28,18 +28,16 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/metadata/mdstate"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 const (
-	defaultValidatorPower int64 = 1
-	chainIDPrefix               = "metadata-shard-"
-	codeSpaceRiver              = "towns-protocol"
+	defaultValidatorPower int64  = 1
+	chainIDPrefix         string = "metadata-shard-"
 )
-
-var _ abci.Application = (*MetadataShard)(nil)
 
 type MetadataShardOpts struct {
 	ShardID         uint64
@@ -62,11 +60,12 @@ type MetadataShard struct {
 	store storage.MetadataStore
 	log   *logging.Log
 
-	// These are only touched on the consensus ABCI connection (FinalizeBlock/Commit),
-	// which CometBFT invokes sequentially, so no mutex is required.
-	lastBlockHeight int64
-	lastAppHash     []byte
+	// pendingBlock holds operations collected during FinalizeBlock to be applied in Commit.
+	// Set during FinalizeBlock, cleared after Commit.
+	pendingBlock *PendingBlockState
 }
+
+var _ abci.Application = (*MetadataShard)(nil)
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
 	if opts.RootDir == "" {
@@ -124,12 +123,15 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	nodeKey := &p2p.NodeKey{PrivKey: privKey}
 
+	log := logging.FromCtx(ctx).Named("md").With("shardId", opts.ShardID)
+	ctx = logging.CtxWithLog(ctx, log)
+
 	shard := &MetadataShard{
 		opts:      opts,
 		serverCtx: ctx,
 		chainID:   chainID,
 		store:     opts.Store,
-		log:       logging.FromCtx(ctx),
+		log:       log,
 	}
 
 	// Save genenis doc
@@ -203,7 +205,7 @@ func decodeMetadataTx(txBytes []byte) (*MetadataTx, error) {
 }
 
 type abciErrorResponder interface {
-	*abci.CheckTxResponse | *abci.ExecTxResult | *abci.QueryResponse
+	*abci.CheckTxResponse | *abci.QueryResponse
 }
 
 func setError[T abciErrorResponder](resp T, err error) {
@@ -215,15 +217,11 @@ func setError[T abciErrorResponder](resp T, err error) {
 	case *abci.CheckTxResponse:
 		r.Code = uint32(riverErr.Code)
 		r.Log = riverErr.Error()
-		r.Codespace = codeSpaceRiver
-	case *abci.ExecTxResult:
-		r.Code = uint32(riverErr.Code)
-		r.Log = riverErr.Error()
-		r.Codespace = codeSpaceRiver
+		r.Codespace = "towns"
 	case *abci.QueryResponse:
 		r.Code = uint32(riverErr.Code)
 		r.Log = riverErr.Error()
-		r.Codespace = codeSpaceRiver
+		r.Codespace = "towns"
 	}
 }
 
@@ -278,30 +276,11 @@ func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (
 		setError(resp, err)
 		return resp, nil
 	}
-	if err := m.validateTx(metaTx); err != nil {
+	if err := ValidateMetadataTx(metaTx); err != nil {
 		setError(resp, err)
 		return resp, nil
 	}
 	return resp, nil
-}
-
-func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	height := m.lastBlockHeight
-	if height == 0 && m.node != nil {
-		height = m.node.BlockStore().Height()
-	}
-	appHash := m.lastAppHash
-	if appHash == nil {
-		var err error
-		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID, height)
-		if err != nil {
-			return nil, AsRiverError(err).Func("Commit")
-		}
-	}
-	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
-		return nil, AsRiverError(err).Func("Commit")
-	}
-	return &abci.CommitResponse{}, nil
 }
 
 func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abci.QueryResponse, error) {
@@ -324,7 +303,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 		if streamHex == "" && len(req.Data) > 0 {
 			streamHex = hex.EncodeToString(req.Data)
 		}
-		streamID, err := shared.StreamIdFromString(streamHex)
+		streamID, err := StreamIdFromString(streamHex)
 		if err != nil {
 			setError(resp, err)
 			return resp, nil
@@ -457,12 +436,6 @@ func (m *MetadataShard) InitChain(ctx context.Context, req *abci.InitChainReques
 	if err := m.store.EnsureShardStorage(ctx, m.opts.ShardID); err != nil {
 		return nil, AsRiverError(err).Func("InitChain")
 	}
-	state, err := m.store.GetShardState(ctx, m.opts.ShardID)
-	if err == nil {
-		m.lastBlockHeight = state.LastHeight
-	} else {
-		m.log.Default.Warnw("failed to load shard state during InitChain", "err", err)
-	}
 	return &abci.InitChainResponse{
 		ConsensusParams: req.ConsensusParams,
 		Validators:      req.Validators,
@@ -508,7 +481,7 @@ func (m *MetadataShard) PrepareProposal(
 		if err != nil {
 			continue
 		}
-		if err := m.validateTx(metaTx); err != nil {
+		if err := ValidateMetadataTx(metaTx); err != nil {
 			continue
 		}
 
@@ -526,12 +499,21 @@ func (m *MetadataShard) ProcessProposal(
 	_ context.Context,
 	req *abci.ProcessProposalRequest,
 ) (*abci.ProcessProposalResponse, error) {
+	m.log.Infow(
+		"processing proposal",
+		"height",
+		req.Height,
+		"blockHash",
+		req.Hash,
+		"txs",
+		len(req.Txs),
+	)
 	for _, tx := range req.Txs {
 		metaTx, err := decodeMetadataTx(tx)
 		if err != nil {
 			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
 		}
-		if err := m.validateTx(metaTx); err != nil {
+		if err := ValidateMetadataTx(metaTx); err != nil {
 			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
 		}
 	}
@@ -555,135 +537,125 @@ func (m *MetadataShard) FinalizeBlock(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
-	txs := make([]*abci.ExecTxResult, len(req.Txs))
+	resp, err := m.finalizeBlockImpl(ctx, req)
+	if err != nil {
+		m.log.Errorw(
+			"failed to finalize block",
+			"err", err,
+			"height", req.Height,
+			"blockHash", req.Hash,
+		)
+		return nil, err
+	}
+
+	m.log.Infow(
+		"finalized block",
+		"height", req.Height,
+		"blockHash", req.Hash,
+		"txs", len(req.Txs),
+		"appHash", resp.AppHash,
+	)
+	return resp, nil
+}
+
+func (m *MetadataShard) finalizeBlockImpl(
+	ctx context.Context,
+	req *abci.FinalizeBlockRequest,
+) (*abci.FinalizeBlockResponse, error) {
+	// Validate that previous FinalizeBlock was committed
+	if m.pendingBlock != nil {
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"FinalizeBlock called without committing previous block",
+			"pendingHeight", m.pendingBlock.Height,
+			"newHeight", req.Height,
+		)
+	}
+
+	pendingBlock := &PendingBlockState{
+		Height:            req.Height,
+		BlockHash:         req.Hash,
+		Txs:               make([]*MetadataTx, len(req.Txs)),
+		TxResults:         make([]*abci.ExecTxResult, len(req.Txs)),
+		CreatedStreams:    make(map[StreamId]*CreateStreamTx),
+		UpdatedStreams:    make(map[StreamId]*UpdateStreamNodesAndReplicationTx),
+		UpdatedMiniblocks: make(map[StreamId]*MiniblockUpdate),
+	}
+
 	for i, txBytes := range req.Txs {
+		pendingBlock.TxResults[i] = &abci.ExecTxResult{}
+		pendingBlock.TxResults[i].Codespace = "towns"
+
 		metaTx, err := decodeMetadataTx(txBytes)
 		if err != nil {
-			res := &abci.ExecTxResult{}
-			setError(res, err)
-			txs[i] = res
+			pendingBlock.SetTxError(i, err)
 			continue
 		}
-		if err := m.validateTx(metaTx); err != nil {
-			res := &abci.ExecTxResult{}
-			setError(res, err)
-			txs[i] = res
+		if err := ValidateMetadataTx(metaTx); err != nil {
+			pendingBlock.SetTxError(i, err)
 			continue
 		}
-		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
-			res := &abci.ExecTxResult{}
-			setError(res, err)
-			txs[i] = res
-			continue
+
+		pendingBlock.Txs[i] = metaTx
+		if op, ok := metaTx.Op.(*MetadataTx_SetStreamLastMiniblockBatch); ok {
+			pendingBlock.TxResults[i].Events = make([]abci.Event, len(op.SetStreamLastMiniblockBatch.Miniblocks))
+		} else {
+			// Batch txes report errors through events.
+			// For non-batch txes mark result as unknown as a precaution.
+			// PreparePendingBlock should explicitly set the result.
+			pendingBlock.TxResults[i].Code = uint32(Err_UNKNOWN)
 		}
-		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
 	}
-	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID, req.Height)
+
+	err := m.store.PreparePendingBlock(ctx, m.opts.ShardID, pendingBlock)
 	if err != nil {
 		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
 	}
-	m.lastBlockHeight = req.Height
-	m.lastAppHash = appHash
+
+	m.pendingBlock = pendingBlock
+
 	return &abci.FinalizeBlockResponse{
-		TxResults: txs,
-		AppHash:   appHash,
+		TxResults: pendingBlock.TxResults,
+		AppHash:   pendingBlock.AppHash,
 	}, nil
 }
 
-func (m *MetadataShard) validateTx(tx *MetadataTx) error {
-	if tx == nil || tx.Op == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "missing op")
+func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
+	if m.pendingBlock == nil {
+		m.log.Errorw("commit called without finalize block")
+		return nil, RiverError(
+			Err_FAILED_PRECONDITION,
+			"Commit called without FinalizeBlock",
+		)
 	}
-	switch op := tx.Op.(type) {
-	case *MetadataTx_CreateStream:
-		return m.validateCreateStream(op.CreateStream)
-	case *MetadataTx_SetStreamLastMiniblockBatch:
-		return m.validateSetBatch(op.SetStreamLastMiniblockBatch)
-	case *MetadataTx_UpdateStreamNodesAndReplication:
-		return m.validateUpdateNodes(op.UpdateStreamNodesAndReplication)
-	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown op")
-	}
-}
 
-func (m *MetadataShard) validateCreateStream(cs *CreateStreamTx) error {
-	if cs == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "create payload missing")
-	}
-	if len(cs.StreamId) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
-	}
-	if len(cs.GenesisMiniblockHash) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock_hash must be 32 bytes")
-	}
-	if len(cs.Nodes) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
-	}
-	for _, n := range cs.Nodes {
-		if len(n) != 20 {
-			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
-		}
-	}
-	if cs.ReplicationFactor == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
-	}
-	if int(cs.ReplicationFactor) > len(cs.Nodes) {
-		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
-	}
-	if cs.LastMiniblockNum == 0 {
-		if len(cs.GenesisMiniblock) == 0 {
-			return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
-		}
+	err := m.store.CommitPendingBlock(ctx, m.opts.ShardID, m.pendingBlock)
+
+	if err == nil {
+		m.log.Infow(
+			"committed block",
+			"height", m.pendingBlock.Height,
+			"blockHash", m.pendingBlock.BlockHash,
+			"appHash", m.pendingBlock.AppHash,
+		)
 	} else {
-		if len(cs.LastMiniblockHash) != 32 {
-			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes when last_miniblock_num is set")
-		}
+		m.log.Errorw(
+			"failed to commit block",
+			"err", err,
+			"height", m.pendingBlock.Height,
+			"blockHash", m.pendingBlock.BlockHash,
+			"appHash", m.pendingBlock.AppHash,
+		)
 	}
-	return nil
-}
 
-func (m *MetadataShard) validateSetBatch(batch *SetStreamLastMiniblockBatchTx) error {
-	if batch == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "batch missing")
-	}
-	if len(batch.Miniblocks) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "miniblocks missing")
-	}
-	for _, mb := range batch.Miniblocks {
-		if len(mb.StreamId) != 32 {
-			return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
-		}
-		if len(mb.PrevMiniblockHash) != 32 || len(mb.LastMiniblockHash) != 32 {
-			return RiverError(Err_INVALID_ARGUMENT, "hashes must be 32 bytes")
-		}
-		if mb.LastMiniblockNum == 0 {
-			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be > 0")
-		}
-	}
-	return nil
-}
+	// Drop pending state even if commit fails. This allows FinalizeBlock to be retried.
+	m.pendingBlock = nil
 
-func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicationTx) error {
-	if update == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "update missing")
+	if err != nil {
+		return nil, AsRiverError(err).Func("Commit")
 	}
-	if len(update.StreamId) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
-	}
-	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "nothing to update")
-	}
-	if len(update.Nodes) > 0 {
-		for _, n := range update.Nodes {
-			if len(n) != 20 {
-				return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
-			}
-		}
-		if update.ReplicationFactor > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
-			return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
-		}
-	}
-	return nil
+
+	return &abci.CommitResponse{}, nil
 }
 
 type cometZapLogger struct {
