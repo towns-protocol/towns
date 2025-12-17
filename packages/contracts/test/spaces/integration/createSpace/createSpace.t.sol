@@ -253,32 +253,17 @@ contract IntegrationCreateSpace is
         assertTrue(isEntitledToChannelAfter, "Member should be able to access the channel");
     }
 
-    function test_createSpaceWithPrepay_deprecated(
-        string memory spaceId,
-        address founder,
-        address member
-    ) public assumeEOA(founder) assumeEOA(member) {
-        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
-        vm.assume(founder != member);
-
-        // create space with default channel (prepay field is ignored)
-        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+    function test_createSpaceWithPrepay_revertsIfETHSent() public {
+        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo("PrepaySpace");
         spaceInfo.membership.settings.pricingModule = tieredPricingModule;
         spaceInfo.membership.requirements.everyone = true;
 
+        address founder = makeAddr("founder");
+        vm.deal(founder, 1 ether);
+
         vm.prank(founder);
-        address newSpace = createSpaceFacet.createSpaceWithPrepay(spaceInfo);
-
-        // prepay is now deprecated - just verify space was created
-        assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
-    }
-
-    function test_createSpaceWithPrepay_deprecated_gas() external {
-        test_createSpaceWithPrepay_deprecated(
-            "PrepaySpace",
-            makeAddr("founder"),
-            makeAddr("member")
-        );
+        vm.expectRevert(Architect__UnexpectedETH.selector);
+        createSpaceFacet.createSpaceWithPrepay{value: 1 ether}(spaceInfo);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
