@@ -21,14 +21,14 @@ import (
 func (s *Service) AllocateStream(
 	ctx context.Context,
 	req *connect.Request[AllocateStreamRequest],
-) (*connect.Response[AllocateStreamResponse], error) {
+) (_ *connect.Response[AllocateStreamResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.AllocateStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("AllocateStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("AllocateStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -37,12 +37,13 @@ func (s *Service) AllocateStream(
 	log.Debugw("AllocateStream ENTER")
 	r, e := s.allocateStream(ctx, req.Msg)
 	if e != nil {
-		return nil, AsRiverError(
+		err = AsRiverError(
 			e,
 		).Func("AllocateStream").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
+		return nil, err
 	}
 	log.Debugw("AllocateStream LEAVE", "response", r)
 	return connect.NewResponse(r), nil
@@ -74,14 +75,14 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 func (s *Service) NewEventReceived(
 	ctx context.Context,
 	req *connect.Request[NewEventReceivedRequest],
-) (*connect.Response[NewEventReceivedResponse], error) {
+) (_ *connect.Response[NewEventReceivedResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.NewEventReceived")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("NewEventReceived slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("NewEventReceived slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -90,12 +91,13 @@ func (s *Service) NewEventReceived(
 	log.Debugw("NewEventReceived ENTER")
 	r, e := s.newEventReceived(ctx, req.Msg)
 	if e != nil {
-		return nil, AsRiverError(
+		err = AsRiverError(
 			e,
 		).Func("NewEventReceived").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
+		return nil, err
 	}
 	log.Debugw("NewEventReceived LEAVE", "response", r)
 	return connect.NewResponse(r), nil
@@ -151,26 +153,27 @@ func (s *Service) NewEventInPool(
 func (s *Service) ProposeMiniblock(
 	ctx context.Context,
 	req *connect.Request[ProposeMiniblockRequest],
-) (*connect.Response[ProposeMiniblockResponse], error) {
+) (_ *connect.Response[ProposeMiniblockResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.ProposeMiniblock")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("ProposeMiniblock slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("ProposeMiniblock slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("ProposeMiniblock ENTER")
 	r, e := s.proposeMiniblock(ctx, req.Msg)
 	if e != nil {
-		return nil, AsRiverError(
+		err = AsRiverError(
 			e,
 		).Func("ProposeMiniblock").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
+		return nil, err
 	}
 	log.Debugw("ProposeMiniblock LEAVE", "response", r)
 	return connect.NewResponse(r), nil
@@ -210,14 +213,14 @@ func (s *Service) proposeMiniblock(
 func (s *Service) SaveMiniblockCandidate(
 	ctx context.Context,
 	req *connect.Request[SaveMiniblockCandidateRequest],
-) (*connect.Response[SaveMiniblockCandidateResponse], error) {
+) (_ *connect.Response[SaveMiniblockCandidateResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.SaveMiniblockCandidate")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("SaveMiniblockCandidate slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("SaveMiniblockCandidate slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
@@ -226,12 +229,13 @@ func (s *Service) SaveMiniblockCandidate(
 	log.Debugw("SaveMiniblockCandidate ENTER")
 	r, e := s.saveMiniblockCandidate(ctx, req.Msg)
 	if e != nil {
-		return nil, AsRiverError(
+		err = AsRiverError(
 			e,
 		).Func("SaveMiniblockCandidate").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
+		return nil, err
 	}
 	log.Debugw("SaveMiniblockCandidate LEAVE", "response", r)
 	return connect.NewResponse(r), nil
@@ -271,24 +275,25 @@ func (s *Service) GetMiniblocksByIds(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksByIdsRequest],
 	resp *connect.ServerStream[GetMiniblockResponse],
-) error {
+) (err error) {
 	timer := timing.NewTimer("rpc.Service.GetMiniblocksByIds")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("GetMiniblocksByIds slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("GetMiniblocksByIds slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("GetMiniblocksByIds ENTER")
-	if err := s.streamMiniblocksByIds(ctx, req.Msg, resp); err != nil {
-		return AsRiverError(err).Func("GetMiniblocksByIds").
+	if e := s.streamMiniblocksByIds(ctx, req.Msg, resp); e != nil {
+		err = AsRiverError(e).Func("GetMiniblocksByIds").
 			Tag("streamId", req.Msg.StreamId).
 			Tag("mbIds", req.Msg.MiniblockIds).
 			LogWarn(log).
 			AsConnectError()
+		return err
 	}
 	log.Debugw("GetMiniblocksByIds LEAVE")
 	return nil

@@ -88,76 +88,80 @@ func executeConnectHandler[Req, Res any](
 func (s *Service) CreateStream(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
-) (*connect.Response[CreateStreamResponse], error) {
+) (resp *connect.Response[CreateStreamResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.CreateStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
-			logging.FromCtx(ctx).Warnw("CreateStream slow", "timing", report)
+		if report.Took > 20*time.Second || err != nil {
+			logging.FromCtx(ctx).Warnw("CreateStream slow", "timing", report, "err", err)
 		}
 	}()
 	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
 	defer cancel()
-	return executeConnectHandler(ctx, req, s, s.createStreamImpl, "CreateStream")
+	resp, err = executeConnectHandler(ctx, req, s, s.createStreamImpl, "CreateStream")
+	return resp, err
 }
 
 func (s *Service) CreateMediaStream(
 	ctx context.Context,
 	req *connect.Request[CreateMediaStreamRequest],
-) (*connect.Response[CreateMediaStreamResponse], error) {
+) (resp *connect.Response[CreateMediaStreamResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.CreateMediaStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
-			logging.FromCtx(ctx).Warnw("CreateMediaStream slow", "timing", report)
+		if report.Took > 20*time.Second || err != nil {
+			logging.FromCtx(ctx).Warnw("CreateMediaStream slow", "timing", report, "err", err)
 		}
 	}()
 	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
 	defer cancel()
-	return executeConnectHandler(ctx, req, s, s.createMediaStreamImpl, "CreateMediaStream")
+	resp, err = executeConnectHandler(ctx, req, s, s.createMediaStreamImpl, "CreateMediaStream")
+	return resp, err
 }
 
 func (s *Service) GetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
-) (*connect.Response[GetStreamResponse], error) {
+) (resp *connect.Response[GetStreamResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.GetStream")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
 		if report.Took > 20*time.Second {
 			logging.FromCtx(ctx).
-				Warnw("GetStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("GetStream slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
-	return executeConnectHandler(ctx, req, s, s.getStreamImpl, "GetStream")
+	resp, err = executeConnectHandler(ctx, req, s, s.getStreamImpl, "GetStream")
+	return resp, err
 }
 
 func (s *Service) GetStreamEx(
 	ctx context.Context,
 	req *connect.Request[GetStreamExRequest],
 	resp *connect.ServerStream[GetStreamExResponse],
-) error {
+) (err error) {
 	timer := timing.NewTimer("rpc.Service.GetStreamEx")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("GetStreamEx slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("GetStreamEx slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debugw("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
 	if e != nil {
-		return s.asAnnotatedRiverError(e).
+		err = s.asAnnotatedRiverError(e).
 			Func("GetStreamEx").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
+		return err
 	}
 	log.Debugw("GetStreamEx LEAVE")
 	return nil
@@ -329,17 +333,18 @@ func (s *Service) getStreamExImpl(
 func (s *Service) GetMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
-) (*connect.Response[GetMiniblocksResponse], error) {
+) (resp *connect.Response[GetMiniblocksResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.GetMiniblocks")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("GetMiniblocks slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("GetMiniblocks slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
-	return executeConnectHandler(ctx, req, s, s.getMiniblocksImpl, "GetMiniblocks")
+	resp, err = executeConnectHandler(ctx, req, s, s.getMiniblocksImpl, "GetMiniblocks")
+	return resp, err
 }
 
 func (s *Service) getMiniblocksImpl(
@@ -406,17 +411,18 @@ func (s *Service) getMiniblocksImpl(
 func (s *Service) GetLastMiniblockHash(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
-) (*connect.Response[GetLastMiniblockHashResponse], error) {
+) (resp *connect.Response[GetLastMiniblockHashResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.GetLastMiniblockHash")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("GetLastMiniblockHash slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("GetLastMiniblockHash slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
-	return executeConnectHandler(ctx, req, s, s.getLastMiniblockHashImpl, "GetLastMiniblockHash")
+	resp, err = executeConnectHandler(ctx, req, s, s.getLastMiniblockHashImpl, "GetLastMiniblockHash")
+	return resp, err
 }
 
 func (s *Service) getLastMiniblockHashImpl(
@@ -478,19 +484,20 @@ func (s *Service) getLastMiniblockHashImpl(
 func (s *Service) AddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
-) (*connect.Response[AddEventResponse], error) {
+) (resp *connect.Response[AddEventResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.AddEvent")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("AddEvent slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId))
+				Warnw("AddEvent slow", "timing", report, "streamId", fmt.Sprintf("%x", req.Msg.StreamId), "err", err)
 		}
 	}()
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
-	return executeConnectHandler(ctx, req, s, s.addEventImpl, "AddEvent")
+	resp, err = executeConnectHandler(ctx, req, s, s.addEventImpl, "AddEvent")
+	return resp, err
 }
 
 func (s *Service) addEventImpl(
@@ -550,19 +557,20 @@ func (s *Service) addEventImpl(
 func (s *Service) AddMediaEvent(
 	ctx context.Context,
 	req *connect.Request[AddMediaEventRequest],
-) (*connect.Response[AddMediaEventResponse], error) {
+) (resp *connect.Response[AddMediaEventResponse], err error) {
 	timer := timing.NewTimer("rpc.Service.AddMediaEvent")
 	ctx = timer.Start(ctx)
 	defer func() {
 		report := timer.Report()
-		if report.Took > 20*time.Second {
+		if report.Took > 20*time.Second || err != nil {
 			logging.FromCtx(ctx).
-				Warnw("AddMediaEvent slow", "timing", report)
+				Warnw("AddMediaEvent slow", "timing", report, "err", err)
 		}
 	}()
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
-	return executeConnectHandler(ctx, req, s, s.addMediaEventImpl, "AddMediaEvent")
+	resp, err = executeConnectHandler(ctx, req, s, s.addMediaEventImpl, "AddMediaEvent")
+	return resp, err
 }
 
 func (s *Service) addMediaEventImpl(
