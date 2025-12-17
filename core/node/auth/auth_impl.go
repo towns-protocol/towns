@@ -1345,6 +1345,7 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 		return nil, err
 	}
 
+	var lastErr error
 	for _, wallet := range wallets {
 		isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, wallet, appContractAddress)
 		if err != nil {
@@ -1353,6 +1354,7 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 				"wallet", wallet,
 				"error", err,
 			)
+			lastErr = err
 			continue
 		}
 		if isInstalled {
@@ -1364,6 +1366,11 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 			)
 			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 		}
+		lastErr = nil
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
 	}
 
 	log.Debugw(
