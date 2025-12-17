@@ -507,12 +507,6 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
-	if _, err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddr(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).
-			Message("Error subscribing to app's user inbox stream to watch for keys").
-			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddr(app))
-	}
-
 	return &connect.Response[RegisterResponse]{
 		Msg: &RegisterResponse{
 			Hs256SharedSecret: appSecret[:],
@@ -782,6 +776,16 @@ func (s *Service) RegisterWebhook(
 	// Store the app record in pg
 	if err := s.store.RegisterWebhook(ctx, app, webhook, defaultEncryptionDevice.DeviceKey, defaultEncryptionDevice.FallbackKey); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Func("RegisterWebhook")
+	}
+
+	// Start tracking the bot's user inbox stream for encryption keys.
+	// This must happen here (not in Register) because keys can only flow to the inbox
+	// after the webhook is registered - the key solicitation flow requires calling
+	// the bot's webhook to request a solicitation.
+	if _, err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddr(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("Error subscribing to app's user inbox stream to watch for keys").
+			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddr(app))
 	}
 
 	return &connect.Response[RegisterWebhookResponse]{}, nil
