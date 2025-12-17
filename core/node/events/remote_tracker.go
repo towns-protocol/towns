@@ -33,14 +33,15 @@ func newRemoteTracker(currentRemote common.Address, remotes []common.Address) re
 
 // execute runs the given function on all remotes in round-robin manner starting from the current remote.
 // On first success nil is returned.
-// On failure, Err_UNAVAILABLE error is returned with the last error as a base.
+// On failure, Err_UNAVAILABLE error is returned with all errors as bases.
 func (rt remoteTracker) execute(f func(common.Address) error) error {
-	var err error
+	var errs []error
 	for range rt.remotes {
-		err = f(rt.remotes[rt.currentRemote])
+		err := f(rt.remotes[rt.currentRemote])
 		if err == nil {
 			return nil
 		}
+		errs = append(errs, err)
 
 		rt.currentRemote++
 		if rt.currentRemote >= len(rt.remotes) {
@@ -48,9 +49,9 @@ func (rt remoteTracker) execute(f func(common.Address) error) error {
 		}
 	}
 
-	if err == nil {
+	if len(errs) == 0 {
 		return RiverError(Err_UNAVAILABLE, "No peers")
 	}
 
-	return RiverErrorWithBase(Err_UNAVAILABLE, "Retry on all peers failed", err)
+	return RiverErrorWithBases(Err_UNAVAILABLE, "Retry on all peers failed", errs)
 }

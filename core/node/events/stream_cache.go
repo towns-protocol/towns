@@ -180,7 +180,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		}
 		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
 		if streamRecord.StreamId() == targetStreamID {
-			logging.FromCtx(ctx).Info("Loaded stream into stream cache on start", "stream", streamRecord.StreamId())
+			logging.FromCtx(ctx).Infow("Loaded stream into stream cache on start", "stream", streamRecord.StreamId())
 		}
 		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {

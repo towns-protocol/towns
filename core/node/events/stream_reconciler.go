@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
 	"time"
@@ -415,19 +416,20 @@ func (sr *streamReconciler) reconcileBackward(ctx context.Context) (err error) {
 }
 
 func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context, remote common.Address) (err error) {
-	ctx = timing.StartSpan(ctx, "events.streamReconciler.reinitializeStreamFromSinglePeer")
-	defer func() { timing.End(ctx, err) }()
+	ctx = timing.StartSpan(ctx, fmt.Sprintf("events.streamReconciler.reinitializeStreamFromSinglePeer(%s)", remote))
+	defer func() { ctx = timing.End(ctx, err) }()
 
 	sr.stats.reinitializeAttempted++
 
 	// TODO: configurable timeouts through this file
-	ctx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
+	// Use a different variable name to avoid overwriting the timing context
+	reqCtx, cancel := context.WithTimeout(sr.ctx, 5*time.Minute)
 	defer cancel()
 
 	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
 	var resp *GetStreamResponse
 	resp, err = sr.cache.params.RemoteMiniblockProvider.GetStream(
-		ctx,
+		reqCtx,
 		remote,
 		&GetStreamRequest{
 			StreamId:                    sr.stream.streamId[:],
@@ -438,7 +440,7 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(ctx context.Context
 		return err
 	}
 
-	err = sr.stream.reinitialize(ctx, resp.GetStream(), !sr.notFound)
+	err = sr.stream.reinitialize(reqCtx, resp.GetStream(), !sr.notFound)
 	if err != nil {
 		return err
 	}
