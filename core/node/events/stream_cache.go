@@ -603,6 +603,11 @@ func (s *StreamCache) GetMbCandidateStreams(ctx context.Context) []*Stream {
 		return true
 	})
 
+	if len(candidates) > 25 {
+		logging.FromCtx(ctx).Warnw("GetMbCandidateStreams: many streams to create miniblock candidates - truncate",
+			"candidatesCounts", len(candidates))
+		return candidates[:25]
+	}
 	return candidates
 }
 

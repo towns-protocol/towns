@@ -404,7 +404,7 @@ func (j *mbJob) gatherRemoteProposals(
 	ctx context.Context,
 	request *ProposeMiniblockRequest,
 ) ([]*sourcedProposalResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, j.cache.Params().RiverChain.Config.BlockTime()*2)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute) // j.cache.Params().RiverChain.Config.BlockTime()*2)
 	defer cancel()
 
 	proposals := make([]*sourcedProposalResponse, 0, len(j.quorumNodes))
@@ -413,7 +413,7 @@ func (j *mbJob) gatherRemoteProposals(
 	qp := NewQuorumPool(
 		ctx,
 		NewQuorumPoolOpts().
-			ReadModeWithFractionAndTimeout(2.0, 100*time.Millisecond).
+			ReadModeWithFractionAndTimeout(5.0, 2*time.Minute).
 			WithTags(
 				"method", "mbJob.gatherRemoteProposals",
 				"streamId", j.stream.streamId,
