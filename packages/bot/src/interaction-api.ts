@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- we use deestructure to exclude from rest */
+/* eslint-disable @typescript-eslint/no-unused-vars -- we use destructure to exclude from rest */
 import type { Address } from 'viem'
 import {
     InteractionRequestPayload,
