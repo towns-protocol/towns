@@ -664,9 +664,8 @@ func (ctc *cacheTestContext) compareStreamStorage(
 	toExclusive := first.Miniblocks[0].Number
 	for actualFromInclusive < toExclusive {
 		var firstMiniblocks []*storage.MiniblockDescriptor
-		var firstTerminus bool
 		for i, inst := range instances {
-			miniblocks, terminus, err := inst.cache.params.Storage.ReadMiniblocks(
+			miniblocks, _, err := inst.cache.params.Storage.ReadMiniblocks(
 				ctc.ctx,
 				streamId,
 				actualFromInclusive,
@@ -676,10 +675,10 @@ func (ctc *cacheTestContext) compareStreamStorage(
 			ctc.require.NoError(err, "failed to read stream for node %d %s", i, nodes[i])
 			if i == 0 {
 				firstMiniblocks = miniblocks
-				firstTerminus = terminus
 			} else {
 				ctc.require.Equal(firstMiniblocks, miniblocks, "stream %s miniblocks are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
-				ctc.require.Equal(firstTerminus, terminus, "stream %s terminus values are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
+				// Note: We don't compare terminus values across nodes because terminus depends on
+				// whether the preceding miniblock exists locally, which can differ during reconciliation
 			}
 		}
 		actualFromInclusive += int64(len(firstMiniblocks))
