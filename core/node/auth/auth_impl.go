@@ -312,6 +312,7 @@ type chainAuth struct {
 	membershipCache         *entitlementCache
 	entitlementManagerCache *entitlementCache
 	linkedWalletCache       *entitlementCache
+	appInstalledCache       *entitlementCache
 
 	isEntitledToChannelCacheHit  prometheus.Counter
 	isEntitledToChannelCacheMiss prometheus.Counter
@@ -384,6 +385,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	appInstalledCache, err := newAppInstalledCache(ctx, blockchain.Config)
+	if err != nil {
+		return nil, err
+	}
+
 	if linkedWalletsLimit <= 0 {
 		linkedWalletsLimit = DEFAULT_MAX_WALLETS
 	}
@@ -407,6 +413,7 @@ func NewChainAuth(
 		membershipCache:         membershipCache,
 		entitlementManagerCache: entitlementManagerCache,
 		linkedWalletCache:       linkedWalletCache,
+		appInstalledCache:       appInstalledCache,
 
 		isEntitledToChannelCacheHit:  counter.WithLabelValues("isEntitledToChannel", "hit"),
 		isEntitledToChannelCacheMiss: counter.WithLabelValues("isEntitledToChannel", "miss"),
@@ -1340,6 +1347,23 @@ func (ca *chainAuth) checkDmValidation(
 	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, botAppContract)
 }
 
+// checkAppInstalledOnUserUncached checks if an app is installed on a single wallet.
+// args.principal = wallet address, args.appAddress = app contract address
+func (ca *chainAuth) checkAppInstalledOnUserUncached(
+	ctx context.Context,
+	_ *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, args.principal, args.appAddress)
+	if err != nil {
+		return nil, err
+	}
+	if isInstalled {
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+}
+
 func (ca *chainAuth) checkAppInstalledOnUser(
 	ctx context.Context,
 	cfg *config.Config,
@@ -1356,7 +1380,16 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 
 	var lastErr error
 	for _, wallet := range wallets {
-		isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, wallet, appContractAddress)
+		cacheArgs := &ChainAuthArgs{
+			principal:  wallet,
+			appAddress: appContractAddress,
+		}
+		result, _, err := ca.appInstalledCache.executeUsingCache(
+			ctx,
+			cfg,
+			cacheArgs,
+			ca.checkAppInstalledOnUserUncached,
+		)
 		if err != nil {
 			log.Debugw(
 				"checkAppInstalledOnUser: IsAppInstalled check failed, trying next wallet",
@@ -1366,7 +1399,7 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 			lastErr = err
 			continue
 		}
-		if isInstalled {
+		if result.IsAllowed() {
 			log.Debugw(
 				"checkAppInstalledOnUser: app installed",
 				"userAddress", userAddress,

@@ -291,6 +291,41 @@ func newEntitlementManagerCache(ctx context.Context, cfg *config.ChainConfig) (*
 	}, nil
 }
 
+// the app installed cache stores whether an app is installed on a user's wallet.
+// We use a minimal negative cache since app installation status changes infrequently.
+func newAppInstalledCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
+	log := logging.FromCtx(ctx)
+
+	positiveCacheSize := 10000
+
+	// We do not use the negative entitlement cache for app installed checks.
+	negativeCacheSize := 1
+
+	positiveCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](positiveCacheSize)
+	if err != nil {
+		log.Errorw("error creating app installed positive cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	// We don't use this, but make it anyway to initialize the entitlementCache.
+	negativeCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](negativeCacheSize)
+	if err != nil {
+		log.Errorw("error creating app installed negative cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	positiveCacheTTL := 24 * time.Hour
+	// This value is irrelevant as we don't use the negative cache for app installed checks.
+	negativeCacheTTL := 2 * time.Second
+
+	return &entitlementCache{
+		positiveCache,
+		negativeCache,
+		positiveCacheTTL,
+		negativeCacheTTL,
+	}, nil
+}
+
 func (ec *entitlementCache) bust(
 	key *ChainAuthArgs,
 ) {
