@@ -100,10 +100,10 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 
 func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address, requireBotParty bool) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:             chainAuthKindDmValidation,
-		principal:        firstParty,
-		botClientAddress: secondParty,
-		requireBotParty:  requireBotParty,
+		kind:            chainAuthKindDmValidation,
+		firstParty:      firstParty,
+		secondParty:     secondParty,
+		requireBotParty: requireBotParty,
 	}
 }
 
@@ -199,6 +199,10 @@ type ChainAuthArgs struct {
 	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
 	// This is the address of the user stream that the bot owner is trying to write to.
 	botClientAddress common.Address
+
+	// firstParty and secondParty are the two parties in a DM for DM validation checks.
+	firstParty  common.Address
+	secondParty common.Address
 
 	// requireBotParty when true requires at least one party to be a bot in DM validation.
 	requireBotParty bool
@@ -1293,42 +1297,47 @@ func (ca *chainAuth) checkDmValidation(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 
-	firstPartyIsApp, firstPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	firstPartyIsApp, firstPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.firstParty)
 	if err != nil {
 		return nil, err
 	}
 
-	secondPartyIsApp, secondPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(
-		ctx,
-		args.botClientAddress,
-	)
+	secondPartyIsApp, secondPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.secondParty)
 	if err != nil {
 		return nil, err
 	}
 
-	// User-to-user
+	// user-to-user
 	if !firstPartyIsApp && !secondPartyIsApp {
 		if args.requireBotParty {
 			log.Debugw(
 				"checkDmValidation: bot required but neither party is a bot",
-				"firstParty", args.principal,
-				"secondParty", args.botClientAddress,
+				"firstParty", args.firstParty,
+				"secondParty", args.secondParty,
 			)
 			return boolCacheResult{false, EntitlementResultReason_NO_BOT_PARTY}, nil
 		}
 		log.Debugw(
-			"checkDmValidation: user-to-user DM",
-			"firstParty", args.principal,
-			"secondParty", args.botClientAddress,
+			"checkDmValidation: user-to-user DM allowed",
+			"firstParty", args.firstParty,
+			"secondParty", args.secondParty,
 		)
 		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
-	// Bot involved: check if the user has the bot installed
+	// bot-to-user / user-to-bot: identify the human party and the bot's app contract,
+	// then verify the human has the bot installed
+	var userAddress common.Address
+	var botAppContract common.Address
 	if firstPartyIsApp {
-		return ca.checkAppInstalledOnUser(ctx, cfg, args.botClientAddress, firstPartyAppContract)
+		userAddress = args.secondParty
+		botAppContract = firstPartyAppContract
+	} else {
+		userAddress = args.firstParty
+		botAppContract = secondPartyAppContract
 	}
-	return ca.checkAppInstalledOnUser(ctx, cfg, args.principal, secondPartyAppContract)
+
+	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, botAppContract)
 }
 
 func (ca *chainAuth) checkAppInstalledOnUser(
