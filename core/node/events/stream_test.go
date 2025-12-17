@@ -506,7 +506,7 @@ func TestStreamGetMiniblocks(t *testing.T) {
 		require.True(terminus, "terminus should be true when fromInclusive is 0")
 	})
 
-	t.Run("terminus is true when fewer blocks returned than requested", func(t *testing.T) {
+	t.Run("terminus is false when preceding block exists even if fewer blocks returned", func(t *testing.T) {
 		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
 		_ = tt.initCache(0, nil)
 		require := require.New(t)
@@ -533,7 +533,9 @@ func TestStreamGetMiniblocks(t *testing.T) {
 		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 1, 10, false)
 		require.NoError(err)
 		require.Len(miniblocks, 2) // Only blocks 1 and 2 exist
-		require.True(terminus, "terminus should be true when fewer blocks returned than requested")
+		// terminus is false because block 0 (the preceding miniblock) exists,
+		// meaning there's more history available before the returned range
+		require.False(terminus)
 	})
 
 	t.Run("terminus is false when full range is returned and fromInclusive more than 0", func(t *testing.T) {
@@ -694,11 +696,12 @@ func TestStreamGetMiniblocks(t *testing.T) {
 		// Verify returned blocks start from 3
 		require.Equal(int64(3), miniblocks[0].Ref.Num)
 
-		// Request exactly the existing range
+		// Request exactly the existing range (3-6)
+		// terminus is still true because block 2 (preceding miniblock) was trimmed
 		miniblocks, terminus, err = stream.GetMiniblocks(ctx, 3, 7, false)
 		require.NoError(err)
 		require.Len(miniblocks, 4)
-		require.False(terminus, "terminus should be false when full existing range is returned")
+		require.True(terminus)
 	})
 }
 
