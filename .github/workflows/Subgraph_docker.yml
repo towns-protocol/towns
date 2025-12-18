@@ -6,11 +6,7 @@ on:
     push:
         branches:
             - main
-        paths:
-            - '.github/workflows/Subgraph_docker.yml'
-            - '.github/workflows/_build-docker-arch.yml'
-            - 'packages/contracts/**'
-            - 'packages/subgraph/**'
+
     workflow_dispatch: # A build was manually requested
         inputs:
             release_version:
