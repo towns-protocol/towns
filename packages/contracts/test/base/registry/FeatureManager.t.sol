@@ -57,9 +57,9 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
         _;
     }
 
-    modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint256 amount) {
+    modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
-        amount = bound(amount, 1, type(uint256).max);
+        amount = bound(amount, 1, type(uint96).max);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(rewardsDistributionFacet),
