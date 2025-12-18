@@ -601,9 +601,6 @@ type AppRegistryConfig struct {
 
 	StreamTracking StreamTrackingConfig
 
-	// MixpanelToken is the project token for Mixpanel analytics.
-	MixpanelToken string
-
 	// RudderstackWriteKey is the write key for RudderStack analytics.
 	RudderstackWriteKey string
 

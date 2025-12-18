@@ -27,6 +27,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/puzpuzpuz/xsync/v4 v4.2.0
 	github.com/rs/cors v1.11.1
+	github.com/rudderlabs/analytics-go/v4 v4.2.2
 	github.com/sideshow/apns2 v0.25.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
@@ -97,7 +98,6 @@ require (
 	github.com/linxGnu/grocksdb v1.9.3 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
-	github.com/mixpanel/mixpanel-go v1.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20220708102147-0a8a51822cae // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
@@ -111,7 +111,6 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/rudderlabs/analytics-go/v4 v4.2.2 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/segmentio/backo-go v1.1.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
