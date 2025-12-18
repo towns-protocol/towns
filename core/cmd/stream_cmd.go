@@ -321,6 +321,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 			miniblock,
 			nil,
 			events.NewParsedMiniblockInfoOpts().
+				WithSkipSnapshotValidation().
 				WithExpectedBlockNumber(from+int64(n)),
 		)
 		if err != nil {
@@ -1079,6 +1080,7 @@ func runStreamCompareMiniblockChainCmd(ctx context.Context, cfg *config.Config, 
 			info, err := events.NewMiniblockInfoFromProto(
 				mb, response.Msg.GetMiniblockSnapshot(int64(i)),
 				events.NewParsedMiniblockInfoOpts().
+					WithSkipSnapshotValidation().
 					WithDoNotParseEvents(true),
 			)
 			if err != nil {
