@@ -47,6 +47,7 @@ type MetadataShardOpts struct {
 	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
 	Store           storage.MetadataStore
+	ConfigOverride  func(*cmtcfg.Config)
 }
 
 type MetadataShard struct {
@@ -107,6 +108,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	cfg.RPC.ListenAddress = ""
 	if len(opts.PersistentPeers) > 0 {
 		cfg.P2P.PersistentPeers = strings.Join(opts.PersistentPeers, ",")
+	}
+	if opts.ConfigOverride != nil {
+		opts.ConfigOverride(cfg)
 	}
 
 	privKey := ed25519.GenPrivKeyFromSecret(opts.Wallet.PrivateKey)

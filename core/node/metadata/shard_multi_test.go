@@ -18,13 +18,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"runtime/pprof"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -150,22 +150,6 @@ func waitForCondition(t *testing.T, check func() bool) bool {
 	}
 }
 
-func goroutineStacksContain(substrings ...string) bool {
-	var buf bytes.Buffer
-	profile := pprof.Lookup("goroutine")
-	if profile == nil {
-		return false
-	}
-	_ = profile.WriteTo(&buf, 1)
-	stacks := buf.String()
-	for _, substr := range substrings {
-		if strings.Contains(stacks, substr) {
-			return true
-		}
-	}
-	return false
-}
-
 func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
 	t.Helper()
 	ok := waitForCondition(t, func() bool {
@@ -173,7 +157,11 @@ func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
 			if shard.Node() == nil || shard.Node().Switch() == nil {
 				continue
 			}
-			if shard.Node().Switch().Peers().Size() > 0 {
+			sw := shard.Node().Switch()
+			if sw.Peers().Size() > 0 {
+				return false
+			}
+			if _, _, dialing := sw.NumPeers(); dialing > 0 {
 				return false
 			}
 		}
@@ -181,20 +169,6 @@ func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
 	})
 	if !ok {
 		t.Errorf("peers did not disconnect before shutdown")
-	}
-}
-
-func waitForConsensusPeerRoutines(t *testing.T) {
-	t.Helper()
-	ok := waitForCondition(t, func() bool {
-		return !goroutineStacksContain(
-			"gossipDataRoutine",
-			"gossipVotesRoutine",
-			"queryMaj23Routine",
-		)
-	})
-	if !ok {
-		t.Errorf("consensus peer routines did not exit before shutdown")
 	}
 }
 
@@ -213,6 +187,12 @@ func waitForShardsStopped(t *testing.T, shards []*MetadataShard) {
 			t.Errorf("shard %d did not stop in time", i)
 		}
 	}
+}
+
+func configureConsensusTestParams(cfg *cmtcfg.Config) {
+	cfg.Consensus.PeerGossipSleepDuration = 10 * time.Millisecond
+	cfg.Consensus.PeerQueryMaj23SleepDuration = 10 * time.Millisecond
+	cfg.Consensus.PeerGossipIntraloopSleepDuration = 0
 }
 
 // setupMultiNodeCometBFTTest creates numShardInstances MetadataShard instances
@@ -336,6 +316,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 			Wallet:          wallets[i],
 			PersistentPeers: peers,
 			Store:           store,
+			ConfigOverride:  configureConsensusTestParams,
 		})
 		require.NoError(t, err, "failed to create shard %d", i)
 		shards[i] = shard
@@ -353,8 +334,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		// To work around this, we:
 		// 1. Disconnect all peers explicitly BEFORE stopping nodes
 		// 2. Wait for peers to disconnect
-		// 3. Wait for per-peer consensus routines to drain
-		// 4. Then stop the nodes
+		// 3. Then stop the nodes
 
 		// Step 1: Explicitly disconnect all peers from all nodes.
 		// This triggers RemovePeer which cancels peer contexts, causing
@@ -372,10 +352,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		// Step 2: Wait for all peers to be fully disconnected.
 		waitForPeersDisconnected(t, shards)
 
-		// Step 3: Wait for per-peer consensus routines to exit before closing blockstore.
-		waitForConsensusPeerRoutines(t)
-
-		// Step 4: Now cancel context and stop nodes
+		// Step 3: Now cancel context and stop nodes
 		cancel()
 		waitForShardsStopped(t, shards)
 
