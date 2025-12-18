@@ -16,7 +16,7 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 - `MetadataTx` wraps three ops: `CreateStreamTx`, `SetStreamLastMiniblockBatchTx`, and `UpdateStreamNodesAndReplicationTx`.
 - `CreateStreamTx`: requires 32-byte `stream_id` and `genesis_miniblock_hash`; `nodes` must be non-empty 20-byte addresses; `replication_factor` > 0 and ≤ len(nodes); if `last_miniblock_num` is 0, a `genesis_miniblock` is required and `last_miniblock_hash` must match the genesis hash, otherwise `last_miniblock_hash` must be 32 bytes. `sealed` can be set at creation.
-- `SetStreamLastMiniblockBatchTx`: a non-empty list of `MiniblockUpdate` items; each enforces 32-byte hashes, `last_miniblock_num` > 0, and uses `prev_miniblock_hash` for optimistic concurrency.
+- `SetStreamLastMiniblockBatchTx`: a non-empty list of `MiniblockUpdate` items; each enforces 32-byte hashes, `last_miniblock_num` > 0, and uses `prev_miniblock_hash` for optimistic concurrency. **Important constraint:** a stream can only be updated once per block—if the same stream appears in multiple updates within a single block (whether in the same batch or across separate transactions), only the first update succeeds.
 - `UpdateStreamNodesAndReplicationTx`: `stream_id` must be 32 bytes; if `nodes` is supplied it must be a list of 20-byte addresses and replaces the current node set; `replication_factor` defaults to the current value when 0 and must remain > 0 and ≤ number of nodes. This op is allowed even on sealed streams (sealing only freezes miniblock pointers).
 - The ABCI layer performs stateless checks in `CheckTx`/`PrepareProposal`/`ProcessProposal`; stateful checks happen inside the Postgres store during FinalizeBlock.
 
@@ -43,9 +43,27 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 ## Store Semantics
 
 - Create stream: enforces unique `stream_id`, validates replication factor against node count, stores the genesis miniblock (empty when starting above height 0), seeds `last_miniblock_hash` from the genesis hash when `last_miniblock_num` is 0, and treats `genesis_miniblock_hash`/`genesis_miniblock` as immutable after creation.
-- Miniblock batch: rejects sealed streams, requires `prev_miniblock_hash` to match the current hash, demands `last_miniblock_num` increment by exactly 1, and ORs the `sealed` flag with existing state.
+- Miniblock batch: rejects sealed streams, requires `prev_miniblock_hash` to match the current hash, demands `last_miniblock_num` increment by exactly 1, ORs the `sealed` flag with existing state, and enforces one-update-per-stream-per-block. **Note:** miniblock updates validate against committed database state, not pending block state—this means you cannot update a stream in the same block where it is created (the create must be committed first).
 - Update nodes/replication: defaults to the existing node set when `nodes` is empty, allows node and/or replication-factor changes even when sealed, enforces replication factor bounds, and rewrites the stored `nodes` array to keep the provided order.
 - Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) resolve stored permanent indexes back into ordered node address lists.
+
+## Transaction Result Semantics
+
+Transaction results in `FinalizeBlock` responses differ by operation type:
+
+- **CreateStreamTx** and **UpdateStreamNodesAndReplicationTx**: Report success or failure via `TxResult.Code`. A non-zero code indicates failure with the error type (e.g., `Err_ALREADY_EXISTS`, `Err_NOT_FOUND`).
+
+- **SetStreamLastMiniblockBatchTx**: Reports per-miniblock status via **events**, not the transaction code. The `TxResult.Code` remains `0` (OK) even when individual miniblock updates fail. Each miniblock in the batch gets a corresponding event in `TxResult.Events`:
+  - **`mbok`** (miniblock ok): Successful update. Event attributes include `sid` (stream ID), `height` (new miniblock number), `hash` (new miniblock hash), and optionally `sealed` if the stream was sealed.
+  - **`mberr`** (miniblock error): Failed update. Event attributes include `sid` (stream ID), `code` (error code), `name` (error name), and `msg` (human-readable message).
+
+Common `mberr` error codes:
+- `Err_NOT_FOUND`: Stream does not exist (or was created in the same block).
+- `Err_FAILED_PRECONDITION`: Stream is sealed, or attempting a duplicate update to the same stream within the block.
+- `Err_BAD_PREV_MINIBLOCK_HASH`: The `prev_miniblock_hash` doesn't match the stream's current hash.
+- `Err_BAD_BLOCK_NUMBER`: The `last_miniblock_num` is not exactly current + 1.
+
+This event-based approach allows partial success in batch operations: some miniblocks in a batch may succeed while others fail, and callers can inspect individual events to determine outcomes.
 
 ## App Hash (Temporary Placeholder)
 

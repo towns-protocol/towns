@@ -131,3 +131,42 @@ func (arc *AppRegistryContract) IsUserBotOwner(
 	// Check if the potential owner matches the app's owner
 	return appData.Owner == potentialOwner, nil
 }
+
+func (arc *AppRegistryContract) GetAppOwnerByClient(
+	ctx context.Context,
+	botClientAddress common.Address,
+) (common.Address, error) {
+	zeroAddress := common.Address{}
+
+	appAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, botClientAddress)
+	if err != nil {
+		return zeroAddress, AsRiverError(
+			err,
+		).Message("Unable to get app by client address").
+			Tag("botClientAddress", botClientAddress)
+	}
+	if appAddress == zeroAddress {
+		return zeroAddress, nil
+	}
+
+	appId, err := arc.appRegistry.GetLatestAppId(&bind.CallOpts{Context: ctx}, appAddress)
+	if err != nil {
+		return zeroAddress, AsRiverError(
+			err,
+		).Message("Unable to get latest app ID").
+			Tag("appAddress", appAddress)
+	}
+	if appId == EMPTY_UID {
+		return zeroAddress, nil
+	}
+
+	appData, err := arc.appRegistry.GetAppById(&bind.CallOpts{Context: ctx}, appId)
+	if err != nil {
+		return zeroAddress, AsRiverError(
+			err,
+		).Message("Unable to get app by ID").
+			Tag("appId", appId)
+	}
+
+	return appData.Owner, nil
+}

@@ -39,6 +39,7 @@ export default defineConfig({
         "**/IAppFactory.sol/*.json",
         "**/IIdentityRegistry.sol/*.json",
         "**/IReputationRegistry.sol/*.json",
+        "**/SubscriptionModuleFacet.sol/*.json",
       ],
       forge: {
         build: false,

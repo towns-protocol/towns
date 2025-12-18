@@ -74,7 +74,10 @@ COPY packages/web3 ./packages/web3/
 COPY protocol ./protocol/
 
 # Build all packages using turbo
-RUN bun run turbo typings --filter=@towns-protocol/subgraph...
+# First generate contract typings (web3 imports from @towns-protocol/contracts/typings)
+RUN bun run turbo typings --filter=@towns-protocol/contracts
+# Then build all dependencies (web3, utils, generated, etc.)
+RUN bun run turbo build --filter=@towns-protocol/subgraph...
 
 # Prepare subgraph for runtime
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh

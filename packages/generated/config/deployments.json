@@ -3,6 +3,7 @@
     "base": {
       "chainId": 84532,
       "addresses": {
+        "accountModules": "0xFF45988E721b5B9b24811f94a7b082aC1aCEea6E",
         "appRegistry": "0x23a9f5AbBcC82d1E2B5C0781b1F05F2B623E2c69",
         "baseRegistry": "0x0230a9d28bc48a90d6f5e5112b24319ec1b14c52",
         "riverAirdrop": "0x5cb1B2a6d413879a7A4A89f46e0621db04aa6430",

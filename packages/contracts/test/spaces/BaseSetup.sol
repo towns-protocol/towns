@@ -19,7 +19,7 @@ import {IImplementationRegistry} from "src/factory/facets/registry/IImplementati
 import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
-import {IAppRegistry, IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 import {IAppInstaller} from "src/apps/facets/installer/IAppInstaller.sol";
 import {IAppFactory, IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";

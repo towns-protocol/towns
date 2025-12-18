@@ -10,6 +10,8 @@
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
         "@types/node": "^20.14.8",
+        "dotenv": "^17.2.3",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-prettier": "^5.2.6",
@@ -21,7 +23,7 @@
         "publint": "^0.2.8",
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
-        "turbo": "^2.5.4",
+        "turbo": "^2.6.3",
         "typescript": "~5.8.3",
         "vite-plugin-wasm": "^3.4.1",
         "vitest": "^3.2.3",
@@ -40,7 +42,7 @@
     },
     "packages/bot": {
       "name": "@towns-protocol/bot",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
@@ -65,7 +67,6 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -85,7 +86,7 @@
     },
     "packages/contracts": {
       "name": "@towns-protocol/contracts",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
         "@ethereum-attestation-service/eas-contracts": "^1.8.0",
@@ -117,7 +118,7 @@
     },
     "packages/create-towns-protocol-app": {
       "name": "create-towns-protocol-app",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "jsonc-parser": "^3.3.1",
@@ -144,7 +145,7 @@
     },
     "packages/encryption": {
       "name": "@towns-protocol/encryption",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/olm": "3.2.28",
@@ -174,7 +175,7 @@
     },
     "packages/eslint-config": {
       "name": "@towns-protocol/eslint-config",
-      "version": "0.0.433",
+      "version": "0.0.440",
     },
     "packages/examples/bot-quickstart": {
       "name": "@towns-protocol/example-bot-quickstart",
@@ -201,7 +202,7 @@
     },
     "packages/generated": {
       "name": "@towns-protocol/generated",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@ethersproject/abi": "^5.8.0",
         "@ethersproject/providers": "^5.8.0",
@@ -308,7 +309,7 @@
     },
     "packages/prettier-config": {
       "name": "@towns-protocol/prettier-config",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "prettier-plugin-solidity": "^1.4.2",
       },
@@ -318,7 +319,7 @@
     },
     "packages/proto": {
       "name": "@towns-protocol/proto",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
       },
@@ -335,7 +336,7 @@
     },
     "packages/react-sdk": {
       "name": "@towns-protocol/react-sdk",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -370,7 +371,7 @@
     },
     "packages/rpc-connector": {
       "name": "@towns-protocol/rpc-connector",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@connectrpc/connect": "^2.1.0",
       },
@@ -400,7 +401,7 @@
     },
     "packages/sdk": {
       "name": "@towns-protocol/sdk",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect": "^2.1.0",
@@ -431,7 +432,6 @@
         "@types/seedrandom": "^3.0.4",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -448,7 +448,7 @@
     },
     "packages/sdk-crypto": {
       "name": "@towns-protocol/sdk-crypto",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
@@ -507,7 +507,6 @@
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "axios": "^1.9.0",
-        "dotenv-cli": "^10.0.0",
         "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
@@ -548,7 +547,6 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
@@ -582,13 +580,12 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "prettier": "^3.5.3",
         "tsx": "^4.7.1",
-        "turbo": "^2.5.4",
         "typescript": "~5.8.3",
       },
     },
     "packages/towns-bot-cli": {
       "name": "towns-bot",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -622,7 +619,7 @@
     },
     "packages/utils": {
       "name": "@towns-protocol/utils",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@ethereumjs/util": "^10.0.0",
@@ -645,7 +642,7 @@
     },
     "packages/web3": {
       "name": "@towns-protocol/web3",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
         "@towns-protocol/generated": "workspace:^",
@@ -663,7 +660,6 @@
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "debug": "^4.3.4",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -674,7 +670,7 @@
     },
     "packages/xchain-monitor": {
       "name": "@towns-protocol/xchain-monitor",
-      "version": "0.0.433",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
@@ -5181,19 +5177,19 @@
 
     "tuf-js": ["tuf-js@2.2.1", "", { "dependencies": { "@tufjs/models": "2.0.1", "debug": "^4.3.4", "make-fetch-happen": "^13.0.1" } }, "sha512-GwIJau9XaA8nLVbUXsN3IlFi7WmQ48gBUrl3FTkkL/XLu/POhBzfmX9hd33FNMX1qAsfl6ozO1iMmW9NC8YniA=="],
 
-    "turbo": ["turbo@2.5.8", "", { "optionalDependencies": { "turbo-darwin-64": "2.5.8", "turbo-darwin-arm64": "2.5.8", "turbo-linux-64": "2.5.8", "turbo-linux-arm64": "2.5.8", "turbo-windows-64": "2.5.8", "turbo-windows-arm64": "2.5.8" }, "bin": { "turbo": "bin/turbo" } }, "sha512-5c9Fdsr9qfpT3hA0EyYSFRZj1dVVsb6KIWubA9JBYZ/9ZEAijgUEae0BBR/Xl/wekt4w65/lYLTFaP3JmwSO8w=="],
+    "turbo": ["turbo@2.6.3", "", { "optionalDependencies": { "turbo-darwin-64": "2.6.3", "turbo-darwin-arm64": "2.6.3", "turbo-linux-64": "2.6.3", "turbo-linux-arm64": "2.6.3", "turbo-windows-64": "2.6.3", "turbo-windows-arm64": "2.6.3" }, "bin": { "turbo": "bin/turbo" } }, "sha512-bf6YKUv11l5Xfcmg76PyWoy/e2vbkkxFNBGJSnfdSXQC33ZiUfutYh6IXidc5MhsnrFkWfdNNLyaRk+kHMLlwA=="],
 
-    "turbo-darwin-64": ["turbo-darwin-64@2.5.8", "", { "os": "darwin", "cpu": "x64" }, "sha512-Dh5bCACiHO8rUXZLpKw+m3FiHtAp2CkanSyJre+SInEvEr5kIxjGvCK/8MFX8SFRjQuhjtvpIvYYZJB4AGCxNQ=="],
+    "turbo-darwin-64": ["turbo-darwin-64@2.6.3", "", { "os": "darwin", "cpu": "x64" }, "sha512-BlJJDc1CQ7SK5Y5qnl7AzpkvKSnpkfPmnA+HeU/sgny3oHZckPV2776ebO2M33CYDSor7+8HQwaodY++IINhYg=="],
 
-    "turbo-darwin-arm64": ["turbo-darwin-arm64@2.5.8", "", { "os": "darwin", "cpu": "arm64" }, "sha512-f1H/tQC9px7+hmXn6Kx/w8Jd/FneIUnvLlcI/7RGHunxfOkKJKvsoiNzySkoHQ8uq1pJnhJ0xNGTlYM48ZaJOQ=="],
+    "turbo-darwin-arm64": ["turbo-darwin-arm64@2.6.3", "", { "os": "darwin", "cpu": "arm64" }, "sha512-MwVt7rBKiOK7zdYerenfCRTypefw4kZCue35IJga9CH1+S50+KTiCkT6LBqo0hHeoH2iKuI0ldTF2a0aB72z3w=="],
 
-    "turbo-linux-64": ["turbo-linux-64@2.5.8", "", { "os": "linux", "cpu": "x64" }, "sha512-hMyvc7w7yadBlZBGl/bnR6O+dJTx3XkTeyTTH4zEjERO6ChEs0SrN8jTFj1lueNXKIHh1SnALmy6VctKMGnWfw=="],
+    "turbo-linux-64": ["turbo-linux-64@2.6.3", "", { "os": "linux", "cpu": "x64" }, "sha512-cqpcw+dXxbnPtNnzeeSyWprjmuFVpHJqKcs7Jym5oXlu/ZcovEASUIUZVN3OGEM6Y/OTyyw0z09tOHNt5yBAVg=="],
 
-    "turbo-linux-arm64": ["turbo-linux-arm64@2.5.8", "", { "os": "linux", "cpu": "arm64" }, "sha512-LQELGa7bAqV2f+3rTMRPnj5G/OHAe2U+0N9BwsZvfMvHSUbsQ3bBMWdSQaYNicok7wOZcHjz2TkESn1hYK6xIQ=="],
+    "turbo-linux-arm64": ["turbo-linux-arm64@2.6.3", "", { "os": "linux", "cpu": "arm64" }, "sha512-MterpZQmjXyr4uM7zOgFSFL3oRdNKeflY7nsjxJb2TklsYqiu3Z9pQ4zRVFFH8n0mLGna7MbQMZuKoWqqHb45w=="],
 
-    "turbo-windows-64": ["turbo-windows-64@2.5.8", "", { "os": "win32", "cpu": "x64" }, "sha512-3YdcaW34TrN1AWwqgYL9gUqmZsMT4T7g8Y5Azz+uwwEJW+4sgcJkIi9pYFyU4ZBSjBvkfuPZkGgfStir5BBDJQ=="],
+    "turbo-windows-64": ["turbo-windows-64@2.6.3", "", { "os": "win32", "cpu": "x64" }, "sha512-biDU70v9dLwnBdLf+daoDlNJVvqOOP8YEjqNipBHzgclbQlXbsi6Gqqelp5er81Qo3BiRgmTNx79oaZQTPb07Q=="],
 
-    "turbo-windows-arm64": ["turbo-windows-arm64@2.5.8", "", { "os": "win32", "cpu": "arm64" }, "sha512-eFC5XzLmgXJfnAK3UMTmVECCwuBcORrWdewoiXBnUm934DY6QN8YowC/srhNnROMpaKaqNeRpoB5FxCww3eteQ=="],
+    "turbo-windows-arm64": ["turbo-windows-arm64@2.6.3", "", { "os": "win32", "cpu": "arm64" }, "sha512-dDHVKpSeukah3VsI/xMEKeTnV9V9cjlpFSUs4bmsUiLu3Yv2ENlgVEZv65wxbeE0bh0jjpmElDT+P1KaCxArQQ=="],
 
     "tweetnacl": ["tweetnacl@1.0.3", "", {}, "sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw=="],
 

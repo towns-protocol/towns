@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"math"
 	"slices"
 	"strings"
 
@@ -14,12 +13,13 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/metadata/mdstate"
 	nodespkg "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-// MetadataShardState captures persisted shard info used by ABCI commit.
+// MetadataShardsState captures persisted shard info used by ABCI commit.
 type MetadataShardState struct {
 	LastHeight  int64
 	LastAppHash []byte
@@ -32,14 +32,7 @@ type PostgresMetadataShardStore struct {
 
 type MetadataStore interface {
 	EnsureShardStorage(ctx context.Context, shardId uint64) error
-	CreateStream(ctx context.Context, shardId uint64, height int64, tx *CreateStreamTx) (*StreamMetadata, error)
-	ApplyMiniblockBatch(ctx context.Context, shardId uint64, height int64, updates []*MiniblockUpdate) error
-	UpdateStreamNodesAndReplication(
-		ctx context.Context,
-		shardId uint64,
-		height int64,
-		update *UpdateStreamNodesAndReplicationTx,
-	) (*StreamMetadata, error)
+
 	GetStream(ctx context.Context, shardId uint64, streamId shared.StreamId) (*StreamMetadata, error)
 	ListStreams(ctx context.Context, shardId uint64, offset int64, limit int32) ([]*StreamMetadata, error)
 	ListStreamsByNode(
@@ -51,11 +44,11 @@ type MetadataStore interface {
 	) ([]*StreamMetadata, error)
 	CountStreams(ctx context.Context, shardId uint64) (int64, error)
 	CountStreamsByNode(ctx context.Context, shardId uint64, node common.Address) (int64, error)
-	SetShardState(ctx context.Context, shardId uint64, height int64, appHash []byte) error
 	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
 	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
-	ApplyMetadataTx(ctx context.Context, shardId uint64, height int64, tx *MetadataTx) error
-	ComputeAppHash(ctx context.Context, shardId uint64, height int64) ([]byte, error)
+
+	PreparePendingBlock(ctx context.Context, shardId uint64, pendingBlock *mdstate.PendingBlockState) error
+	CommitPendingBlock(ctx context.Context, shardId uint64, pendingBlock *mdstate.PendingBlockState) error
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -169,29 +162,6 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 	return nil
 }
 
-func validateStreamID(streamId []byte) error {
-	if len(streamId) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
-	}
-	return nil
-}
-
-func validateHash(hash []byte, field string) error {
-	if len(hash) != 32 {
-		return RiverError(
-			Err_INVALID_ARGUMENT,
-			"hash length invalid",
-			"field",
-			field,
-			"expectedLen",
-			32,
-			"actualLen",
-			len(hash),
-		)
-	}
-	return nil
-}
-
 func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEmpty bool) ([]int32, error) {
 	if len(nodes) == 0 {
 		if allowEmpty {
@@ -244,402 +214,6 @@ func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]b
 		addrs = append(addrs, cp)
 	}
 	return addrs, nil
-}
-
-func (s *PostgresMetadataShardStore) CreateStream(
-	ctx context.Context,
-	shardID uint64,
-	height int64,
-	txData *CreateStreamTx,
-) (*StreamMetadata, error) {
-	_ = height
-
-	if txData == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "create stream payload is required")
-	}
-	if err := validateStreamID(txData.StreamId); err != nil {
-		return nil, err
-	}
-	if err := validateHash(txData.GenesisMiniblockHash, "genesis_miniblock_hash"); err != nil {
-		return nil, err
-	}
-	nodeIndexes, err := s.nodeIndexesForAddrs(txData.Nodes, false)
-	if err != nil {
-		return nil, err
-	}
-	if txData.ReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
-	}
-	if int(txData.ReplicationFactor) > len(nodeIndexes) {
-		return nil, RiverError(
-			Err_INVALID_ARGUMENT,
-			"replication_factor cannot exceed number of nodes",
-			"replicationFactor", txData.ReplicationFactor,
-			"numNodes", len(nodeIndexes),
-		)
-	}
-	if txData.LastMiniblockNum > math.MaxInt64 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
-	}
-
-	var (
-		lastMiniblockHash []byte
-		lastMiniblockNum  = int64(txData.LastMiniblockNum)
-	)
-
-	genesisMiniblock := txData.GenesisMiniblock
-	if genesisMiniblock == nil {
-		genesisMiniblock = []byte{}
-	}
-
-	if txData.LastMiniblockNum == 0 {
-		if len(txData.GenesisMiniblock) == 0 {
-			return nil, RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
-		}
-		if len(txData.LastMiniblockHash) > 0 && !bytes.Equal(txData.LastMiniblockHash, txData.GenesisMiniblockHash) {
-			return nil, RiverError(
-				Err_INVALID_ARGUMENT,
-				"last_miniblock_hash must match genesis_miniblock_hash when last_miniblock_num is 0",
-			)
-		}
-		lastMiniblockHash = txData.GenesisMiniblockHash
-	} else {
-		if err := validateHash(txData.LastMiniblockHash, "last_miniblock_hash"); err != nil {
-			return nil, err
-		}
-		lastMiniblockHash = txData.LastMiniblockHash
-	}
-
-	record := &StreamMetadata{
-		StreamId:             txData.StreamId,
-		GenesisMiniblockHash: txData.GenesisMiniblockHash,
-		LastMiniblockHash:    lastMiniblockHash,
-		LastMiniblockNum:     lastMiniblockNum,
-		Nodes:                txData.Nodes,
-		ReplicationFactor:    txData.ReplicationFactor,
-		Sealed:               txData.Sealed,
-		GenesisMiniblock:     genesisMiniblock,
-	}
-	return record, s.store.txRunner(
-		ctx,
-		"MetadataShard.CreateStream",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createStreamTx(ctx, tx, shardID, record, genesisMiniblock, nodeIndexes)
-		},
-		nil,
-		"shardId", shardID,
-		"streamId", txData.StreamId,
-	)
-}
-
-func (s *PostgresMetadataShardStore) createStreamTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	shardID uint64,
-	record *StreamMetadata,
-	genesisMiniblock []byte,
-	nodeIndexes []int32,
-) error {
-	var exists bool
-	err := tx.QueryRow(ctx, s.sqlForShard(
-		"SELECT EXISTS (SELECT 1 FROM {{streams}} WHERE stream_id = $1)", shardID),
-		record.StreamId).Scan(&exists)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", record.StreamId)
-	}
-
-	insertStreamSQL := s.sqlForShard(`
-INSERT INTO {{streams}}
-    (stream_id, genesis_miniblock_hash, genesis_miniblock, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8);`, shardID)
-
-	if _, err := tx.Exec(
-		ctx,
-		insertStreamSQL,
-		record.StreamId,
-		record.GenesisMiniblockHash,
-		genesisMiniblock,
-		record.LastMiniblockHash,
-		record.LastMiniblockNum,
-		record.ReplicationFactor,
-		record.Sealed,
-		nodeIndexes,
-	); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *PostgresMetadataShardStore) ApplyMiniblockBatch(
-	ctx context.Context,
-	shardID uint64,
-	height int64,
-	updates []*MiniblockUpdate,
-) error {
-	if len(updates) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "no miniblock updates provided")
-	}
-	for idx, u := range updates {
-		if u == nil {
-			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("update at index %d missing", idx))
-		}
-		if err := validateStreamID(u.StreamId); err != nil {
-			return err
-		}
-		if err := validateHash(u.LastMiniblockHash, "last_miniblock_hash"); err != nil {
-			return err
-		}
-		if err := validateHash(u.PrevMiniblockHash, "prev_miniblock_hash"); err != nil {
-			return err
-		}
-		if u.LastMiniblockNum == 0 {
-			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be greater than 0")
-		}
-	}
-
-	return s.store.txRunner(
-		ctx,
-		"MetadataShard.ApplyMiniblockBatch",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			for _, update := range updates {
-				if err := s.applyMiniblockUpdateTx(ctx, tx, shardID, height, update); err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-		nil,
-		"shardId", shardID,
-		"numUpdates", len(updates),
-	)
-}
-
-func (s *PostgresMetadataShardStore) applyMiniblockUpdateTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	shardID uint64,
-	height int64,
-	update *MiniblockUpdate,
-) error {
-	_ = height
-
-	var (
-		currentHash []byte
-		currentNum  int64
-		currentSeal bool
-	)
-
-	selectSQL := s.sqlForShard(
-		`SELECT last_miniblock_hash, last_miniblock_num, sealed FROM {{streams}} WHERE stream_id = $1 FOR UPDATE`,
-		shardID,
-	)
-	if err := tx.QueryRow(ctx, selectSQL, update.StreamId).Scan(&currentHash, &currentNum, &currentSeal); err != nil {
-		if err == pgx.ErrNoRows {
-			return RiverError(Err_NOT_FOUND, "stream not found", "streamId", update.StreamId)
-		}
-		return err
-	}
-
-	if currentSeal {
-		return RiverError(Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId)
-	}
-
-	if !bytes.Equal(currentHash, update.PrevMiniblockHash) {
-		return RiverError(
-			Err_FAILED_PRECONDITION,
-			"prev_miniblock_hash mismatch",
-			"streamId", update.StreamId,
-		)
-	}
-
-	if update.LastMiniblockNum > math.MaxInt64 {
-		return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
-	}
-
-	nextNum := int64(update.LastMiniblockNum)
-	if nextNum != currentNum+1 {
-		return RiverError(
-			Err_FAILED_PRECONDITION,
-			"last_miniblock_num must increase by 1",
-			"streamId", update.StreamId,
-			"current", currentNum,
-			"proposed", nextNum,
-		)
-	}
-
-	updateSQL := s.sqlForShard(
-		`UPDATE {{streams}}
-SET last_miniblock_hash = $2,
-    last_miniblock_num = $3,
-    sealed = $4
-WHERE stream_id = $1`,
-		shardID,
-	)
-	_, err := tx.Exec(
-		ctx,
-		updateSQL,
-		update.StreamId,
-		update.LastMiniblockHash,
-		nextNum,
-		currentSeal || update.Sealed,
-	)
-	return err
-}
-
-func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
-	ctx context.Context,
-	shardID uint64,
-	height int64,
-	update *UpdateStreamNodesAndReplicationTx,
-) (*StreamMetadata, error) {
-	if update == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "update payload is required")
-	}
-	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "nothing to update:nodes or replication_factor are required")
-	}
-	if err := validateStreamID(update.StreamId); err != nil {
-		return nil, err
-	}
-	nodeIndexes, err := s.nodeIndexesForAddrs(update.Nodes, true)
-	if err != nil {
-		return nil, err
-	}
-
-	var result *StreamMetadata
-	err = s.store.txRunner(
-		ctx,
-		"MetadataShard.UpdateStreamNodesAndReplication",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			record, innerErr := s.updateStreamNodesAndReplicationTx(
-				ctx,
-				tx,
-				shardID,
-				height,
-				update.StreamId,
-				update.ReplicationFactor,
-				nodeIndexes,
-			)
-			if innerErr != nil {
-				return innerErr
-			}
-			result = record
-			return nil
-		},
-		nil,
-		"shardId", shardID,
-		"streamId", update.StreamId,
-	)
-	return result, err
-}
-
-func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	shardID uint64,
-	height int64,
-	streamId []byte,
-	newReplicationFactor uint32,
-	newNodeIndexes []int32,
-) (*StreamMetadata, error) {
-	_ = height
-
-	var (
-		currentReplicationFactor uint32
-		sealed                   bool
-		lastHash                 []byte
-		lastNum                  int64
-		genesisHash              []byte
-		genesisMiniblock         []byte
-		currentNodeIndexes       []int32
-	)
-
-	selectSQL := s.sqlForShard(
-		`SELECT replication_factor,
-                sealed,
-                last_miniblock_hash,
-                last_miniblock_num,
-                genesis_miniblock_hash,
-                genesis_miniblock,
-                nodes
-         FROM {{streams}} WHERE stream_id = $1 FOR UPDATE`,
-		shardID,
-	)
-	if err := tx.QueryRow(
-		ctx,
-		selectSQL,
-		streamId,
-	).Scan(&currentReplicationFactor, &sealed, &lastHash, &lastNum, &genesisHash, &genesisMiniblock, &currentNodeIndexes); err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId)
-		}
-		return nil, err
-	}
-
-	switch {
-	case newReplicationFactor > 0 && len(newNodeIndexes) > 0:
-		if _, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-			SET replication_factor = $2,
-				nodes = $3
-			WHERE stream_id = $1`,
-			shardID,
-		), streamId, newReplicationFactor, newNodeIndexes); err != nil {
-			return nil, err
-		}
-		currentReplicationFactor = newReplicationFactor
-		currentNodeIndexes = newNodeIndexes
-
-	case newReplicationFactor > 0:
-		if int(newReplicationFactor) > len(currentNodeIndexes) {
-			return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
-		}
-		if _, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-			SET replication_factor = $2
-			WHERE stream_id = $1`,
-			shardID,
-		), streamId, newReplicationFactor); err != nil {
-			return nil, err
-		}
-		currentReplicationFactor = newReplicationFactor
-
-	case len(newNodeIndexes) > 0:
-		if len(newNodeIndexes) < int(currentReplicationFactor) {
-			return nil, RiverError(Err_INVALID_ARGUMENT, "nodes cannot be less than replication_factor")
-		}
-		if _, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-			SET nodes = $2
-			WHERE stream_id = $1`,
-			shardID,
-		), streamId, newNodeIndexes); err != nil {
-			return nil, err
-		}
-		currentNodeIndexes = newNodeIndexes
-	}
-
-	nodesAddrs, err := s.nodeAddrsForIndexes(currentNodeIndexes)
-	if err != nil {
-		return nil, err
-	}
-	return &StreamMetadata{
-		StreamId:             streamId,
-		GenesisMiniblockHash: genesisHash,
-		LastMiniblockHash:    lastHash,
-		LastMiniblockNum:     lastNum,
-		Nodes:                nodesAddrs,
-		ReplicationFactor:    currentReplicationFactor,
-		Sealed:               sealed,
-		GenesisMiniblock:     genesisMiniblock,
-	}, nil
 }
 
 func (s *PostgresMetadataShardStore) GetStream(
@@ -1077,43 +651,469 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 	return records, err
 }
 
-func (s *PostgresMetadataShardStore) ApplyMetadataTx(
+func (s *PostgresMetadataShardStore) PreparePendingBlock(
 	ctx context.Context,
 	shardId uint64,
-	height int64,
-	tx *MetadataTx,
+	pendingBlock *mdstate.PendingBlockState,
 ) error {
-	if tx == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
-	}
-	switch op := tx.Op.(type) {
-	case *MetadataTx_CreateStream:
-		_, err := s.CreateStream(ctx, shardId, height, op.CreateStream)
-		return err
-	case *MetadataTx_SetStreamLastMiniblockBatch:
-		return s.ApplyMiniblockBatch(ctx, shardId, height, op.SetStreamLastMiniblockBatch.Miniblocks)
-	case *MetadataTx_UpdateStreamNodesAndReplication:
-		_, err := s.UpdateStreamNodesAndReplication(ctx, shardId, height, op.UpdateStreamNodesAndReplication)
-		return err
-	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
-	}
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.PreparePendingBlock",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.preparePendingBlockTx(ctx, tx, shardId, pendingBlock)
+		},
+		nil,
+		"shardId", shardId,
+		"height", pendingBlock.Height,
+	)
 }
 
-func (s *PostgresMetadataShardStore) ComputeAppHash(
-	_ context.Context,
-	_ uint64,
-	height int64,
-) ([]byte, error) {
-	// TEMPORARY: This "fake" app hash is only a hash of the block height.
-	// It exists to unblock metadata shard development while the real app hash
-	// (a fixed-depth sparse Merkle tree backed by Postgres) is implemented.
-	if height < 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "height must be >= 0")
+func (s *PostgresMetadataShardStore) preparePendingBlockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+) error {
+	batch := &pgx.Batch{}
+
+	// Check height matches last height + 1
+	batch.Queue(`SELECT last_height FROM metadata WHERE shard_id = $1`, shardId).
+		QueryRow(func(row pgx.Row) error {
+			var lastHeight int64
+			if err := row.Scan(&lastHeight); err != nil {
+				return err
+			}
+			if lastHeight+1 != pendingBlock.Height {
+				return RiverError(
+					Err_FAILED_PRECONDITION,
+					"height mismatch",
+					"lastHeight",
+					lastHeight,
+					"pendingHeight",
+					pendingBlock.Height,
+				)
+			}
+			return nil
+		})
+
+	for i, blockTx := range pendingBlock.Txs {
+		if blockTx == nil {
+			continue
+		}
+
+		switch op := blockTx.Op.(type) {
+		case *MetadataTx_CreateStream:
+			s.batchValidateCreateStreamTx(batch, shardId, pendingBlock, i, op.CreateStream)
+		case *MetadataTx_SetStreamLastMiniblockBatch:
+			for j, mb := range op.SetStreamLastMiniblockBatch.Miniblocks {
+				s.batchValidateMbUpdateTx(batch, shardId, pendingBlock, i, j, mb)
+			}
+		case *MetadataTx_UpdateStreamNodesAndReplication:
+			s.batchValidateUpdateStreamNodesAndReplicationTx(batch, shardId, pendingBlock, i, op.UpdateStreamNodesAndReplication)
+		default:
+			return RiverError(Err_INTERNAL, "unknown operation, should not happen", "operation", blockTx.Op)
+		}
 	}
+
+	err := tx.SendBatch(ctx, batch).Close()
+	if err != nil {
+		return err
+	}
+
+	// Compute fake app hash. TODO: replace with merkle root.
 	hasher := sha256.New()
 	var buf [8]byte
-	binary.BigEndian.PutUint64(buf[:], uint64(height))
-	hasher.Write(buf[:])
-	return hasher.Sum(nil), nil
+	binary.BigEndian.PutUint64(buf[:], uint64(pendingBlock.Height))
+	_, _ = hasher.Write(buf[:])
+	pendingBlock.AppHash = hasher.Sum(nil)
+	return nil
+}
+
+func (s *PostgresMetadataShardStore) batchValidateCreateStreamTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+	index int,
+	op *CreateStreamTx,
+) {
+	streamId, err := shared.StreamIdFromBytes(op.StreamId)
+	if err != nil {
+		pendingBlock.SetTxError(index, err)
+		return
+	}
+
+	_, err = s.nodeIndexesForAddrs(op.Nodes, false)
+	if err != nil {
+		pendingBlock.SetTxError(index, err)
+		return
+	}
+
+	batch.Queue(
+		s.sqlForShard(
+			`SELECT EXISTS (
+				SELECT 1
+				FROM {{streams}}
+				WHERE stream_id = $1
+			) AS stream_exists`,
+			shardId),
+		streamId[:],
+	).QueryRow(func(row pgx.Row) error {
+		var streamExists bool
+		if err := row.Scan(&streamExists); err != nil {
+			return err
+		}
+		if streamExists {
+			pendingBlock.SetTxErrorCode(index, Err_ALREADY_EXISTS)
+			return nil
+		}
+		if pendingBlock.CreatedStreams[streamId] != nil {
+			pendingBlock.SetTxErrorCode(index, Err_ALREADY_EXISTS)
+			return nil
+		}
+		pendingBlock.CreatedStreams[streamId] = op
+		pendingBlock.SetSuccess(index)
+		return nil
+	})
+}
+
+func (s *PostgresMetadataShardStore) batchValidateMbUpdateTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+	txIndex int,
+	mbIndex int,
+	op *MiniblockUpdate,
+) {
+	streamId, err := shared.StreamIdFromBytes(op.StreamId)
+	if err != nil {
+		pendingBlock.SetMbErrorEvent(txIndex, mbIndex, streamId, Err_BAD_STREAM_ID, "can't parse stream id")
+		return
+	}
+
+	batch.Queue(
+		s.sqlForShard(
+			`SELECT last_miniblock_hash,
+                last_miniblock_num,
+                sealed
+         FROM {{streams}}
+         WHERE stream_id = $1`,
+			shardId),
+		streamId[:],
+	).QueryRow(func(row pgx.Row) error {
+		var prevHash []byte
+		var prevNum uint64
+		var sealed bool
+		if err := row.Scan(&prevHash, &prevNum, &sealed); err != nil {
+			if err == pgx.ErrNoRows {
+				pendingBlock.SetMbErrorEvent(txIndex, mbIndex, streamId, Err_NOT_FOUND, "stream not found")
+				return nil
+			}
+			return err
+		}
+		if pendingBlock.UpdatedMiniblocks[streamId] != nil {
+			pendingBlock.SetMbErrorEvent(
+				txIndex,
+				mbIndex,
+				streamId,
+				Err_FAILED_PRECONDITION, // TODO: introduce Err_DUPLICATE_MINIBLOCK_UPDATE
+				"can't update miniblock twice in the same block",
+			)
+			return nil
+		}
+		if sealed {
+			pendingBlock.SetMbErrorEvent(
+				txIndex,
+				mbIndex,
+				streamId,
+				Err_FAILED_PRECONDITION,
+				"stream is sealed",
+			) // TODO: introduce Err_STREAM_SEALED
+			return nil
+		}
+		if !bytes.Equal(prevHash, op.PrevMiniblockHash) {
+			pendingBlock.SetMbErrorEvent(
+				txIndex,
+				mbIndex,
+				streamId,
+				Err_BAD_PREV_MINIBLOCK_HASH,
+				"prev_miniblock_hash mismatch",
+			)
+			return nil
+		}
+		if prevNum+1 != op.LastMiniblockNum {
+			pendingBlock.SetMbErrorEvent(
+				txIndex,
+				mbIndex,
+				streamId,
+				Err_BAD_BLOCK_NUMBER,
+				"last_miniblock_num must increase by 1",
+			)
+			return nil
+		}
+
+		pendingBlock.UpdatedMiniblocks[streamId] = op
+		pendingBlock.SetMbStatusEvent(txIndex, mbIndex, streamId, op.LastMiniblockNum, op.LastMiniblockHash, op.Sealed)
+		return nil
+	})
+}
+
+func (s *PostgresMetadataShardStore) batchValidateUpdateStreamNodesAndReplicationTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+	txIndex int,
+	op *UpdateStreamNodesAndReplicationTx,
+) {
+	streamId, err := shared.StreamIdFromBytes(op.StreamId)
+	if err != nil {
+		pendingBlock.SetTxError(txIndex, err)
+		return
+	}
+
+	_, err = s.nodeIndexesForAddrs(op.Nodes, true)
+	if err != nil {
+		pendingBlock.SetTxError(txIndex, err)
+		return
+	}
+
+	batch.Queue(
+		s.sqlForShard(
+			`SELECT
+			  replication_factor,
+			  array_length(nodes, 1) AS num_nodes
+			FROM {{streams}}
+			WHERE stream_id = $1`,
+			shardId),
+		streamId[:],
+	).QueryRow(func(row pgx.Row) error {
+		var prevRepl uint32
+		var prevNumNodes int
+		if err := row.Scan(&prevRepl, &prevNumNodes); err != nil {
+			if err == pgx.ErrNoRows {
+				pendingBlock.SetTxErrorCode(txIndex, Err_NOT_FOUND)
+				return nil
+			}
+			return err
+		}
+
+		if pendingBlock.UpdatedStreams[streamId] != nil {
+			pendingBlock.SetTxErrorCode(txIndex, Err_FAILED_PRECONDITION)
+			return nil
+		}
+
+		switch {
+		case op.ReplicationFactor > 0 && len(op.Nodes) > 0:
+			if int(op.ReplicationFactor) > len(op.Nodes) {
+				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
+			}
+		case op.ReplicationFactor > 0:
+			if int(op.ReplicationFactor) > prevNumNodes {
+				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
+			}
+		case len(op.Nodes) > 0:
+			if len(op.Nodes) < int(prevRepl) {
+				pendingBlock.SetTxErrorCode(txIndex, Err_INVALID_ARGUMENT)
+				return nil
+			}
+		}
+
+		pendingBlock.UpdatedStreams[streamId] = op
+		pendingBlock.SetSuccess(txIndex)
+		return nil
+	})
+}
+
+func (s *PostgresMetadataShardStore) CommitPendingBlock(
+	ctx context.Context,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+) error {
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.CommitBlock",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.commitPendingBlockTx(ctx, tx, shardId, pendingBlock)
+		},
+		nil,
+		"shardId", shardId,
+		"height", pendingBlock.Height,
+	)
+}
+
+func (s *PostgresMetadataShardStore) commitPendingBlockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	shardId uint64,
+	pendingBlock *mdstate.PendingBlockState,
+) error {
+	batch := &pgx.Batch{}
+
+	// Validate height matches last height + 1 and update last height and app hash
+	batch.Queue(`SELECT last_height FROM metadata WHERE shard_id = $1 FOR UPDATE`, shardId).
+		QueryRow(func(row pgx.Row) error {
+			var lastHeight int64
+			if err := row.Scan(&lastHeight); err != nil {
+				return err
+			}
+			if lastHeight+1 != pendingBlock.Height {
+				return RiverError(
+					Err_FAILED_PRECONDITION,
+					"height mismatch",
+					"lastHeight",
+					lastHeight,
+					"pendingHeight",
+					pendingBlock.Height,
+				).Func("commitPendingBlockTx")
+			}
+			return nil
+		})
+	batch.Queue(
+		`UPDATE metadata SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`,
+		pendingBlock.Height,
+		pendingBlock.AppHash,
+		shardId,
+	)
+
+	for _, createOp := range pendingBlock.CreatedStreams {
+		if err := s.batchCreateStreamTx(batch, shardId, createOp); err != nil {
+			return err
+		}
+	}
+	for _, updateOp := range pendingBlock.UpdatedStreams {
+		if err := s.batchUpdateStreamNodesAndReplicationTx(batch, shardId, updateOp); err != nil {
+			return err
+		}
+	}
+	for _, updateOp := range pendingBlock.UpdatedMiniblocks {
+		if err := s.batchUpdateMiniblockTx(batch, shardId, updateOp); err != nil {
+			return err
+		}
+	}
+
+	return tx.SendBatch(ctx, batch).Close()
+}
+
+func (s *PostgresMetadataShardStore) batchCreateStreamTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	op *CreateStreamTx,
+) error {
+	nodeIndexes, err := s.nodeIndexesForAddrs(op.Nodes, false)
+	if err != nil {
+		return err
+	}
+
+	// For new streams (last_miniblock_num = 0), use genesis_miniblock_hash as last_miniblock_hash
+	lastMiniblockHash := op.LastMiniblockHash
+	if op.LastMiniblockNum == 0 {
+		lastMiniblockHash = op.GenesisMiniblockHash
+	}
+
+	batch.Queue(
+		s.sqlForShard(
+			`INSERT INTO {{streams}} (stream_id, genesis_miniblock_hash, genesis_miniblock, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			shardId,
+		),
+		op.StreamId,
+		op.GenesisMiniblockHash,
+		op.GenesisMiniblock,
+		lastMiniblockHash,
+		op.LastMiniblockNum,
+		op.ReplicationFactor,
+		op.Sealed,
+		nodeIndexes,
+	)
+	return nil
+}
+
+func (s *PostgresMetadataShardStore) batchUpdateStreamNodesAndReplicationTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	op *UpdateStreamNodesAndReplicationTx,
+) error {
+	nodeIndexes, err := s.nodeIndexesForAddrs(op.Nodes, true)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case op.ReplicationFactor > 0 && len(op.Nodes) > 0:
+		batch.Queue(
+			s.sqlForShard(
+				`UPDATE {{streams}}
+				SET replication_factor = $2,
+					nodes = $3
+				WHERE stream_id = $1`,
+				shardId,
+			),
+			op.StreamId,
+			op.ReplicationFactor,
+			nodeIndexes,
+		)
+
+	case op.ReplicationFactor > 0:
+		batch.Queue(
+			s.sqlForShard(
+				`UPDATE {{streams}}
+				SET replication_factor = $2
+				WHERE stream_id = $1`,
+				shardId,
+			),
+			op.StreamId,
+			op.ReplicationFactor,
+		)
+	case len(op.Nodes) > 0:
+		batch.Queue(
+			s.sqlForShard(
+				`UPDATE {{streams}}
+			SET nodes = $2
+			WHERE stream_id = $1`,
+				shardId,
+			),
+			op.StreamId,
+			nodeIndexes,
+		)
+	}
+	return nil
+}
+
+func (s *PostgresMetadataShardStore) batchUpdateMiniblockTx(
+	batch *pgx.Batch,
+	shardId uint64,
+	op *MiniblockUpdate,
+) error {
+	if op.Sealed {
+		batch.Queue(
+			s.sqlForShard(
+				`UPDATE {{streams}}
+				SET last_miniblock_hash = $2,
+					last_miniblock_num = $3,
+					sealed = $4
+				WHERE stream_id = $1`,
+				shardId,
+			),
+			op.StreamId,
+			op.LastMiniblockHash,
+			op.LastMiniblockNum,
+			op.Sealed,
+		)
+	} else {
+		batch.Queue(
+			s.sqlForShard(
+				`UPDATE {{streams}}
+				SET last_miniblock_hash = $2,
+					last_miniblock_num = $3
+				WHERE stream_id = $1`,
+				shardId,
+			),
+			op.StreamId,
+			op.LastMiniblockHash,
+			op.LastMiniblockNum,
+		)
+	}
+	return nil
 }
