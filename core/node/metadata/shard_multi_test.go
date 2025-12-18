@@ -34,15 +34,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/infra"
 	nodespkg "github.com/towns-protocol/towns/core/node/nodes"
 	prot "github.com/towns-protocol/towns/core/node/protocol"
 	protocolconnect "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
-	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
@@ -248,57 +245,12 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 	shards := make([]*MetadataShard, numShardInstances)
 	clients := make([]*local.Local, numShardInstances)
 	stores := make([]*storage.PostgresMetadataShardStore, numShardInstances)
-	dbClosers := make([]func(), numShardInstances)
-	streamStores := make([]*storage.PostgresStreamStore, numShardInstances)
+	storeCleanups := make([]func(), numShardInstances)
 
 	for i := range numShardInstances {
-		dbCfg, dbSchema, dbCloser, err := dbtestutils.ConfigureDB(ctx)
-		require.NoError(t, err)
-
-		dbCfg.StartupDelay = 2 * time.Millisecond
-		dbCfg.Extra = strings.Replace(dbCfg.Extra, "pool_max_conns=1000", "pool_max_conns=10", 1)
-
-		poolInfo, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, dbSchema, nil)
-		require.NoError(t, err)
-
-		exitSignal := make(chan error, 1)
-		streamStore, err := storage.NewPostgresStreamStore(
-			ctx,
-			poolInfo,
-			base.GenShortNanoid(),
-			exitSignal,
-			infra.NewMetricsFactory(nil, "", ""),
-			&mocks.MockOnChainCfg{
-				Settings: &crypto.OnChainSettings{
-					StreamEphemeralStreamTTL: time.Minute * 10,
-					StreamHistoryMiniblocks: crypto.StreamHistoryMiniblocks{
-						Default:      0,
-						Space:        5,
-						UserSettings: 5,
-					},
-					MinSnapshotEvents: crypto.MinSnapshotEventsSettings{
-						Default: 10,
-					},
-					StreamSnapshotIntervalInMiniblocks: 110,
-					StreamTrimActivationFactor:         1,
-				},
-			},
-			nil,
-			5,
-		)
-		require.NoError(t, err)
-
-		store, err := storage.NewPostgresMetadataShardStore(
-			ctx,
-			&streamStore.PostgresEventStore,
-			multiTestShardID,
-			registry,
-		)
-		require.NoError(t, err)
-
-		stores[i] = store
-		streamStores[i] = streamStore
-		dbClosers[i] = dbCloser
+		storeSetup := setupMetadataStore(t, ctx, multiTestShardID, registry)
+		stores[i] = storeSetup.shardStore
+		storeCleanups[i] = storeSetup.cleanup
 
 		// Build persistent peers excluding self
 		peers := make([]string, 0, numShardInstances-1)
@@ -358,8 +310,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		waitForShardsStopped(t, shards)
 
 		for i := range numShardInstances {
-			streamStores[i].Close(ctx)
-			dbClosers[i]()
+			storeCleanups[i]()
 		}
 	}
 
