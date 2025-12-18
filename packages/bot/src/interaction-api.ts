@@ -144,7 +144,10 @@ export function flattenedComponentToPayload(
         return { id, component: { case: 'button', value: { label: component.label } } }
     }
     if (type === 'textInput') {
-        return { id, component: { case: 'textInput', value: { placeholder: component.placeholder } } }
+        return {
+            id,
+            component: { case: 'textInput', value: { placeholder: component.placeholder } },
+        }
     }
     checkNever(type, `Unknown component type: ${type}`)
 }
