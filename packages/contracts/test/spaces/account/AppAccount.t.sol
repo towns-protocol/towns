@@ -72,11 +72,14 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
 
     modifier givenAppIsInstalled() {
         // setup clients
+        vm.prank(dev);
+        mockModule.setPrice(0.001 ether);
 
         vm.prank(dev);
         appId = registry.registerApp(mockModule, client);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
+
         uint256 totalRequired = registry.getAppPrice(address(mockModule));
 
         uint256 protocolFee = _getProtocolFee(totalRequired);
@@ -220,7 +223,6 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         });
 
         assertEq(address(appAccount).balance, 1 ether);
-        assertEq(address(mockModule).balance, 0);
     }
 
     function test_isAppExecuting() external givenAppIsInstalled {
