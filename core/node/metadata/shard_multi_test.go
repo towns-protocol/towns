@@ -904,18 +904,18 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 	require.NoError(t, err, "failed to reach height 10")
 
 	// Phase 2: Update streams (blocks 13-25)
-	updateRound := 1
+	updateIndex := 0
 	for streamID, prevHash := range createdStreams {
-		newHash := bytes.Repeat([]byte{byte(updateRound + 100)}, 32)
+		newHash := bytes.Repeat([]byte{byte(updateIndex + 100)}, 32)
 
-		txBytes, err := buildMiniblockUpdateTx(streamID, prevHash, newHash, uint64(updateRound), false)
+		txBytes, err := buildMiniblockUpdateTx(streamID, prevHash, newHash, 1, false)
 		require.NoError(t, err)
 
-		err = env.broadcastTxSync(updateRound%numShardInstances, txBytes)
+		err = env.broadcastTxSync(updateIndex%numShardInstances, txBytes)
 		require.NoError(t, err)
 
 		createdStreams[streamID] = newHash
-		updateRound++
+		updateIndex++
 	}
 
 	// Wait for final blocks via RPC Status
