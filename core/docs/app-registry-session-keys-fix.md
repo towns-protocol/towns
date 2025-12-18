@@ -10,99 +10,161 @@ This causes:
 
 ## Root Cause Analysis
 
-1. **Missing Unique Constraint**: The `app_session_keys` table (`000001_create_initial_schema.up.sql:19-27`) has no `UNIQUE` constraint on `(device_key, stream_id)`. There's only:
+1. **Missing Unique Constraint**: The `app_session_keys` table (`000001_create_initial_schema.up.sql:19-27`) has no `UNIQUE` constraint. There's only:
    - A foreign key constraint on `device_key`
    - CHECK constraints for session_ids array
    - Indexes (including `idx_app_session_keys_device_stream` added in migration 000006)
 
-2. **No Sync Cookie Persistence for User Inbox Streams**: The `shouldPersistCookie` method in `tracked_stream.go:176-209` explicitly returns `false` for non-channel streams, meaning user inbox stream positions are never saved, causing full reprocessing on restart.
+2. **Code Expects Constraint**: `pg_app_registry_store.go:672` has `isPgError(err, pgerrcode.UniqueViolation)` handling that would return `Err_ALREADY_EXISTS`, but this never triggers because there's no constraint.
 
-3. **Code Expects Constraint**: `pg_app_registry_store.go:672` has `isPgError(err, pgerrcode.UniqueViolation)` handling that would return `Err_ALREADY_EXISTS`, but this never triggers because there's no constraint.
+3. **Verbose Logging**: The `log.Infow("Publishing session keys for bot", ...)` at `tracked_stream.go:42` logs before attempting to publish, so it fires for every event regardless of whether the publish succeeds or is a duplicate.
 
-4. **Verbose Logging**: The `log.Infow("Publishing session keys for bot", ...)` at `tracked_stream.go:42` logs before attempting to publish, so it fires for every event regardless of whether the publish succeeds or is a duplicate.
+**Note**: Cookie persistence for user inbox streams was already implemented separately.
+
+## Why the Unique Constraint Needs All Three Columns
+
+A simple `UNIQUE(device_key, stream_id)` constraint would be **incorrect** because:
+
+1. **Multiple events can legitimately exist** for the same `(device_key, stream_id)` with different `session_ids` arrays
+2. Example: Event1 has `[S1, S2, S3]`, Event2 has `[S3, S4, S5]`
+   - Both events are needed: Event1's envelope decrypts S1/S2, Event2's envelope decrypts S4/S5
+3. The duplicate problem is when the **exact same event** (same session_ids array) is reprocessed
+
+Additionally, different clients may send the same session_ids in different order (e.g., `[S1, S2, S3]` vs `[S3, S1, S2]`). PostgreSQL compares arrays element-by-element, so `['S1','S2','S3'] != ['S3','S1','S2']`. We solve this by using a **database trigger** to automatically sort arrays before insert.
 
 ## Solution
 
-Implement both fixes:
+### Part 1: Add Database Trigger and Unique Constraint via Migration
 
-### Part 1: Add Unique Constraint via Migration
-
-Create migration `000008_add_unique_device_stream_constraint`:
+Create migration `000009_add_unique_session_keys_constraint`:
 
 **Up migration:**
-1. Delete duplicate rows, keeping the first occurrence (by ctid)
-2. Add `UNIQUE` constraint on `(device_key, stream_id)`
+1. Create a function to sort session_ids arrays
+2. Create a BEFORE INSERT trigger that auto-sorts session_ids
+3. Sort existing session_ids arrays (one-time update)
+4. Delete duplicate rows, keeping the first occurrence
+5. Add `UNIQUE` constraint on `(device_key, stream_id, session_ids)`
 
 **Down migration:**
 1. Drop the unique constraint
+2. Drop the trigger
+3. Drop the function
 
-### Part 2: Persist Sync Cookies for User Inbox Streams
+### Part 2: Fix Log Spam by Moving Log Inside PublishSessionKeys
 
-Modify `shouldPersistCookie` in `tracked_stream.go` to also persist cookies for user inbox streams (not just channel streams with bots).
-
-### Part 3: Fix Log Spam by Moving Log Inside PublishSessionKeys
-
-Move the "Publishing session keys for bot" log from `tracked_stream.go:42-48` into `CachedEncryptedMessageQueue.PublishSessionKeys` (`cached_encrypted_message_queue.go`), after we know the result of the publish attempt. This way we can log:
-- If keys were newly published (success)
-- If keys were skipped because they already exist (after adding the unique constraint)
-- Already logs if messages were dequeued (`cached_encrypted_message_queue.go:203-210`)
+Move the "Publishing session keys for bot" log from `tracked_stream.go:42-48` into `CachedEncryptedMessageQueue.PublishSessionKeys` (`cached_encrypted_message_queue.go`), after we know the result of the publish attempt.
 
 ## Files Modified
 
-1. **New file**: `core/node/storage/app_registry_migrations/000008_add_unique_device_stream_constraint.up.sql`
-2. **New file**: `core/node/storage/app_registry_migrations/000008_add_unique_device_stream_constraint.down.sql`
-3. **Modify**: `core/node/app_registry/sync/tracked_stream.go` - Update `shouldPersistCookie`, remove the pre-publish log
+1. **New file**: `core/node/storage/app_registry_migrations/000009_add_unique_session_keys_constraint.up.sql`
+2. **New file**: `core/node/storage/app_registry_migrations/000009_add_unique_session_keys_constraint.down.sql`
+3. **Modify**: `core/node/app_registry/sync/tracked_stream.go` - Remove the pre-publish log at lines 42-48
 4. **Modify**: `core/node/app_registry/cached_encrypted_message_queue.go` - Add log after publish with result
+
+**Note**: No changes needed to `pg_app_registry_store.go` - the database trigger handles sorting automatically.
 
 ## Implementation Details
 
-### Migration 000008 (up.sql)
+### Migration 000009 (up.sql)
 
 ```sql
--- Delete duplicate rows, keeping the first occurrence
+-- Step 1: Create function to sort session_ids array
+-- This function is called by the trigger before each insert
+CREATE OR REPLACE FUNCTION sort_session_ids_array() RETURNS TRIGGER AS $$
+BEGIN
+    -- unnest expands array into rows, ORDER BY sorts them, ARRAY collects back
+    -- Example: ['S3','S1','S2'] -> rows S3,S1,S2 -> sorted S1,S2,S3 -> ['S1','S2','S3']
+    NEW.session_ids := ARRAY(SELECT unnest(NEW.session_ids) ORDER BY 1);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Step 2: Create trigger to auto-sort session_ids before insert
+CREATE TRIGGER trigger_sort_session_ids
+BEFORE INSERT ON app_session_keys
+FOR EACH ROW EXECUTE FUNCTION sort_session_ids_array();
+
+-- Step 3: Sort existing session_ids arrays (one-time migration)
+UPDATE app_session_keys
+SET session_ids = sorted.sorted_ids
+FROM (
+    SELECT ctid, ARRAY(SELECT unnest(session_ids) ORDER BY 1) AS sorted_ids
+    FROM app_session_keys
+) AS sorted
+WHERE app_session_keys.ctid = sorted.ctid;
+
+-- Step 4: Delete duplicate rows (same device_key, stream_id, session_ids), keeping first by ctid
 DELETE FROM app_session_keys a
 USING app_session_keys b
 WHERE a.device_key = b.device_key
   AND a.stream_id = b.stream_id
+  AND a.session_ids = b.session_ids
   AND a.ctid > b.ctid;
 
--- Add unique constraint on (device_key, stream_id)
+-- Step 5: Add unique constraint on (device_key, stream_id, session_ids)
 ALTER TABLE app_session_keys
-ADD CONSTRAINT unique_device_key_stream_id UNIQUE (device_key, stream_id);
+ADD CONSTRAINT unique_device_stream_session_ids UNIQUE (device_key, stream_id, session_ids);
 ```
 
-### Migration 000008 (down.sql)
+### Migration 000009 (down.sql)
 
 ```sql
 ALTER TABLE app_session_keys
-DROP CONSTRAINT unique_device_key_stream_id;
+DROP CONSTRAINT IF EXISTS unique_device_stream_session_ids;
+
+DROP TRIGGER IF EXISTS trigger_sort_session_ids ON app_session_keys;
+
+DROP FUNCTION IF EXISTS sort_session_ids_array();
 ```
 
 ### tracked_stream.go Change
 
-Update `shouldPersistCookie` to persist cookies for user inbox streams:
+Remove the log at lines 42-48:
 
 ```go
-func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
-    streamId := view.StreamId()
+// REMOVE this block:
+log.Infow(
+    "Publishing session keys for bot",
+    "streamId", streamId,
+    "deviceKey", deviceKey,
+    "sessionIdCount", len(sessionIds),
+    "sessionIds", sessionIds,
+)
+```
 
-    // Persist cookies for user inbox streams to avoid reprocessing
-    // session keys on service restart
-    if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-        return true
+### cached_encrypted_message_queue.go Change
+
+Add logging after the publish attempt in `PublishSessionKeys`:
+
+```go
+func (c *CachedEncryptedMessageQueue) PublishSessionKeys(...) error {
+    messages, err := c.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, encryptionEnvelope)
+    if err != nil {
+        if base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS) {
+            log.Debugw("Session keys already exist, skipping",
+                "streamId", streamId,
+                "deviceKey", deviceKey,
+                "sessionIdCount", len(sessionIds),
+            )
+            return nil  // Not an error - just a duplicate
+        }
+        return err
     }
 
-    // Only persist cookies for channel streams with bot members
-    if streamId.Type() != shared.STREAM_CHANNEL_BIN {
-        return false
-    }
-    // ... rest of existing logic for channels
+    log.Infow("Published session keys for bot",
+        "streamId", streamId,
+        "deviceKey", deviceKey,
+        "sessionIdCount", len(sessionIds),
+        "dequeuedMessages", len(messages.MessageEnvelopes),
+    )
+    // ... rest of function (forward messages if any)
 }
 ```
 
 ## Testing
 
 1. Verify migration runs successfully on a database with existing duplicates
-2. Verify unique constraint prevents duplicate inserts
-3. Verify service restart no longer reprocesses historical user inbox events
-4. Verify `Err_ALREADY_EXISTS` is properly returned when attempting duplicate insert (if edge case)
+2. Verify trigger auto-sorts: insert `[S3, S1, S2]`, verify stored as `[S1, S2, S3]`
+3. Verify duplicate detection: insert `[S3, S1, S2]` then `[S1, S2, S3]` - second should fail with UniqueViolation
+4. Verify different session_ids arrays are allowed: `[S1, S2]` and `[S2, S3]` should both be stored
+5. Verify `Err_ALREADY_EXISTS` is properly returned and handled (log at debug level, not error)

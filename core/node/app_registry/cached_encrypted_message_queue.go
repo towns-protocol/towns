@@ -194,14 +194,23 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	sessionIds []string,
 	encryptionEnvelope []byte,
 ) (err error) {
+	log := logging.FromCtx(ctx)
 	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, encryptionEnvelope)
 	if err != nil {
+		if base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS) {
+			log.Debugw(
+				"Session keys already exist, skipping",
+				"streamId", streamId,
+				"deviceKey", deviceKey,
+				"sessionIdCount", len(sessionIds),
+			)
+			return nil
+		}
 		return err
 	}
 	if sendableMessages != nil {
-		log := logging.FromCtx(ctx)
 		log.Infow(
-			"Dequeuing messages after receiving session keys",
+			"Published session keys and dequeuing messages",
 			"appId", sendableMessages.AppId,
 			"streamId", streamId,
 			"deviceKey", deviceKey,
@@ -219,9 +228,15 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 			MessageEnvelopes:      sendableMessages.MessageEnvelopes,
 		}
 		return q.appDispatcher.SubmitMessages(ctx, messages)
-	} else {
-		return nil
 	}
+
+	log.Infow(
+		"Published session keys for bot",
+		"streamId", streamId,
+		"deviceKey", deviceKey,
+		"sessionIdCount", len(sessionIds),
+	)
+	return nil
 }
 
 // DispatchOrEnqueueMessages will immediately send a message for each device that has session keys, and will
