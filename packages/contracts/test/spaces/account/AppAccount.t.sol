@@ -359,8 +359,4 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         uint256 basisPointsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
         return FixedPointMathLib.max(basisPointsFee, minPrice);
     }
-
-    function _getTotalRequired(uint256 installPrice) internal view returns (uint256) {
-        return installPrice == 0 ? _getProtocolFee(installPrice) : installPrice;
-    }
 }
