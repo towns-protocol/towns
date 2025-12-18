@@ -182,13 +182,11 @@ export function flattenedToPayloadContent(
             }
         }
         case 'transaction': {
-            const { type, id, title, subtitle, recipient, tx } = payload
+            const { type, recipient, tx, ...rest } = payload
             return {
                 case: 'transaction',
                 value: {
-                    id,
-                    title,
-                    subtitle,
+                    ...rest,
                     content: {
                         case: 'evm',
                         value: tx,
