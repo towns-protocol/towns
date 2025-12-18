@@ -88,7 +88,10 @@ func (r *rudderstackAnalytics) Track(
 
 // NewRudderstack creates a new Analytics implementation using RudderStack.
 // If writeKey or dataPlaneURL is empty, or if client creation fails, returns a no-op implementation.
-func NewRudderstack(writeKey, dataPlaneURL string) Analytics {
+// The client will be automatically closed when the context is cancelled.
+func NewRudderstack(ctx context.Context, writeKey, dataPlaneURL string) Analytics {
+	log := logging.FromCtx(ctx)
+
 	if writeKey == "" || dataPlaneURL == "" {
 		return &noopAnalytics{}
 	}
@@ -96,8 +99,18 @@ func NewRudderstack(writeKey, dataPlaneURL string) Analytics {
 		DataPlaneUrl: dataPlaneURL,
 	})
 	if err != nil {
+		log.Errorw("Failed to create RudderStack client", "error", err)
 		return &noopAnalytics{}
 	}
+
+	// Close the client when the context is cancelled to flush pending events
+	go func() {
+		<-ctx.Done()
+		if err := client.Close(); err != nil {
+			log.Errorw("Failed to close RudderStack client", "error", err)
+		}
+	}()
+
 	return &rudderstackAnalytics{client: client}
 }
 

@@ -110,7 +110,7 @@ func NewService(
 	}
 
 	if listener == nil {
-		analyticsClient := analytics.NewRudderstack(cfg.RudderstackWriteKey, cfg.RudderstackDataPlaneURL)
+		analyticsClient := analytics.NewRudderstack(ctx, cfg.RudderstackWriteKey, cfg.RudderstackDataPlaneURL)
 		listener = NewAppMessageProcessor(cache, analyticsClient)
 	}
 
