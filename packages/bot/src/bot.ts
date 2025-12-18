@@ -101,20 +101,24 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
+// x402 v2: Using v1 payment payload types (v2 facilitators accept v1 format for backwards compatibility)
+// Note: x402 core v2.0.0 still uses PaymentPayloadV1/PaymentRequirementsV1 types.
+// The v2 improvements are CAIP-2 networks, multi-chain support, and sessions (all implemented here).
+import type { PaymentPayloadV1, PaymentRequirementsV1 } from '@x402/core/types/v1'
+import type { PendingPayment, PaymentConfig, ActiveSession } from './payments'
+import {
+    chainIdToNetwork,
+    createPaymentRequest,
+    getSessionKey,
+    validateNetworkSupport,
+} from './payments'
+import type { FacilitatorConfig, FacilitatorConfigInput } from './x402'
+import { normalizeFacilitatorConfig, callFacilitatorSettle, callFacilitatorVerify } from './x402'
 import {
     type FlattenedInteractionRequest,
     isFlattenedRequest,
     flattenedToPayloadContent,
 } from './interaction-api'
-import type {
-    FacilitatorConfig,
-    PaymentPayload,
-    PaymentRequirements,
-    RouteConfig,
-} from 'x402/types'
-import type { PendingPayment } from './payments'
-import { chainIdToNetwork, createPaymentRequest } from './payments'
-import { useFacilitator } from 'x402/verify'
 
 import {
     http,
@@ -145,8 +149,21 @@ import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
+/**
+ * Extended bot command with x402 v2 payment support
+ * Supports sessions (pay once, use many) and multi-chain payments
+ */
 export type BotCommand = PlainMessage<SlashCommand> & {
-    paid?: RouteConfig
+    /**
+     * Payment configuration for paid commands
+     *
+     * Simple payment: `paid: \{ price: '$0.50' \}`
+     *
+     * With session (pay once, use for 1 hour): `paid: \{ price: '$1.00', session: \{ duration: 3600 \} \}`
+     *
+     * Multi-chain support: `paid: \{ price: '$0.25', networks: ['eip155:8453', 'eip155:84532'] \}`
+     */
+    paid?: PaymentConfig
 }
 
 export type BotHandler = ReturnType<typeof buildBotActions>
@@ -418,10 +435,11 @@ export class Bot<Commands extends BotCommand[] = []> {
     private readonly identityConfig?: BotIdentityConfig
     private readonly eventDedup: EventDedup
 
-    // Payment related members
+    // Payment related members (x402 v2)
     private readonly paymentConfig?: FacilitatorConfig
     private readonly pendingPayments: Map<string, PendingPayment> = new Map()
-    private readonly paymentCommands = new Map<string, RouteConfig>()
+    private readonly paymentCommands = new Map<string, PaymentConfig>()
+    private readonly activeSessions: Map<string, ActiveSession> = new Map()
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -453,6 +471,72 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
 
         this.onInteractionResponse(this.handlePaymentResponse.bind(this))
+    }
+
+    /**
+     * Check if a user has an active session for a command
+     */
+    private hasActiveSession(userId: string, command: string): boolean {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.activeSessions.get(sessionKey)
+
+        if (!session) return false
+
+        // Check if session has expired
+        if (Date.now() > session.expiresAt) {
+            this.activeSessions.delete(sessionKey)
+            return false
+        }
+
+        // Check if session has uses remaining
+        if (session.usesRemaining !== undefined && session.usesRemaining <= 0) {
+            this.activeSessions.delete(sessionKey)
+            return false
+        }
+
+        return true
+    }
+
+    /**
+     * Use a session (decrements use count if limited)
+     */
+    private useSession(userId: string, command: string): ActiveSession | undefined {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.activeSessions.get(sessionKey)
+
+        if (!session) return undefined
+
+        // Decrement uses if limited
+        if (session.usesRemaining !== undefined) {
+            session.usesRemaining--
+            if (session.usesRemaining <= 0) {
+                this.activeSessions.delete(sessionKey)
+            }
+        }
+
+        return session
+    }
+
+    /**
+     * Create a new session after successful payment
+     */
+    private createSession(
+        userId: string,
+        command: string,
+        sessionConfig: { duration?: number; maxUses?: number },
+        transactionHash: string,
+    ): ActiveSession {
+        const sessionKey = getSessionKey(userId, command)
+        const duration = sessionConfig.duration ?? 3600 // Default 1 hour
+        const session: ActiveSession = {
+            userId,
+            command,
+            expiresAt: Date.now() + duration * 1000,
+            usesRemaining: sessionConfig.maxUses,
+            transactionHash,
+        }
+        this.activeSessions.set(sessionKey, session)
+        return session
     }
 
     start() {
@@ -1020,13 +1104,21 @@ export class Bot<Commands extends BotCommand[] = []> {
         // Remove from pending
         this.pendingPayments.delete(signatureId)
 
-        const facilitator = useFacilitator(this.paymentConfig)
+        // Get network in CAIP-2 format (x402 v2)
+        const network = chainIdToNetwork(this.viem.chain.id)
 
-        // Build PaymentPayload for x402
-        const paymentPayload: PaymentPayload = {
+        // Validate network support (double-check in case chain switched)
+        const paymentConfig = this.paymentCommands.get(pending.command)
+        if (paymentConfig) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            validateNetworkSupport(this.viem.chain.id, paymentConfig)
+        }
+
+        // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
+        const paymentPayload: PaymentPayloadV1 = {
             x402Version: 1,
             scheme: 'exact',
-            network: chainIdToNetwork(this.viem.chain.id),
+            network: network,
             payload: {
                 signature: signature,
                 authorization: {
@@ -1040,17 +1132,19 @@ export class Bot<Commands extends BotCommand[] = []> {
             },
         }
 
-        // Build PaymentRequirements for x402
-        const paymentRequirements: PaymentRequirements = {
+        // Build PaymentRequirements using v1 format (x402 core v2.0.0 still uses v1 payload types)
+        const paymentRequirements: PaymentRequirementsV1 = {
             scheme: 'exact',
-            network: paymentPayload.network,
+            network: network,
             maxAmountRequired: pending.params.value.toString(),
             resource: `https://towns.com/command/${pending.command}`,
             description: `Payment for /${pending.command}`,
             mimeType: 'application/json',
+            outputSchema: {},
             payTo: pending.params.to,
             maxTimeoutSeconds: 300,
             asset: pending.params.verifyingContract,
+            extra: {},
         }
 
         // Single status message that gets updated through the flow
@@ -1061,7 +1155,12 @@ export class Bot<Commands extends BotCommand[] = []> {
         let transactionHash: string | undefined
 
         try {
-            const verifyResult = await facilitator.verify(paymentPayload, paymentRequirements)
+            // Call x402 facilitator to verify payment
+            const verifyResult = await callFacilitatorVerify(
+                this.paymentConfig,
+                paymentPayload,
+                paymentRequirements,
+            )
 
             if (!verifyResult.isValid) {
                 await handler.editMessage(
@@ -1080,7 +1179,11 @@ export class Bot<Commands extends BotCommand[] = []> {
                 `✅ Verified • Settling $${formatUnits(pending.params.value, 6)} USDC...`,
             )
 
-            const settleResult = await facilitator.settle(paymentPayload, paymentRequirements)
+            const settleResult = await callFacilitatorSettle(
+                this.paymentConfig,
+                paymentPayload,
+                paymentRequirements,
+            )
 
             if (!settleResult.success) {
                 await handler.editMessage(
@@ -1096,13 +1199,32 @@ export class Bot<Commands extends BotCommand[] = []> {
             settlementCompleted = true
             transactionHash = settleResult.transaction
 
+            // Create session if configured
+            let sessionInfo = ''
+            if (pending.sessionConfig && transactionHash) {
+                const session = this.createSession(
+                    pending.userId,
+                    pending.command,
+                    pending.sessionConfig,
+                    transactionHash,
+                )
+                const duration = pending.sessionConfig.duration ?? 3600
+                const hours = Math.floor(duration / 3600)
+                const mins = Math.floor((duration % 3600) / 60)
+                const durationStr =
+                    hours > 0 ? `${hours}h${mins > 0 ? ` ${mins}m` : ''}` : `${mins}m`
+                const usesStr =
+                    session.usesRemaining !== undefined ? ` (${session.usesRemaining} uses)` : ''
+                sessionInfo = `\n🔓 Session active for ${durationStr}${usesStr}`
+            }
+
             // Final success - show receipt
             await handler.editMessage(
                 channelId,
                 statusMsg.eventId,
                 `✅ **Payment Complete**\n` +
                     `/${pending.command} • $${formatUnits(pending.params.value, 6)} USDC\n` +
-                    `Tx: \`${transactionHash}\``,
+                    `Tx: \`${transactionHash}\`${sessionInfo}`,
             )
 
             // Delete the signature request now that payment is complete
@@ -1309,7 +1431,10 @@ export class Bot<Commands extends BotCommand[] = []> {
             // New flattened format: (streamId, payload, opts?)
             return this.client.sendInteractionRequest(
                 streamId,
-                contentOrPayload,
+                flattenedToPayloadContent(contentOrPayload),
+                contentOrPayload.recipient
+                    ? bin_fromHexString(contentOrPayload.recipient)
+                    : undefined,
                 recipientOrOpts as MessageOpts | undefined,
                 tags,
             )
@@ -1520,14 +1645,48 @@ export class Bot<Commands extends BotCommand[] = []> {
 
         this.slashCommandHandlers.set(command, async (handler, event) => {
             try {
+                // Check for active session (x402 v2 feature)
+                if (paymentConfig.session && this.hasActiveSession(event.userId, command)) {
+                    const session = this.useSession(event.userId, command)
+                    if (session) {
+                        // Session is valid, execute command without payment
+                        debug('session:used', {
+                            userId: event.userId,
+                            command,
+                            usesRemaining: session.usesRemaining,
+                            expiresAt: new Date(session.expiresAt).toISOString(),
+                        })
+
+                        // Show session usage info
+                        const usesInfo =
+                            session.usesRemaining !== undefined
+                                ? ` (${session.usesRemaining} uses remaining)`
+                                : ''
+                        await handler.sendMessage(
+                            event.channelId,
+                            `🔓 Using session access${usesInfo}`,
+                            { ephemeral: true },
+                        )
+
+                        // Execute the original command handler
+                        await fn(handler, event)
+                        return
+                    }
+                }
+
                 const chainId = this.viem.chain.id
+
+                // Validate network support before creating payment request
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                validateNetworkSupport(chainId, paymentConfig)
+
                 const smartAccountAddress = await getSmartAccountFromUserIdImpl(
                     this.client.config.base.chainConfig.addresses.spaceFactory,
                     this.viem,
                     event.userId,
                 )
 
-                const { signatureId, params, eventId } = await createPaymentRequest(
+                const { signatureId, params, eventId, sessionConfig } = await createPaymentRequest(
                     handler,
                     event,
                     chainId,
@@ -1537,7 +1696,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     command,
                 )
 
-                // Store pending payment
+                // Store pending payment with session config
                 this.pendingPayments.set(signatureId, {
                     command: command,
                     channelId: event.channelId,
@@ -1545,6 +1704,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     interactionEventId: eventId,
                     event: event,
                     params: params,
+                    sessionConfig: sessionConfig,
                 })
             } catch (error) {
                 await handler.sendMessage(
@@ -1715,7 +1875,13 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         commands?: Commands
         identity?: BotIdentityConfig
         dedup?: EventDedupConfig
-        paymentConfig?: FacilitatorConfig
+        /**
+         * Configure the x402 facilitator used for paid commands.
+         *
+         * Important: you must provide a `url` for the facilitator verify/settle HTTP API.
+         * (There is no reliable hard-coded default.)
+         */
+        paymentConfig?: FacilitatorConfigInput
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1797,6 +1963,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
     }
 
     await client.uploadDeviceKeys()
+    const paymentConfig = normalizeFacilitatorConfig(opts.paymentConfig)
     return new Bot<Commands>(
         client,
         viem,
@@ -1805,7 +1972,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         opts.commands,
         opts.identity,
         opts.dedup,
-        opts.paymentConfig,
+        paymentConfig,
     )
 }
 
@@ -2486,7 +2653,6 @@ const buildBotActions = (
         let recipient: Uint8Array | undefined
         let opts: MessageOpts | undefined
         let tags: PlainMessage<Tags> | undefined
-
         if (isFlattenedRequest(contentOrPayload)) {
             // New flattened format
             content = flattenedToPayloadContent(contentOrPayload)
@@ -2502,7 +2668,6 @@ const buildBotActions = (
             opts = optsOrTags as MessageOpts | undefined
             tags = maybeTags
         }
-
         // Get encryption settings (same as sendMessageEvent)
         const miniblockInfo = await client.getMiniblockInfo(streamId)
         const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
@@ -2767,6 +2932,7 @@ const buildBotActions = (
                 client.signerContext,
                 make_ChannelPayload_Inception({
                     streamId: streamIdAsBytes(channelId),
+                    spaceId: streamIdAsBytes(spaceId),
                     settings: undefined,
                     channelSettings: {
                         autojoin: params.autojoin ?? false,
