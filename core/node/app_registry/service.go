@@ -110,8 +110,8 @@ func NewService(
 	}
 
 	if listener == nil {
-		analyticsClient := analytics.New(cfg.MixpanelToken)
-		listener = NewAppMessageProcessor(ctx, cache, analyticsClient)
+		analyticsClient := analytics.NewRudderstack(ctx, cfg.RudderstackWriteKey, cfg.RudderstackDataPlaneURL)
+		listener = NewAppMessageProcessor(cache, analyticsClient)
 	}
 
 	cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
