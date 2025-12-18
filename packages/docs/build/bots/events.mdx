@@ -46,9 +46,9 @@ Bots have three message forwarding modes that control which events they receive.
 - Use for: External-only bots triggered by [custom webhooks](/build/bots/external-interactions) or timers
 
 ## Event Listeners
-All event listeners are asynchronous functions that receive a `handler` and an `event` object. 
+All event listeners are asynchronous functions that receive a `ctx` (context) and an `event` object.
 
-The `handler` is the bot instance and the `event` contains the `BasePayload` and additional fields specific to the event type.
+The `ctx` provides methods for sending messages and interacting with Towns, while the `event` contains the `BasePayload` and additional fields specific to the event type. You can access event data from either `ctx` or `event` (they contain the same payload data).
 
 ### onMessage
 
@@ -217,10 +217,10 @@ Send binary data (videos, screenshots, generated images). Framework automaticall
 ```ts
 import { readFileSync } from 'node:fs'
 
-bot.onSlashCommand("video", async (handler, { channelId }) => {
+bot.onSlashCommand("video", async (ctx, event) => {
   const videoData = readFileSync('./video.mp4')
 
-  await handler.sendMessage(channelId, "Check this out!", {
+  await ctx.send("Check this out!", {
     attachments: [{
       type: 'chunked',
       data: videoData,        // Uint8Array
@@ -237,19 +237,19 @@ bot.onSlashCommand("video", async (handler, { channelId }) => {
 ```ts
 import { createCanvas } from '@napi-rs/canvas'
 
-bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
-  const value = parseInt(args[0]) || 50
+bot.onSlashCommand("chart", async (ctx, event) => {
+  const value = parseInt(ctx.args[0]) || 50
 
   const canvas = createCanvas(400, 300)
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle = '#2c3e50'
-  ctx.fillRect(0, 0, 400, 300)
-  ctx.fillStyle = '#3498db'
-  ctx.fillRect(50, 300 - value * 2, 300, value * 2)
+  const canvasCtx = canvas.getContext('2d')
+  canvasCtx.fillStyle = '#2c3e50'
+  canvasCtx.fillRect(0, 0, 400, 300)
+  canvasCtx.fillStyle = '#3498db'
+  canvasCtx.fillRect(50, 300 - value * 2, 300, value * 2)
 
   const blob = await canvas.encode('png')
 
-  await handler.sendMessage(channelId, "Your chart:", {
+  await ctx.send("Your chart:", {
     attachments: [{
       type: 'chunked',
       data: blob,             // Blob (mimetype automatic)
@@ -261,10 +261,10 @@ bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
 
 **Screenshot:**
 ```ts
-bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
+bot.onSlashCommand("screenshot", async (ctx, event) => {
   const screenshotBuffer = await captureScreen()
 
-  await handler.sendMessage(channelId, "Screenshot:", {
+  await ctx.send("Screenshot:", {
     attachments: [{
       type: 'chunked',
       data: screenshotBuffer, // Uint8Array
@@ -296,9 +296,9 @@ Returns the `eventId` of the sent reaction.
 Example:
 
 ```ts
-bot.onMessage(async (handler, { channelId, eventId, message }) => {
-  if (message.includes('Towns')) {
-    await handler.sendReaction(channelId, eventId, '🔥')
+bot.onMessage(async (ctx, event) => {
+  if (ctx.message.includes('Towns')) {
+    await ctx.react('🔥')
   }
 })
 ```
@@ -373,14 +373,14 @@ Returns the `eventId` of the tip event.
 Example - tip users for helpful messages:
 
 ```ts
-bot.onMessage(async (handler, { channelId, eventId, userId, message }) => {
-  const shouldTip = checkIfDeserveTip(message)
+bot.onMessage(async (ctx, event) => {
+  const shouldTip = checkIfDeserveTip(ctx.message)
   if (shouldTip) {
-    await handler.sendTip({
-      userId,
+    await ctx.sendTip({
+      userId: ctx.userId,
       amount: parseEther('0.001'),
-      messageId: eventId,
-      channelId
+      messageId: ctx.eventId,
+      channelId: ctx.channelId
     })
   }
 })
@@ -395,7 +395,7 @@ Check user permissions before executing operations.
 Check if user is a space admin (has `ModifyBanning` permission).
 
 ```ts
-const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+const isAdmin = await ctx.hasAdminPermission(userId, spaceId)
 ```
 
 ### checkPermission
@@ -405,9 +405,9 @@ Check specific permission for a user.
 ```ts
 import { Permission } from '@towns-protocol/web3'
 
-const canRedact = await handler.checkPermission(
-  channelId,
-  userId,
+const canRedact = await ctx.checkPermission(
+  ctx.channelId,
+  ctx.userId,
   Permission.Redact
 )
 ```
@@ -424,20 +424,20 @@ const canRedact = await handler.checkPermission(
 **Example:**
 
 ```ts
-bot.onSlashCommand('ban', async (handler, event) => {
+bot.onSlashCommand('ban', async (ctx, event) => {
   // Check if user has admin permission
-  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
-    await handler.sendMessage(event.channelId, 'No permission')
+  if (!await ctx.hasAdminPermission(ctx.userId, ctx.spaceId)) {
+    await ctx.send('No permission')
     return
   }
-  
-  const userToBan = event.mentions[0]?.userId
+
+  const userToBan = ctx.mentions[0]?.userId
   if (userToBan) {
     try {
-      await handler.ban(userToBan, event.spaceId)
-      await handler.sendMessage(event.channelId, 'User banned')
+      await ctx.ban(userToBan, ctx.spaceId)
+      await ctx.send('User banned')
     } catch (error) {
-      await handler.sendMessage(event.channelId, 'Failed to ban user')
+      await ctx.send('Failed to ban user')
     }
   }
 })
@@ -454,13 +454,13 @@ Your **bot** must have `ModifyBanning` permission in the space. Your **gas walle
 ### ban
 
 ```ts
-await handler.ban(userId, spaceId)
+await ctx.ban(userId, spaceId)
 ```
 
 ### unban
 
 ```ts
-await handler.unban(userId, spaceId)
+await ctx.unban(userId, spaceId)
 ```
 
 ## Snapshot Data

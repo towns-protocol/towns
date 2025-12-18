@@ -31,11 +31,11 @@ The bot framework is stateless. Each event is isolated - no access to previous m
 ```ts
 const messageCache = new Map()
 
-bot.onMessage(async (handler, event) => {
-  messageCache.set(event.eventId, event.message)
-  
-  if (event.replyId) {
-    const original = messageCache.get(event.replyId)
+bot.onMessage(async (ctx, event) => {
+  messageCache.set(ctx.eventId, ctx.message)
+
+  if (ctx.replyId) {
+    const original = messageCache.get(ctx.replyId)
     // Now you have the context
   }
 })
@@ -75,10 +75,10 @@ Fund `bot.appAddress` (the app contract), not `bot.botId` (the signer). See [Wal
 
 ```ts
 // ❌ Wrong
-await handler.sendMessage(channelId, "@username hello")
+await ctx.send("@username hello")
 
 // ✅ Correct
-await handler.sendMessage(channelId, "Hello <@0x1234...>", {
+await ctx.send("Hello <@0x1234...>", {
   mentions: [{
     userId: "0x1234...",
     displayName: "username"
@@ -115,12 +115,12 @@ Get free RPC from [Alchemy](https://alchemy.com) or [Infura](https://infura.io).
 **Add error handling:**
 
 ```ts
-bot.onMessage(async (handler, event) => {
+bot.onMessage(async (ctx, event) => {
   try {
     await someAsyncOperation()
   } catch (error) {
     console.error('Error:', error)
-    await handler.sendMessage(event.channelId, 'Something went wrong')
+    await ctx.send('Something went wrong')
   }
 })
 ```
