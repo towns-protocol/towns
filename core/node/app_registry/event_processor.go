@@ -23,7 +23,6 @@ type MessageToAppProcessor struct {
 }
 
 func NewAppMessageProcessor(
-	ctx context.Context,
 	cache *CachedEncryptedMessageQueue,
 	analytics analytics.Analytics,
 ) *MessageToAppProcessor {

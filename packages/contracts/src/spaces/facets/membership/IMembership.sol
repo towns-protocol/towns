@@ -41,38 +41,22 @@ interface IMembershipBase {
         string referralCode;
     }
 
-    struct PricingDetails {
-        uint256 basePrice;
-        uint256 amountDue;
-        bool shouldCharge;
-        bool isPrepaid;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error Membership__InvalidAddress();
-    error Membership__InvalidPrice();
-    error Membership__InvalidLimit();
-    error Membership__InvalidCurrency();
-    error Membership__InvalidFeeRecipient();
     error Membership__InvalidDuration();
     error Membership__InvalidMaxSupply();
     error Membership__InvalidFreeAllocation();
     error Membership__InvalidPricingModule();
-    error Membership__AlreadyMember();
     error Membership__InsufficientPayment();
     error Membership__MaxSupplyReached();
-    error Membership__InvalidTokenId();
-    error Membership__NotExpired();
-    error Membership__InsufficientAllowance();
     error Membership__InvalidPayment();
     error Membership__InvalidTransactionType();
     error Membership__Banned();
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
-    error Membership__CannotSetPriceOnFreeSpace();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

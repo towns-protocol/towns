@@ -1815,6 +1815,159 @@ describe('Bot', { sequential: true }, () => {
         expect(message).toBeDefined()
     })
 
+    it('bot should be able to send signature interaction request using flattened API', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const requestId = randomUUID()
+        const { eventId } = await bot.sendInteractionRequest(channelId, {
+            type: 'signature',
+            id: requestId,
+            data: '0xabcdef1234567890',
+            chainId: '8453',
+            method: 'personal_sign',
+            signerWallet: botClientAddress,
+        })
+
+        // Wait for Bob to receive the interaction request
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        // Wait for decryption to complete
+        await waitFor(() => {
+            const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+            if (event?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+                return false
+            }
+            return event?.content?.payload !== undefined
+        })
+
+        const decryptedEvent = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === eventId,
+        )
+        expect(decryptedEvent?.content?.kind).toBe(RiverTimelineEvent.InteractionRequest)
+        if (decryptedEvent?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('Event is not an InteractionRequest')
+        }
+
+        const decryptedPayload = decryptedEvent.content.payload
+        expect(decryptedPayload).toBeDefined()
+        expect(decryptedPayload?.content.case).toBe('signature')
+        if (decryptedPayload?.content.case === 'signature') {
+            expect(decryptedPayload.content.value.id).toBe(requestId)
+            expect(decryptedPayload.content.value.data).toBe('0xabcdef1234567890')
+            expect(decryptedPayload.content.value.chainId).toBe('8453')
+            expect(decryptedPayload.content.value.type).toBe(
+                InteractionRequestPayload_Signature_SignatureType.PERSONAL_SIGN,
+            )
+        }
+    })
+
+    it('bot should be able to send form interaction request using flattened API', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const requestId = randomUUID()
+        const { eventId } = await bot.sendInteractionRequest(channelId, {
+            type: 'form',
+            id: requestId,
+            components: [
+                { id: 'btn-1', type: 'button', label: 'Click Me' },
+                { id: 'input-1', type: 'textInput', placeholder: 'Enter text here' },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        // Wait for decryption to complete
+        await waitFor(() => {
+            const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+            if (event?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+                return false
+            }
+            return event?.content?.payload !== undefined
+        })
+
+        const decryptedEvent = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === eventId,
+        )
+        expect(decryptedEvent?.content?.kind).toBe(RiverTimelineEvent.InteractionRequest)
+        if (decryptedEvent?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('Event is not an InteractionRequest')
+        }
+
+        const decryptedPayload = decryptedEvent.content.payload
+        expect(decryptedPayload).toBeDefined()
+        expect(decryptedPayload?.content.case).toBe('form')
+        if (decryptedPayload?.content.case === 'form') {
+            expect(decryptedPayload.content.value.id).toBe(requestId)
+            expect(decryptedPayload.content.value.components).toHaveLength(2)
+            expect(decryptedPayload.content.value.components[0].id).toBe('btn-1')
+            expect(decryptedPayload.content.value.components[0].component.case).toBe('button')
+            expect(decryptedPayload.content.value.components[1].id).toBe('input-1')
+            expect(decryptedPayload.content.value.components[1].component.case).toBe('textInput')
+        }
+    })
+
+    it('bot should be able to send transaction interaction request using flattened API', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const requestId = randomUUID()
+        const { eventId } = await bot.sendInteractionRequest(channelId, {
+            type: 'transaction',
+            id: requestId,
+            title: 'Send USDC',
+            subtitle: 'Send 50 USDC to recipient',
+            tx: {
+                chainId: '8453',
+                to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+                value: '0',
+                data: '0xa9059cbb', // transfer function selector
+                signerWallet: botClientAddress,
+            },
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        // Wait for decryption to complete
+        await waitFor(() => {
+            const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+            if (event?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+                return false
+            }
+            return event?.content?.payload !== undefined
+        })
+
+        const decryptedEvent = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === eventId,
+        )
+        expect(decryptedEvent?.content?.kind).toBe(RiverTimelineEvent.InteractionRequest)
+        if (decryptedEvent?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('Event is not an InteractionRequest')
+        }
+
+        const decryptedPayload = decryptedEvent.content.payload
+        expect(decryptedPayload).toBeDefined()
+        expect(decryptedPayload?.content.case).toBe('transaction')
+        if (decryptedPayload?.content.case === 'transaction') {
+            expect(decryptedPayload.content.value.id).toBe(requestId)
+            expect(decryptedPayload.content.value.title).toBe('Send USDC')
+            expect(decryptedPayload.content.value.subtitle).toBe('Send 50 USDC to recipient')
+            expect(decryptedPayload.content.value.content.case).toBe('evm')
+            if (decryptedPayload.content.value.content.case === 'evm') {
+                expect(decryptedPayload.content.value.content.value.chainId).toBe('8453')
+                expect(decryptedPayload.content.value.content.value.to).toBe(
+                    '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+                )
+                expect(decryptedPayload.content.value.content.value.value).toBe('0')
+                expect(decryptedPayload.content.value.content.value.data).toBe('0xa9059cbb')
+            }
+        }
+    })
+
     it('user should be able to send form interaction response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const recipient = bin_fromHexString(botClientAddress)

@@ -4,6 +4,12 @@ import { defineConfig } from 'vitest/config'
 import wasm from 'vite-plugin-wasm'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import dotenv from 'dotenv'
+
+dotenv.config({
+    path: resolve(__dirname, 'packages/generated/deployments/local_dev/.env'),
+    quiet: true,
+})
 
 export function readBypassSecret(): string | undefined {
     try {

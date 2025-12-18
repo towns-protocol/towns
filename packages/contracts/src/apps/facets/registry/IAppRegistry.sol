@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 
 // libraries
@@ -39,6 +38,7 @@ interface IAppRegistryBase {
     error NotAllowed();
     error ClientAlreadyRegistered();
     error ClientNotRegistered();
+    error UnexpectedETH();
 
     error AppRegistry__InvalidDuration();
     error AppRegistry__InvalidPrice();

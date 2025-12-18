@@ -28,13 +28,15 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:build": "turbo test:build",
-        "test:unit": "turbo test:unit -- --silent"
+        "test:unit": "turbo test:unit"
     },
     "dependencies": {
         "pino-pretty": "^13.0.0"
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
+        "dotenv": "^17.2.3",
+        "dotenv-cli": "^10.0.0",
         "@types/node": "^20.14.8",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",

@@ -22,7 +22,6 @@ export default defineConfig({
         "**/Roles.sol/*.json",
         "**/Channels.sol/*.json",
         "**/TokenPausableFacet.sol/*.json",
-        "**/PrepayFacet.sol/*.json",
         "**/ReferralsFacet.sol/*.json",
         "**/ReviewFacet.sol/*.json",
         "**/SpaceEntitlementGated.sol/*.json",
@@ -39,6 +38,7 @@ export default defineConfig({
         "**/IAppFactory.sol/*.json",
         "**/IIdentityRegistry.sol/*.json",
         "**/IReputationRegistry.sol/*.json",
+        "**/SubscriptionModuleFacet.sol/*.json",
       ],
       forge: {
         build: false,

@@ -452,22 +452,17 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     ): Promise<ContractTransaction> {
         return wrapTransaction(() => {
             const createSpaceFunction = this.spaceRegistrar.CreateSpace.write(signer)[
-                'createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))'
+                'createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))'
             ] as (arg: any) => Promise<ContractTransaction>
 
             return createSpaceFunction({
+                name: params.spaceName,
+                uri: params.uri,
+                shortDescription: params.shortDescription || '',
+                longDescription: params.longDescription || '',
+                membership: params.membership,
                 channel: {
                     metadata: params.channelName || '',
-                },
-                membership: params.membership,
-                metadata: {
-                    name: params.spaceName,
-                    uri: params.uri,
-                    longDescription: params.longDescription || '',
-                    shortDescription: params.shortDescription || '',
-                },
-                prepay: {
-                    supply: params.prepaySupply ?? 0,
                 },
             })
         }, txnOpts)
@@ -1460,35 +1455,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         )
     }
 
-    public async prepayMembership(
-        spaceId: string,
-        supply: number,
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        const cost = await space.Prepay.read.calculateMembershipPrepayFee(supply)
-
-        return wrapTransaction(
-            () =>
-                space.Prepay.write(signer).prepayMembership(supply, {
-                    value: cost,
-                }),
-            txnOpts,
-        )
-    }
-
-    public async getPrepaidMembershipSupply(spaceId: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        return space.Prepay.read.prepaidMembershipSupply()
-    }
-
     public async setChannelAccess(
         spaceId: string,
         channelNetworkId: string,
@@ -1517,7 +1483,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
     public async getJoinSpacePriceDetails(spaceId: string): Promise<{
         price: ethers.BigNumber
-        prepaidSupply: ethers.BigNumber
         remainingFreeSupply: ethers.BigNumber
         protocolFee: ethers.BigNumber
     }> {
@@ -1526,7 +1491,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         // membershipPrice is either the maximum of either the price set during space creation, or the PlatformRequirements membership fee
-        // it will alawys be a value regardless of whether the space has free allocations or prepaid memberships
+        // it will always be a value regardless of whether the space has free allocations
         const membershipPriceEncoded =
             space.Membership.interface.encodeFunctionData('getMembershipPrice')
         // totalSupply = number of memberships minted
@@ -1537,27 +1502,16 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         const freeAllocationEncoded = space.Membership.interface.encodeFunctionData(
             'getMembershipFreeAllocation',
         )
-        // prepaidSupply = number of additional prepaid memberships
-        // if any prepaid memberships have been purchased, the contracts won't charge for minting a membership nft,
-        // else it will charge the membershipPrice
-        const prepaidSupplyEncoded =
-            space.Prepay.interface.encodeFunctionData('prepaidMembershipSupply')
 
         const protocolFeeEncoded = space.Membership.interface.encodeFunctionData('getProtocolFee')
 
-        const [
-            membershipPriceResult,
-            totalSupplyResult,
-            freeAllocationResult,
-            prepaidSupplyResult,
-            protocolFeeResult,
-        ] = await space.Multicall.read.callStatic.multicall([
-            membershipPriceEncoded,
-            totalSupplyEncoded,
-            freeAllocationEncoded,
-            prepaidSupplyEncoded,
-            protocolFeeEncoded,
-        ])
+        const [membershipPriceResult, totalSupplyResult, freeAllocationResult, protocolFeeResult] =
+            await space.Multicall.read.callStatic.multicall([
+                membershipPriceEncoded,
+                totalSupplyEncoded,
+                freeAllocationEncoded,
+                protocolFeeEncoded,
+            ])
 
         try {
             const membershipPrice = space.Membership.interface.decodeFunctionResult(
@@ -1572,24 +1526,17 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 'getMembershipFreeAllocation',
                 freeAllocationResult,
             )[0] as BigNumber
-            const prepaidSupply = space.Prepay.interface.decodeFunctionResult(
-                'prepaidMembershipSupply',
-                prepaidSupplyResult,
-            )[0] as BigNumber
             const protocolFee = space.Membership.interface.decodeFunctionResult(
                 'getProtocolFee',
                 protocolFeeResult,
             )[0] as BigNumber
-            // remainingFreeSupply
-            // if totalSupply < freeAllocation, freeAllocation + prepaid - minted memberships
-            // else the remaining prepaidSupply if any
+            // remainingFreeSupply = freeAllocation - totalSupply (if positive)
             const remainingFreeSupply = totalSupply.lt(freeAllocation)
-                ? freeAllocation.add(prepaidSupply).sub(totalSupply)
-                : prepaidSupply
+                ? freeAllocation.sub(totalSupply)
+                : ethers.BigNumber.from(0)
 
             return {
                 price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
-                prepaidSupply,
                 remainingFreeSupply,
                 protocolFee,
             }
@@ -1707,7 +1654,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             space.ERC721A.read.totalSupply(),
             space.Membership.read.getMembershipPricingModule(),
         ])
-        const { price, prepaidSupply, remainingFreeSupply } = joinSpacePriceDetails
+        const { price, remainingFreeSupply } = joinSpacePriceDetails
 
         return {
             price, // keep as BigNumber (wei)
@@ -1717,7 +1664,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             duration: duration.toNumber(),
             totalSupply: totalSupply.toNumber(),
             pricingModule: pricingModule,
-            prepaidSupply: prepaidSupply.toNumber(),
             remainingFreeSupply: remainingFreeSupply.toNumber(),
         } satisfies MembershipInfo
     }

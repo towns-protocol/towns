@@ -20,7 +20,6 @@ import {DeployEntitlementsManager} from "../facets/DeployEntitlementsManager.s.s
 import {DeployMembership} from "../facets/DeployMembership.s.sol";
 import {DeployMembershipMetadata} from "../facets/DeployMembershipMetadata.s.sol";
 import {DeployMembershipToken} from "../facets/DeployMembershipToken.s.sol";
-import {DeployPrepayFacet} from "../facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "../facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "../facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "../facets/DeployRoles.s.sol";
@@ -112,7 +111,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("Roles");
         facetHelper.add("Channels");
         facetHelper.add("TokenPausableFacet");
-        facetHelper.add("PrepayFacet");
         facetHelper.add("ReferralsFacet");
         facetHelper.add("ReviewFacet");
 
@@ -163,9 +161,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
         facet = facetHelper.getDeployedAddress("TokenPausableFacet");
         addCut(makeCut(facet, FacetCutAction.Add, DeployTokenPausable.selectors()));
-
-        facet = facetHelper.getDeployedAddress("PrepayFacet");
-        addCut(makeCut(facet, FacetCutAction.Add, DeployPrepayFacet.selectors()));
 
         facet = facetHelper.getDeployedAddress("ReferralsFacet");
         addCut(makeCut(facet, FacetCutAction.Add, DeployReferrals.selectors()));
@@ -247,8 +242,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployChannels.selectors()));
             } else if (facetName.eq("TokenPausableFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployTokenPausable.selectors()));
-            } else if (facetName.eq("PrepayFacet")) {
-                addCut(makeCut(facet, FacetCutAction.Add, DeployPrepayFacet.selectors()));
             } else if (facetName.eq("ReferralsFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployReferrals.selectors()));
             } else if (facetName.eq("ReviewFacet")) {

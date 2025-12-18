@@ -948,7 +948,8 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 }
 
 // TestReconciler_NoRemotesNoCandidateFails verifies that when a non-replicated stream
-// has no remotes and no local candidate, reconciliation fails gracefully.
+// has no remotes and no local candidate, and the DB is out of sync with the registry,
+// reconciliation fails gracefully.
 // This test ensures the error handling path in tryPromoteLocalCandidate works correctly.
 func TestReconciler_NoRemotesNoCandidateFails(t *testing.T) {
 	cfg := config.GetDefaultConfig()
@@ -978,13 +979,26 @@ func TestReconciler_NoRemotesNoCandidateFails(t *testing.T) {
 	require.NoError(err)
 	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
-	record := river.NewStreamWithId(streamId, recordNoId)
+
+	// Create a modified stream record with a higher LastMiniblockNum than what's in the DB.
+	// This simulates a scenario where the registry indicates a newer miniblock exists,
+	// but the local DB hasn't caught up and there's no candidate to promote.
+	modifiedStream := &river.Stream{
+		LastMiniblockHash: recordNoId.LastMiniblockHash,
+		LastMiniblockNum:  recordNoId.LastMiniblockNum + 5, // DB is behind by 5 miniblocks
+		Reserved0:         recordNoId.Reserved0,
+		Flags:             recordNoId.Flags,
+		Nodes:             recordNoId.Nodes,
+	}
+	record := river.NewStreamWithId(streamId, modifiedStream)
 
 	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
 	require.NoError(err)
 
-	// Reconciliation should fail - this is the same scenario as TestReconciler_NoRemotes
-	// but explicitly tests the new tryPromoteLocalCandidate code path
+	// Reconciliation should fail because:
+	// 1. No remotes to fetch from
+	// 2. No local candidate to promote
+	// 3. DB miniblock (0) != registry miniblock (5), so not in sync
 	reconciler := newStreamReconciler(inst.cache, stream, record)
 	err = reconciler.reconcile()
 	require.Error(err)

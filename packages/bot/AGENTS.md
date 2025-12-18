@@ -367,66 +367,26 @@ bot.onChannelJoin(async (handler, event) => {
 
 ### Sending Interactive Requests (Buttons, Forms, Transactions)
 
-**⚠️ BREAKING CHANGE - SDK 408+:** The `sendInteractionRequest` API changed in SDK 408. Any SDK below 408 will not send interaction requests correctly.
+The `sendInteractionRequest` method uses a flattened, TypeScript-friendly API for sending interactive UI elements to users.
 
-**NEW FORMAT (SDK 408+):**
+**Send Form with Buttons:**
 ```typescript
-import { hexToBytes } from 'viem'
-
 // Send interactive form with buttons
-await handler.sendInteractionRequest(
-  channelId,
-  {
-    case: "form",
-    value: {
-      id: "tier-selection-form",
-      title: "Select Battle Tier",
-      subtitle: "Choose which tier to stake your Degen in:",
-      components: [
-        {
-          id: "tier-0",
-          component: {
-            case: "button",
-            value: { label: "Low Tier - 1 $TOWNS" },
-          },
-        },
-        {
-          id: "tier-1",
-          component: {
-            case: "button",
-            value: { label: "Medium Tier - 2 $TOWNS" },
-          },
-        },
-        {
-          id: "tier-2",
-          component: {
-            case: "button",
-            value: { label: "Large Tier - 3 $TOWNS" },
-          },
-        },
-      ],
-    },
-  },
-  hexToBytes(userId as `0x${string}`)  // recipient is now the 3rd parameter
-)
-```
-
-**OLD FORMAT (SDK < 408) - DO NOT USE:**
-```typescript
-// ❌ This format no longer works in SDK 408+
 await handler.sendInteractionRequest(channelId, {
-  recipient: hexToBytes(userId as `0x${string}`),  // recipient was inside the object
-  content: {
-    case: "form",
-    value: { /* ... */ }
-  }
+  type: 'form',
+  id: 'tier-selection-form',
+  components: [
+    { id: 'tier-0', type: 'button', label: 'Low Tier - 1 $TOWNS' },
+    { id: 'tier-1', type: 'button', label: 'Medium Tier - 2 $TOWNS' },
+    { id: 'tier-2', type: 'button', label: 'Large Tier - 3 $TOWNS' },
+  ],
+  recipient: userId,  // Optional: target specific user (Address string)
 })
 ```
 
-**Key Changes:**
-- `recipient` parameter moved from inside the object to the 3rd parameter
-- Interaction requests are now encrypted for security
-- Update to SDK 408+ and adjust all `sendInteractionRequest` calls
+**Form Components:**
+- **Button**: `{ id: string, type: 'button', label: string }`
+- **Text Input**: `{ id: string, type: 'textInput', placeholder: string }`
 
 **Use Case - Button Click Handling:**
 ```typescript
@@ -464,8 +424,6 @@ bot.onInteractionResponse(async (handler, event) => {
 
 **Pattern - Game with Interactive Buttons:**
 ```typescript
-import { hexToBytes } from 'viem'
-
 // Store game state
 const gameStates = new Map()
 
@@ -476,36 +434,17 @@ bot.onSlashCommand("play", async (handler, event) => {
     health: 100,
     channelId: event.channelId
   })
-  
+
   // Send interactive buttons to the user
-  await handler.sendInteractionRequest(
-    event.channelId,
-    {
-      case: "form",
-      value: {
-        id: "game-actions-form",
-        title: "🎮 Your turn!",
-        subtitle: "What do you do?",
-        components: [
-          {
-            id: "attack-button",
-            component: {
-              case: "button",
-              value: { label: "⚔️ Attack" },
-            },
-          },
-          {
-            id: "defend-button",
-            component: {
-              case: "button",
-              value: { label: "🛡️ Defend" },
-            },
-          },
-        ],
-      },
-    },
-    hexToBytes(event.userId as `0x${string}`)
-  )
+  await handler.sendInteractionRequest(event.channelId, {
+    type: 'form',
+    id: 'game-actions-form',
+    components: [
+      { id: 'attack-button', type: 'button', label: '⚔️ Attack' },
+      { id: 'defend-button', type: 'button', label: '🛡️ Defend' },
+    ],
+    recipient: event.userId,
+  })
 })
 
 bot.onInteractionResponse(async (handler, event) => {
@@ -623,35 +562,32 @@ bot.onInteractionResponse(async (handler, event) => {
 This example shows a **real USDC ERC-20 transfer transaction** on Base mainnet. The user can sign with any wallet they control.
 
 ```typescript
-import { InteractionRequestPayload_Signature_SignatureType } from "@towns-protocol/proto"
+import { encodeFunctionData, erc20Abi } from 'viem'
 
 bot.onSlashCommand("send-usdc", async (handler, event) => {
   // USDC Contract on Base (real contract address)
   const usdcContract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
   const recipient = "0x1234567890123456789012345678901234567890"
-  const amount = "50000000" // 50 USDC (6 decimals)
-  
-  // Encode ERC20 transfer: transfer(address,uint256)
-  const recipientPadded = recipient.slice(2).padStart(64, '0')
-  const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
-  const data = `0xa9059cbb${recipientPadded}${amountPadded}`
-  
+  const amount = 50_000_000n // 50 USDC (6 decimals)
+
+  // Encode ERC20 transfer using viem
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [recipient, amount],
+  })
+
   await handler.sendInteractionRequest(event.channelId, {
-    case: "transaction",
-    value: {
-      id: "usdc-transfer",
-      title: "Send USDC",
-      subtitle: "Send 50 USDC to recipient",
-      content: {
-        case: "evm",
-        value: {
-          chainId: "8453", // Base mainnet
-          to: usdcContract,
-          value: "0", // No ETH being sent
-          data: data,
-          signerWallet: undefined, // ⚠️ Allow ANY wallet (user chooses)
-        },
-      },
+    type: 'transaction',
+    id: 'usdc-transfer',
+    title: 'Send USDC',
+    subtitle: 'Send 50 USDC to recipient',
+    tx: {
+      chainId: '8453',  // Base mainnet
+      to: usdcContract,
+      value: '0',       // No ETH being sent
+      data: data,
+      // signerWallet omitted = Allow ANY wallet (user chooses)
     },
   })
 })
@@ -662,42 +598,42 @@ bot.onSlashCommand("send-usdc", async (handler, event) => {
 This example restricts the transaction to **only the user's smart account wallet**. The user cannot choose a different wallet.
 
 ```typescript
+import { encodeFunctionData, erc20Abi } from 'viem'
+import { getSmartAccountFromUserId } from '@towns-protocol/bot'
+
 bot.onSlashCommand("send-usdc-sm", async (handler, event) => {
   // Get user's smart account address
   const smartAccount = await getSmartAccountFromUserId(bot, {
     userId: event.userId,
   })
-  
+
   if (!smartAccount) {
     await handler.sendMessage(event.channelId, "Couldn't find smart account!")
     return
   }
-  
+
   // Same USDC transfer, but restricted to smart account
   const usdcContract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
   const recipient = "0x1234567890123456789012345678901234567890"
-  const amount = "50000000" // 50 USDC
-  
-  const recipientPadded = recipient.slice(2).padStart(64, '0')
-  const amountPadded = parseInt(amount).toString(16).padStart(64, '0')
-  const data = `0xa9059cbb${recipientPadded}${amountPadded}`
-  
+  const amount = 50_000_000n // 50 USDC
+
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [recipient, amount],
+  })
+
   await handler.sendInteractionRequest(event.channelId, {
-    case: "transaction",
-    value: {
-      id: "usdc-transfer-sm",
-      title: "Send USDC",
-      subtitle: "Send 50 USDC via smart account only",
-      content: {
-        case: "evm",
-        value: {
-          chainId: "8453",
-          to: usdcContract,
-          value: "0",
-          data: data,
-          signerWallet: smartAccount, // ✅ RESTRICTED to this specific wallet
-        },
-      },
+    type: 'transaction',
+    id: 'usdc-transfer-sm',
+    title: 'Send USDC',
+    subtitle: 'Send 50 USDC via smart account only',
+    tx: {
+      chainId: '8453',
+      to: usdcContract,
+      value: '0',
+      data: data,
+      signerWallet: smartAccount,  // RESTRICTED to this specific wallet
     },
   })
 })
@@ -711,7 +647,7 @@ For testing, you can deploy a lightweight contract with a simple function:
 // SimpleGreeting.sol - Deploy this for testing
 contract SimpleGreeting {
     string public greeting = "Hello";
-    
+
     function setGreeting(string memory _greeting) public {
         greeting = _greeting;
     }
@@ -721,32 +657,40 @@ contract SimpleGreeting {
 Then interact with it:
 
 ```typescript
+import { encodeFunctionData } from 'viem'
+
+// Define your contract ABI (or import from generated types)
+const greetingAbi = [
+  {
+    name: 'setGreeting',
+    type: 'function',
+    inputs: [{ name: '_greeting', type: 'string' }],
+    outputs: [],
+  },
+] as const
+
 bot.onSlashCommand("set-greeting", async (handler, event) => {
   const newGreeting = event.args.join(" ") || "Hello Towns!"
   const contractAddress = "0xYourDeployedContractAddress"
-  
-  // Encode setGreeting(string) function call
-  // Function selector: 0xa4136862
-  const abiCoder = new ethers.utils.AbiCoder()
-  const encodedParams = abiCoder.encode(["string"], [newGreeting]).slice(2)
-  const data = `0xa4136862${encodedParams}`
-  
+
+  // Encode function call using viem
+  const data = encodeFunctionData({
+    abi: greetingAbi,
+    functionName: 'setGreeting',
+    args: [newGreeting],
+  })
+
   await handler.sendInteractionRequest(event.channelId, {
-    case: "transaction",
-    value: {
-      id: "set-greeting",
-      title: "Update Greeting",
-      subtitle: `Set greeting to: "${newGreeting}"`,
-      content: {
-        case: "evm",
-        value: {
-          chainId: "8453",
-          to: contractAddress,
-          value: "0",
-          data: data,
-          signerWallet: undefined, // Any wallet can call this
-        },
-      },
+    type: 'transaction',
+    id: 'set-greeting',
+    title: 'Update Greeting',
+    subtitle: `Set greeting to: "${newGreeting}"`,
+    tx: {
+      chainId: '8453',
+      to: contractAddress,
+      value: '0',
+      data: data,
+      // signerWallet omitted = Any wallet can call this
     },
   })
 })
@@ -775,14 +719,17 @@ View on explorer: https://basescan.org/tx/${txData.txHash}`
 ```
 
 **Transaction Request Parameters:**
+- `type`: Always `'transaction'`
 - `id`: Unique identifier for this transaction request
 - `title`: Main heading shown to user
 - `subtitle`: Descriptive text explaining the transaction
-- `chainId`: EVM chain ID as string (e.g., "8453" for Base, "1" for Ethereum mainnet)
-- `to`: Contract or wallet address receiving the transaction
-- `value`: Amount of native token (ETH) to send in wei (as string)
-- `data`: Encoded function call data (for contract interactions)
-- `signerWallet`: (Optional) Specific wallet address that must sign, or undefined to allow any wallet
+- `recipient`: (Optional) Address string of user to show request to
+- `tx`: EVM transaction details:
+  - `chainId`: EVM chain ID as string (e.g., "8453" for Base, "1" for Ethereum mainnet)
+  - `to`: Contract or wallet address receiving the transaction (Address string)
+  - `value`: Amount of native token (ETH) to send in wei (as string)
+  - `data`: Encoded function call data (use viem's `encodeFunctionData`)
+  - `signerWallet`: (Optional) Specific wallet address that must sign, or omit to allow any wallet
 
 ### Sending Signature Requests (EIP-712 Typed Data)
 
@@ -793,8 +740,6 @@ View on explorer: https://basescan.org/tx/${txData.txHash}`
 This example allows the user to sign with **any wallet they control**. Useful for general authentication or agreements.
 
 ```typescript
-import { InteractionRequestPayload_Signature_SignatureType } from "@towns-protocol/proto"
-
 bot.onSlashCommand("sign-message", async (handler, event) => {
   // EIP-712 Typed Data Structure
   const typedData = {
@@ -821,18 +766,17 @@ bot.onSlashCommand("sign-message", async (handler, event) => {
       timestamp: Math.floor(Date.now() / 1000),
     },
   }
-  
+
   await handler.sendInteractionRequest(event.channelId, {
-    case: "signature",
-    value: {
-      id: "message-signature",
-      title: "Sign Message",
-      subtitle: `Sign: "${typedData.message.content}"`,
-      chainId: "8453",
-      data: JSON.stringify(typedData),
-      type: InteractionRequestPayload_Signature_SignatureType.TYPED_DATA,
-      signerWallet: undefined, // ⚠️ Allow ANY wallet (user chooses)
-    },
+    type: 'signature',
+    id: 'message-signature',
+    title: 'Sign Message',
+    subtitle: `Sign: "${typedData.message.content}"`,
+    chainId: '8453',
+    data: JSON.stringify(typedData),
+    method: 'typed_data',
+    signerWallet: event.userId,  // Any wallet - but required field
+    // recipient: event.userId,  // Optional: show only to this user
   })
 })
 ```
@@ -842,16 +786,18 @@ bot.onSlashCommand("sign-message", async (handler, event) => {
 This example restricts the signature to **only the user's smart account wallet**. Useful when you need to verify the signature came from a specific account.
 
 ```typescript
+import { getSmartAccountFromUserId } from '@towns-protocol/bot'
+
 bot.onSlashCommand("sign-message-sm", async (handler, event) => {
   const smartAccount = await getSmartAccountFromUserId(bot, {
     userId: event.userId,
   })
-  
+
   if (!smartAccount) {
     await handler.sendMessage(event.channelId, "Couldn't find smart account!")
     return
   }
-  
+
   const typedData = {
     domain: {
       name: "My Towns Bot",
@@ -871,18 +817,17 @@ bot.onSlashCommand("sign-message-sm", async (handler, event) => {
       content: "Smart account signature",
     },
   }
-  
+
   await handler.sendInteractionRequest(event.channelId, {
-    case: "signature",
-    value: {
-      id: "message-signature-sm",
-      title: "Sign Message",
-      subtitle: "Sign with smart account only",
-      chainId: "8453",
-      data: JSON.stringify(typedData),
-      type: InteractionRequestPayload_Signature_SignatureType.TYPED_DATA,
-      signerWallet: smartAccount, // ✅ RESTRICTED to this specific wallet
-    },
+    type: 'signature',
+    id: 'message-signature-sm',
+    title: 'Sign Message',
+    subtitle: 'Sign with smart account only',
+    chainId: '8453',
+    data: JSON.stringify(typedData),
+    method: 'typed_data',
+    signerWallet: smartAccount,  // RESTRICTED to this specific wallet
+    recipient: event.userId,
   })
 })
 ```
@@ -918,13 +863,15 @@ You can now verify this signature on-chain or use it for authentication.`
 ```
 
 **Signature Request Parameters:**
+- `type`: Always `'signature'`
 - `id`: Unique identifier for this signature request
-- `title`: Main heading shown to user
-- `subtitle`: Descriptive text explaining what they're signing
+- `title`: Main heading shown to user (optional)
+- `subtitle`: Descriptive text explaining what they're signing (optional)
 - `chainId`: EVM chain ID as string
 - `data`: JSON string of EIP-712 typed data structure
-- `type`: Signature type (use `InteractionRequestPayload_Signature_SignatureType.TYPED_DATA`)
-- `signerWallet`: (Optional) Specific wallet address that must sign, or undefined to allow any wallet
+- `method`: Signature method - `'typed_data'` or `'personal_sign'`
+- `signerWallet`: Wallet address that must sign (Address string)
+- `recipient`: (Optional) Address string of user to show request to
 
 **Complete onInteractionResponse Handler (All Types):**
 ```typescript

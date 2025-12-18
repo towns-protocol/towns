@@ -177,6 +177,13 @@ func (sr *streamReconciler) reconcile() error {
 	sr.stream.mu.RUnlock()
 
 	if len(remotes) == 0 {
+		// if the database is already in sync with the stream record, there is no need to reconcile
+		if dbMbNum, err := sr.cache.params.Storage.GetLastMiniblockNumber(sr.ctx, sr.stream.StreamId()); err == nil {
+			if dbMbNum == sr.streamRecord.LastMbNum() {
+				return nil // local stream already in sync, no need to reconcile
+			}
+		}
+
 		// For non-replicated streams it is possible that the node missed the stream updated event
 		// and never promoted the candidate in its DB and can't reconcile the stream from other nodes.
 		// Try to promote the local candidate to finish reconciliation.

@@ -34,7 +34,6 @@ import { IBanningShim } from './IBanningShim'
 import { ITippingShim } from './ITippingShim'
 import { IERC721AQueryableShim } from '../erc-721/IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
-import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
@@ -61,7 +60,6 @@ export class Space {
     private readonly banning: IBanningShim
     private readonly erc721AQueryable: IERC721AQueryableShim
     private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
-    private readonly prepay: IPrepayShim
     private readonly erc721A: IERC721AShim
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
@@ -90,7 +88,6 @@ export class Space {
         this.banning = new IBanningShim(address, provider)
         this.erc721AQueryable = new IERC721AQueryableShim(address, provider)
         this.entitlementDataQueryable = new IEntitlementDataQueryableShim(address, provider)
-        this.prepay = new IPrepayShim(address, provider)
         this.erc721A = new IERC721AShim(address, provider)
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
@@ -110,7 +107,6 @@ export class Space {
             this.banning,
             this.erc721AQueryable,
             this.entitlementDataQueryable,
-            this.prepay,
             this.erc721A,
             this.tipping,
             this.treasury,
@@ -164,10 +160,6 @@ export class Space {
 
     public get EntitlementDataQueryable(): IEntitlementDataQueryableShim {
         return this.entitlementDataQueryable
-    }
-
-    public get Prepay(): IPrepayShim {
-        return this.prepay
     }
 
     public get ERC721A(): IERC721AShim {

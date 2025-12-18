@@ -1,6 +1,9 @@
 package river
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -244,4 +247,23 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryContractStreamUpda
 	}
 
 	return results, nil
+}
+
+// MarshalJSON returns the abigen generated s in JSON representation.
+func (s StreamWithId) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"streamId": s.StreamId(),
+		"stream":   s.Stream,
+	})
+}
+
+// MarshalJSON returns abigen generated s in JSON representation.
+func (s Stream) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"nodes":             s.Nodes,
+		"lastMiniblockHash": fmt.Sprintf("%x", s.LastMiniblockHash),
+		"lastMiniblockNum":  s.LastMiniblockNum,
+		"flags":             s.Flags,
+		"reserved0":         s.Reserved0,
+	})
 }
