@@ -87,14 +87,17 @@ func (r *rudderstackAnalytics) Track(
 }
 
 // NewRudderstack creates a new Analytics implementation using RudderStack.
-// If writeKey or dataPlaneURL is empty, returns a no-op implementation.
+// If writeKey or dataPlaneURL is empty, or if client creation fails, returns a no-op implementation.
 func NewRudderstack(writeKey, dataPlaneURL string) Analytics {
 	if writeKey == "" || dataPlaneURL == "" {
 		return &noopAnalytics{}
 	}
-	client, _ := rudderstack.NewWithConfig(writeKey, rudderstack.Config{
+	client, err := rudderstack.NewWithConfig(writeKey, rudderstack.Config{
 		DataPlaneUrl: dataPlaneURL,
 	})
+	if err != nil {
+		return &noopAnalytics{}
+	}
 	return &rudderstackAnalytics{client: client}
 }
 
