@@ -600,8 +600,8 @@ func TestPublishSessionKeys(t *testing.T) {
 	require.Empty(messages)
 	require.NoError(err)
 
-	// Publishing a session key that has already been registered should be fine,
-	// as in reality a session key may come in multiple times
+	// Publishing a session key that has already been registered should return
+	// Err_ALREADY_EXISTS due to the unique constraint on (device_key, stream_id, session_ids)
 	messages, err = store.PublishSessionKeys(
 		params.ctx,
 		shared.StreamId{},
@@ -610,7 +610,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		[]byte("ciphertexts2"),
 	)
 	require.Nil(messages)
-	require.Nil(err)
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
 	messages, err = store.PublishSessionKeys(
 		params.ctx,

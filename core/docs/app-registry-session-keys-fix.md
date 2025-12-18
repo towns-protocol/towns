@@ -68,32 +68,33 @@ Move the "Publishing session keys for bot" log from `tracked_stream.go:42-48` in
 ### Migration 000009 (up.sql)
 
 ```sql
--- Step 1: Create function to sort session_ids array
--- This function is called by the trigger before each insert
-CREATE OR REPLACE FUNCTION sort_session_ids_array() RETURNS TRIGGER AS $$
+-- Step 1: Create helper function to sort a VARCHAR array
+CREATE OR REPLACE FUNCTION sort_varchar_array(arr VARCHAR[]) RETURNS VARCHAR[] AS $$
 BEGIN
     -- unnest expands array into rows, ORDER BY sorts them, ARRAY collects back
     -- Example: ['S3','S1','S2'] -> rows S3,S1,S2 -> sorted S1,S2,S3 -> ['S1','S2','S3']
-    NEW.session_ids := ARRAY(SELECT unnest(NEW.session_ids) ORDER BY 1);
+    RETURN ARRAY(SELECT unnest(arr) ORDER BY 1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Step 2: Create trigger function that uses the helper
+CREATE OR REPLACE FUNCTION sort_session_ids_trigger() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.session_ids := sort_varchar_array(NEW.session_ids);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Step 2: Create trigger to auto-sort session_ids before insert
+-- Step 3: Create trigger to auto-sort session_ids before insert
 CREATE TRIGGER trigger_sort_session_ids
 BEFORE INSERT ON app_session_keys
-FOR EACH ROW EXECUTE FUNCTION sort_session_ids_array();
+FOR EACH ROW EXECUTE FUNCTION sort_session_ids_trigger();
 
--- Step 3: Sort existing session_ids arrays (one-time migration)
+-- Step 4: Sort existing session_ids arrays (one-time migration)
 UPDATE app_session_keys
-SET session_ids = sorted.sorted_ids
-FROM (
-    SELECT ctid, ARRAY(SELECT unnest(session_ids) ORDER BY 1) AS sorted_ids
-    FROM app_session_keys
-) AS sorted
-WHERE app_session_keys.ctid = sorted.ctid;
+SET session_ids = sort_varchar_array(session_ids);
 
--- Step 4: Delete duplicate rows (same device_key, stream_id, session_ids), keeping first by ctid
+-- Step 5: Delete duplicate rows (same device_key, stream_id, session_ids), keeping first by ctid
 DELETE FROM app_session_keys a
 USING app_session_keys b
 WHERE a.device_key = b.device_key
@@ -101,7 +102,7 @@ WHERE a.device_key = b.device_key
   AND a.session_ids = b.session_ids
   AND a.ctid > b.ctid;
 
--- Step 5: Add unique constraint on (device_key, stream_id, session_ids)
+-- Step 6: Add unique constraint on (device_key, stream_id, session_ids)
 ALTER TABLE app_session_keys
 ADD CONSTRAINT unique_device_stream_session_ids UNIQUE (device_key, stream_id, session_ids);
 ```
@@ -114,7 +115,9 @@ DROP CONSTRAINT IF EXISTS unique_device_stream_session_ids;
 
 DROP TRIGGER IF EXISTS trigger_sort_session_ids ON app_session_keys;
 
-DROP FUNCTION IF EXISTS sort_session_ids_array();
+DROP FUNCTION IF EXISTS sort_session_ids_trigger();
+
+DROP FUNCTION IF EXISTS sort_varchar_array(VARCHAR[]);
 ```
 
 ### tracked_stream.go Change
