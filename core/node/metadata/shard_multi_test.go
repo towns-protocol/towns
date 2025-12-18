@@ -1,34 +1,31 @@
-//go:build integration
-
 // Package metadata provides multi-node CometBFT consensus tests for metadata shards.
 //
 // These tests set up 4 MetadataShard instances running full CometBFT nodes that
-// communicate via P2P networking to reach consensus on blocks. Transactions are
-// submitted through the CometBFT mempool interface (SubmitTx) and blocks are
-// produced through the consensus protocol.
-//
-// Run with: go test -tags=integration -timeout=5m ./node/metadata/...
+// communicate via P2P networking to reach consensus on blocks. All interactions
+// with the nodes go through CometBFT's rpc/client/local.Local client, which
+// provides the standard CometBFT RPC interface:
+//   - BroadcastTxSync for transaction submission
+//   - Status for node status and block height
+//   - ABCIQuery for application state queries
 //
 // Requirements:
 // - PostgreSQL running on port 5433
 // - Ports 26700-26703 available for P2P networking
 // - Sufficient time for CometBFT P2P connection establishment (~10-30s)
-//
-// Note: CometBFT P2P networking in localhost environments can be slow to establish.
-// The tests may need longer timeouts (up to several minutes) for all nodes to
-// connect and begin producing blocks. If tests timeout waiting for height, try
-// increasing the P2P wait time or running fewer tests at once.
 package metadata
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"runtime/pprof"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -52,6 +49,8 @@ const (
 	numShardInstances = 4
 	multiTestShardID  = uint64(9)
 	baseP2PPort       = 26700
+	shutdownTimeout   = 10 * time.Second
+	shutdownPollDelay = 50 * time.Millisecond
 )
 
 // multiInstanceRegistry implements nodespkg.NodeRegistry for testing with multiple instances.
@@ -117,20 +116,107 @@ func (r *multiInstanceRegistry) IsOperator(common.Address) bool {
 	return false
 }
 
-// multiNodeTestEnv holds multiple MetadataShard instances running full CometBFT nodes.
+// multiNodeTestEnv holds multiple MetadataShard instances with CometBFT local RPC clients.
 type multiNodeTestEnv struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	t         *testing.T
 	shards    []*MetadataShard
+	clients   []*local.Local // CometBFT local RPC clients
 	stores    []*storage.PostgresMetadataShardStore
 	wallets   []*crypto.Wallet
 	registry  *multiInstanceRegistry
 	nodeAddrs []common.Address
 }
 
+func waitForCondition(t *testing.T, check func() bool) bool {
+	t.Helper()
+	if check() {
+		return true
+	}
+	timer := time.NewTimer(shutdownTimeout)
+	ticker := time.NewTicker(shutdownPollDelay)
+	defer timer.Stop()
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if check() {
+				return true
+			}
+		case <-timer.C:
+			return check()
+		}
+	}
+}
+
+func goroutineStacksContain(substrings ...string) bool {
+	var buf bytes.Buffer
+	profile := pprof.Lookup("goroutine")
+	if profile == nil {
+		return false
+	}
+	_ = profile.WriteTo(&buf, 1)
+	stacks := buf.String()
+	for _, substr := range substrings {
+		if strings.Contains(stacks, substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
+	t.Helper()
+	ok := waitForCondition(t, func() bool {
+		for _, shard := range shards {
+			if shard.Node() == nil || shard.Node().Switch() == nil {
+				continue
+			}
+			if shard.Node().Switch().Peers().Size() > 0 {
+				return false
+			}
+		}
+		return true
+	})
+	if !ok {
+		t.Errorf("peers did not disconnect before shutdown")
+	}
+}
+
+func waitForConsensusPeerRoutines(t *testing.T) {
+	t.Helper()
+	ok := waitForCondition(t, func() bool {
+		return !goroutineStacksContain(
+			"gossipDataRoutine",
+			"gossipVotesRoutine",
+			"queryMaj23Routine",
+		)
+	})
+	if !ok {
+		t.Errorf("consensus peer routines did not exit before shutdown")
+	}
+}
+
+func waitForShardsStopped(t *testing.T, shards []*MetadataShard) {
+	t.Helper()
+	for i, shard := range shards {
+		ok := waitForCondition(t, func() bool {
+			select {
+			case <-shard.Stopped():
+				return true
+			default:
+				return false
+			}
+		})
+		if !ok {
+			t.Errorf("shard %d did not stop in time", i)
+		}
+	}
+}
+
 // setupMultiNodeCometBFTTest creates numShardInstances MetadataShard instances
-// running full CometBFT nodes connected via P2P for consensus.
+// with CometBFT local RPC clients for interaction.
 func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 	t.Helper()
 	ctx, cancel := context.WithCancel(test.NewTestContext(t))
@@ -170,14 +256,16 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 	}
 
 	// Build persistent peers list
+	// Node IDs must be lowercase hex for CometBFT peer matching
 	peerAddrs := make([]string, numShardInstances)
 	for i := range numShardInstances {
 		nodeID := nodeKeys[i].PubKey().Address()
-		peerAddrs[i] = fmt.Sprintf("%x@127.0.0.1:%d", nodeID, baseP2PPort+i)
+		peerAddrs[i] = fmt.Sprintf("%s@127.0.0.1:%d", strings.ToLower(nodeID.String()), baseP2PPort+i)
 	}
 
-	// Create stores and shards
+	// Create stores, shards, and RPC clients
 	shards := make([]*MetadataShard, numShardInstances)
+	clients := make([]*local.Local, numShardInstances)
 	stores := make([]*storage.PostgresMetadataShardStore, numShardInstances)
 	dbClosers := make([]func(), numShardInstances)
 	streamStores := make([]*storage.PostgresStreamStore, numShardInstances)
@@ -251,17 +339,46 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		})
 		require.NoError(t, err, "failed to create shard %d", i)
 		shards[i] = shard
+
+		// Create CometBFT local RPC client for this node
+		clients[i] = local.New(shard.Node())
 	}
 
 	cleanup := func() {
-		cancel()
-		for i, shard := range shards {
-			select {
-			case <-shard.Stopped():
-			case <-time.After(5 * time.Second):
-				t.Logf("shard %d did not stop in time", i)
+		// CometBFT has a race condition during shutdown where goroutines like
+		// queryMaj23Routine may still access the blockstore after it's closed.
+		// The issue is that node.Stop() closes the blockstore before all peer
+		// goroutines have exited.
+		//
+		// To work around this, we:
+		// 1. Disconnect all peers explicitly BEFORE stopping nodes
+		// 2. Wait for peers to disconnect
+		// 3. Wait for per-peer consensus routines to drain
+		// 4. Then stop the nodes
+
+		// Step 1: Explicitly disconnect all peers from all nodes.
+		// This triggers RemovePeer which cancels peer contexts, causing
+		// queryMaj23Routine and similar goroutines to exit.
+		for _, shard := range shards {
+			if shard.Node() != nil && shard.Node().Switch() != nil {
+				sw := shard.Node().Switch()
+				peers := sw.Peers().Copy()
+				for _, peer := range peers {
+					sw.StopPeerGracefully(peer)
+				}
 			}
 		}
+
+		// Step 2: Wait for all peers to be fully disconnected.
+		waitForPeersDisconnected(t, shards)
+
+		// Step 3: Wait for per-peer consensus routines to exit before closing blockstore.
+		waitForConsensusPeerRoutines(t)
+
+		// Step 4: Now cancel context and stop nodes
+		cancel()
+		waitForShardsStopped(t, shards)
+
 		for i := range numShardInstances {
 			streamStores[i].Close(ctx)
 			dbClosers[i]()
@@ -275,6 +392,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		cancel:    cancel,
 		t:         t,
 		shards:    shards,
+		clients:   clients,
 		stores:    stores,
 		wallets:   wallets,
 		registry:  registry,
@@ -282,16 +400,46 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 	}
 }
 
-// waitForHeight waits until all shards reach at least the target block height.
+// getHeight returns the current block height from a node using CometBFT RPC Status.
+func (env *multiNodeTestEnv) getHeight(nodeIdx int) (int64, error) {
+	status, err := env.clients[nodeIdx].Status(env.ctx)
+	if err != nil {
+		return 0, err
+	}
+	return status.SyncInfo.LatestBlockHeight, nil
+}
+
+// getHeights returns current block heights from all nodes using CometBFT RPC.
+func (env *multiNodeTestEnv) getHeights() []int64 {
+	heights := make([]int64, len(env.clients))
+	for i := range env.clients {
+		h, err := env.getHeight(i)
+		if err != nil {
+			env.t.Logf("failed to get height from node %d: %v", i, err)
+			heights[i] = -1
+		} else {
+			heights[i] = h
+		}
+	}
+	return heights
+}
+
+// waitForHeight waits until all nodes reach at least the target block height
+// using CometBFT RPC Status calls.
 func (env *multiNodeTestEnv) waitForHeight(targetHeight int64, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		allReached := true
-		for i, shard := range env.shards {
-			height := shard.Height()
+		for i := range env.clients {
+			height, err := env.getHeight(i)
+			if err != nil {
+				env.t.Logf("node %d status error: %v", i, err)
+				allReached = false
+				continue
+			}
 			if height < targetHeight {
 				allReached = false
-				env.t.Logf("shard %d at height %d, waiting for %d", i, height, targetHeight)
+				env.t.Logf("node %d at height %d, waiting for %d", i, height, targetHeight)
 			}
 		}
 		if allReached {
@@ -302,13 +450,29 @@ func (env *multiNodeTestEnv) waitForHeight(targetHeight int64, timeout time.Dura
 	return fmt.Errorf("timeout waiting for height %d", targetHeight)
 }
 
-// getHeights returns current block heights from all shards.
-func (env *multiNodeTestEnv) getHeights() []int64 {
-	heights := make([]int64, len(env.shards))
-	for i, shard := range env.shards {
-		heights[i] = shard.Height()
+// broadcastTxSync submits a transaction to a node using CometBFT RPC BroadcastTxSync.
+// This waits for the transaction to pass CheckTx before returning.
+func (env *multiNodeTestEnv) broadcastTxSync(nodeIdx int, txBytes []byte) error {
+	result, err := env.clients[nodeIdx].BroadcastTxSync(env.ctx, txBytes)
+	if err != nil {
+		return fmt.Errorf("broadcast error: %w", err)
 	}
-	return heights
+	if result.Code != 0 {
+		return fmt.Errorf("CheckTx failed with code %d: %s", result.Code, result.Log)
+	}
+	return nil
+}
+
+// abciQuery performs an ABCI query via CometBFT RPC.
+func (env *multiNodeTestEnv) abciQuery(nodeIdx int, path string, data []byte) ([]byte, error) {
+	result, err := env.clients[nodeIdx].ABCIQuery(env.ctx, path, data)
+	if err != nil {
+		return nil, fmt.Errorf("ABCI query error: %w", err)
+	}
+	if result.Response.Code != 0 {
+		return nil, fmt.Errorf("query failed with code %d: %s", result.Response.Code, result.Response.Log)
+	}
+	return result.Response.Value, nil
 }
 
 // buildCreateStreamTx creates a create stream transaction.
@@ -355,11 +519,6 @@ func buildMiniblockUpdateTx(
 	return proto.Marshal(tx)
 }
 
-// submitTxToNode submits a transaction to a specific node via CometBFT mempool.
-func (env *multiNodeTestEnv) submitTxToNode(nodeIdx int, txBytes []byte) error {
-	return env.shards[nodeIdx].SubmitTx(txBytes)
-}
-
 // verifyStreamConsistency checks that a stream has identical state across all nodes.
 func (env *multiNodeTestEnv) verifyStreamConsistency(streamID shared.StreamId) error {
 	var firstRecord *prot.StreamMetadata
@@ -394,7 +553,7 @@ func (env *multiNodeTestEnv) verifyStreamConsistency(streamID shared.StreamId) e
 	return nil
 }
 
-// verifyHeightConsistency checks that all nodes are at the same block height.
+// verifyHeightConsistency checks that all nodes are at the same block height using RPC.
 func (env *multiNodeTestEnv) verifyHeightConsistency() error {
 	heights := env.getHeights()
 	for i := 1; i < len(heights); i++ {
@@ -405,8 +564,69 @@ func (env *multiNodeTestEnv) verifyHeightConsistency() error {
 	return nil
 }
 
+// waitForP2PConnections waits until all nodes have established P2P connections.
+func (env *multiNodeTestEnv) waitForP2PConnections() {
+	require.Eventually(env.t, func() bool {
+		for i := range env.shards {
+			// Check if node has peers by querying NetInfo
+			netInfo, err := env.clients[i].NetInfo(env.ctx)
+			if err != nil {
+				return false
+			}
+			// Each node should have at least 1 peer (ideally numShardInstances-1)
+			if netInfo.NPeers < 1 {
+				return false
+			}
+		}
+		return true
+	}, 30*time.Second, 200*time.Millisecond, "P2P connections not established")
+}
+
+// waitForStreamState waits until a stream reaches the expected state on all nodes.
+func (env *multiNodeTestEnv) waitForStreamState(
+	streamID shared.StreamId,
+	expectedMiniblockNum int64,
+	expectedHash []byte,
+	expectedSealed bool,
+) {
+	require.Eventually(env.t, func() bool {
+		for _, store := range env.stores {
+			record, err := store.GetStream(env.ctx, multiTestShardID, streamID)
+			if err != nil {
+				return false
+			}
+			if record.LastMiniblockNum != expectedMiniblockNum {
+				return false
+			}
+			if expectedHash != nil && !bytes.Equal(record.LastMiniblockHash, expectedHash) {
+				return false
+			}
+			if record.Sealed != expectedSealed {
+				return false
+			}
+		}
+		return true
+	}, 10*time.Second, 100*time.Millisecond, "stream state not reached on all nodes")
+}
+
+// waitForStreamCount waits until all nodes have the expected number of streams.
+func (env *multiNodeTestEnv) waitForStreamCount(expectedCount int) {
+	require.Eventually(env.t, func() bool {
+		for _, store := range env.stores {
+			streams, err := store.ListStreams(env.ctx, multiTestShardID, 0, 1000)
+			if err != nil {
+				return false
+			}
+			if len(streams) != expectedCount {
+				return false
+			}
+		}
+		return true
+	}, 10*time.Second, 100*time.Millisecond, "stream count not reached on all nodes")
+}
+
 // TestMultiNodeCometBFTConsensus tests that 4 CometBFT nodes reach consensus
-// and produce at least 20 blocks with transactions.
+// and produce at least 20 blocks with transactions via RPC.
 func TestMultiNodeCometBFTConsensus(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -414,11 +634,14 @@ func TestMultiNodeCometBFTConsensus(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections to establish (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Submit transactions to trigger block creation
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Submit transactions via BroadcastTxSync to trigger block creation
 	numStreams := 25
 	streams := make([]shared.StreamId, numStreams)
 
@@ -429,23 +652,19 @@ func TestMultiNodeCometBFTConsensus(t *testing.T) {
 		txBytes, err := env.buildCreateStreamTx(streams[i], genesisHash)
 		require.NoError(t, err)
 
-		// Submit to a rotating node via CometBFT mempool
+		// Submit via CometBFT RPC BroadcastTxSync to a rotating node
 		nodeIdx := i % numShardInstances
-		err = env.submitTxToNode(nodeIdx, txBytes)
-		require.NoError(t, err, "failed to submit tx %d to node %d", i, nodeIdx)
-
-		// Small delay between submissions
-		time.Sleep(100 * time.Millisecond)
+		err = env.broadcastTxSync(nodeIdx, txBytes)
+		require.NoError(t, err, "failed to broadcast tx %d to node %d", i, nodeIdx)
 	}
 
 	// Wait for blocks to be produced through consensus
-	t.Log("Waiting for consensus and block production...")
-	err := env.waitForHeight(20, 60*time.Second)
+	err = env.waitForHeight(20, 60*time.Second)
 	require.NoError(t, err, "failed to reach height 20")
 
-	// Log final heights
+	// Log final heights from RPC Status
 	heights := env.getHeights()
-	t.Logf("Final heights: %v", heights)
+	t.Logf("Final heights (via RPC Status): %v", heights)
 
 	// Verify all nodes reached at least height 20
 	for i, h := range heights {
@@ -454,7 +673,7 @@ func TestMultiNodeCometBFTConsensus(t *testing.T) {
 }
 
 // TestMultiNodeCometBFTStreamLifecycle tests stream create, update, and seal
-// operations through the CometBFT consensus layer.
+// operations through the CometBFT RPC interface.
 func TestMultiNodeCometBFTStreamLifecycle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -462,67 +681,60 @@ func TestMultiNodeCometBFTStreamLifecycle(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Create a stream
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Create a stream via BroadcastTxSync
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	genesisHash := bytes.Repeat([]byte{0xaa}, 32)
 
 	createTx, err := env.buildCreateStreamTx(streamID, genesisHash)
 	require.NoError(t, err)
 
-	err = env.submitTxToNode(0, createTx)
-	require.NoError(t, err, "failed to submit create stream tx")
+	err = env.broadcastTxSync(0, createTx)
+	require.NoError(t, err, "failed to broadcast create stream tx")
 
-	// Wait for block containing the create tx
-	err = env.waitForHeight(1, 10*time.Second)
-	require.NoError(t, err, "failed to reach height 1")
+	// Wait for stream to be created on all nodes
+	env.waitForStreamState(streamID, 0, genesisHash, false)
 
-	// Allow time for state propagation
-	time.Sleep(1 * time.Second)
+	// Submit an update via RPC
+	newHash := bytes.Repeat([]byte{0xbb}, 32)
+	updateTx, err := buildMiniblockUpdateTx(streamID, genesisHash, newHash, 1, false)
+	require.NoError(t, err)
 
-	// Submit 19 more updates to reach 20 miniblock operations
-	prevHash := genesisHash
-	for i := 1; i <= 19; i++ {
-		newHash := bytes.Repeat([]byte{byte(i + 1)}, 32)
+	err = env.broadcastTxSync(1, updateTx)
+	require.NoError(t, err, "failed to broadcast update tx")
 
-		updateTx, err := buildMiniblockUpdateTx(streamID, prevHash, newHash, uint64(i), false)
-		require.NoError(t, err)
+	// Wait for update to be applied on all nodes
+	env.waitForStreamState(streamID, 1, newHash, false)
 
-		// Submit to rotating nodes
-		nodeIdx := i % numShardInstances
-		err = env.submitTxToNode(nodeIdx, updateTx)
-		require.NoError(t, err, "failed to submit update %d", i)
+	// Seal the stream
+	finalHash := bytes.Repeat([]byte{0xcc}, 32)
+	sealTx, err := buildMiniblockUpdateTx(streamID, newHash, finalHash, 2, true)
+	require.NoError(t, err)
 
-		// Wait for block to be produced
-		time.Sleep(300 * time.Millisecond)
+	err = env.broadcastTxSync(2, sealTx)
+	require.NoError(t, err, "failed to broadcast seal tx")
 
-		prevHash = newHash
-	}
+	// Wait for stream to be sealed on all nodes
+	env.waitForStreamState(streamID, 2, finalHash, true)
 
-	// Wait for all transactions to be processed
-	err = env.waitForHeight(20, 60*time.Second)
-	require.NoError(t, err, "failed to reach height 20")
-
-	// Allow final state propagation
-	time.Sleep(2 * time.Second)
-
-	// Verify stream state consistency across all nodes
-	err = env.verifyStreamConsistency(streamID)
-	require.NoError(t, err, "stream state inconsistent across nodes")
-
-	// Verify stream has correct final state
+	// Final verification
 	for i, store := range env.stores {
 		record, err := store.GetStream(env.ctx, multiTestShardID, streamID)
-		require.NoError(t, err, "node %d", i)
-		require.EqualValues(t, 19, record.LastMiniblockNum, "node %d wrong miniblock num", i)
+		require.NoError(t, err, "node %d failed to get sealed stream", i)
+		require.EqualValues(t, 2, record.LastMiniblockNum, "node %d wrong final miniblock num", i)
+		require.Equal(t, finalHash, record.LastMiniblockHash, "node %d wrong final hash", i)
+		require.True(t, record.Sealed, "node %d stream not sealed", i)
 	}
 }
 
 // TestMultiNodeCometBFTMultipleStreams tests creating and updating multiple
-// streams through CometBFT consensus.
+// streams through CometBFT RPC.
 func TestMultiNodeCometBFTMultipleStreams(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -530,11 +742,14 @@ func TestMultiNodeCometBFTMultipleStreams(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Create multiple streams
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Create multiple streams via BroadcastTxSync
 	numStreams := 10
 	streams := make([]shared.StreamId, numStreams)
 	hashes := make([][]byte, numStreams)
@@ -546,51 +761,48 @@ func TestMultiNodeCometBFTMultipleStreams(t *testing.T) {
 		txBytes, err := env.buildCreateStreamTx(streams[i], hashes[i])
 		require.NoError(t, err)
 
-		err = env.submitTxToNode(i%numShardInstances, txBytes)
+		err = env.broadcastTxSync(i%numShardInstances, txBytes)
 		require.NoError(t, err)
-
-		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Wait for creates to be processed
-	err := env.waitForHeight(5, 15*time.Second)
-	require.NoError(t, err, "failed to reach height 5")
+	// Wait for all streams to exist on all nodes
+	env.waitForStreamCount(numStreams)
 
-	// Submit updates to generate more blocks
+	// Submit updates via RPC to generate more blocks
 	for round := 1; round <= 15; round++ {
 		for i := range numStreams {
 			newHash := bytes.Repeat([]byte{byte(round*16 + i)}, 32)
 			txBytes, err := buildMiniblockUpdateTx(streams[i], hashes[i], newHash, uint64(round), false)
 			require.NoError(t, err)
 
-			err = env.submitTxToNode((round+i)%numShardInstances, txBytes)
+			err = env.broadcastTxSync((round+i)%numShardInstances, txBytes)
 			require.NoError(t, err)
 
 			hashes[i] = newHash
 		}
-		time.Sleep(200 * time.Millisecond)
 	}
 
 	// Wait for all transactions to be processed
 	err = env.waitForHeight(20, 60*time.Second)
 	require.NoError(t, err, "failed to reach height 20")
 
-	// Allow final state propagation
-	time.Sleep(2 * time.Second)
-
 	// Verify all streams have consistent state
-	for _, streamID := range streams {
-		err := env.verifyStreamConsistency(streamID)
-		require.NoError(t, err, "stream %s inconsistent", streamID)
-	}
+	require.Eventually(t, func() bool {
+		for _, streamID := range streams {
+			if err := env.verifyStreamConsistency(streamID); err != nil {
+				return false
+			}
+		}
+		return true
+	}, 10*time.Second, 100*time.Millisecond, "streams not consistent")
 
-	// Log final heights
+	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights: %v", heights)
+	t.Logf("Final heights (via RPC): %v", heights)
 }
 
 // TestMultiNodeCometBFTConcurrentSubmissions tests concurrent transaction
-// submissions from multiple nodes through CometBFT consensus.
+// submissions from multiple nodes through CometBFT RPC.
 func TestMultiNodeCometBFTConcurrentSubmissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -598,16 +810,21 @@ func TestMultiNodeCometBFTConcurrentSubmissions(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Submit transactions concurrently from all nodes
-	done := make(chan struct{})
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Submit transactions concurrently from all nodes via BroadcastTxSync
+	var wg sync.WaitGroup
 	errChan := make(chan error, numShardInstances*10)
 
 	for nodeIdx := range numShardInstances {
+		wg.Add(1)
 		go func(nIdx int) {
+			defer wg.Done()
 			for i := range 10 {
 				streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 				hash := bytes.Repeat([]byte{byte(nIdx*10 + i + 1)}, 32)
@@ -618,34 +835,30 @@ func TestMultiNodeCometBFTConcurrentSubmissions(t *testing.T) {
 					return
 				}
 
-				if err := env.submitTxToNode(nIdx, txBytes); err != nil {
+				if err := env.broadcastTxSync(nIdx, txBytes); err != nil {
 					errChan <- err
 					return
 				}
-
-				time.Sleep(50 * time.Millisecond)
 			}
 		}(nodeIdx)
 	}
 
-	// Wait for submissions to complete
-	time.Sleep(2 * time.Second)
-	close(done)
+	// Wait for all goroutines to complete
+	wg.Wait()
+	close(errChan)
 
 	// Check for submission errors
-	select {
-	case err := <-errChan:
+	for err := range errChan {
 		require.NoError(t, err, "submission error")
-	default:
 	}
 
 	// Wait for blocks to be produced
-	err := env.waitForHeight(20, 60*time.Second)
+	err = env.waitForHeight(20, 60*time.Second)
 	require.NoError(t, err, "failed to reach height 20")
 
-	// Log final heights
+	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights after concurrent submissions: %v", heights)
+	t.Logf("Final heights (via RPC) after concurrent submissions: %v", heights)
 
 	// Verify all nodes reached at least height 20
 	for i, h := range heights {
@@ -654,7 +867,7 @@ func TestMultiNodeCometBFTConcurrentSubmissions(t *testing.T) {
 }
 
 // TestMultiNodeCometBFTStateConsistency tests that all nodes maintain
-// consistent application state through CometBFT consensus.
+// consistent application state through CometBFT consensus via RPC.
 func TestMultiNodeCometBFTStateConsistency(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -662,11 +875,14 @@ func TestMultiNodeCometBFTStateConsistency(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Create streams and track them
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Create streams and track them via BroadcastTxSync
 	numStreams := 20
 	streams := make([]shared.StreamId, numStreams)
 
@@ -677,18 +893,12 @@ func TestMultiNodeCometBFTStateConsistency(t *testing.T) {
 		txBytes, err := env.buildCreateStreamTx(streams[i], hash)
 		require.NoError(t, err)
 
-		err = env.submitTxToNode(i%numShardInstances, txBytes)
+		err = env.broadcastTxSync(i%numShardInstances, txBytes)
 		require.NoError(t, err)
-
-		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Wait for blocks
-	err := env.waitForHeight(20, 60*time.Second)
-	require.NoError(t, err, "failed to reach height 20")
-
-	// Allow final state propagation
-	time.Sleep(2 * time.Second)
+	// Wait for all streams to exist on all nodes
+	env.waitForStreamCount(numStreams)
 
 	// Verify stream counts are consistent
 	counts := make([]int64, numShardInstances)
@@ -728,7 +938,7 @@ func TestMultiNodeCometBFTStateConsistency(t *testing.T) {
 }
 
 // TestMultiNodeCometBFT25Blocks ensures at least 25 blocks are created
-// through CometBFT consensus with various transaction types.
+// through CometBFT consensus with various transaction types via RPC.
 func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-node CometBFT test in short mode")
@@ -736,11 +946,14 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 
 	env := setupMultiNodeCometBFTTest(t)
 
-	// Wait for P2P connections (CometBFT needs time for peer discovery)
-	t.Log("Waiting for P2P connections...")
-	time.Sleep(10 * time.Second)
+	// Wait for P2P connections to establish
+	env.waitForP2PConnections()
 
-	// Submit enough transactions to generate 25+ blocks
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Submit enough transactions via BroadcastTxSync to generate 25+ blocks
 	createdStreams := make(map[shared.StreamId][]byte)
 
 	// Phase 1: Create streams (blocks 1-12)
@@ -751,15 +964,14 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 		txBytes, err := env.buildCreateStreamTx(streamID, hash)
 		require.NoError(t, err)
 
-		err = env.submitTxToNode(i%numShardInstances, txBytes)
+		err = env.broadcastTxSync(i%numShardInstances, txBytes)
 		require.NoError(t, err)
 
 		createdStreams[streamID] = hash
-		time.Sleep(150 * time.Millisecond)
 	}
 
-	// Wait for creates to be processed
-	err := env.waitForHeight(10, 20*time.Second)
+	// Wait for creates to be processed via RPC
+	err = env.waitForHeight(10, 30*time.Second)
 	require.NoError(t, err, "failed to reach height 10")
 
 	// Phase 2: Update streams (blocks 13-25)
@@ -770,21 +982,20 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 		txBytes, err := buildMiniblockUpdateTx(streamID, prevHash, newHash, uint64(updateRound), false)
 		require.NoError(t, err)
 
-		err = env.submitTxToNode(updateRound%numShardInstances, txBytes)
+		err = env.broadcastTxSync(updateRound%numShardInstances, txBytes)
 		require.NoError(t, err)
 
 		createdStreams[streamID] = newHash
 		updateRound++
-		time.Sleep(150 * time.Millisecond)
 	}
 
-	// Wait for final blocks
+	// Wait for final blocks via RPC Status
 	err = env.waitForHeight(25, 60*time.Second)
 	require.NoError(t, err, "failed to reach height 25")
 
-	// Log final heights
+	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights: %v", heights)
+	t.Logf("Final heights (via RPC): %v", heights)
 
 	// Verify all nodes reached at least height 25
 	for i, h := range heights {
@@ -792,11 +1003,90 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 	}
 
 	// Verify state consistency
-	err = env.verifyHeightConsistency()
-	require.NoError(t, err, "height inconsistency detected")
+	require.Eventually(t, func() bool {
+		return env.verifyHeightConsistency() == nil
+	}, 10*time.Second, 100*time.Millisecond, "height inconsistency")
 
 	for streamID := range createdStreams {
 		err := env.verifyStreamConsistency(streamID)
 		require.NoError(t, err, "stream %s inconsistent", streamID)
 	}
+}
+
+// TestMultiNodeCometBFTABCIQuery tests querying application state via
+// CometBFT RPC ABCIQuery.
+func TestMultiNodeCometBFTABCIQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping multi-node CometBFT test in short mode")
+	}
+
+	env := setupMultiNodeCometBFTTest(t)
+
+	// Wait for P2P connections
+	env.waitForP2PConnections()
+
+	// Wait for consensus to start (nodes need to finish blocksync before accepting transactions)
+	err := env.waitForHeight(1, 30*time.Second)
+	require.NoError(t, err, "failed to reach height 1 - nodes may still be syncing")
+
+	// Create some streams
+	numStreams := 5
+	streams := make([]shared.StreamId, numStreams)
+
+	for i := range numStreams {
+		streams[i] = testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+		hash := bytes.Repeat([]byte{byte(i + 1)}, 32)
+
+		txBytes, err := env.buildCreateStreamTx(streams[i], hash)
+		require.NoError(t, err)
+
+		err = env.broadcastTxSync(i%numShardInstances, txBytes)
+		require.NoError(t, err)
+	}
+
+	// Wait for blocks
+	err = env.waitForHeight(5, 20*time.Second)
+	require.NoError(t, err, "failed to reach height 5")
+
+	// Wait for all streams to be replicated to all nodes
+	env.waitForStreamCount(numStreams)
+
+	// Query each stream via ABCIQuery on all nodes
+	for _, streamID := range streams {
+		var firstValue []byte
+		for nodeIdx := range env.clients {
+			value, err := env.abciQuery(nodeIdx, "/stream/"+streamID.String(), nil)
+			require.NoError(t, err, "node %d ABCI query failed", nodeIdx)
+			require.NotEmpty(t, value, "node %d returned empty value", nodeIdx)
+
+			if firstValue == nil {
+				firstValue = value
+			} else {
+				require.Equal(t, firstValue, value,
+					"node %d returned different query result", nodeIdx)
+			}
+		}
+	}
+
+	// Query stream count via ABCIQuery
+	for nodeIdx := range env.clients {
+		value, err := env.abciQuery(nodeIdx, "/streams/count", nil)
+		require.NoError(t, err, "node %d count query failed", nodeIdx)
+		require.NotEmpty(t, value, "node %d returned empty count", nodeIdx)
+	}
+
+	// Continue to 20 blocks
+	for i := numStreams; i < 20; i++ {
+		streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+		hash := bytes.Repeat([]byte{byte(i + 1)}, 32)
+
+		txBytes, err := env.buildCreateStreamTx(streamID, hash)
+		require.NoError(t, err)
+
+		err = env.broadcastTxSync(i%numShardInstances, txBytes)
+		require.NoError(t, err)
+	}
+
+	err = env.waitForHeight(20, 60*time.Second)
+	require.NoError(t, err, "failed to reach height 20")
 }
