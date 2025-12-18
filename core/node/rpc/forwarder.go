@@ -344,6 +344,7 @@ func (s *Service) getMiniblocksImpl(
 			if len(resp.Msg.Miniblocks) == 0 {
 				// Empty response when we requested miniblocks - data might be missing locally
 				// Try remotes to see if they have the data
+				// TODO: Optimize this to not query remotes if we know the data is not available
 				shouldForward = true
 				logging.FromCtx(ctx).Warnw("Empty miniblocks response, should query remotes",
 					"streamId", streamId,
