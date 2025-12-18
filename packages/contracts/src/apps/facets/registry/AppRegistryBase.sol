@@ -9,7 +9,6 @@ import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {IEntitlementsManager} from "../../../spaces/facets/entitlements/IEntitlementsManager.sol";
 
@@ -320,7 +319,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         uint256 installPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(installPrice);
-        if (installPrice == 0) return (protocolFee, protocolFee);
+        if (installPrice == 0) return (0, protocolFee);
         return (installPrice + protocolFee, protocolFee);
     }
 
@@ -331,6 +330,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Handles protocol fee, developer payment, and excess refund
     function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
         (uint256 totalRequired, uint256 protocolFee) = _getTotalRequiredPayment(installPrice);
+
+        if (totalRequired == 0 && msg.value != 0) UnexpectedETH.selector.revertWith();
+        if (totalRequired == 0) return;
 
         if (msg.value < totalRequired) InsufficientPayment.selector.revertWith();
 
