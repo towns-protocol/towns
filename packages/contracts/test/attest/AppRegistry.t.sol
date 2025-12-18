@@ -242,17 +242,21 @@ contract AppRegistryTest is AppRegistryBaseTest {
     function test_installApp_withFreeApp() external givenAppIsRegistered {
         _setupAppWithPrice(0);
 
-        uint256 requiredAmount = registry.getAppPrice(address(mockModule));
-
         vm.expectEmit(address(appAccount));
         emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
-        hoax(founder, requiredAmount);
-        installer.installApp{value: requiredAmount}(mockModule, appAccount, "");
+        vm.prank(founder);
+        installer.installApp(mockModule, appAccount, "");
 
-        uint256 protocolFee = _getProtocolFee(0);
+        // verify no fees were paid
+        assertEq(address(deployer).balance, 0);
+    }
 
-        // Verify protocol fee was paid
-        assertEq(address(deployer).balance, protocolFee);
+    function test_installApp_revertWhen_installApp_unexpectedETH() external givenAppIsRegistered {
+        _setupAppWithPrice(0);
+
+        hoax(founder, 0.1 ether);
+        vm.expectRevert(UnexpectedETH.selector);
+        installer.installApp{value: 0.1 ether}(mockModule, appAccount, "");
     }
 
     function test_installApp_withPaidApp() external givenAppIsRegistered {
