@@ -88,6 +88,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v24.12.23+incompatible // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
+	github.com/grafana/jsonparser v0.0.0-20250908162026-5c2524e07b4c // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -110,7 +111,9 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/rudderlabs/analytics-go/v4 v4.2.2 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
+	github.com/segmentio/backo-go v1.1.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/tinylib/msgp v1.6.1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect

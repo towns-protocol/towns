@@ -601,8 +601,14 @@ type AppRegistryConfig struct {
 
 	StreamTracking StreamTrackingConfig
 
-	// MixpanelToken is the project token for Mixpanel analytics. If empty, analytics is disabled.
+	// MixpanelToken is the project token for Mixpanel analytics.
 	MixpanelToken string
+
+	// RudderstackWriteKey is the write key for RudderStack analytics.
+	RudderstackWriteKey string
+
+	// RudderstackDataPlaneURL is the data plane URL for RudderStack analytics.
+	RudderstackDataPlaneURL string
 
 	// EnqueuedMessageRetention configures retention for enqueued messages
 	EnqueuedMessageRetention EnqueuedMessageRetentionConfig
