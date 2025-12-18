@@ -1,0 +1,227 @@
+---
+title: Interactions
+---
+
+Interactions let users interact with your bot through forms, buttons, text inputs, transaction requests, and signature requests.
+
+## Sending Interactions
+
+Use `handler.sendInteractionRequest()` to send interactive UI elements to users. The method takes a channel ID and a payload object that defines the interaction type.
+
+```ts
+await handler.sendInteractionRequest(channelId, payload)
+```
+
+### Forms (Buttons & Text Inputs)
+
+Forms display buttons and text inputs that users can interact with. Use forms for menus, confirmations, polls, feedback collection, and multi-step flows. Set `recipient` to target a specific user, or omit it for public interactions anyone can respond to.
+
+```ts
+await handler.sendInteractionRequest(event.channelId, {
+  type: 'form',
+  id: 'my-form',
+  components: [
+    { id: 'name', type: 'textInput', placeholder: 'Enter name...' },
+    { id: 'confirm', type: 'button', label: 'Submit' },
+    { id: 'cancel', type: 'button', label: 'Cancel' }
+  ],
+  recipient: event.userId  // Optional: omit for public interactions
+})
+```
+
+**Component Types:**
+
+| Type | Properties |
+|------|------------|
+| `button` | `id`, `type: 'button'`, `label` |
+| `textInput` | `id`, `type: 'textInput'`, `placeholder` |
+
+### Transaction Requests
+
+Prompt users to sign and execute blockchain transactions from their wallets. Use transactions for payments, token transfers, NFT minting, contract interactions, and DeFi operations. Set `tx.signerWallet` to require a specific wallet, or omit it to let users choose.
+
+```ts
+import { encodeFunctionData, erc20Abi, parseUnits } from 'viem'
+
+await handler.sendInteractionRequest(event.channelId, {
+  type: 'transaction',
+  id: 'token-transfer',
+  title: 'Send Tokens',
+  subtitle: 'Transfer 50 USDC',
+  tx: {
+    chainId: '8453',
+    to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    value: '0',
+    data: encodeFunctionData({
+      abi: erc20Abi,
+      functionName: 'transfer',
+      args: [recipientAddress, parseUnits('50', 6)]
+    }),
+    signerWallet: smartAccountAddress  // Optional: omit to let user choose wallet
+  },
+  recipient: event.userId
+})
+```
+
+### Signature Requests
+
+Request cryptographic signatures without executing transactions. Use signatures for authentication, permissions, off-chain agreements, and gasless interactions. Supports EIP-712 typed data (`'typed_data'`) and personal sign (`'personal_sign'`).
+
+```ts
+await handler.sendInteractionRequest(event.channelId, {
+  type: 'signature',
+  id: 'agreement',
+  title: 'Sign Agreement',
+  subtitle: 'I agree to the terms',
+  chainId: '8453',
+  data: JSON.stringify({
+    domain: { name: 'My Bot', version: '1', chainId: 8453, verifyingContract: '0x0000000000000000000000000000000000000000' },
+    types: { Message: [{ name: 'content', type: 'string' }] },
+    primaryType: 'Message',
+    message: { content: 'I agree to the terms' }
+  }),
+  method: 'typed_data',
+  signerWallet: event.userId,
+  recipient: event.userId
+})
+```
+
+## Handling Responses
+
+Use `bot.onInteractionResponse()` to handle user interactions. This callback fires whenever a user clicks a button, submits a form, completes a transaction, or signs a message.
+
+**Available properties:**
+- `event.userId` - The user who responded
+- `event.channelId` - Channel where interaction occurred
+- `event.response.payload.content?.case` - Type: `'form'`, `'transaction'`, or `'signature'`
+- `event.response.payload.content?.value` - Response data
+
+```ts
+bot.onInteractionResponse(async (handler, event) => {
+  const { response } = event
+
+  switch (response.payload.content?.case) {
+    case 'form': {
+      const form = response.payload.content.value
+      for (const component of form.components) {
+        if (component.component.case === 'button') {
+          // Button clicked: component.id
+        }
+        if (component.component.case === 'textInput') {
+          const value = component.component.value.value
+          // Text input: component.id = value
+        }
+      }
+      break
+    }
+
+    case 'transaction': {
+      const tx = response.payload.content.value
+      if (tx.txHash) {
+        await handler.sendMessage(event.channelId, `Success: ${tx.txHash}`)
+      } else if (tx.error) {
+        await handler.sendMessage(event.channelId, `Failed: ${tx.error}`)
+      }
+      break
+    }
+
+    case 'signature': {
+      const sig = response.payload.content.value
+      if (sig.signature) {
+        await handler.sendMessage(event.channelId, 'Signed successfully')
+      } else if (sig.error) {
+        await handler.sendMessage(event.channelId, `Failed: ${sig.error}`)
+      }
+      break
+    }
+  }
+})
+```
+
+## Complete Example: Poll
+
+```ts
+const polls = new Map<string, { yes: number; no: number; voters: Set<string> }>()
+
+bot.onSlashCommand('poll', async (handler, event) => {
+  const pollId = `poll-${Date.now()}`
+  polls.set(pollId, { yes: 0, no: 0, voters: new Set() })
+
+  await handler.sendInteractionRequest(event.channelId, {
+    type: 'form',
+    id: pollId,
+    components: [
+      { id: 'yes', type: 'button', label: 'Yes' },
+      { id: 'no', type: 'button', label: 'No' }
+    ]
+    // No recipient = public poll
+  })
+})
+
+bot.onInteractionResponse(async (handler, event) => {
+  if (event.response.payload.content?.case !== 'form') return
+
+  const form = event.response.payload.content.value
+  const poll = polls.get(form.id)
+  if (!poll) return
+
+  // Prevent duplicate votes
+  if (poll.voters.has(event.userId)) return
+  poll.voters.add(event.userId)
+
+  for (const c of form.components) {
+    if (c.component.case === 'button') {
+      if (c.id === 'yes') poll.yes++
+      if (c.id === 'no') poll.no++
+    }
+  }
+
+  await handler.sendMessage(event.channelId, `Yes: ${poll.yes}, No: ${poll.no}`)
+})
+```
+
+## Reference
+
+### Form Request
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `'form'` | Yes | Interaction type |
+| `id` | string | Yes | Unique ID for matching responses |
+| `components` | array | Yes | Buttons and text inputs |
+| `recipient` | string | No | Target user address (omit for public) |
+
+### Transaction Request
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `'transaction'` | Yes | Interaction type |
+| `id` | string | Yes | Unique ID for matching responses |
+| `title` | string | Yes | Heading shown to user |
+| `subtitle` | string | Yes | Description of transaction |
+| `tx.chainId` | string | Yes | Chain ID (e.g., `'8453'` for Base) |
+| `tx.to` | string | Yes | Contract or recipient address |
+| `tx.value` | string | Yes | ETH amount in wei |
+| `tx.data` | string | Yes | Encoded function call |
+| `tx.signerWallet` | string | No | Required wallet (omit for user choice) |
+| `recipient` | string | No | Target user address |
+
+### Signature Request
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `'signature'` | Yes | Interaction type |
+| `id` | string | Yes | Unique ID for matching responses |
+| `chainId` | string | Yes | Chain ID |
+| `data` | string | Yes | JSON stringified EIP-712 typed data |
+| `method` | string | Yes | `'typed_data'` or `'personal_sign'` |
+| `signerWallet` | string | Yes | Wallet address to sign |
+| `title` | string | No | Heading shown to user |
+| `subtitle` | string | No | Description |
+| `recipient` | string | No | Target user address |
+
+## Next Steps
+
+- Learn about [onchain integrations](/build/bots/onchain-integrations) for bot blockchain operations
+- Explore [slash commands](/build/bots/slash-commands)
+- Read about [event handlers](/build/bots/events)

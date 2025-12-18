@@ -153,9 +153,11 @@
               "build/bots/local-development",
               "build/bots/events",
               "build/bots/slash-commands",
+              "build/bots/interactions",
+              "build/bots/onchain-integrations",
+              "build/bots/external-interactions",
               "build/bots/roles",
-              "build/bots/interaction-with-contracts",
-              "build/bots/external-interactions"
+              "build/bots/troubleshooting"
             ]
           },
           {
