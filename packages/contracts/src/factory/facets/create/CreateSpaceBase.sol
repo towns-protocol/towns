@@ -12,7 +12,6 @@ import {IUserEntitlement} from "../../../spaces/entitlements/user/IUserEntitleme
 import {IChannel} from "../../../spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "../../../spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "../../../spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "../../../spaces/facets/prepay/IPrepay.sol";
 import {IRoles, IRolesBase} from "../../../spaces/facets/roles/IRoles.sol";
 import {IArchitectBase} from "../architect/IArchitect.sol";
 
@@ -43,6 +42,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
         CreateSpace calldata space,
         SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
+        if (msg.value > 0) revert Architect__UnexpectedETH();
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
@@ -54,10 +54,6 @@ abstract contract CreateSpaceBase is IArchitectBase {
             space.channel,
             spaceOptions
         );
-
-        if (space.prepay.supply > 0) {
-            IPrepay(spaceAddress).prepayMembership{value: msg.value}(space.prepay.supply);
-        }
     }
 
     /// @dev Converts legacy CreateSpaceOld format and creates space
@@ -65,6 +61,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
         CreateSpaceOld calldata space,
         SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
+        if (msg.value > 0) revert Architect__UnexpectedETH();
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
@@ -84,10 +81,6 @@ abstract contract CreateSpaceBase is IArchitectBase {
             space.channel,
             spaceOptions
         );
-
-        if (space.prepay.supply > 0) {
-            IPrepay(spaceAddress).prepayMembership{value: msg.value}(space.prepay.supply);
-        }
     }
 
     function _createSpaceCore(
