@@ -261,16 +261,16 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		}
 
 		// Create full CometBFT node via NewMetadataShard
-		shard, err := NewMetadataShard(ctx, MetadataShardOpts{
+			shard, err := NewMetadataShard(ctx, MetadataShardOpts{
 			ShardID:         multiTestShardID,
 			P2PPort:         baseP2PPort + i,
 			RootDir:         t.TempDir(),
-			GenesisDoc:      genesisDoc,
-			Wallet:          wallets[i],
-			PersistentPeers: peers,
-			Store:           store,
-			ConfigOverride:  configureConsensusTestParams,
-		})
+				GenesisDoc:      genesisDoc,
+				Wallet:          wallets[i],
+				PersistentPeers: peers,
+				Store:           storeSetup.shardStore,
+				ConfigOverride:  configureConsensusTestParams,
+			})
 		require.NoError(t, err, "failed to create shard %d", i)
 		shards[i] = shard
 
