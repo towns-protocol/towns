@@ -2153,7 +2153,7 @@ export class Client
     async sendInteractionRequest(
         streamId: string,
         content: PlainMessage<InteractionRequestPayload['content']>,
-        recipient?: Uint8Array,
+        recipient?: string | Uint8Array,
         opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
     ): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
@@ -2178,7 +2178,10 @@ export class Client
 
         // Create the request matching InteractionResquest structure
         const request: PlainMessage<InteractionRequest> = {
-            recipient: recipient,
+            recipient:
+                typeof recipient === 'string'
+                    ? bin_fromHexString(recipient)
+                    : (recipient ?? undefined),
             encryptedData: encryptedData,
             threadId: opts?.tags?.threadId,
         }

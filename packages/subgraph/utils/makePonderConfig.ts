@@ -21,8 +21,8 @@ import {
     iAppFactoryAbi,
     iIdentityRegistryAbi,
     iReputationRegistryAbi,
+    subscriptionModuleFacetAbi,
 } from '@towns-protocol/contracts/typings'
-import SubscriptionModuleFacetAbi from '@towns-protocol/generated/dev/abis/SubscriptionModuleFacet.abi'
 
 import { getContractAddress } from './contractAddresses'
 
@@ -144,7 +144,7 @@ export function makePonderConfig(
                 chain: baseChainName,
             },
             SubscriptionModule: {
-                abi: SubscriptionModuleFacetAbi,
+                abi: subscriptionModuleFacetAbi,
                 address: subscriptionModule,
                 // this can be set to much later than the start block, let's figure this out for all newer contracts like swap etc
                 startBlock: baseChainStartBlock,

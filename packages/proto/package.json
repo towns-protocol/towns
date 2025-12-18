@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/proto",
-    "version": "0.0.440",
+    "version": "0.0.441",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -12,7 +12,7 @@
         "cb": "bun run clean && bun run build",
         "clean": "bun run buf:clean && rm -rf ./dist",
         "test": "vitest run",
-        "test:ci": "bun run test",
+        "test:ci": "vitest run --silent=passed-only",
         "test:watch": "vitest --watch",
         "watch": "bun scripts/watch_proto_files.cjs",
         "watch:go": "bun scripts/watch_proto_files_go.cjs"

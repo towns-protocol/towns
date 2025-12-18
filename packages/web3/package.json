@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.440",
+    "version": "0.0.441",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -9,10 +9,9 @@
         "cb": "bun run clean && bun run build",
         "clean": "rm -rf dist",
         "lint": "eslint --format unix ./src",
-        "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
         "lint:fix": "bun run lint --fix",
-        "test": "bun run load-env vitest run",
-        "test:ci": "bun run test",
+        "test": "vitest run",
+        "test:ci": "vitest run --silent=passed-only",
         "test:debug": "DEBUG=test bun run test",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"
@@ -34,7 +33,6 @@
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "debug": "^4.3.4",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",

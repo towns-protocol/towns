@@ -101,6 +101,11 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
+import {
+    type FlattenedInteractionRequest,
+    isFlattenedRequest,
+    flattenedToPayloadContent,
+} from './interaction-api'
 import type {
     FacilitatorConfig,
     PaymentPayload,
@@ -1270,25 +1275,54 @@ export class Bot<Commands extends BotCommand[] = []> {
     /**
      * Send an interaction request to a stream
      * @param streamId - Id of the stream. Usually channelId or userId
-     * @param request - The interaction request to send
-     * @param opts - The options for the interaction request
+     * @param contentOrPayload - The interaction request content (old format) or flattened payload (new format)
+     * @param recipientOrOpts - Recipient bytes (old format) or message options (new format)
+     * @param opts - The options for the interaction request (old format only)
      * @returns The eventId of the interaction request
      */
+    // Overload 1: Old format (backward compatible)
     async sendInteractionRequest(
         streamId: string,
         content: PlainMessage<InteractionRequestPayload['content']>,
         recipient?: Uint8Array,
         opts?: MessageOpts,
-    ) {
-        const result = await this.client.sendInteractionRequest(
-            streamId,
-            content,
-            recipient,
-            opts,
-            this.currentMessageTags,
-        )
+    ): Promise<{ eventId: string }>
+    // Overload 2: New flattened format (recipient inside payload)
+    async sendInteractionRequest(
+        streamId: string,
+        payload: FlattenedInteractionRequest,
+        opts?: MessageOpts,
+    ): Promise<{ eventId: string }>
+    // Implementation
+    async sendInteractionRequest(
+        streamId: string,
+        contentOrPayload:
+            | PlainMessage<InteractionRequestPayload['content']>
+            | FlattenedInteractionRequest,
+        recipientOrOpts?: Uint8Array | MessageOpts,
+        maybeOpts?: MessageOpts,
+    ): Promise<{ eventId: string }> {
+        const tags = this.currentMessageTags
         this.currentMessageTags = undefined
-        return result
+
+        if (isFlattenedRequest(contentOrPayload)) {
+            // New flattened format: (streamId, payload, opts?)
+            return this.client.sendInteractionRequest(
+                streamId,
+                contentOrPayload,
+                recipientOrOpts as MessageOpts | undefined,
+                tags,
+            )
+        } else {
+            // Old format: (streamId, content, recipient?, opts?)
+            return this.client.sendInteractionRequest(
+                streamId,
+                contentOrPayload,
+                recipientOrOpts as Uint8Array | undefined,
+                maybeOpts,
+                tags,
+            )
+        }
     }
 
     async hasAdminPermission(userId: string, spaceId: string) {
@@ -2422,13 +2456,53 @@ const buildBotActions = (
         return channel
     }
 
-    const sendInteractionRequest = async (
+    // Overload 1: Old format (backward compatible)
+    async function sendInteractionRequest(
         streamId: string,
         content: PlainMessage<InteractionRequestPayload['content']>,
         recipient?: Uint8Array,
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
-    ) => {
+    ): Promise<{ eventId: string }>
+    // Overload 2: New flattened format (recipient inside payload)
+    async function sendInteractionRequest(
+        streamId: string,
+        payload: FlattenedInteractionRequest,
+        opts?: MessageOpts,
+        tags?: PlainMessage<Tags>,
+    ): Promise<{ eventId: string }>
+    // Implementation
+    async function sendInteractionRequest(
+        streamId: string,
+        contentOrPayload:
+            | PlainMessage<InteractionRequestPayload['content']>
+            | FlattenedInteractionRequest,
+        recipientOrOpts?: Uint8Array | MessageOpts,
+        optsOrTags?: MessageOpts | PlainMessage<Tags>,
+        maybeTags?: PlainMessage<Tags>,
+    ): Promise<{ eventId: string }> {
+        // Detect which format is being used
+        let content: PlainMessage<InteractionRequestPayload['content']>
+        let recipient: Uint8Array | undefined
+        let opts: MessageOpts | undefined
+        let tags: PlainMessage<Tags> | undefined
+
+        if (isFlattenedRequest(contentOrPayload)) {
+            // New flattened format
+            content = flattenedToPayloadContent(contentOrPayload)
+            recipient = contentOrPayload.recipient
+                ? bin_fromHexString(contentOrPayload.recipient)
+                : undefined
+            opts = recipientOrOpts as MessageOpts | undefined
+            tags = optsOrTags as PlainMessage<Tags> | undefined
+        } else {
+            // Old format
+            content = contentOrPayload
+            recipient = recipientOrOpts as Uint8Array | undefined
+            opts = optsOrTags as MessageOpts | undefined
+            tags = maybeTags
+        }
+
         // Get encryption settings (same as sendMessageEvent)
         const miniblockInfo = await client.getMiniblockInfo(streamId)
         const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm

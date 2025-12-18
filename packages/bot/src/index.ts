@@ -4,6 +4,7 @@
 export * from './bot'
 export * from './eventDedup'
 export * from './identity-types'
+export * from './interaction-api'
 export * from './re-exports'
 export * from './smart-account'
 export * from './snapshot-getter'

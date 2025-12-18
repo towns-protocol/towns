@@ -28,6 +28,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
@@ -97,7 +98,7 @@ func getStreamFromNode(
 }
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -199,7 +200,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 
 	nodeAddress := common.HexToAddress(args[0])
 	zeroAddress := common.Address{}
@@ -237,7 +238,7 @@ func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -320,6 +321,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 			miniblock,
 			nil,
 			events.NewParsedMiniblockInfoOpts().
+				WithSkipSnapshotValidation().
 				WithExpectedBlockNumber(from+int64(n)),
 		)
 		if err != nil {
@@ -440,7 +442,7 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 }
 
 func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -530,7 +532,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -629,7 +631,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	nodeAddress := common.HexToAddress(args[0])
 	zeroAddress := common.Address{}
 	if nodeAddress == zeroAddress {
@@ -704,7 +706,7 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamGetCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -755,11 +757,43 @@ func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamUserCmd(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
+	contract, err := cmd.Flags().GetBool("contract")
+	if err != nil {
+		return err
+	}
+
 	a := args[0]
 	if !common.IsHexAddress(a) {
 		return RiverError(protocol.Err_INVALID_ARGUMENT, "Not a valid address", "arg", a)
 	}
 	address := common.HexToAddress(a)
+
+	if contract {
+		baseBlockchain, err := crypto.NewBlockchain(
+			ctx,
+			&cmdConfig.BaseChain,
+			nil,
+			infra.NewMetricsFactory(nil, "river", "cmdline"),
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+
+		contract, err := base.NewWalletLink(cmdConfig.GetWalletLinkContractAddress(), baseBlockchain.Client)
+		if err != nil {
+			return err
+		}
+
+		rootKey, err := contract.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, address)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Root key for wallet %s is %s\n", address.Hex(), rootKey.Hex())
+		address = rootKey
+	}
 
 	fmt.Printf("%s\n", UserStreamIdFromAddr(address))
 	fmt.Printf("%s\n", UserSettingStreamIdFromAddr(address))
@@ -848,8 +882,8 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+func runStreamCompareMiniblockChainCmd(ctx context.Context, cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	streamId, err := StreamIdFromString(args[0])
@@ -1046,6 +1080,7 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 			info, err := events.NewMiniblockInfoFromProto(
 				mb, response.Msg.GetMiniblockSnapshot(int64(i)),
 				events.NewParsedMiniblockInfoOpts().
+					WithSkipSnapshotValidation().
 					WithDoNotParseEvents(true),
 			)
 			if err != nil {
@@ -1363,7 +1398,7 @@ func fetchStreamStateSummaryOnNodes(
 		req.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
 		req.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
-		if err := client.sem.Acquire(context.Background(), 1); err != nil {
+		if err := client.sem.Acquire(ctx, 1); err != nil {
 			panic(err)
 		}
 		resp, err := client.client.GetLastMiniblockHash(ctx, req)
@@ -1428,8 +1463,8 @@ func fetchStreamStateSummaryOnNodes(
 	return result
 }
 
-func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	outputFile, err := os.Create(args[0])
@@ -1737,12 +1772,13 @@ max-block-range is optional and limits the number of blocks to consider (default
 	}
 
 	cmdStreamUser := &cobra.Command{
-		Use:   "user <stream-id>",
+		Use:   "user <user-address>",
 		Short: "Get user stream ids",
 		Long:  `Print 4 stream ids for the given user`,
-		Args:  cobra.RangeArgs(1, 1),
+		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamUserCmd,
 	}
+	cmdStreamUser.Flags().Bool("contract", false, "Treat input as a wallet address and find the corresponding root key")
 
 	cmdStreamValidate := &cobra.Command{
 		Use:   "validate <stream-id>",
@@ -1751,6 +1787,9 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamValidateCmd,
 	}
+	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
+	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
+	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
 
 	cmdStreamCompareMiniblockChain := &cobra.Command{
 		Use:   "compare-miniblock-chain <stream-id>",
@@ -1758,7 +1797,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Long:  `Compare miniblock chain by loading all miniblocks and comparing them between nodes.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStreamCompareMiniblockChainCmd(cmdConfig, args)
+			return runStreamCompareMiniblockChainCmd(cmd.Context(), cmdConfig, args)
 		},
 	}
 
@@ -1768,7 +1807,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Long:  `Find out-of-sync streams by loading all miniblocks and comparing them between nodes.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStreamOutOfSyncCmd(cmdConfig, args)
+			return runStreamOutOfSyncCmd(cmd.Context(), cmdConfig, args)
 		},
 	}
 
@@ -1781,10 +1820,6 @@ max-block-range is optional and limits the number of blocks to consider (default
 			return runStreamCheckStateCmd(cmd, cmdConfig, args)
 		},
 	}
-
-	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
-	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
-	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
 
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
 	cmdStream.AddCommand(cmdStreamGetMiniblockNum)
