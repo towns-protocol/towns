@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtcfg "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -43,6 +43,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 const (
@@ -392,7 +393,7 @@ func (env *multiNodeTestEnv) getHeights() []int64 {
 	for i := range env.clients {
 		h, err := env.getHeight(i)
 		if err != nil {
-			env.t.Logf("failed to get height from node %d: %v", i, err)
+			testfmt.Logf(env.t, "failed to get height from node %d: %v", i, err)
 			heights[i] = -1
 		} else {
 			heights[i] = h
@@ -410,13 +411,13 @@ func (env *multiNodeTestEnv) waitForHeight(targetHeight int64, timeout time.Dura
 		for i := range env.clients {
 			height, err := env.getHeight(i)
 			if err != nil {
-				env.t.Logf("node %d status error: %v", i, err)
+				testfmt.Logf(env.t, "node %d status error: %v", i, err)
 				allReached = false
 				continue
 			}
 			if height < targetHeight {
 				allReached = false
-				env.t.Logf("node %d at height %d, waiting for %d", i, height, targetHeight)
+				testfmt.Logf(env.t, "node %d at height %d, waiting for %d", i, height, targetHeight)
 			}
 		}
 		if allReached {
@@ -641,7 +642,7 @@ func TestMultiNodeCometBFTConsensus(t *testing.T) {
 
 	// Log final heights from RPC Status
 	heights := env.getHeights()
-	t.Logf("Final heights (via RPC Status): %v", heights)
+	testfmt.Logf(t, "Final heights (via RPC Status): %v", heights)
 
 	// Verify all nodes reached at least height 20
 	for i, h := range heights {
@@ -775,7 +776,7 @@ func TestMultiNodeCometBFTMultipleStreams(t *testing.T) {
 
 	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights (via RPC): %v", heights)
+	testfmt.Logf(t, "Final heights (via RPC): %v", heights)
 }
 
 // TestMultiNodeCometBFTConcurrentSubmissions tests concurrent transaction
@@ -835,7 +836,7 @@ func TestMultiNodeCometBFTConcurrentSubmissions(t *testing.T) {
 
 	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights (via RPC) after concurrent submissions: %v", heights)
+	testfmt.Logf(t, "Final heights (via RPC) after concurrent submissions: %v", heights)
 
 	// Verify all nodes reached at least height 20
 	for i, h := range heights {
@@ -885,7 +886,7 @@ func TestMultiNodeCometBFTStateConsistency(t *testing.T) {
 		counts[i] = count
 	}
 
-	t.Logf("Stream counts across nodes: %v", counts)
+	testfmt.Logf(t, "Stream counts across nodes: %v", counts)
 
 	// All nodes should have the same count
 	for i := 1; i < numShardInstances; i++ {
@@ -972,7 +973,7 @@ func TestMultiNodeCometBFT25Blocks(t *testing.T) {
 
 	// Log final heights from RPC
 	heights := env.getHeights()
-	t.Logf("Final heights (via RPC): %v", heights)
+	testfmt.Logf(t, "Final heights (via RPC): %v", heights)
 
 	// Verify all nodes reached at least height 25
 	for i, h := range heights {
