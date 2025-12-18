@@ -32,13 +32,15 @@ func (r *rudderstackAnalytics) Track(
 	event string,
 	properties map[string]any,
 ) {
+	// Copy properties synchronously to avoid race conditions if caller reuses the map
+	props := rudderstack.NewProperties()
+	for k, v := range properties {
+		props.Set(k, v)
+	}
+
 	trackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), trackTimeout)
 	go func() {
 		defer cancel()
-		props := rudderstack.NewProperties()
-		for k, v := range properties {
-			props.Set(k, v)
-		}
 		if err := r.client.Enqueue(rudderstack.Track{
 			UserId:     accountId.Hex(),
 			Event:      event,
