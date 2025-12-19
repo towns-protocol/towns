@@ -450,7 +450,8 @@ func TestReconciler_ForwardOnly(t *testing.T) {
 	require.Equal(prevMb.Num, view.LastBlock().Ref.Num)
 }
 
-// Reconciliation must fail with Err_UNAVAILABLE when there are no remotes (replication factor = 1 and running on the only node).
+// Reconciliation must fail with Err_UNAVAILABLE when there are no remotes (replication factor = 1 and running on the
+// only node).
 func TestReconciler_NoRemotes(t *testing.T) {
 	cfg := config.GetDefaultConfig()
 	cfg.StreamReconciliation.InitialWorkerPoolSize = 0

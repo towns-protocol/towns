@@ -833,9 +833,11 @@ func (r *transactionPool) submitLocked(
 
 	// TODO: disabling this check for now
 	// ensure that tx gas price is not higher than node operator has defined in the config he is willing to pay
-	// if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0 {
+	// if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0
+	// {
 	// 	return nil, RiverError(Err_BAD_CONFIG, "Transaction too expensive").
-	// 		Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String(), "name", name).
+	// 		Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String(), "name",
+	// name).
 	// 		Func("Submit")
 	// }
 

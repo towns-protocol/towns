@@ -30,7 +30,7 @@ formatters:
                 - github.com/towns-protocol/towns
         golines:
             max-len: 120
-            shorten-comments: false
+            shorten-comments: true
             reformat-tags: true
             chain-split-dots: true
         gofumpt:

@@ -19,7 +19,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
-// TestSyncWithEmptyNodeAddress_NoRace tests that the sync service can handle an empty node address by using sticky peer.
+// TestSyncWithEmptyNodeAddress_NoRace tests that the sync service can handle an empty node address by using sticky
+// peer.
 func TestSyncWithEmptyNodeAddress_NoRace(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping TestSyncWithEmptyNodeAddress_NoRace in short mode")

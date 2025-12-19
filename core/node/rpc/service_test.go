@@ -1097,7 +1097,8 @@ func TestForwardingWithRetries(t *testing.T) {
 			require.NotNil(t, resp)
 			require.Equal(t, streamId[:], resp.Msg.Stream.NextSyncCookie.StreamId)
 		},
-		// "GetStreamEx": func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
+		// "GetStreamEx": func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId
+		// StreamId) {
 		// 	// Note: the GetStreamEx implementation bypasses the stream cache, which fetches miniblocks from the
 		// 	// registry if none are yet present in the local cache. The stream creation flow returns when a quorum of
 		// 	// nodes terminates the stream creation call successfully, meaning that some nodes may not have finished
@@ -1351,7 +1352,8 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 	alice.say(channelId, "hello from Alice")
 
 	testfmt.Print(t, "StartSync with wrong cookie")
-	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
+	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify
+	// sync
 	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
 	defer syncCancel()
 

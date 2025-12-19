@@ -1218,7 +1218,8 @@ func (s *PostgresStreamStore) writeEventTx(
 		return err
 	}
 
-	// At this moment counter should be equal to minipoolSlot otherwise it is discrepancy of actual and expected records in minipool
+	// At this moment counter should be equal to minipoolSlot otherwise it is discrepancy of actual and expected records
+	// in minipool
 	// Keep in mind that there is service record with seqNum equal to -1
 	if counter != minipoolSlot {
 		var seqNum int
@@ -1396,7 +1397,8 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 // ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 // Supported consistency checks:
 // 1. There are no gaps in miniblocks sequence
-// TODO: Do we want to check that if we get miniblocks an toIndex is greater or equal block with latest snapshot, than in results we will have at least
+// TODO: Do we want to check that if we get miniblocks an toIndex is greater or equal block with latest snapshot, than
+// in results we will have at least
 // miniblock with latest snapshot?
 // This functional is not transactional as it consists of only one SELECT query
 func (s *PostgresStreamStore) ReadMiniblocks(
@@ -1618,7 +1620,8 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 	return miniblocks, nil
 }
 
-// WriteMiniblockCandidate adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote the
+// WriteMiniblockCandidate adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote
+// the
 // candidate with the correct hash.
 func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	ctx context.Context,

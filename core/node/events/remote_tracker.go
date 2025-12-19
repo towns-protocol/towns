@@ -11,8 +11,9 @@ import (
 
 // remoteTracker is a simplified version of StreamNodes that tracks the current remote and the list of remotes.
 // It is intededed for single tasks that need retries, such as streamReconciler.
-// AdvanceStickyPeer logic in StreamNodes is intended for concurrent tracking, and may not retry on all available replicas.
-// Also, in case of downloading miniblocks, remote error does not indicate persistent problem since this particular range
+// AdvanceStickyPeer logic in StreamNodes is intended for concurrent tracking, and may not retry on all available
+// replicas. Also, in case of downloading miniblocks, remote error does not indicate persistent problem since this
+// particular range
 // of miniblocks may not be available on this remote.
 // remoteTracker is not thread-safe.
 type remoteTracker struct {

@@ -99,7 +99,8 @@ func (sr *streamReconciler) trim() error {
 
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
 	// such as backward/forwards reconciliation, gaps filling.
-	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO in "reconcile" function.
+	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO in
+	// "reconcile" function.
 	err := sr.loadRanges()
 	if err != nil {
 		return err
@@ -548,7 +549,8 @@ func (sr *streamReconciler) reconcileForward() error {
 	return nil
 }
 
-// reconcileStreamForwardFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
+// reconcileStreamForwardFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks
+// from a single peer.
 // It returns the block number of the last block successfully reconciled + 1.
 func (sr *streamReconciler) reconcileForwardFromSinglePeer(
 	remote common.Address,

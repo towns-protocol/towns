@@ -1353,7 +1353,8 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 		), nil
 	case *BlockchainTransaction_SpaceReview_:
 		// space reviews can be sent through a bundler, verify the space review sender
-		// as specified in the space review content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
+		// as specified in the space review content and verified against the logs in
+		// blockchainTransaction_CheckReceiptMetadata
 		return auth.NewChainAuthArgsForIsWalletLinked(
 			common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
 			common.BytesToAddress(content.SpaceReview.GetEvent().GetUser()),
@@ -1852,7 +1853,8 @@ func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthAr
 			)
 		}
 		if bytes.Equal(ru.userMembership.Inviter, userId.Bytes()) {
-			// if the app invited itself, check to see that they have add remove channel permissions (supposibly the only way we could have gotten here is via a new channel creation)
+			// if the app invited itself, check to see that they have add remove channel permissions (supposibly the
+			// only way we could have gotten here is via a new channel creation)
 			return ru.addRemoveChannelChainAuthForApp(userId, appAddress)
 		} else {
 			// otherwise, check to see that the inviter has space ownership permissions
@@ -2300,7 +2302,8 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 }
 
 func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
-	// key solicitations are allowed if they are not empty, or if they are empty and isNewDevice is true and there is no existing device key
+	// key solicitations are allowed if they are not empty, or if they are empty and isNewDevice is true and there is no
+	// existing device key
 	if ru.solicitation == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key solicitation event")
 	}
@@ -2338,7 +2341,8 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required")
 	}
 
-	// if the fulfillment is ephemeral, the node has no idea that the ephemeral key solicitation this fulfillment is fulfilling
+	// if the fulfillment is ephemeral, the node has no idea that the ephemeral key solicitation this fulfillment is
+	// fulfilling
 	// exists or not — so we need to allow it
 	if ru.params.parsedEvent.Event.Ephemeral {
 		return true, nil
