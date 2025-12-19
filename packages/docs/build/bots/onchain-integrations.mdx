@@ -1,0 +1,158 @@
+---
+title: Onchain Integrations
+---
+
+Towns bots are onchain apps with two blockchain capabilities: direct contract interactions using your bot's wallet, and requesting users to sign transactions or messages.
+
+## Bot Wallet Architecture
+
+Your bot has two addresses:
+- **Gas wallet** (`bot.viem.account`) - Signs and pays for transactions
+- **App address** (`bot.appAddress`) - Treasury wallet (SimpleAccount)
+
+<Note>
+Your gas wallet needs Base ETH for transaction fees. See [Getting Started](/build/bots/getting-started#understanding-your-bots-wallet-architecture) for details.
+</Note>
+
+## Configuration
+
+### Base RPC URL
+
+For reliable blockchain interactions, configure a custom RPC endpoint. The default public RPC has strict rate limits.
+
+```typescript
+const bot = await makeTownsBot(
+  process.env.APP_PRIVATE_DATA!,
+  process.env.JWT_SECRET!,
+  {
+    baseRpcUrl: process.env.BASE_RPC_URL,
+    commands
+  }
+)
+```
+
+Add to `.env`:
+
+```bash
+BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+```
+
+We recommend getting a RPC URL from a reputable provider, like [Alchemy](https://www.alchemy.com/).
+
+## Bot Contract Interactions
+
+### Reading from Contracts
+
+Read contract state without gas costs:
+
+```ts
+import { readContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+
+const owner = await readContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'moduleOwner',
+  args: []
+})
+```
+
+### Writing to Contracts
+
+Use `execute` from ERC-7821 for any onchain interaction:
+
+```ts
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+import { waitForTransactionReceipt } from 'viem/actions'
+
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [{
+    to: tokenAddress,
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [recipientAddress, parseEther('1.0')]
+  }]
+})
+
+await waitForTransactionReceipt(bot.viem, { hash })
+```
+
+### Batch Transactions
+
+Execute multiple operations atomically:
+
+```ts
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [
+    {
+      to: tokenAddress,
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: [dexAddress, amount]
+    },
+    {
+      to: dexAddress,
+      abi: dexAbi,
+      functionName: 'swap',
+      args: [tokenIn, tokenOut, amount]
+    }
+  ]
+})
+```
+
+All operations succeed or all fail.
+
+<Note>
+To request users to sign transactions or messages, see [Interactions](/build/bots/interactions). This page focuses on bot-initiated blockchain operations.
+</Note>
+
+## Utility Functions
+
+### getSmartAccountFromUserId
+
+Get a user's smart account address:
+
+```ts
+import { getSmartAccountFromUserId } from '@towns-protocol/bot'
+
+const wallet = await getSmartAccountFromUserId(bot, {
+  userId: event.userId
+})
+
+if (wallet) {
+  // Send tokens, check balances, etc.
+}
+```
+
+Returns `null` if no smart account exists.
+
+**Use cases:**
+- Send tokens/NFTs to users
+- Airdrop rewards
+- Check balances
+- Verify ownership
+
+## Method Selection Guide
+
+| Task | Method | Learn More |
+|------|--------|------------|
+| Read contract state | `readContract` | - |
+| Bot sends transaction | `execute` | - |
+| Bot sends batch transactions | `execute` with multiple calls | - |
+| User sends transaction | `sendInteractionRequest` (transaction) | [Interactions](/build/bots/interactions) |
+| User signs message | `sendInteractionRequest` (signature) | [Interactions](/build/bots/interactions) |
+| User clicks button/form | `sendInteractionRequest` (form) | [Interactions](/build/bots/interactions) |
+| Bot's SimpleAccount operations | `writeContract` | - |
+
+## Next Steps
+
+- Create [interactions](/build/bots/interactions) with buttons and forms
+- Integrate [external services](/build/bots/external-interactions) via webhooks
+- Learn about [slash commands](/build/bots/slash-commands)
+- Explore [event handlers](/build/bots/events)
+

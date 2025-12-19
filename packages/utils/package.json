@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/utils",
-    "version": "0.0.440",
+    "version": "0.0.442",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
         "lint": "eslint --format unix ./src",
         "lint:fix": "bun run lint --fix",
         "test": "vitest run",
-        "test:ci": "bun run test",
+        "test:ci": "vitest run --silent=passed-only",
         "test:debug": "DEBUG=test bun run test",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"

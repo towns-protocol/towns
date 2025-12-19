@@ -12,7 +12,6 @@ import {IRuleEntitlementBase} from "src/spaces/entitlements/rule/IRuleEntitlemen
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase, IMembership} from "src/spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IRolesBase, IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
@@ -254,34 +253,17 @@ contract IntegrationCreateSpace is
         assertTrue(isEntitledToChannelAfter, "Member should be able to access the channel");
     }
 
-    function test_createSpaceWithPrepay(
-        string memory spaceId,
-        address founder,
-        address member
-    ) public assumeEOA(founder) assumeEOA(member) {
-        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
-        vm.assume(founder != member);
-
-        // create space with default channel
-        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+    function test_createSpaceWithPrepay_revertsIfETHSent() public {
+        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo("PrepaySpace");
         spaceInfo.membership.settings.pricingModule = tieredPricingModule;
-        spaceInfo.prepay.supply = 100;
         spaceInfo.membership.requirements.everyone = true;
 
-        uint256 cost = spaceInfo.prepay.supply *
-            IPlatformRequirements(spaceFactory).getMembershipFee();
+        address founder = makeAddr("founder");
+        vm.deal(founder, 1 ether);
 
-        deal(founder, cost);
         vm.prank(founder);
-        address newSpace = createSpaceFacet.createSpaceWithPrepay{value: cost}(spaceInfo);
-
-        uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
-        assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
-        assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
-    }
-
-    function test_createSpaceWithPrepay_gas() external {
-        test_createSpaceWithPrepay("PrepaySpace", makeAddr("founder"), makeAddr("member"));
+        vm.expectRevert(Architect__UnexpectedETH.selector);
+        createSpaceFacet.createSpaceWithPrepay{value: 1 ether}(spaceInfo);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -359,7 +341,7 @@ contract IntegrationCreateSpace is
         test_createSpace_CreateBasic("BasicSpace", makeAddr("founder"), makeAddr("user"));
     }
 
-    function test_createSpace_CreateWithPrepay(
+    function test_createSpace_CreateWithPrepay_deprecated(
         string memory spaceId,
         address founder,
         address user
@@ -369,27 +351,26 @@ contract IntegrationCreateSpace is
         address[] memory users = new address[](1);
         users[0] = user;
 
+        // prepay field is ignored (prepay functionality removed)
         CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
         spaceInfo.membership.settings.pricingModule = tieredPricingModule;
         spaceInfo.membership.requirements.users = users;
-        spaceInfo.prepay.supply = 50;
-
-        uint256 cost = spaceInfo.prepay.supply *
-            IPlatformRequirements(spaceFactory).getMembershipFee();
 
         bytes memory data = abi.encode(spaceInfo);
 
-        deal(founder, cost);
         vm.prank(founder);
-        address newSpace = createSpaceFacet.createSpace{value: cost}(Action.CreateWithPrepay, data);
+        address newSpace = createSpaceFacet.createSpace(Action.CreateWithPrepay, data);
 
-        uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
-        assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
+        // prepay is now deprecated - just verify space was created with entitlements
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
     }
 
-    function test_createSpace_CreateWithPrepay_gas() external {
-        test_createSpace_CreateWithPrepay("PrepayUnified", makeAddr("founder"), makeAddr("user"));
+    function test_createSpace_CreateWithPrepay_deprecated_gas() external {
+        test_createSpace_CreateWithPrepay_deprecated(
+            "PrepayUnified",
+            makeAddr("founder"),
+            makeAddr("user")
+        );
     }
 
     function test_createSpace_CreateWithOptions(

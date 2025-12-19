@@ -72,11 +72,14 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
 
     modifier givenAppIsInstalled() {
         // setup clients
+        vm.prank(dev);
+        mockModule.setPrice(0.001 ether);
 
         vm.prank(dev);
         appId = registry.registerApp(mockModule, client);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
+
         uint256 totalRequired = registry.getAppPrice(address(mockModule));
 
         uint256 protocolFee = _getProtocolFee(totalRequired);
@@ -220,7 +223,6 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         });
 
         assertEq(address(appAccount).balance, 1 ether);
-        assertEq(address(mockModule).balance, 0);
     }
 
     function test_isAppExecuting() external givenAppIsInstalled {
@@ -356,9 +358,5 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         if (installPrice == 0) return minPrice;
         uint256 basisPointsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
         return FixedPointMathLib.max(basisPointsFee, minPrice);
-    }
-
-    function _getTotalRequired(uint256 installPrice) internal view returns (uint256) {
-        return installPrice == 0 ? _getProtocolFee(installPrice) : installPrice;
     }
 }

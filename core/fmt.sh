@@ -2,54 +2,59 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-if ! command -v "gofumpt" >/dev/null 2>&1; then
-    go install mvdan.cc/gofumpt@v0.9.1 >/dev/null 2>&1
-fi
-if ! command -v "golines" >/dev/null 2>&1; then
-    go install github.com/segmentio/golines@v0.13.0 >/dev/null 2>&1
-fi
-if ! command -v "goimports" >/dev/null 2>&1; then
-    go install golang.org/x/tools/cmd/goimports@v0.37.0 >/dev/null 2>&1
-fi
+./golangci-version-check.sh
 
-# Read all STDIN into a variable, but do not stop if there is nothing on STDIN
-if [ -t 0 ]; then
-  INPUT=""
-else
-  INPUT=$(cat)
-fi
+usage() {
+  cat <<'EOF'
+Usage: ./fmt.sh [--stdin|--all]
 
-FMT_CMD="go run github.com/segmentio/golines@v0.13.0 --base-formatter=gofumpt --max-len=120"
-IMPORTS_CMD="go run golang.org/x/tools/cmd/goimports@v0.37.0 -local github.com/towns-protocol/towns"
+Default: format modified Go files detected by git.
+  --stdin  Run: golangci-lint fmt --stdin
+  --all    Run: golangci-lint fmt
+EOF
+}
 
-# If arguments are empty and stdin is not empty, run formatter on stdin to stdout
-if [[ -z "$*" && -n "${INPUT}" ]]
-then
-    echo "${INPUT}" | ${FMT_CMD} | ${IMPORTS_CMD}
+if [[ $# -eq 0 ]]; then
+  list_modified_go_files() {
+    {
+      git diff --name-only --diff-filter=ACMR
+      git ls-files --others --exclude-standard
+    } | awk 'NF && /\.go$/ { print }' | sort -u
+  }
+
+  files=()
+  while IFS= read -r file; do
+    files+=("$file")
+  done < <(list_modified_go_files)
+
+  if [[ ${#files[@]} -eq 0 ]]; then
+    echo "No modified Go files to format."
     exit 0
+  fi
+
+  golangci-lint fmt "${files[@]}"
+  exit 0
 fi
 
-# Set ARGS to -w if not set, otherwie to cmd line args
-ARGS=${@:-"-w"}
-
-OUTPUT=$(go list -f '{{.Dir}}' ./... | grep -v /contracts | grep -v /protocol | grep -v /mocks | xargs ${FMT_CMD} $ARGS)
-if [ -n "$OUTPUT" ]
-then
-    echo "$OUTPUT"
+if [[ $# -ne 1 ]]; then
+  echo "ERROR: unexpected arguments." >&2
+  usage >&2
+  exit 2
 fi
 
-if [ "$ARGS" == "-l" ] && [ -n "$OUTPUT" ]
-then
-    exit 1
-fi
-
-OUTPUT=$(go list -f '{{.Dir}}' ./... | grep -v /contracts | grep -v /protocol | grep -v /mocks | xargs ${IMPORTS_CMD} $ARGS)
-if [ -n "$OUTPUT" ]
-then
-    echo "$OUTPUT"
-fi
-
-if [ "$ARGS" == "-l" ] && [ -n "$OUTPUT" ]
-then
-    exit 1
-fi
+case "$1" in
+  --stdin)
+    golangci-lint fmt --stdin
+    ;;
+  --all)
+    golangci-lint fmt
+    ;;
+  -h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

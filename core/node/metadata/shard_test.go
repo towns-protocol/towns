@@ -3,9 +3,7 @@ package metadata
 import (
 	"bytes"
 	"context"
-	"strings"
 	"testing"
-	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,8 +13,6 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
-	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	nodespkg "github.com/towns-protocol/towns/core/node/nodes"
 	prot "github.com/towns-protocol/towns/core/node/protocol"
@@ -24,8 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
-	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type fakeNodeRegistry struct{}
@@ -77,68 +71,23 @@ func setupMetadataShardTest(t *testing.T) metadataTestEnv {
 	t.Helper()
 	ctx := test.NewTestContext(t)
 
-	dbCfg, dbSchema, dbCloser, err := dbtestutils.ConfigureDB(ctx)
-	require.NoError(t, err)
-
-	dbCfg.StartupDelay = 2 * time.Millisecond
-	dbCfg.Extra = strings.Replace(dbCfg.Extra, "pool_max_conns=1000", "pool_max_conns=10", 1)
-
-	poolInfo, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, dbSchema, nil)
-	require.NoError(t, err)
-
-	exitSignal := make(chan error, 1)
-	streamStore, err := storage.NewPostgresStreamStore(
-		ctx,
-		poolInfo,
-		base.GenShortNanoid(),
-		exitSignal,
-		infra.NewMetricsFactory(nil, "", ""),
-		&mocks.MockOnChainCfg{
-			Settings: &crypto.OnChainSettings{
-				StreamEphemeralStreamTTL: time.Minute * 10,
-				StreamHistoryMiniblocks: crypto.StreamHistoryMiniblocks{
-					Default:      0,
-					Space:        5,
-					UserSettings: 5,
-				},
-				MinSnapshotEvents: crypto.MinSnapshotEventsSettings{
-					Default: 10,
-				},
-				StreamSnapshotIntervalInMiniblocks: 110,
-				StreamTrimActivationFactor:         1,
-			},
-		},
-		nil,
-		5,
-	)
-	require.NoError(t, err)
-
-	store, err := storage.NewPostgresMetadataShardStore(
-		ctx,
-		&streamStore.PostgresEventStore,
-		1,
-		fakeNodeRegistry{},
-	)
-	require.NoError(t, err)
+	storeSetup := setupMetadataStore(t, ctx, 1, fakeNodeRegistry{})
 
 	shard := &MetadataShard{
 		opts: MetadataShardOpts{
 			ShardID: 1,
-			Store:   store,
+			Store:   storeSetup.shardStore,
 		},
 		chainID: chainIDForShard(1),
-		store:   store,
+		store:   storeSetup.shardStore,
 		log:     logging.FromCtx(ctx),
 	}
 
-	t.Cleanup(func() {
-		streamStore.Close(ctx)
-		dbCloser()
-	})
+	t.Cleanup(storeSetup.cleanup)
 
 	return metadataTestEnv{
 		shard: shard,
-		store: store,
+		store: storeSetup.shardStore,
 		ctx:   ctx,
 	}
 }

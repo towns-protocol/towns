@@ -18,7 +18,7 @@
 		"prettier": "prettier --config ../prettier-config/config.js --ignore-path .prettierignore .",
 		"run-build": "bun run build && bun ./dist/node_esbuild.cjs",
 		"start": "bun ./dist/node_esbuild.cjs",
-		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 DEBUG='csb:*,test:*' dotenv -e ../generated/deployments/local_dev/.env -- vitest run --testNamePattern integration/stream-metadata",
+		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 DEBUG='csb:*,test:*' vitest run --silent=passed-only --testNamePattern integration/stream-metadata",
 		"test:watch": "vitest --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
@@ -58,7 +58,6 @@
 		"@typescript-eslint/eslint-plugin": "^8.29.0",
 		"@typescript-eslint/parser": "^8.29.0",
 		"axios": "^1.9.0",
-		"dotenv-cli": "^10.0.0",
 		"esbuild": "^0.25.9",
 		"eslint": "^8.57.1",
 		"eslint-config-prettier": "^10.1.2",

@@ -37,10 +37,10 @@
 /core/ @sergekh2
 /core/node/ @sergekh2 @bas-vk
 /core/node/events/ @sergekh2 @texuf
-/core/node/protocol/ @sergekh2 @texuf
+/core/node/protocol/ @sergekh2
 /core/node/protocol_extensions/ @sergekh2 @texuf
 /core/node/rules/ @sergekh2 @texuf
-/core/xchain/ @sergekh2 @bas-vk @clemire
+/core/xchain/ @sergekh2 @bas-vk
 /infra/ @Tee-S
 /packages/ @sergekh2 @texuf
 /packages/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo

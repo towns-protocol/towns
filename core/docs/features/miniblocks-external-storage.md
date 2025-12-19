@@ -80,7 +80,7 @@ You may also set the equivalent environment variables:
 - RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_BUCKET
 
 And optionally enable migration of existing streams to external storage (recommended):
-- RIVER_EXTERNAL_MEDIA_STREAM_ENABLE_MIGRATION_EXISTING_STREAMS (bool: true or false)
+- RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_ENABLE_MIGRATION_EXISTING_STREAMS (bool: true or false)
 
 ### Amazon S3
 
@@ -105,4 +105,4 @@ You may also set the equivalent environment variables:
 - RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_BUCKET
 
 And optionally enable migration of existing streams to external storage (recommended):
-- RIVER_EXTERNAL_MEDIA_STREAM_ENABLE_MIGRATION_EXISTING_STREAMS (bool: true or false)
+- RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_ENABLE_MIGRATION_EXISTING_STREAMS (bool: true or false)

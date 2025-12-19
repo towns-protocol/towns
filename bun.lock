@@ -10,6 +10,8 @@
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
         "@types/node": "^20.14.8",
+        "dotenv": "^17.2.3",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-prettier": "^5.2.6",
@@ -40,7 +42,7 @@
     },
     "packages/bot": {
       "name": "@towns-protocol/bot",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
@@ -65,7 +67,6 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -85,7 +86,7 @@
     },
     "packages/contracts": {
       "name": "@towns-protocol/contracts",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
         "@ethereum-attestation-service/eas-contracts": "^1.8.0",
@@ -117,7 +118,7 @@
     },
     "packages/create-towns-protocol-app": {
       "name": "create-towns-protocol-app",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "jsonc-parser": "^3.3.1",
@@ -144,7 +145,7 @@
     },
     "packages/encryption": {
       "name": "@towns-protocol/encryption",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/olm": "3.2.28",
@@ -174,7 +175,7 @@
     },
     "packages/eslint-config": {
       "name": "@towns-protocol/eslint-config",
-      "version": "0.0.439",
+      "version": "0.0.440",
     },
     "packages/examples/bot-quickstart": {
       "name": "@towns-protocol/example-bot-quickstart",
@@ -201,7 +202,7 @@
     },
     "packages/generated": {
       "name": "@towns-protocol/generated",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@ethersproject/abi": "^5.8.0",
         "@ethersproject/providers": "^5.8.0",
@@ -308,7 +309,7 @@
     },
     "packages/prettier-config": {
       "name": "@towns-protocol/prettier-config",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "prettier-plugin-solidity": "^1.4.2",
       },
@@ -318,7 +319,7 @@
     },
     "packages/proto": {
       "name": "@towns-protocol/proto",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
       },
@@ -335,7 +336,7 @@
     },
     "packages/react-sdk": {
       "name": "@towns-protocol/react-sdk",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -370,7 +371,7 @@
     },
     "packages/rpc-connector": {
       "name": "@towns-protocol/rpc-connector",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@connectrpc/connect": "^2.1.0",
       },
@@ -400,7 +401,7 @@
     },
     "packages/sdk": {
       "name": "@towns-protocol/sdk",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect": "^2.1.0",
@@ -431,7 +432,6 @@
         "@types/seedrandom": "^3.0.4",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -448,7 +448,7 @@
     },
     "packages/sdk-crypto": {
       "name": "@towns-protocol/sdk-crypto",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
@@ -507,7 +507,6 @@
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "axios": "^1.9.0",
-        "dotenv-cli": "^10.0.0",
         "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
@@ -548,7 +547,6 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "dotenv-cli": "^10.0.0",
         "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
@@ -587,7 +585,7 @@
     },
     "packages/towns-bot-cli": {
       "name": "towns-bot",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "bin": "index.js",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -621,7 +619,7 @@
     },
     "packages/utils": {
       "name": "@towns-protocol/utils",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@ethereumjs/util": "^10.0.0",
@@ -644,7 +642,7 @@
     },
     "packages/web3": {
       "name": "@towns-protocol/web3",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
         "@towns-protocol/generated": "workspace:^",
@@ -662,7 +660,6 @@
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "debug": "^4.3.4",
-        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
@@ -673,7 +670,7 @@
     },
     "packages/xchain-monitor": {
       "name": "@towns-protocol/xchain-monitor",
-      "version": "0.0.439",
+      "version": "0.0.440",
       "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
@@ -5783,8 +5780,6 @@
     "@stoplight/spectral-runtime/node-fetch": ["node-fetch@2.7.0", "", { "dependencies": { "whatwg-url": "^5.0.0" }, "peerDependencies": { "encoding": "^0.1.0" }, "optionalPeers": ["encoding"] }, "sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A=="],
 
     "@stoplight/yaml/@stoplight/types": ["@stoplight/types@14.1.1", "", { "dependencies": { "@types/json-schema": "^7.0.4", "utility-types": "^3.10.0" } }, "sha512-/kjtr+0t0tjKr+heVfviO9FrU/uGLc+QNX3fHJc19xsCNYqU7lVhaXxDmEID9BZTjG+/r9pK9xP/xU02XGg65g=="],
-
-    "@towns-protocol/diamond/forge-std": ["forge-std@github:foundry-rs/forge-std#8bbcf6e", {}, "foundry-rs-forge-std-8bbcf6e"],
 
     "@ts-morph/common/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
