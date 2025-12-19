@@ -5,7 +5,10 @@ pragma solidity ^0.8.29;
 import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IExtendedResolver.sol";
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IL1ResolverService} from "src/domains/facets/resolver/IL1Resolver.sol";
+import {IL1ResolverService} from "src/domains/facets/resolver/IL1ResolverService.sol";
+
+// libraries
+import {OffchainLookup} from "@ensdomains/ens-contracts/ccipRead/EIP3668.sol";
 
 // contracts
 import {L1ResolverFacet} from "src/domains/facets/resolver/L1ResolverFacet.sol";
@@ -43,6 +46,10 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
 
         vm.prank(deployer);
         L1ResolverFacet(l1Resolver).setGatewayURL(newUrl);
+
+        // Verify the gateway URL was stored
+        string memory storedUrl = L1ResolverFacet(l1Resolver).getGatewayURL();
+        assertEq(storedUrl, newUrl, "Gateway URL should match");
     }
 
     function test_revertWhen_setGatewayURLNotOwner() external {
@@ -62,6 +69,10 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
 
         vm.prank(deployer);
         L1ResolverFacet(l1Resolver).setGatewaySigner(newSigner);
+
+        // Verify the signer was stored
+        address storedSigner = L1ResolverFacet(l1Resolver).getGatewaySigner();
+        assertEq(storedSigner, newSigner, "Gateway signer should match");
     }
 
     function test_revertWhen_setGatewaySignerNotOwner() external {
@@ -86,6 +97,13 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
 
         vm.prank(domainOwner);
         L1ResolverFacet(l1Resolver).setL2Registry(testNode, TEST_CHAIN_ID, l2Registry);
+
+        // Verify the registry mapping was updated
+        (uint64 storedChainId, address storedRegistry) = L1ResolverFacet(l1Resolver).getL2Registry(
+            testNode
+        );
+        assertEq(storedChainId, TEST_CHAIN_ID, "Chain ID should match");
+        assertEq(storedRegistry, l2Registry, "Registry address should match");
     }
 
     function test_revertWhen_setL2RegistryNotOwner() external {
@@ -112,8 +130,26 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
         bytes memory name = _dnsEncode("sub.test.eth");
         bytes memory data = abi.encodeWithSelector(IAddrResolver.addr.selector, testNode);
 
-        // Should revert with OffchainLookup
-        vm.expectRevert();
+        // Build expected OffchainLookup parameters
+        string[] memory urls = new string[](1);
+        urls[0] = GATEWAY_URL;
+
+        bytes memory callData = abi.encodeCall(
+            IL1ResolverService.stuffedResolveCall,
+            (name, data, TEST_CHAIN_ID, l2Registry)
+        );
+
+        // Should revert with specific OffchainLookup error
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OffchainLookup.selector,
+                l1Resolver,
+                urls,
+                callData,
+                L1ResolverFacet.resolveWithProof.selector,
+                callData // extraData same as callData
+            )
+        );
         L1ResolverFacet(l1Resolver).resolve(name, data);
     }
 

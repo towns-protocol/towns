@@ -4,7 +4,7 @@ pragma solidity ^0.8.29;
 // interfaces
 import {INameWrapper} from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
-import {IL1ResolverService} from "./IL1Resolver.sol";
+import {IL1ResolverService} from "./IL1ResolverService.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
@@ -33,7 +33,7 @@ library L1ResolverMod {
 
     // ENS name wrapper node
     bytes32 constant NAME_WRAPPER_NODE =
-        0xdee478ba2734e34d81c6adc77a32d75b29007895efa2fe60921f1c315e1ec7d9;
+        0xdee478ba2734e34d81c6adc77a32d75b29007895efa2fe60921f1c315e1ec7d9; // namewrapper.eth
 
     /// @notice L2 registry information
     /// @param chainId The chain ID of the L2 registry
@@ -194,6 +194,9 @@ library L1ResolverMod {
         bytes calldata response,
         bytes calldata extraData
     ) internal view returns (bytes memory result) {
+        address signer = $.gatewaySigner;
+        if (signer == address(0)) L1Resolver__InvalidGatewaySigner.selector.revertWith();
+
         // Decode the gateway response
         uint64 expires;
         bytes memory sig;
@@ -209,7 +212,7 @@ library L1ResolverMod {
 
         // Verify signature using SignatureCheckerLib
         // Supports both EOA (ECDSA) and smart contract wallets (ERC-1271)
-        if (!SignatureCheckerLib.isValidSignatureNow($.gatewaySigner, hash, sig)) {
+        if (!SignatureCheckerLib.isValidSignatureNow(signer, hash, sig)) {
             L1Resolver__InvalidSignature.selector.revertWith();
         }
     }

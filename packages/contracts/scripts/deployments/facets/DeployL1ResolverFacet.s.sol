@@ -15,7 +15,7 @@ library DeployL1ResolverFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(5);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(8);
 
         // IExtendedResolver
         arr.p(L1ResolverFacet.resolve.selector);
@@ -25,10 +25,15 @@ library DeployL1ResolverFacet {
 
         // Registry management
         arr.p(L1ResolverFacet.setL2Registry.selector);
+        arr.p(L1ResolverFacet.getL2Registry.selector);
 
-        // Owner functions
+        // Gateway URL configuration
         arr.p(L1ResolverFacet.setGatewayURL.selector);
+        arr.p(L1ResolverFacet.getGatewayURL.selector);
+
+        // Gateway signer configuration
         arr.p(L1ResolverFacet.setGatewaySigner.selector);
+        arr.p(L1ResolverFacet.getGatewaySigner.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {

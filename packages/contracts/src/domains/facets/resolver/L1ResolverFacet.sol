@@ -74,4 +74,27 @@ contract L1ResolverFacet is IExtendedResolver, OwnableBase, Facet {
     function setGatewaySigner(address gatewaySigner) external onlyOwner {
         L1ResolverMod.getStorage().setGatewaySigner(gatewaySigner);
     }
+
+    /// @notice Returns the L2 registry for a given node
+    /// @param node The node to get the L2 registry for
+    /// @return chainId The chain ID of the L2 registry
+    /// @return registryAddress The address of the L2 registry
+    function getL2Registry(
+        bytes32 node
+    ) external view returns (uint64 chainId, address registryAddress) {
+        L1ResolverMod.L2Registry memory registry = L1ResolverMod.getStorage().registryByNode[node];
+        return (registry.chainId, registry.registryAddress);
+    }
+
+    /// @notice Returns the gateway signer address
+    /// @return The address of the gateway signer
+    function getGatewaySigner() external view returns (address) {
+        return L1ResolverMod.getStorage().gatewaySigner;
+    }
+
+    /// @notice Returns the gateway URL
+    /// @return The URL of the CCIP gateway
+    function getGatewayURL() external view returns (string memory) {
+        return L1ResolverMod.getStorage().gatewayUrl;
+    }
 }
