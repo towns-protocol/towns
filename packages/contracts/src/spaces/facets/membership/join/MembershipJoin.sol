@@ -115,13 +115,14 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate and capture payment if required
+        // Validate and capture payment
+        address currency = _getMembershipCurrency();
         uint256 capturedAmount;
-        if (joinDetails.shouldCharge) {
-            capturedAmount = _validateAndCapturePayment(
-                _getMembershipCurrency(),
-                joinDetails.amountDue
-            );
+        if (!joinDetails.shouldCharge) {
+            // Capture any ETH sent for free memberships so it can be refunded
+            if (currency == CurrencyTransfer.NATIVE_TOKEN) capturedAmount = msg.value;
+        } else {
+            capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
         }
 
         bytes32 transactionId = _registerTransaction(
@@ -139,7 +140,11 @@ abstract contract MembershipJoin is
 
         if (!isCrosschainPending) {
             if (isEntitled) {
-                if (joinDetails.shouldCharge) _chargeForJoinSpace(transactionId, joinDetails);
+                if (!joinDetails.shouldCharge) {
+                    _afterChargeForJoinSpace(transactionId, receiver, 0);
+                } else {
+                    _chargeForJoinSpace(transactionId, joinDetails);
+                }
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
             } else {
@@ -156,13 +161,14 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate and capture payment if required
+        // Validate and capture payment
+        address currency = _getMembershipCurrency();
         uint256 capturedAmount;
-        if (joinDetails.shouldCharge) {
-            capturedAmount = _validateAndCapturePayment(
-                _getMembershipCurrency(),
-                joinDetails.amountDue
-            );
+        if (!joinDetails.shouldCharge) {
+            // Capture any ETH sent for free memberships so it can be refunded
+            if (currency == CurrencyTransfer.NATIVE_TOKEN) capturedAmount = msg.value;
+        } else {
+            capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
         }
 
         _validateUserReferral(receiver, referral);
@@ -186,9 +192,11 @@ abstract contract MembershipJoin is
 
         if (!isCrosschainPending) {
             if (isEntitled) {
-                if (joinDetails.shouldCharge)
+                if (!joinDetails.shouldCharge) {
+                    _afterChargeForJoinSpace(transactionId, receiver, 0);
+                } else {
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
-
+                }
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
             } else {
@@ -446,17 +454,20 @@ abstract contract MembershipJoin is
         }
     }
 
-    /// @notice Refunds the balance to the sender if necessary
+    /// @notice Refunds the remaining captured balance
+    /// @dev NOTE: Currently refunds go to `receiver` (the membership recipient), not the original
+    /// payer (msg.sender). This means if Alice pays for Bob's membership, excess ETH is refunded
+    /// to Bob, not Alice. This design may change in a future update to refund the original payer.
     /// @param transactionId The unique identifier for this join transaction
-    /// @param sender The address of the sender to refund
-    function _refundBalance(bytes32 transactionId, address sender) internal {
+    /// @param receiver The address to receive the refund (currently the membership receiver)
+    function _refundBalance(bytes32 transactionId, address receiver) internal {
         uint256 userValue = _getCapturedValue(transactionId);
         if (userValue > 0) {
             _releaseCapturedValue(transactionId, userValue);
             CurrencyTransfer.transferCurrency(
                 _getMembershipCurrency(),
                 address(this),
-                sender,
+                receiver,
                 userValue
             );
         }
@@ -593,6 +604,9 @@ abstract contract MembershipJoin is
     /// @param receiver The address receiving the points
     /// @param paidAmount The amount paid for membership
     function _mintMembershipPoints(address receiver, uint256 paidAmount) internal {
+        // No points for free memberships
+        if (paidAmount == 0) return;
+
         // TODO: Add ERC20 support - requires price oracle to convert token amount to points
         if (_getMembershipCurrency() != CurrencyTransfer.NATIVE_TOKEN) return;
 

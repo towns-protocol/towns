@@ -119,27 +119,28 @@ contract MembershipJoinSpaceTest is
     }
 
     function test_joinSpace_withValueAndFreeAllocation() external {
-        uint256 value = membership.getMembershipPrice();
-
+        // Set a non-zero free allocation so membership is free
         vm.prank(founder);
         membership.setMembershipFreeAllocation(1000);
-        uint256 freeAlloc = membership.getMembershipFreeAllocation();
-        assertTrue(freeAlloc > 0);
+        assertTrue(membership.getMembershipFreeAllocation() > 0);
 
+        // User accidentally sends 1 ETH for a free membership
+        uint256 accidentalValue = 1 ether;
+        vm.deal(alice, accidentalValue);
         vm.prank(alice);
-        vm.deal(alice, value);
-        membership.joinSpace{value: value}(alice);
+        membership.joinSpace{value: accidentalValue}(alice);
 
-        assertTrue(address(membership).balance == 0);
-        assertTrue(alice.balance == value);
+        // ETH should be fully refunded
+        assertEq(address(membership).balance, 0, "contract should have no ETH");
+        assertEq(alice.balance, accidentalValue, "alice should get full refund");
 
+        // Treasury should have nothing to withdraw
         address withdrawAddress = _randomAddress();
         vm.prank(founder);
         vm.expectRevert(Membership__InsufficientPayment.selector);
         treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, withdrawAddress);
 
         assertEq(withdrawAddress.balance, 0);
-        assertEq(address(membership).balance, 0);
     }
 
     function test_joinSpace_priceChangesMidTransaction() external givenMembershipHasPrice {
