@@ -37,7 +37,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
 
     modifier givenTokenFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
-        vm.assume(amount > 0 && amount < type(uint96).max);
+        vm.assume(amount > 0);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(townsToken),
@@ -59,7 +59,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
 
     modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
-        vm.assume(amount > 0 && amount < type(uint96).max);
+        vm.assume(amount > 0);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(rewardsDistributionFacet),
@@ -80,7 +80,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     }
 
     modifier givenTokensAreMinted(address to, uint96 amount) {
-        vm.assume(amount > 0 && amount < type(uint96).max);
+        vm.assume(amount > 0);
         vm.prank(bridge);
         towns.mint(to, amount);
         _;
