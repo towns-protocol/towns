@@ -323,6 +323,7 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
 
     function test_joinSpace_basicActionUSDC() external givenUSDCMembershipHasPrice {
         uint256 membershipFee = usdcMembership.getMembershipPrice();
+        uint256 protocolFeeRecipientBalanceBefore = mockUSDC.balanceOf(deployer);
 
         // Mint and approve USDC
         mockUSDC.mint(alice, membershipFee);
@@ -336,6 +337,14 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
 
         assertEq(usdcMembershipToken.balanceOf(alice), 1);
         assertEq(mockUSDC.balanceOf(alice), 0);
+
+        // Verify protocol fee was paid in USDC (min $1.50 for $10 base price)
+        uint256 expectedProtocolFee = 1_500_000; // $1.50 minimum fee
+        assertEq(
+            mockUSDC.balanceOf(deployer) - protocolFeeRecipientBalanceBefore,
+            expectedProtocolFee,
+            "Protocol fee should be paid in USDC"
+        );
     }
 
     function test_joinSpace_withReferralActionUSDC(
@@ -436,5 +445,34 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
         bytes memory data = abi.encode(alice);
         vm.expectRevert(Membership__UnexpectedValue.selector);
         usdcMembership.joinSpace{value: 1 ether}(JoinType.Basic, data);
+    }
+
+    function test_joinSpace_USDC_insufficientApproval() external givenUSDCMembershipHasPrice {
+        uint256 membershipFee = usdcMembership.getMembershipPrice();
+
+        // Mint USDC but approve less than required
+        mockUSDC.mint(alice, membershipFee);
+        vm.prank(alice);
+        mockUSDC.approve(address(usdcMembership), membershipFee - 1);
+
+        // Should revert due to insufficient approval
+        vm.prank(alice);
+        bytes memory data = abi.encode(alice);
+        vm.expectRevert(); // ERC20 transfer will fail
+        usdcMembership.joinSpace(JoinType.Basic, data);
+    }
+
+    function test_joinSpace_USDC_freeMembership() external {
+        // Set USDC space price to 0 (free)
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(0);
+
+        // Join without any approval needed
+        vm.prank(alice);
+        bytes memory data = abi.encode(alice);
+        usdcMembership.joinSpace(JoinType.Basic, data);
+
+        assertEq(usdcMembershipToken.balanceOf(alice), 1);
+        assertEq(mockUSDC.balanceOf(alice), 0); // No USDC spent
     }
 }

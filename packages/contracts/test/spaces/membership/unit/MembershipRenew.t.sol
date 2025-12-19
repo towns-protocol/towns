@@ -612,7 +612,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         usdcMembership.renewMembership{value: ethSent}(tokenId);
 
         // Verify membership was renewed
-        assertGt(usdcMembership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
+        assertGt(
+            usdcMembership.expiresAt(tokenId),
+            originalExpiration,
+            "Membership should be renewed"
+        );
 
         // Verify ETH was refunded
         assertEq(alice.balance, aliceBalanceBefore + ethSent, "ETH should be fully refunded");

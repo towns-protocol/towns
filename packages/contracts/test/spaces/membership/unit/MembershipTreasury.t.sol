@@ -6,6 +6,7 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
@@ -26,17 +27,29 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         test1155 = new MockERC1155();
     }
 
-    function test_withdraw() external givenMembershipHasPrice givenAliceHasPaidMembership {
-        address multisig = _randomAddress();
+    function test_withdraw(
+        uint256 membershipPrice,
+        address recipient
+    ) external assumeEOA(recipient) {
+        membershipPrice = bound(membershipPrice, 1, type(uint128).max);
+        vm.assume(recipient != deployer); // deployer receives protocol fees
+        vm.assume(recipient.balance == 0);
+
+        vm.prank(founder);
+        membership.setMembershipPrice(membershipPrice);
+
+        uint256 totalPrice = membership.getMembershipPrice();
+        hoax(alice, totalPrice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         // With fee-added model, the space receives the full asking price
         uint256 revenue = membership.revenue();
-        assertEq(revenue, MEMBERSHIP_PRICE);
+        assertEq(revenue, membershipPrice);
 
         vm.prank(founder);
-        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, multisig);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, recipient);
 
-        assertEq(multisig.balance, MEMBERSHIP_PRICE);
+        assertEq(recipient.balance, membershipPrice);
     }
 
     function test_revertWhen_withdrawNotOwner() external {
@@ -115,5 +128,86 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         assertTrue(test1155.directCheckOfReceivedBatch(address(membership)));
         assertEq(test1155.balanceOf(address(membership), tokenIds[0]), amounts[0]);
         assertEq(test1155.balanceOf(address(membership), tokenIds[1]), amounts[1]);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     USDC WITHDRAW TESTS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_withdrawUSDC(
+        uint256 membershipPrice,
+        address recipient
+    ) external assumeEOA(recipient) {
+        membershipPrice = bound(membershipPrice, 1, type(uint128).max);
+        vm.assume(recipient != deployer); // deployer receives protocol fees
+        vm.assume(mockUSDC.balanceOf(recipient) == 0);
+
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(membershipPrice);
+
+        uint256 totalPrice = usdcMembership.getMembershipPrice();
+
+        // Mint and approve USDC for alice
+        mockUSDC.mint(alice, totalPrice);
+        vm.prank(alice);
+        mockUSDC.approve(address(usdcMembership), totalPrice);
+
+        // Join with USDC
+        vm.prank(alice);
+        bytes memory data = abi.encode(alice);
+        usdcMembership.joinSpace(JoinType.Basic, data);
+
+        ITreasury usdcTreasury = ITreasury(address(usdcMembership));
+
+        // With fee-added model, the space receives the full asking price
+        uint256 revenue = usdcMembership.revenue();
+        assertEq(revenue, membershipPrice);
+
+        vm.prank(founder);
+        usdcTreasury.withdraw(address(mockUSDC), recipient);
+
+        assertEq(mockUSDC.balanceOf(recipient), membershipPrice);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 MULTI-CURRENCY WITHDRAW TESTS              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Test that treasury can withdraw multiple currencies
+    /// @dev Space can hold ETH from membership + ERC20 from external sources (tips, etc.)
+    function test_withdrawMultipleCurrencies(
+        uint256 usdcAmount,
+        address ethRecipient,
+        address usdcRecipient
+    )
+        external
+        assumeEOA(ethRecipient)
+        assumeEOA(usdcRecipient)
+        givenMembershipHasPrice
+        givenAliceHasPaidMembership
+    {
+        usdcAmount = bound(usdcAmount, 1, type(uint128).max);
+        vm.assume(ethRecipient != deployer); // deployer receives protocol fees
+        vm.assume(usdcRecipient != deployer);
+        vm.assume(ethRecipient.balance == 0);
+        vm.assume(mockUSDC.balanceOf(usdcRecipient) == 0);
+
+        // Alice joined with ETH, space has ETH balance
+        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(address(membership).balance, MEMBERSHIP_PRICE);
+
+        // Send some USDC directly to the space (simulating tips or external transfer)
+        mockUSDC.mint(address(membership), usdcAmount);
+        assertEq(mockUSDC.balanceOf(address(membership)), usdcAmount);
+
+        // Withdraw ETH
+        vm.prank(founder);
+        treasury.withdraw(CurrencyTransfer.NATIVE_TOKEN, ethRecipient);
+        assertEq(ethRecipient.balance, MEMBERSHIP_PRICE);
+
+        // Withdraw USDC
+        vm.prank(founder);
+        treasury.withdraw(address(mockUSDC), usdcRecipient);
+        assertEq(mockUSDC.balanceOf(usdcRecipient), usdcAmount);
     }
 }
