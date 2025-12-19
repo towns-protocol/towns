@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-// interfaces
-
-// libraries
-
-// contracts
-
 /// @notice Interface for the resolver service
 interface IL1ResolverService {
     /// @notice Resolves a name on the L1 registry
