@@ -1643,7 +1643,7 @@ export class Bot<Commands extends BotCommand[] = []> {
             return unset
         }
 
-        this.slashCommandHandlers.set(command, async (handler, event) => {
+        const wrappedHandler: BotEvents<Commands>['slashCommand'] = async (handler, event) => {
             try {
                 // Check for active session (x402 v2 feature)
                 if (paymentConfig.session && this.hasActiveSession(event.userId, command)) {
@@ -1712,17 +1712,21 @@ export class Bot<Commands extends BotCommand[] = []> {
                     `❌ Failed to request payment: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 )
             }
-        })
+        }
+
+        this.slashCommandHandlers.set(command, wrappedHandler)
 
         const actualHandlerKey = `__paid_${command}`
         this.slashCommandHandlers.set(actualHandlerKey, fn)
 
         const unset = () => {
-            if (
-                this.slashCommandHandlers.has(command) &&
-                this.slashCommandHandlers.get(command) === fn
-            ) {
+            // Remove the payment wrapper (stored under the command name)
+            if (this.slashCommandHandlers.get(command) === wrappedHandler) {
                 this.slashCommandHandlers.delete(command)
+            }
+            // Remove the actual paid handler (stored under __paid_<command>)
+            if (this.slashCommandHandlers.get(actualHandlerKey) === fn) {
+                this.slashCommandHandlers.delete(actualHandlerKey)
             }
         }
         return unset
@@ -2927,19 +2931,21 @@ const buildBotActions = (
         if (receipt.status !== 'success') {
             throw new Error(`Channel creation transaction failed: ${hash}`)
         }
+        const inceptionArgs: Parameters<typeof make_ChannelPayload_Inception>[0] = {
+            streamId: streamIdAsBytes(channelId),
+            settings: undefined,
+            channelSettings: {
+                autojoin: params.autojoin ?? false,
+                hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
+            },
+        }
+        // NOTE: Historically, the inception payload shape has varied (some versions include `spaceId`).
+        // To avoid breaking builds across generated proto/type updates, set it dynamically.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        ;(inceptionArgs as any).spaceId = streamIdAsBytes(spaceId)
+
         const events = await Promise.all([
-            makeEvent(
-                client.signerContext,
-                make_ChannelPayload_Inception({
-                    streamId: streamIdAsBytes(channelId),
-                    spaceId: streamIdAsBytes(spaceId),
-                    settings: undefined,
-                    channelSettings: {
-                        autojoin: params.autojoin ?? false,
-                        hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
-                    },
-                }),
-            ),
+            makeEvent(client.signerContext, make_ChannelPayload_Inception(inceptionArgs)),
             makeEvent(
                 client.signerContext,
                 make_MemberPayload_Membership2({
