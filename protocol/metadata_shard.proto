@@ -2,6 +2,40 @@ syntax = "proto3";
 package river.metadata;
 option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
+// StreamMetadata is the stream state stored in a metadata shard.
+message StreamMetadata {
+    // Stream id.
+    // Must be 32 bytes.
+    bytes stream_id = 1;
+
+    // Hash of the last miniblock.
+    // Must be 32 bytes.
+    bytes last_miniblock_hash = 2;
+
+    // Last miniblock height.
+    int64 last_miniblock_num = 3;
+
+    // Nodes hosting the stream.
+    // Must be 20 bytes records.
+    // Nodes array is ordered:
+    // - first replication_factor nodes are quorum nodes for the stream.
+    // - remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
+    // Should contain at least replication_factor nodes.
+    repeated bytes nodes = 4;
+
+    // Replication factor for the stream.
+    // Must be greater than 0.
+    // First replication_factor nodes are quorum nodes for the stream.
+    // Remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
+    // Should be less than or equal to the number of nodes.
+    uint32 replication_factor = 5;
+
+    // Whether the stream is sealed.
+    // When stream is sealed, last miniblock hash and number are immutable.
+    // Both replication factor and nodes can be updated when stream is sealed.
+    bool sealed = 8;
+}
+
 // MetadataTx is the envelope for all metadata shard transactions.
 message MetadataTx {
     oneof op {
@@ -16,44 +50,7 @@ message MetadataTx {
 // promoting ephemeral streams to permanent streams, and for migrating streams
 // from legacy StreamRegistry smart contract.
 message CreateStreamTx {
-    // Stream id.
-    // Must be 32 bytes.
-    bytes stream_id = 1;
-
-    // Hash of the genesis miniblock.
-    // Must be set if num_miniblocks is 0.
-    bytes genesis_miniblock_hash = 2;
-
-
-    // Replication factor for the stream.
-    // Must be greater than 0.
-    // First replication_factor nodes are quorum nodes for the stream.
-    // Remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
-    uint32 replication_factor = 3;
-
-    // Nodes hosting the stream.
-    // Must be 20 bytes records.
-    // Must contain at least 1 node.
-    // Nodes array is ordered:
-    // - first replication_factor nodes are quorum nodes for the stream.
-    // - remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
-    repeated bytes nodes = 4;
-
-    // Number of miniblocks in the stream.
-    uint64 last_miniblock_num = 5;
-
-    // Hash of the last miniblock in the stream.
-    // Must be 32 bytes.
-    // Must be set if last_miniblock_num is not 0.
-    bytes last_miniblock_hash = 6;
-
-    // Whether the stream is sealed on creation.
-    bool sealed = 7;
-
-    // Serialized genesis miniblock payload.
-    // Must be set if last_miniblock_num is 0.
-    // TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
-    bytes genesis_miniblock = 8;
+    StreamMetadata stream = 1;
 }
 
 // SetStreamLastMiniblockBatchTx updates miniblock pointers for multiple streams atomically.
@@ -74,7 +71,7 @@ message MiniblockUpdate {
 
     // New miniblock height.
     // Must be greater than the last known miniblock height by 1.
-    uint64 last_miniblock_num = 3;
+    int64 last_miniblock_num = 3;
 
     // New miniblock hash.
     // Must be 32 bytes.
@@ -101,46 +98,4 @@ message UpdateStreamNodesAndReplicationTx {
 
     // Optional replication factor change. If 0, keep current.
     uint32 replication_factor = 3;
-}
-
-// StreamMetadata is the stream state stored in a metadata shard.
-message StreamMetadata {
-    // Stream id.
-    // Must be 32 bytes.
-    bytes stream_id = 1;
-
-    // Hash of the genesis miniblock.
-    // Must be 32 bytes.
-    // Set on creation and cannot be changed.
-    bytes genesis_miniblock_hash = 2;
-
-    // Hash of the last miniblock.
-    // Must be 32 bytes.
-    bytes last_miniblock_hash = 3;
-
-    // Last miniblock height.
-    int64 last_miniblock_num = 5;
-
-    // Nodes hosting the stream.
-    // Must be 20 bytes records.
-    // Nodes array is ordered:
-    // - first replication_factor nodes are quorum nodes for the stream.
-    // - remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
-    repeated bytes nodes = 6;
-
-    // Replication factor for the stream.
-    // Must be greater than 0.
-    // First replication_factor nodes are quorum nodes for the stream.
-    // Remaining nodes are follow nodes that replicate the stream, but do not vote on miniblocks.
-    uint32 replication_factor = 7;
-
-    // Whether the stream is sealed.
-    // When stream is sealed, last miniblock hash and number are immutable.
-    // Both replication factor and nodes can be updated when stream is sealed.
-    bool sealed = 8;
-
-    // Serialized genesis miniblock payload.
-    // Set on creation and cannot be changed.
-    // TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
-    bytes genesis_miniblock = 9;
 }

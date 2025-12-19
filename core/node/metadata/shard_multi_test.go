@@ -416,12 +416,13 @@ func (env *multiNodeTestEnv) buildCreateStreamTx(
 	tx := &prot.MetadataTx{
 		Op: &prot.MetadataTx_CreateStream{
 			CreateStream: &prot.CreateStreamTx{
-				StreamId:             streamID[:],
-				GenesisMiniblockHash: genesisHash,
-				GenesisMiniblock:     bytes.Repeat([]byte{0x01}, 32),
-				LastMiniblockNum:     0,
-				Nodes:                [][]byte{env.nodeAddrs[0].Bytes()},
-				ReplicationFactor:    1,
+				Stream: &prot.StreamMetadata{
+					StreamId:          streamID[:],
+					LastMiniblockHash: genesisHash,
+					LastMiniblockNum:  0,
+					Nodes:             [][]byte{env.nodeAddrs[0].Bytes()},
+					ReplicationFactor: 1,
+				},
 			},
 		},
 	}
@@ -433,7 +434,7 @@ func buildMiniblockUpdateTx(
 	streamID shared.StreamId,
 	prevHash []byte,
 	newHash []byte,
-	newNum uint64,
+	newNum int64,
 	sealed bool,
 ) ([]byte, error) {
 	tx := &prot.MetadataTx{
@@ -705,7 +706,7 @@ func TestMultiNodeCometBFTMultipleStreams(t *testing.T) {
 	for round := 1; round <= 15; round++ {
 		for i := range numStreams {
 			newHash := bytes.Repeat([]byte{byte(round*16 + i)}, 32)
-			txBytes, err := buildMiniblockUpdateTx(streams[i], hashes[i], newHash, uint64(round), false)
+			txBytes, err := buildMiniblockUpdateTx(streams[i], hashes[i], newHash, int64(round), false)
 			require.NoError(t, err)
 
 			err = env.broadcastTxSync((round+i)%numShardInstances, txBytes)
