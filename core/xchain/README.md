@@ -123,6 +123,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 ## Troubleshooting
 
 - **Issue:** Node doesn't start
+
   - **Solution:** Validate that `common/localhost_entitlementChecker.json` and `common/localhost_entitlementGatedExample.json` contains the correct contract addresses.
 
 - **Issue:** Failed transaction posting
