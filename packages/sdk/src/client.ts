@@ -887,6 +887,7 @@ export class Client
 
     async createDMChannel(
         userId: string,
+        appAddress?: string,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string }> {
         const channelIdStr = makeDMStreamId(this.userId, userId)
@@ -898,6 +899,7 @@ export class Client
                 streamId: channelId,
                 firstPartyAddress: this.signerContext.creatorAddress,
                 secondPartyAddress: addressFromUserId(userId),
+                secondPartyAppAddress: appAddress ? bin_fromHexString(appAddress) : undefined,
                 settings: streamSettings,
             }),
         )
@@ -917,6 +919,7 @@ export class Client
                 userId: userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
+                appAddress,
             }),
         )
         return this.createStreamAndSync({

@@ -375,6 +375,8 @@ message DmChannelPayload {
         bytes first_party_address = 2;
         bytes second_party_address = 3;
         StreamSettings settings = 4;
+        optional bytes first_party_app_address = 5;
+        optional bytes second_party_app_address = 6;
     }
 
     oneof content {

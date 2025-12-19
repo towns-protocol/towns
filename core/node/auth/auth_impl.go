@@ -98,12 +98,35 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 	}
 }
 
-func NewChainAuthArgsForDmValidation(firstParty, secondParty common.Address, requireBotParty bool) *ChainAuthArgs {
+// NewChainAuthArgsForDmStreamCreation creates chain auth args for DM stream creation.
+// Validate app address using blockchain call and checks app installation on user.
+func NewChainAuthArgsForDmStreamCreation(
+	firstParty, secondParty common.Address,
+	firstPartyAppAddress, secondPartyAppAddress *common.Address,
+	requireBotParty bool,
+) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:            chainAuthKindDmValidation,
-		firstParty:      firstParty,
-		secondParty:     secondParty,
-		requireBotParty: requireBotParty,
+		kind:                  chainAuthKindDmCreation,
+		firstParty:            firstParty,
+		secondParty:           secondParty,
+		firstPartyAppAddress:  firstPartyAppAddress,
+		secondPartyAppAddress: secondPartyAppAddress,
+		requireBotParty:       requireBotParty,
+	}
+}
+
+// NewChainAuthArgsForDmEvent creates chain auth args for events on existing DM streams.
+// Checks if bot is installed, if applicable.
+func NewChainAuthArgsForDmEvent(
+	firstParty, secondParty common.Address,
+	firstPartyAppAddress, secondPartyAppAddress *common.Address,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:                  chainAuthKindDmEvent,
+		firstParty:            firstParty,
+		secondParty:           secondParty,
+		firstPartyAppAddress:  firstPartyAppAddress,
+		secondPartyAppAddress: secondPartyAppAddress,
 	}
 }
 
@@ -175,7 +198,8 @@ const (
 	chainAuthKindIsApp
 	chainAuthKindIsNotApp
 	chainAuthKindIsBotOwner
-	chainAuthKindDmValidation
+	chainAuthKindDmCreation
+	chainAuthKindDmEvent
 )
 
 type ChainAuthArgs struct {
@@ -206,6 +230,10 @@ type ChainAuthArgs struct {
 
 	// requireBotParty when true requires at least one party to be a bot in DM validation.
 	requireBotParty bool
+
+	// firstPartyAppAddress and secondPartyAppAddress are optional app contract addresses from the DM inception.
+	firstPartyAppAddress  *common.Address
+	secondPartyAppAddress *common.Address
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -1209,7 +1237,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner || args.kind == chainAuthKindDmValidation {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner || args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
@@ -1297,14 +1325,18 @@ func (ca *chainAuth) checkIsApp(
 		return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
 	}
 
-	if args.kind == chainAuthKindDmValidation {
-		return ca.checkDmValidation(ctx, cfg, args)
+	if args.kind == chainAuthKindDmCreation {
+		return ca.checkDmCreation(ctx, cfg, args)
+	}
+
+	if args.kind == chainAuthKindDmEvent {
+		return ca.checkDmEvent(ctx, cfg, args)
 	}
 
 	return nil, nil
 }
 
-func (ca *chainAuth) checkDmValidation(
+func (ca *chainAuth) checkDmCreation(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
@@ -1321,37 +1353,106 @@ func (ca *chainAuth) checkDmValidation(
 		return nil, err
 	}
 
-	// user-to-user
+	if args.firstPartyAppAddress != nil || args.secondPartyAppAddress != nil {
+		if args.firstPartyAppAddress == nil && firstPartyIsApp {
+			log.Warnw("checkDmCreation: first party claimed not bot but is registered",
+				"firstParty", args.firstParty)
+			return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
+		}
+
+		if args.firstPartyAppAddress != nil {
+			if !firstPartyIsApp || *args.firstPartyAppAddress != firstPartyAppContract {
+				log.Warnw("checkDmCreation: first party app address mismatch",
+					"firstParty", args.firstParty,
+					"claimed", args.firstPartyAppAddress,
+					"actual", firstPartyAppContract)
+				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+			}
+		}
+
+		if args.secondPartyAppAddress == nil && secondPartyIsApp {
+			log.Warnw("checkDmCreation: second party claimed not bot but is registered",
+				"secondParty", args.secondParty)
+			return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
+		}
+
+		if args.secondPartyAppAddress != nil {
+			if !secondPartyIsApp || *args.secondPartyAppAddress != secondPartyAppContract {
+				log.Warnw("checkDmCreation: second party app address mismatch",
+					"secondParty", args.secondParty,
+					"claimed", args.secondPartyAppAddress,
+					"actual", secondPartyAppContract)
+				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+			}
+		}
+	}
+
+	// User-to-user: neither party is a bot
 	if !firstPartyIsApp && !secondPartyIsApp {
 		if args.requireBotParty {
-			log.Debugw(
-				"checkDmValidation: bot required but neither party is a bot",
+			// In case of user initialization with a DM with a bot, we require at least one party to be a bot.
+			log.Debugw("checkDmCreation: bot required but neither party is a bot",
 				"firstParty", args.firstParty,
-				"secondParty", args.secondParty,
-			)
+				"secondParty", args.secondParty)
 			return boolCacheResult{false, EntitlementResultReason_NO_BOT_PARTY}, nil
 		}
-		log.Debugw(
-			"checkDmValidation: user-to-user DM allowed",
+		log.Debugw("checkDmCreation: user-to-user DM allowed",
 			"firstParty", args.firstParty,
-			"secondParty", args.secondParty,
-		)
+			"secondParty", args.secondParty)
 		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
-	// bot-to-user / user-to-bot: identify the human party and the bot's app contract,
-	// then verify the human has the bot installed
-	var userAddress common.Address
-	var botAppContract common.Address
-	if firstPartyIsApp {
-		userAddress = args.secondParty
-		botAppContract = firstPartyAppContract
-	} else {
-		userAddress = args.firstParty
-		botAppContract = secondPartyAppContract
+	if secondPartyIsApp {
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract)
+		if err == nil && result.IsAllowed() {
+			return result, nil
+		}
 	}
 
-	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, botAppContract)
+	if firstPartyIsApp {
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract)
+		if err == nil && result.IsAllowed() {
+			return result, nil
+		}
+	}
+
+	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+}
+
+// Check if app is installed on user for events on existing DM streams.
+func (ca *chainAuth) checkDmEvent(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	firstPartyIsApp := args.firstPartyAppAddress != nil
+	secondPartyIsApp := args.secondPartyAppAddress != nil
+
+	// User-to-user: neither party is an app - always allowed
+	if !firstPartyIsApp && !secondPartyIsApp {
+		log.Debugw("checkDmEvent: user-to-user DM allowed",
+			"firstParty", args.firstParty,
+			"secondParty", args.secondParty)
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+
+	// At least one party is an app. Check if app is installed on user.
+	if secondPartyIsApp {
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, *args.secondPartyAppAddress)
+		if err == nil && result.IsAllowed() {
+			return result, nil
+		}
+	}
+	if firstPartyIsApp {
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, *args.firstPartyAppAddress)
+		if err == nil && result.IsAllowed() {
+			return result, nil
+		}
+	}
+	// App is not installed on user - reject
+	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 }
 
 // checkAppInstalledOnUserUncached checks if an app is installed on a single wallet.
