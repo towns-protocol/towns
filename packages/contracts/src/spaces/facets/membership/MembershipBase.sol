@@ -192,8 +192,9 @@ abstract contract MembershipBase is IMembershipBase {
     /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Sets the membership currency. Only currencies with an enabled fee config in FeeManager
+    /// can be set. Native token (address(0) or NATIVE_TOKEN) is always supported.
     function _setMembershipCurrency(address currency) internal {
-        // Validate fee type is configured (skip for native token - always supported)
         if (!(currency == address(0) || currency == CurrencyTransfer.NATIVE_TOKEN)) {
             bytes32 feeType = FeeTypesLib.membership(currency);
             FeeConfig memory config = IFeeManager(_getSpaceFactory()).getFeeConfig(feeType);
