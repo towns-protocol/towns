@@ -550,10 +550,13 @@ abstract contract MembershipJoin is
 
         // Handle free renewal
         if (basePrice == 0) {
-            // Refund any ETH sent (for ETH only)
-            if (currency == CurrencyTransfer.NATIVE_TOKEN && msg.value > 0) {
-                CurrencyTransfer.transferCurrency(currency, address(this), payer, msg.value);
-            }
+            // Refund any ETH sent (regardless of membership currency)
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                address(this),
+                payer,
+                msg.value
+            );
             _renewSubscription(tokenId, uint64(duration));
             return;
         }

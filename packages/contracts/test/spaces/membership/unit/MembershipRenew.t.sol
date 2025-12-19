@@ -581,4 +581,40 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
             "Points should be awarded based on locked lower price"
         );
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 USDC FREE RENEWAL TESTS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Test that ETH sent with free ERC20 renewal is refunded
+    function test_renewMembership_freeUSDC_refundsEth() external {
+        // Setup: USDC space with price 0 (free)
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(0);
+
+        // Alice joins the free USDC space
+        vm.prank(alice);
+        bytes memory data = abi.encode(alice);
+        usdcMembership.joinSpace(JoinType.Basic, data);
+
+        uint256 tokenId = IERC721AQueryable(address(usdcMembership)).tokensOfOwner(alice)[0];
+        uint256 originalExpiration = usdcMembership.expiresAt(tokenId);
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        // Alice accidentally sends ETH with free USDC renewal
+        uint256 ethSent = 1 ether;
+        uint256 aliceBalanceBefore = alice.balance;
+        vm.deal(alice, ethSent);
+
+        vm.prank(alice);
+        usdcMembership.renewMembership{value: ethSent}(tokenId);
+
+        // Verify membership was renewed
+        assertGt(usdcMembership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
+
+        // Verify ETH was refunded
+        assertEq(alice.balance, aliceBalanceBefore + ethSent, "ETH should be fully refunded");
+    }
 }
