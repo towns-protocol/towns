@@ -13,13 +13,13 @@ export const validateAndParseXChainConfig = (input: string): ParsedObject => {
     const urlPattern: RegExp = /^(http|https):\/\/[^\s/$.?#].[^\s]*$/
     const pairs: string[] = input.split(',')
 
-    pairs.forEach((pair) => {
+    for (const pair of pairs) {
         const colonIndex = pair.indexOf(':')
         if (colonIndex === -1) {
             log.warn(
                 `Invalid XChain config pair: "${pair}". Each pair must be in the format key:url.`,
             )
-            return {}
+            continue
         }
         const key = pair.substring(0, colonIndex)
         const value = pair.substring(colonIndex + 1)
@@ -28,23 +28,23 @@ export const validateAndParseXChainConfig = (input: string): ParsedObject => {
             log.warn(
                 `Invalid XChain config pair: "${pair}". Each pair must be in the format key:url.`,
             )
-            return {}
+            continue
         }
 
         const keyNumber = Number(key)
 
         if (isNaN(keyNumber)) {
             log.warn(`Invalid XChain config key: "${key}". Key must be a number.`)
-            return {}
+            continue
         }
 
         if (!urlPattern.test(value)) {
             log.warn(`Invalid XChain config URL: "${value}". Value must be a valid URL.`)
-            return {}
+            continue
         }
 
         obj[keyNumber] = value
-    })
+    }
 
     return obj
 }
