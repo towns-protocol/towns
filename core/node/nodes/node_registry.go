@@ -30,7 +30,8 @@ type NodeRegistry interface {
 	GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error)
 	GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error)
 
-	// TODO: refactor to provide IsValidNodeAddress(address common.Address) bool functions instead of copying the whole list
+	// TODO: refactor to provide IsValidNodeAddress(address common.Address) bool functions instead of copying the whole
+	// list
 	GetValidNodeAddresses() []common.Address
 
 	IsOperator(address common.Address) bool

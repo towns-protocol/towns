@@ -527,12 +527,14 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 	return s.insertEmptyLocalStream(record, blockNum, false), nil
 }
 
-// GetStreamWaitForLocal is a transitional method to support existing GetStream API before block number are wired through APIs.
+// GetStreamWaitForLocal is a transitional method to support existing GetStream API before block number are wired
+// through APIs.
 func (s *StreamCache) GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error) {
 	return s.getStreamImpl(ctx, streamId, true)
 }
 
-// GetStreamNoWait is a transitional method to support existing GetStream API before block number are wired through APIs.
+// GetStreamNoWait is a transitional method to support existing GetStream API before block number are wired through
+// APIs.
 func (s *StreamCache) GetStreamNoWait(ctx context.Context, streamId StreamId) (*Stream, error) {
 	return s.getStreamImpl(ctx, streamId, false)
 }

@@ -217,7 +217,8 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 
 	if view.minipool.generation != request.NewMiniblockNum {
-		// TODO: REPLICATION: FIX: if any MissingEvents are received, should they still be attempted to be added? I.e. loop below should be still executed?
+		// TODO: REPLICATION: FIX: if any MissingEvents are received, should they still be attempted to be added? I.e.
+		// loop below should be still executed?
 		return nil, nil, RiverError(
 			Err_MINIBLOCK_TOO_OLD,
 			"mbJob.processRemoteProposals: stream advanced in the meantime (1)",
@@ -273,7 +274,8 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 
 	if quorumErr != nil {
-		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, reconcile to catch up.
+		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, reconcile to
+		// catch up.
 		if AsRiverError(quorumErr).IsCodeWithBases(Err_MINIBLOCK_TOO_OLD) {
 			j.cache.SubmitReconcileStreamTask(j.stream, nil)
 		}
@@ -403,7 +405,8 @@ func (j *mbJob) gatherRemoteProposals(
 			),
 	)
 
-	// Add fake task to return success for local node, it's a bit hacky, but it is required for correct quorum calculations.
+	// Add fake task to return success for local node, it's a bit hacky, but it is required for correct quorum
+	// calculations.
 	qp.AddTask(func(ctx context.Context) error {
 		return nil
 	})

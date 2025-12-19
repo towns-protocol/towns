@@ -452,7 +452,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 }
 
 // TestMiniblockRegistrationWithPendingLocalCandidate tests that the node can recover from a situation where it tries to
-// register a miniblock candidate but fails because the candidate was already registered but the confirmation receipt was
+// register a miniblock candidate but fails because the candidate was already registered but the confirmation receipt
+// was
 // missed before and therefore the candidate was never promoted.
 func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1, disableStreamCacheCallbacks: true})

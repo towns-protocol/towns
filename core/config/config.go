@@ -736,7 +736,8 @@ type DebugEndpointsConfig struct {
 	// on the underlying database.
 	EnableStorageEndpoint bool
 
-	// PrivateDebugServerAddress is the address to start the debug server on, such as "127.0.0.1:8080" or ":8080" to listen on all interfaces.
+	// PrivateDebugServerAddress is the address to start the debug server on, such as "127.0.0.1:8080" or ":8080" to
+	// listen on all interfaces.
 	// If not set, the debug server will not be started.
 	// There is no TLS and no authentication, all debug endpoints, including pprof, are exposed.
 	// This is highly privileged endpoint and should not be exposed to the public internet.
@@ -830,7 +831,8 @@ type ScrubbingConfig struct {
 }
 
 type StreamReconciliationConfig struct {
-	// InitialWorkerPoolSize is the size of the worker pool for initial background stream reconciliation tasks on node start.
+	// InitialWorkerPoolSize is the size of the worker pool for initial background stream reconciliation tasks on node
+	// start.
 	InitialWorkerPoolSize int
 
 	// OnlineWorkerPoolSize is the size of the worker pool for ongoing stream reconciliation tasks.

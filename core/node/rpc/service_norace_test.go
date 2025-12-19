@@ -92,7 +92,8 @@ func TestGetMiniblocksRangeLimit_NoRace(t *testing.T) {
 	}, 20*time.Second, 100*time.Millisecond)
 }
 
-// TestSyncSubscriptionWithTooSlowClient_NoRace ensures that a sync operation cancels itself when a subscriber isn't able to
+// TestSyncSubscriptionWithTooSlowClient_NoRace ensures that a sync operation cancels itself when a subscriber isn't
+// able to
 // keep up with sync updates.
 func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	if testing.Short() {
