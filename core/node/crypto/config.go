@@ -86,7 +86,8 @@ const (
 	// if not overwritten by StreamMaxEventsPerMiniblockKey.
 	MaxEventsPerMiniblockDefault = 15_000
 
-	// StreamMaxTotalEventsSizePerMiniblockDefault defines the default (also the maximum) size of all protobuf encoded events
+	// StreamMaxTotalEventsSizePerMiniblockDefault defines the default (also the maximum) size of all protobuf encoded
+	// events
 	// combined in a miniblock if not overwritten by StreamMaxTotalEventsSizePerMiniblockKey.
 	StreamMaxTotalEventsSizePerMiniblockDefault = 10 * 1024 * 1024
 )

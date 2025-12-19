@@ -28,7 +28,8 @@ const (
 	remoteStreamUpdateEmitterTimeout = time.Second * 20
 )
 
-// remoteStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a remote stream.
+// remoteStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a remote
+// stream.
 // TODO: Advance sticky peer on failure.
 type remoteStreamUpdateEmitter struct {
 	cancel         context.CancelCauseFunc

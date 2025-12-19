@@ -346,7 +346,8 @@ func (s *StreamCache) reconcileStreamFromStreamRegistryGenesisBlock(stream *Stre
 	return stream.importMiniblocks(ctx, []*MiniblockInfo{genesisBlock})
 }
 
-// reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
+// reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a
+// single peer.
 // It returns the block number of the last block successfully reconciled + 1.
 func (s *StreamCache) reconcileStreamFromSinglePeer(
 	stream *Stream,

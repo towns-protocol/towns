@@ -100,8 +100,9 @@ func (s *PostgresEventStore) txRunner(
 	log := logging.FromCtx(ctx).With(append(tags, "name", name, "dbSchema", s.schemaName)...)
 
 	if accessMode == pgx.ReadWrite {
-		// For write transactions context should not be cancelled if a client connection drops. Cancellations due to lost client connections can cause
-		// operations on the PostgresEventStore to fail even if transactions commit, leading to a corruption in cached state.
+		// For write transactions context should not be cancelled if a client connection drops. Cancellations due to
+		// lost client connections can cause operations on the PostgresEventStore to fail even if transactions commit,
+		// leading to a corruption in cached state.
 		ctx = context.WithoutCancel(ctx)
 	}
 
@@ -186,7 +187,8 @@ func createPgxPool(
 		return nil, nil, err
 	}
 
-	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
+	// In general, it should be possible to add database schema name into database url as a parameter search_path
+	// (&search_path=database_schema_name)
 	// For some reason it doesn't work so have to put it into config explicitly
 	if databaseSchemaName != "" {
 		poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName

@@ -41,9 +41,11 @@ type (
 	}
 
 	// UserPreferencesCache provides access to notification related userPreferencesCache a user has set.
-	// It implements storage.NotificationStore and wraps a persistent datastore and build up an in-memory userPreferencesCache
+	// It implements storage.NotificationStore and wraps a persistent datastore and build up an in-memory
+	// userPreferencesCache
 	// for fast retrieval. It uses a lazy-loading strategy where userPreferencesCache are only retrieved from persistent
-	// userPreferences when needed. Because reads are likely to happen much more frequently than writes it uses copy on write
+	// userPreferences when needed. Because reads are likely to happen much more frequently than writes it uses copy on
+	// write
 	// allowing for parallel reads.
 	UserPreferencesCache struct {
 		persistent storage.NotificationStore

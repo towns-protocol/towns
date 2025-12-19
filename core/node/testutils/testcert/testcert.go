@@ -19,7 +19,8 @@ import (
 // LocalhostCertBytes is a PEM-encoded TLS cert with SAN IPs
 // "127.0.0.1", "[::1]" and "localhost", expiring at Jan 29 16:00:00 2084 GMT.
 // generated from go's stdlib crypto/tls:
-// go run generate_cert.go  --rsa-bits 2048 --host 127.0.0.1,::1,localhost --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
+// go run generate_cert.go  --rsa-bits 2048 --host 127.0.0.1,::1,localhost --ca --start-date "Jan 1 00:00:00 1970"
+// --duration=1000000h
 var LocalhostCertBytes = []byte(`-----BEGIN CERTIFICATE-----
 MIIDNzCCAh+gAwIBAgIQAsnl2DcoPHijC6aEfZGmIDANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw

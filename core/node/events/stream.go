@@ -445,7 +445,8 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 }
 
 // schedulePromotionLocked should be called with a lock held.
-// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted upon.
+// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted
+// upon.
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.getViewLocked().LastBlock().Ref.Num+1 {
@@ -1317,7 +1318,8 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 
 // GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in
+// quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
 // GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
 func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {

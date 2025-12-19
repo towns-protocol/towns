@@ -63,7 +63,8 @@ func MarshalEntitlement(
 		}
 
 		if len(unpackedData) > 0 {
-			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a struct
+			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a
+			// struct
 			jsonData, err := json.Marshal(unpackedData[0])
 			if err != nil {
 				log.Warnw("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
@@ -115,7 +116,8 @@ func MarshalEntitlement(
 		}
 
 		if len(unpackedData) > 0 {
-			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a struct
+			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a
+			// struct
 			jsonData, err := json.Marshal(unpackedData[0])
 			if err != nil {
 				log.Warnw("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)

@@ -864,7 +864,8 @@ func (r *StreamView) ValidateNextEvent(
 
 	// make sure we're recent
 	// if the user isn't adding the latest block, allow it if the block after was recently created
-	// if time is zero, disable recency check - this is used for replicated add after ValidateNextEvent was already called as part of CanAddEvent
+	// if time is zero, disable recency check - this is used for replicated add after ValidateNextEvent was already
+	// called as part of CanAddEvent
 	if !currentTime.IsZero() && foundBlockAt < len(r.blocks)-1 &&
 		!r.isRecentBlock(cfg, r.blocks[foundBlockAt+1], currentTime) {
 		return RiverError(

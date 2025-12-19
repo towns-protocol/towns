@@ -131,7 +131,8 @@ func (ssr *syncSessionRunner) AddStream(
 	ctx, end := ssr.startSpan(ctx, attribute.String("streamId", record.streamId.String()))
 	defer end()
 
-	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
+	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer
+	// fails.
 	ssr.syncStarted.Wait()
 	ssr.mu.Lock()
 	if ssr.streamRecords.Size() >= ssr.maxStreamsPerSyncSession-1 || ssr.closeErr != nil {
@@ -699,7 +700,8 @@ type TrackedViewConstructorFn func(
 ) (events.TrackedStreamView, error)
 
 // The MultiSyncRunner implements the logic for setting up a collection of stream syncs across nodes, and creating and
-// continuously updating TrackedStreamViews with updates for each stream from streaming sync responses. The TrackedStreamView
+// continuously updating TrackedStreamViews with updates for each stream from streaming sync responses. The
+// TrackedStreamView
 // is responsible for firing any callbacks needed by a service that is tracking the contents of remotely hosted streams.
 type MultiSyncRunner struct {
 	// Keep track of all streams that need to be added (or re-added) to a sync session
@@ -791,7 +793,8 @@ func NewMultiSyncRunner(
 	}
 }
 
-// Run starts the operation of the MultiSyncRunner and continues to add streams to sync sessions until rootCtx is canceled.
+// Run starts the operation of the MultiSyncRunner and continues to add streams to sync sessions until rootCtx is
+// canceled.
 func (msr *MultiSyncRunner) Run(
 	rootCtx context.Context,
 ) {

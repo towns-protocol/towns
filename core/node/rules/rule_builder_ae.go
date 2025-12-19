@@ -8,7 +8,8 @@ import (
 
 type AddEventSideEffects struct {
 	// RequiredParentEvent: event that must exist in the stream before the event can be added
-	// required parent events must be replayable - meaning that in the case of a no-op, the can_add_event function should return false, nil, nil, nil to indicate
+	// required parent events must be replayable - meaning that in the case of a no-op, the can_add_event function
+	// should return false, nil, nil, nil to indicate
 	// that the event cannot be added to the stream, but there is no error
 	RequiredParentEvent *DerivedEvent
 	// OnChainAuthFailure: event that should be added to the stream if the chain auth check fails entitlement checks

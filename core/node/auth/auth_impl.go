@@ -666,7 +666,8 @@ func (ecr *entitlementCacheResult) Reason() EntitlementResultReason {
 	return EntitlementResultReason_NONE // entitlement cache results are a second layer of caching, so we don't need to return a reason
 }
 
-// If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.
+// If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may
+// be cached.
 // If the call fails or the space is not found, the allowed flag is set to false so the negative caching time applies.
 func (ca *chainAuth) getSpaceEntitlementsForPermissionUncached(
 	ctx context.Context,
@@ -692,7 +693,8 @@ func (ca *chainAuth) getSpaceEntitlementsForPermissionUncached(
 	return &entitlementCacheResult{allowed: true, entitlementData: entitlementData, owner: owner}, nil
 }
 
-// If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.
+// If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may
+// be cached.
 // If the call fails or the space is not found, the allowed flag is set to false so the negative caching time applies.
 func (ca *chainAuth) getChannelEntitlementsForPermissionUncached(
 	ctx context.Context,
