@@ -1826,7 +1826,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Treasury.write(signer).withdraw(recipient)
+        return space.Treasury.write(signer).withdraw(ETH_ADDRESS, recipient)
     }
 
     /**

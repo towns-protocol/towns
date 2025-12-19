@@ -219,7 +219,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     }
 
     function test_revertWith_setFeatureCondition_invalidInterface() external {
-        MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
+        MockERC20 mockToken = new MockERC20("Mock Token", "MTK", 18);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(mockToken),

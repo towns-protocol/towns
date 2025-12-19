@@ -34,6 +34,7 @@ cast rpc anvil_setCode $PERMIT2_ADDRESS $PERMIT2_BYTECODE --rpc-url $BASE_ANVIL_
 make clear-anvil-deployments context=$RIVER_ENV
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployProxyBatchDelegation
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTownsBase
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployMockUSDC
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpace
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceOwner

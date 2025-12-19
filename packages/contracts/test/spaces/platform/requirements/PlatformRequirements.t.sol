@@ -49,7 +49,7 @@ contract PlatformRequirementsTest is BaseSetup, IPlatformRequirementsBase, IOwna
 
     function test_getMembershipBps() public view {
         uint16 membershipBps = platformReqs.getMembershipBps();
-        assertEq(membershipBps, 500);
+        assertEq(membershipBps, 1000);
     }
 
     function test_setMembershipBps() public {

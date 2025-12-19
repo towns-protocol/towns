@@ -6,6 +6,8 @@ import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -15,6 +17,7 @@ import {MembershipJoin} from "./join/MembershipJoin.sol";
 
 contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            JOIN                            */
@@ -141,6 +144,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
         _verifyFreeAllocation(newAllocation);
         _setMembershipFreeAllocation(newAllocation);
+        emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
     /// @inheritdoc IMembership
@@ -178,13 +182,23 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          GETTERS                           */
+    /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IMembership
+    function setMembershipCurrency(address currency) external onlyOwner {
+        _setMembershipCurrency(currency);
+        emit MembershipCurrencyUpdated(currency);
+    }
 
     /// @inheritdoc IMembership
     function getMembershipCurrency() external view returns (address) {
         return _getMembershipCurrency();
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
     function getSpaceFactory() external view returns (address) {
@@ -193,6 +207,10 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function revenue() external view returns (uint256) {
+        address currency = _getMembershipCurrency();
+        if (currency != CurrencyTransfer.NATIVE_TOKEN) {
+            return currency.balanceOf(address(this));
+        }
         return address(this).balance;
     }
 }
