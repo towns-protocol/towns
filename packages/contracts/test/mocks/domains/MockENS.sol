@@ -48,4 +48,3 @@ contract MockNameWrapper {
         return tokenOwners[tokenId];
     }
 }
-
