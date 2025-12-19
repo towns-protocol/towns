@@ -152,7 +152,7 @@ func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
 	t.Helper()
 	ok := waitForCondition(t, func() bool {
 		for _, shard := range shards {
-			if shard.Node() == nil || shard.Node().Switch() == nil {
+			if shard == nil || shard.Node() == nil || shard.Node().Switch() == nil {
 				continue
 			}
 			sw := shard.Node().Switch()
@@ -173,6 +173,9 @@ func waitForPeersDisconnected(t *testing.T, shards []*MetadataShard) {
 func waitForShardsStopped(t *testing.T, shards []*MetadataShard) {
 	t.Helper()
 	for i, shard := range shards {
+		if shard == nil {
+			continue
+		}
 		ok := waitForCondition(t, func() bool {
 			select {
 			case <-shard.Stopped():
@@ -261,16 +264,16 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		}
 
 		// Create full CometBFT node via NewMetadataShard
-			shard, err := NewMetadataShard(ctx, MetadataShardOpts{
+		shard, err := NewMetadataShard(ctx, MetadataShardOpts{
 			ShardID:         multiTestShardID,
 			P2PPort:         baseP2PPort + i,
 			RootDir:         t.TempDir(),
-				GenesisDoc:      genesisDoc,
-				Wallet:          wallets[i],
-				PersistentPeers: peers,
-				Store:           storeSetup.shardStore,
-				ConfigOverride:  configureConsensusTestParams,
-			})
+			GenesisDoc:      genesisDoc,
+			Wallet:          wallets[i],
+			PersistentPeers: peers,
+			Store:           storeSetup.shardStore,
+			ConfigOverride:  configureConsensusTestParams,
+		})
 		require.NoError(t, err, "failed to create shard %d", i)
 		shards[i] = shard
 
@@ -293,12 +296,13 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		// This triggers RemovePeer which cancels peer contexts, causing
 		// queryMaj23Routine and similar goroutines to exit.
 		for _, shard := range shards {
-			if shard.Node() != nil && shard.Node().Switch() != nil {
-				sw := shard.Node().Switch()
-				peers := sw.Peers().Copy()
-				for _, peer := range peers {
-					sw.StopPeerGracefully(peer)
-				}
+			if shard == nil || shard.Node() == nil || shard.Node().Switch() == nil {
+				continue
+			}
+			sw := shard.Node().Switch()
+			peers := sw.Peers().Copy()
+			for _, peer := range peers {
+				sw.StopPeerGracefully(peer)
 			}
 		}
 
