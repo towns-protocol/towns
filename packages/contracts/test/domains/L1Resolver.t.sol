@@ -6,6 +6,7 @@ import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IE
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IL1ResolverService} from "src/domains/facets/resolver/IL1ResolverService.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {OffchainLookup} from "@ensdomains/ens-contracts/ccipRead/EIP3668.sol";
@@ -41,8 +42,8 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
                           GATEWAY CONFIGURATION
     //////////////////////////////////////////////////////////////*/
 
-    function test_setGatewayURL() external {
-        string memory newUrl = "https://new-gateway.com/{sender}/{data}";
+    function test_setGatewayURL(string memory newUrl) external {
+        vm.assume(bytes(newUrl).length > 0);
 
         vm.prank(deployer);
         L1ResolverFacet(l1Resolver).setGatewayURL(newUrl);
@@ -52,9 +53,10 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
         assertEq(storedUrl, newUrl, "Gateway URL should match");
     }
 
-    function test_revertWhen_setGatewayURLNotOwner() external {
-        vm.prank(_randomAddress());
-        vm.expectRevert();
+    function test_revertWhen_setGatewayURLNotOwner(address notOwner) external {
+        vm.assume(notOwner != deployer);
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
         L1ResolverFacet(l1Resolver).setGatewayURL("https://test.com");
     }
 
@@ -64,8 +66,9 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
         L1ResolverFacet(l1Resolver).setGatewayURL("");
     }
 
-    function test_setGatewaySigner() external {
-        address newSigner = _randomAddress();
+    function test_setGatewaySigner(address newSigner) external {
+        vm.assume(newSigner != deployer);
+        vm.assume(newSigner != address(0));
 
         vm.prank(deployer);
         L1ResolverFacet(l1Resolver).setGatewaySigner(newSigner);
@@ -75,9 +78,12 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
         assertEq(storedSigner, newSigner, "Gateway signer should match");
     }
 
-    function test_revertWhen_setGatewaySignerNotOwner() external {
-        vm.prank(_randomAddress());
-        vm.expectRevert();
+    function test_revertWhen_setGatewaySignerNotOwner(address notOwner) external {
+        vm.assume(notOwner != deployer);
+        vm.assume(notOwner != address(0));
+
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
         L1ResolverFacet(l1Resolver).setGatewaySigner(_randomAddress());
     }
 
@@ -91,29 +97,35 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
                           L2 REGISTRY MANAGEMENT
     //////////////////////////////////////////////////////////////*/
 
-    function test_setL2Registry() external {
+    function test_setL2Registry(bytes32 node) external {
+        vm.assume(node != bytes32(0));
+
         // Setup domain ownership
-        _setDomainOwner(testNode, domainOwner);
+        _setDomainOwner(node, domainOwner);
 
         vm.prank(domainOwner);
-        L1ResolverFacet(l1Resolver).setL2Registry(testNode, TEST_CHAIN_ID, l2Registry);
+        L1ResolverFacet(l1Resolver).setL2Registry(node, TEST_CHAIN_ID, l2Registry);
 
         // Verify the registry mapping was updated
         (uint64 storedChainId, address storedRegistry) = L1ResolverFacet(l1Resolver).getL2Registry(
-            testNode
+            node
         );
         assertEq(storedChainId, TEST_CHAIN_ID, "Chain ID should match");
         assertEq(storedRegistry, l2Registry, "Registry address should match");
     }
 
-    function test_revertWhen_setL2RegistryNotOwner() external {
+    function test_revertWhen_setL2RegistryNotOwner(bytes32 node) external {
+        vm.assume(node != bytes32(0));
+        vm.assume(node != testNode);
+
         // Setup domain ownership to someone else
-        _setDomainOwner(testNode, domainOwner);
+        _setDomainOwner(node, domainOwner);
 
         address notOwner = _randomAddress();
+        vm.assume(notOwner != domainOwner);
         vm.prank(notOwner);
         vm.expectRevert(L1ResolverMod.L1Resolver__InvalidOwner.selector);
-        L1ResolverFacet(l1Resolver).setL2Registry(testNode, TEST_CHAIN_ID, l2Registry);
+        L1ResolverFacet(l1Resolver).setL2Registry(node, TEST_CHAIN_ID, l2Registry);
     }
 
     /*//////////////////////////////////////////////////////////////

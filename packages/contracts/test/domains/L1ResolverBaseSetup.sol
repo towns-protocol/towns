@@ -117,4 +117,3 @@ contract L1ResolverBaseSetup is TestUtils {
         return abi.encodePacked(r, s, v);
     }
 }
-
