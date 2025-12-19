@@ -25,34 +25,32 @@ func ValidateCreateStreamTx(cs *CreateStreamTx) error {
 	if cs == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "create payload missing")
 	}
-	if len(cs.StreamId) != 32 {
+	if cs.Stream == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "stream metadata missing")
+	}
+	stream := cs.Stream
+	if len(stream.StreamId) != 32 {
 		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
 	}
-	if len(cs.GenesisMiniblockHash) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock_hash must be 32 bytes")
+	if len(stream.LastMiniblockHash) != 32 {
+		return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes")
 	}
-	if len(cs.Nodes) == 0 {
+	if stream.LastMiniblockNum < 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be >= 0")
+	}
+	if len(stream.Nodes) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
 	}
-	for _, n := range cs.Nodes {
+	for _, n := range stream.Nodes {
 		if len(n) != 20 {
 			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
 		}
 	}
-	if cs.ReplicationFactor == 0 {
+	if stream.ReplicationFactor == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
 	}
-	if int(cs.ReplicationFactor) > len(cs.Nodes) {
+	if int(stream.ReplicationFactor) > len(stream.Nodes) {
 		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
-	}
-	if cs.LastMiniblockNum == 0 {
-		if len(cs.GenesisMiniblock) == 0 {
-			return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
-		}
-	} else {
-		if len(cs.LastMiniblockHash) != 32 {
-			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes when last_miniblock_num is set")
-		}
 	}
 	return nil
 }
@@ -71,7 +69,7 @@ func ValidateSetStreamLastMiniblockBatchTx(batch *SetStreamLastMiniblockBatchTx)
 		if len(mb.PrevMiniblockHash) != 32 || len(mb.LastMiniblockHash) != 32 {
 			return RiverError(Err_INVALID_ARGUMENT, "hashes must be 32 bytes")
 		}
-		if mb.LastMiniblockNum == 0 {
+		if mb.LastMiniblockNum <= 0 {
 			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be > 0")
 		}
 	}

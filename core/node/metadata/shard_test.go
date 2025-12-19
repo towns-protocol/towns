@@ -96,12 +96,13 @@ func buildCreateStreamTx(streamID shared.StreamId, genesisHash []byte) *prot.Met
 	return &prot.MetadataTx{
 		Op: &prot.MetadataTx_CreateStream{
 			CreateStream: &prot.CreateStreamTx{
-				StreamId:             streamID[:],
-				GenesisMiniblockHash: genesisHash,
-				GenesisMiniblock:     bytes.Repeat([]byte{0x01}, 32),
-				LastMiniblockNum:     0,
-				Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
-				ReplicationFactor:    1,
+				Stream: &prot.StreamMetadata{
+					StreamId:          streamID[:],
+					LastMiniblockHash: genesisHash,
+					LastMiniblockNum:  0,
+					Nodes:             [][]byte{bytes.Repeat([]byte{0x01}, 20)},
+					ReplicationFactor: 1,
+				},
 			},
 		},
 	}
@@ -123,10 +124,13 @@ func TestMetadataShardCheckTxValidation(t *testing.T) {
 	invalid := &prot.MetadataTx{
 		Op: &prot.MetadataTx_CreateStream{
 			CreateStream: &prot.CreateStreamTx{
-				StreamId:          []byte{0x01, 0x02}, // invalid length
-				GenesisMiniblock:  []byte("genesis"),
-				Nodes:             [][]byte{bytes.Repeat([]byte{0x01}, 20)},
-				ReplicationFactor: 1,
+				Stream: &prot.StreamMetadata{
+					StreamId:          []byte{0x01, 0x02}, // invalid length
+					LastMiniblockHash: bytes.Repeat([]byte{0x01}, 32),
+					LastMiniblockNum:  0,
+					Nodes:             [][]byte{bytes.Repeat([]byte{0x01}, 20)},
+					ReplicationFactor: 1,
+				},
 			},
 		},
 	}
@@ -219,11 +223,13 @@ func TestMetadataShardPrepareProposalFiltersInvalid(t *testing.T) {
 	invalidTx := &prot.MetadataTx{
 		Op: &prot.MetadataTx_CreateStream{
 			CreateStream: &prot.CreateStreamTx{
-				StreamId:             []byte{0x01}, // invalid
-				GenesisMiniblockHash: genesisHash,
-				GenesisMiniblock:     []byte("genesis"),
-				Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
-				ReplicationFactor:    1,
+				Stream: &prot.StreamMetadata{
+					StreamId:          []byte{0x01}, // invalid
+					LastMiniblockHash: genesisHash,
+					LastMiniblockNum:  0,
+					Nodes:             [][]byte{bytes.Repeat([]byte{0x01}, 20)},
+					ReplicationFactor: 1,
+				},
 			},
 		},
 	}
