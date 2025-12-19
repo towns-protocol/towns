@@ -1554,7 +1554,7 @@ func (ca *chainAuth) getUserIsAppCached(
 		return false, common.Address{}, err
 	}
 
-	userResult := result.(*userIsAppCacheResult)
+	userResult := result.(*timestampedCacheValue).result.(*userIsAppCacheResult)
 	return userResult.isApp, userResult.appAddress, nil
 }
 
