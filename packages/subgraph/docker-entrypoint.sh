@@ -43,8 +43,8 @@ export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT
 
 if [ "$NODE_ENV" = "development" ]; then
   echo "Starting Ponder in development mode"
-  bun ponder dev --config "${PONDER_CONFIG}" ${LOG_FORMAT}
+  npx ponder dev --config "${PONDER_CONFIG}" ${LOG_FORMAT}
 else
   echo "Starting Ponder in production mode"
-  bun ponder start --config "${PONDER_CONFIG}" ${LOG_FORMAT}
+  npx ponder start --config "${PONDER_CONFIG}" ${LOG_FORMAT}
 fi
