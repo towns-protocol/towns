@@ -30,17 +30,26 @@ type IsInceptionPayload interface {
 	isInceptionPayload()
 	GetStreamId() []byte
 	GetSettings() *StreamSettings
+	GetAppAddress() []byte
 }
-func (*SpacePayload_Inception) isInceptionPayload() {}
-func (*ChannelPayload_Inception) isInceptionPayload() {}
-func (*DmChannelPayload_Inception) isInceptionPayload() {}
-func (*GdmChannelPayload_Inception) isInceptionPayload() {}
-func (*UserPayload_Inception) isInceptionPayload() {}
-func (*UserInboxPayload_Inception) isInceptionPayload() {}
+
+func (*SpacePayload_Inception) isInceptionPayload()       {}
+func (*ChannelPayload_Inception) isInceptionPayload()     {}
+func (*DmChannelPayload_Inception) isInceptionPayload()   {}
+func (*GdmChannelPayload_Inception) isInceptionPayload()  {}
+func (*UserPayload_Inception) isInceptionPayload()        {}
+func (*UserInboxPayload_Inception) isInceptionPayload()   {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserMetadataPayload_Inception) isInceptionPayload() {}
-func (*MediaPayload_Inception) isInceptionPayload() {}
-func (*MetadataPayload_Inception) isInceptionPayload() {}
+func (*MediaPayload_Inception) isInceptionPayload()       {}
+func (*MetadataPayload_Inception) isInceptionPayload()    {}
+
+func (*SpacePayload_Inception) GetAppAddress() []byte       { return nil }
+func (*ChannelPayload_Inception) GetAppAddress() []byte     { return nil }
+func (*DmChannelPayload_Inception) GetAppAddress() []byte   { return nil }
+func (*GdmChannelPayload_Inception) GetAppAddress() []byte  { return nil }
+func (*MediaPayload_Inception) GetAppAddress() []byte       { return nil }
+func (*MetadataPayload_Inception) GetAppAddress() []byte    { return nil }
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {
