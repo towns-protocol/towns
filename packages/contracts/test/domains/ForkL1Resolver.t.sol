@@ -6,9 +6,11 @@ import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IE
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {INameWrapper} from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
+import {IL1ResolverService} from "src/domains/facets/resolver/IL1ResolverService.sol";
 
 // libraries
 import {NameCoder} from "@ensdomains/ens-contracts/utils/NameCoder.sol";
+import {OffchainLookup} from "@ensdomains/ens-contracts/ccipRead/EIP3668.sol";
 
 // contracts
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
@@ -210,8 +212,26 @@ contract ForkL1ResolverTest is TestUtils {
             _namehash("test.eth")
         );
 
-        // Should revert with OffchainLookup
-        vm.expectRevert();
+        // Build expected OffchainLookup parameters
+        string[] memory urls = new string[](1);
+        urls[0] = GATEWAY_URL;
+
+        bytes memory callData = abi.encodeCall(
+            IL1ResolverService.stuffedResolveCall,
+            (name, data, TEST_CHAIN_ID, l2Registry)
+        );
+
+        // Should revert with specific OffchainLookup error
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OffchainLookup.selector,
+                l1Resolver,
+                urls,
+                callData,
+                L1ResolverFacet.resolveWithProof.selector,
+                callData // extraData same as callData
+            )
+        );
         L1ResolverFacet(l1Resolver).resolve(name, data);
     }
 }
