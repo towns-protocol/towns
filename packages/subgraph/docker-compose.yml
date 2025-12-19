@@ -46,7 +46,7 @@ services:
                 condition: service_healthy
             subgraph-indexer:
                 condition: service_started
-        entrypoint: ['bun', 'ponder', 'serve', '--config', '${PONDER_CONFIG}']
+        entrypoint: ['npx', 'ponder', 'serve', '--config', '${PONDER_CONFIG}']
         environment:
             - NODE_ENV=production
             - DATABASE_SCHEMA=public
