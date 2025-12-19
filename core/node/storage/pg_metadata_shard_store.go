@@ -138,15 +138,6 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 			Message("failed to create streams table").
 			Tag("shardId", shardId)
 	}
-	if _, err := tx.Exec(ctx, s.sqlForShard(`
-			ALTER TABLE {{streams}}
-				DROP COLUMN IF EXISTS genesis_miniblock_hash,
-				DROP COLUMN IF EXISTS genesis_miniblock
-		`, shardId)); err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
-			Message("failed to update streams table").
-			Tag("shardId", shardId)
-	}
 	if _, err := tx.Exec(ctx, s.sqlForShard(
 		`CREATE INDEX IF NOT EXISTS {{streams}}_nodes_gin_idx ON {{streams}} USING GIN (nodes)`,
 		shardId,
