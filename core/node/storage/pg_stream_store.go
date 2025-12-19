@@ -1401,17 +1401,23 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 // in results we will have at least
 // miniblock with latest snapshot?
 // This functional is not transactional as it consists of only one SELECT query
+// The second return value (terminus) indicates whether the returned miniblocks represent the
+// beginning of the stream:
+// - true if fromInclusive is 0
+// - true if the miniblock at fromInclusive-1 does not exist (stream is trimmed)
+// - false if the miniblock at fromInclusive-1 exists (more history available)
 func (s *PostgresStreamStore) ReadMiniblocks(
 	ctx context.Context,
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
 	omitSnapshot bool,
-) ([]*MiniblockDescriptor, error) {
+) ([]*MiniblockDescriptor, bool, error) {
 	var (
 		lockStreamResult *LockStreamResult
 		miniblockParts   []external.MiniblockDescriptor
 		miniblocks       []*MiniblockDescriptor
+		terminus         bool
 	)
 
 	if err := s.txRunner(
@@ -1427,15 +1433,17 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 			}
 
 			if lockStreamResult.MiniblocksStoredInDB() {
-				miniblocks, err = s.readMiniblocksTxNoLock(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
+				miniblocks, terminus, err = s.readMiniblocksTxNoLock(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
 				return err
 			}
 
 			// if miniblock data is not stored in the database fetch the miniblock parts that
 			// are used to retrieve and decode miniblocks from external storage. Fetch and
 			// decode the miniblocks outside the DB transaction.
+			// TODO: External storage doesn't support terminus logic yet - always returns false
 			miniblockParts, err = s.readMiniblockDescriptorsForExternalStorageNoLockTx(
 				ctx, tx, streamId, fromInclusive, toExclusive)
+			terminus = fromInclusive == 0 // For external storage, only set terminus=true if requesting from 0
 			return err
 		},
 		nil,
@@ -1443,19 +1451,19 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		"fromInclusive", fromInclusive,
 		"toExclusive", toExclusive,
 	); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if lockStreamResult.MiniblocksStoredInDB() {
-		return miniblocks, nil
+		return miniblocks, terminus, nil
 	}
 
 	miniblocks, err := s.downloadAndDecodeExternalMiniblocks(ctx, streamId, miniblockParts)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return miniblocks, nil
+	return miniblocks, terminus, nil
 }
 
 // readMiniblockDescriptorsForExternalStorageNoLockTx expects the caller to have a lock on the stream.
@@ -1550,7 +1558,7 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 	fromInclusive int64,
 	toExclusive int64,
 	omitSnapshot bool,
-) ([]*MiniblockDescriptor, error) {
+) ([]*MiniblockDescriptor, bool, error) {
 	var sql string
 
 	if omitSnapshot {
@@ -1562,12 +1570,12 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(sql, streamId),
-		fromInclusive,
+		max(fromInclusive-1, 0), // Fetching from fromInclusive-1 to check there are more miniblocks available
 		toExclusive,
 		streamId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// Retrieve miniblocks starting from the latest miniblock with snapshot
@@ -1577,17 +1585,7 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 	var blockdata []byte
 	var seqNum int
 	var snapshot []byte
-	firstRow := true
 	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum, &snapshot}, func() error {
-		// Check if the first miniblock matches the requested fromInclusive
-		if firstRow && int64(seqNum) != fromInclusive {
-			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks at start of range").
-				Tag("RequestedStart", fromInclusive).
-				Tag("ActualStart", seqNum).
-				Tag("streamId", streamId)
-		}
-		firstRow = false
-
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
@@ -1606,18 +1604,27 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 		})
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	// Check if we got any miniblocks at all when we expected some
-	if len(miniblocks) == 0 && fromInclusive < toExclusive {
-		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
-			Tag("fromInclusive", fromInclusive).
-			Tag("toExclusive", toExclusive).
-			Tag("streamId", streamId)
+	// Terminus logic:
+	// - If fromInclusive is 0, terminus is always true (at the beginning of the stream)
+	// - If fromInclusive > 0 and we got the preceding miniblock (fromInclusive-1), terminus is false
+	// - If fromInclusive > 0 and we didn't get the preceding miniblock, terminus is true (stream is trimmed)
+	var terminus bool
+	if fromInclusive == 0 {
+		terminus = true
+	} else if len(miniblocks) > 0 && miniblocks[0].Number == fromInclusive-1 {
+		// We got the preceding miniblock, so there's more history available
+		terminus = false
+		// Remove the preceding miniblock from the result
+		miniblocks = miniblocks[1:]
+	} else {
+		// The preceding miniblock doesn't exist (stream is trimmed or starts later)
+		terminus = true
 	}
 
-	return miniblocks, nil
+	return miniblocks, terminus, nil
 }
 
 // WriteMiniblockCandidate adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote

@@ -151,13 +151,18 @@ type (
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
+		// The second return value (terminus) indicates whether the returned miniblocks represent the
+		// beginning of the stream:
+		// - true if fromInclusive is 0
+		// - true if the miniblock at fromInclusive-1 does not exist (stream is trimmed)
+		// - false if the miniblock at fromInclusive-1 exists (more history available)
 		ReadMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
 			fromInclusive int64,
 			toExclusive int64,
 			omitSnapshot bool,
-		) ([]*MiniblockDescriptor, error)
+		) ([]*MiniblockDescriptor, bool, error)
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)

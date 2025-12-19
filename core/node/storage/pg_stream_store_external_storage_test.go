@@ -699,10 +699,13 @@ func compareExternallyFetchedMiniblocks(
 	}
 
 	// ensure that store.ReadMiniblocks returns the correct miniblocks
-	readMiniblocks, err := store.ReadMiniblocks(ctx, streamID, 0, int64(chunks)+1, true)
+	readMiniblocks, terminus, err := store.ReadMiniblocks(ctx, streamID, 0, int64(chunks)+1, true)
 	if err != nil {
 		collect.Errorf("unable to read miniblocks: %v", err)
 		return
+	}
+	if !terminus {
+		collect.Errorf("terminus should be true when reading from 0")
 	}
 
 	if int(lastMbNum)+1 != len(miniblocks) {
@@ -799,19 +802,31 @@ func rangeReadTest(
 		}
 
 		for _, tst := range []struct {
-			fromInclusive int64
-			toExclusive   int64
+			fromInclusive    int64
+			toExclusive      int64
+			expectedTerminus bool
 		}{
-			{fromInclusive: 0, toExclusive: 1},
-			{fromInclusive: 0, toExclusive: 5},
-			{fromInclusive: 0, toExclusive: int64(chunks + 1)},
-			{fromInclusive: 3, toExclusive: int64(7 + 1)},
-			{fromInclusive: 3, toExclusive: int64(chunks + 1)},
+			{fromInclusive: 0, toExclusive: 1, expectedTerminus: true},
+			{fromInclusive: 0, toExclusive: 5, expectedTerminus: true},
+			{fromInclusive: 0, toExclusive: int64(chunks + 1), expectedTerminus: true},
+			{fromInclusive: 3, toExclusive: int64(7 + 1), expectedTerminus: false},
+			{fromInclusive: 3, toExclusive: int64(chunks + 1), expectedTerminus: false},
 		} {
 			expNumberOfMiniblocks := int(tst.toExclusive - tst.fromInclusive)
-			gotMiniblocks, err := store.ReadMiniblocks(ctx, streamID, tst.fromInclusive, tst.toExclusive, true)
+			gotMiniblocks, terminus, err := store.ReadMiniblocks(
+				ctx,
+				streamID,
+				tst.fromInclusive,
+				tst.toExclusive,
+				true,
+			)
 			if err != nil {
 				collect.Errorf("unable to read miniblocks: %v", err)
+				return
+			}
+			if terminus != tst.expectedTerminus {
+				collect.Errorf("unexpected terminus value for fromInclusive=%d: got %v, expected %v",
+					tst.fromInclusive, terminus, tst.expectedTerminus)
 				return
 			}
 

@@ -260,7 +260,7 @@ func (s *Service) streamMiniblocksByIds(
 	miniblockRanges := storage.MiniblockIdsToRanges(req.GetMiniblockIds(), 10)
 
 	for _, mbRange := range miniblockRanges {
-		miniblocks, err := s.storage.ReadMiniblocks(
+		miniblocks, _, err := s.storage.ReadMiniblocks(
 			ctx,
 			streamId,
 			mbRange.StartInclusive,

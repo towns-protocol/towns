@@ -474,6 +474,237 @@ func TestAddEventWithEphemeralEvents(t *testing.T) {
 	stream.Unsub(subscriber)
 }
 
+func TestStreamGetMiniblocks(t *testing.T) {
+	t.Run("terminus is true when fromInclusive is 0", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Add some events and create miniblocks
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		// Request from 0 - terminus should be true
+		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 0, 3, false)
+		require.NoError(err)
+		require.Len(miniblocks, 3)
+		require.True(terminus, "terminus should be true when fromInclusive is 0")
+	})
+
+	t.Run("terminus is false when preceding block exists even if fewer blocks returned", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Add events and create miniblocks (total 3: genesis + 2)
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		// Request more blocks than exist (1 to 10, but only 2 exist after genesis)
+		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 1, 10, false)
+		require.NoError(err)
+		require.Len(miniblocks, 2) // Only blocks 1 and 2 exist
+		// terminus is false because block 0 (the preceding miniblock) exists,
+		// meaning there's more history available before the returned range
+		require.False(terminus)
+	})
+
+	t.Run("terminus is false when full range is returned and fromInclusive more than 0", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Add events and create multiple miniblocks
+		for i := 0; i < 5; i++ {
+			addEventToStream(t, ctx, tt.instances[0].params, stream, "event", view.LastBlock().Ref, false)
+			tt.makeMiniblock(0, streamId, false)
+		}
+
+		// Request exactly the range that exists (blocks 1-3)
+		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 1, 4, false)
+		require.NoError(err)
+		require.Len(miniblocks, 3)
+		require.False(terminus, "terminus should be false when full range is returned and fromInclusive > 0")
+	})
+
+	t.Run("terminus is true for empty result with fromInclusive more than 0", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, _ := tt.createStream(streamId, genesisMb.Proto)
+
+		// Request blocks that don't exist (only genesis exists at block 0)
+		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 10, 20, false)
+		require.NoError(err)
+		require.Empty(miniblocks)
+		require.True(terminus, "terminus should be true when no blocks are returned")
+	})
+
+	t.Run("returns miniblocks with correct data", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Add events and create miniblocks
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, false)
+
+		// Get all miniblocks
+		miniblocks, _, err := stream.GetMiniblocks(ctx, 0, 3, false)
+		require.NoError(err)
+		require.Len(miniblocks, 3)
+
+		// Verify block numbers are correct
+		for i, mb := range miniblocks {
+			require.Equal(int64(i), mb.Ref.Num)
+		}
+	})
+
+	t.Run("omits snapshots when requested", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Add events and create miniblock
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+		tt.makeMiniblock(0, streamId, true) // force snapshot
+
+		// Get miniblocks with snapshots
+		miniblocksWithSnapshots, _, err := stream.GetMiniblocks(ctx, 0, 2, false)
+		require.NoError(err)
+		require.Len(miniblocksWithSnapshots, 2)
+
+		// Get miniblocks without snapshots
+		miniblocksNoSnapshots, _, err := stream.GetMiniblocks(ctx, 0, 2, true)
+		require.NoError(err)
+		require.Len(miniblocksNoSnapshots, 2)
+
+		// Verify snapshots are omitted
+		for _, mb := range miniblocksNoSnapshots {
+			require.Nil(mb.SnapshotEnvelope, "snapshot should be nil when omitSnapshot is true")
+		}
+	})
+
+	t.Run("terminus behavior after trimming", func(t *testing.T) {
+		ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+		_ = tt.initCache(0, nil)
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesisMb := MakeGenesisMiniblockForSpaceStream(
+			t,
+			tt.instances[0].params.Wallet,
+			tt.instances[0].params.Wallet,
+			streamId,
+			nil,
+		)
+
+		stream, view := tt.createStream(streamId, genesisMb.Proto)
+
+		// Create multiple miniblocks with snapshots
+		for i := 0; i < 6; i++ {
+			addEventToStream(t, ctx, tt.instances[0].params, stream, "event", view.LastBlock().Ref, false)
+			// Force snapshot every 2 blocks
+			tt.makeMiniblock(0, streamId, i%2 == 1)
+		}
+
+		// Trim stream - remove miniblocks 0-2, keep from 3 onwards
+		err := tt.instances[0].params.Storage.TrimStream(ctx, streamId, 3, nil)
+		require.NoError(err)
+
+		// Request from 0 - should return fewer blocks than requested (trimmed blocks missing)
+		miniblocks, terminus, err := stream.GetMiniblocks(ctx, 0, 7, false)
+		require.NoError(err)
+		require.Len(miniblocks, 4) // Only blocks 3-6 exist
+		require.True(terminus, "terminus should be true when stream is trimmed and fewer blocks returned")
+
+		// Verify returned blocks start from 3
+		require.Equal(int64(3), miniblocks[0].Ref.Num)
+
+		// Request exactly the existing range (3-6)
+		// terminus is still true because block 2 (preceding miniblock) was trimmed
+		miniblocks, terminus, err = stream.GetMiniblocks(ctx, 3, 7, false)
+		require.NoError(err)
+		require.Len(miniblocks, 4)
+		require.True(terminus)
+	})
+}
+
 // testSubscriber is a test implementation of SyncResultReceiver for testing notifications
 type testSubscriber struct {
 	receivedUpdates []*StreamAndCookie

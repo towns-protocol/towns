@@ -88,9 +88,10 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 	require.NoError(err)
 
 	// Verify all blocks are present
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 0, 7, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 7, false)
 	require.NoError(err)
 	require.Len(blocks, 7)
+	require.True(terminus)
 
 	// Verify blocks are in correct order
 	for i, block := range blocks {
@@ -185,9 +186,10 @@ func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 	require.NoError(err)
 
 	// Verify blocks
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
 	require.NoError(err)
 	require.Len(blocks, 6) // 0, 1, 2, 3, 4, 5
+	require.True(terminus)
 
 	// Verify block 2 wasn't overwritten
 	require.Equal([]byte("block2"), blocks[2].Data)
@@ -402,9 +404,10 @@ func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 	require.NoError(err)
 
 	// Verify blocks weren't overwritten
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 0, 3, false)
 	require.NoError(err)
 	require.Len(blocks, 3)
+	require.True(terminus)
 	require.Equal([]byte("genesis"), blocks[0].Data)
 	require.Equal([]byte("block1"), blocks[1].Data)
 }
@@ -469,9 +472,10 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	require.NoError(err)
 
 	// Verify some blocks
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 100, 110, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 100, 110, false)
 	require.NoError(err)
 	require.Len(blocks, 10)
+	require.False(terminus)
 	for i, block := range blocks {
 		require.Equal(int64(100+i), block.Number)
 	}
@@ -551,9 +555,10 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 	require.NoError(err2)
 
 	// Verify blocks were written
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 1, 4, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 1, 4, false)
 	require.NoError(err)
 	require.Len(blocks, 3)
+	require.False(terminus)
 }
 
 func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
@@ -644,7 +649,8 @@ func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
 
 	// Verify blocks 3-4 exist from initial creation
-	blocks, err := store.ReadMiniblocks(ctx, streamId, 3, 5, false)
+	blocks, terminus, err := store.ReadMiniblocks(ctx, streamId, 3, 5, false)
 	require.NoError(err)
 	require.Len(blocks, 2) // blocks 3 and 4 exist
+	require.False(terminus)
 }

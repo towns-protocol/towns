@@ -59,9 +59,10 @@ func TestArchive(t *testing.T) {
 	err = pgStreamStore.WriteArchiveMiniblocks(ctx, streamId1, 0, data)
 	require.NoError(err)
 
-	readMBs, err := pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 3, false)
+	readMBs, terminus, err := pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 3, false)
 	require.NoError(err)
 	require.Len(readMBs, 3)
+	require.True(terminus)
 	require.Equal([]*MiniblockDescriptor{
 		{Number: 0, Data: data[0].Data, Snapshot: data[0].Snapshot},
 		{Number: 1, Data: data[1].Data, Snapshot: data[1].Snapshot},
@@ -87,8 +88,9 @@ func TestArchive(t *testing.T) {
 	err = pgStreamStore.WriteArchiveMiniblocks(ctx, streamId1, 3, data2)
 	require.NoError(err)
 
-	readMBs, err = pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 8, false)
+	readMBs, terminus, err = pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 8, false)
 	require.NoError(err)
+	require.True(terminus)
 	require.Equal([]*MiniblockDescriptor{
 		{Number: 0, Data: data[0].Data, Snapshot: data[0].Snapshot},
 		{Number: 1, Data: data[1].Data, Snapshot: data[1].Snapshot},
