@@ -47,6 +47,7 @@ type MetadataShardOpts struct {
 	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
 	Store           storage.MetadataStore
+	ConfigOverride  func(*cmtcfg.Config)
 }
 
 type MetadataShard struct {
@@ -90,7 +91,7 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	// P2P and RPC defaults are tuned for local shard instances.
 	cfg.BaseConfig.Moniker = chainID
-	cfg.P2P.AddrBookStrict = true
+	cfg.P2P.AddrBookStrict = false          // Allow localhost addresses for local/test environments
 	cfg.P2P.AllowDuplicateIP = true         // TODO: in prod set to false?
 	cfg.Consensus.CreateEmptyBlocks = false // produce blocks only when txs are available
 	cfg.Consensus.CreateEmptyBlocksInterval = 0
@@ -107,6 +108,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	cfg.RPC.ListenAddress = ""
 	if len(opts.PersistentPeers) > 0 {
 		cfg.P2P.PersistentPeers = strings.Join(opts.PersistentPeers, ",")
+	}
+	if opts.ConfigOverride != nil {
+		opts.ConfigOverride(cfg)
 	}
 
 	privKey := ed25519.GenPrivKeyFromSecret(opts.Wallet.PrivateKey)
@@ -177,19 +181,16 @@ func (m *MetadataShard) Stopped() <-chan struct{} {
 	return m.node.Quit()
 }
 
-func (m *MetadataShard) SubmitTx(tx []byte) error {
-	if m.node == nil {
-		return RiverError(Err_FAILED_PRECONDITION, "metadata shard not started")
-	}
-	_, err := m.node.Mempool().CheckTx(tx, "")
-	return err
-}
-
 func (m *MetadataShard) Height() int64 {
 	if m.node == nil {
 		return 0
 	}
 	return m.node.BlockStore().Height()
+}
+
+// Node returns the underlying CometBFT node for direct RPC client access.
+func (m *MetadataShard) Node() *node.Node {
+	return m.node
 }
 
 func chainIDForShard(shardID uint64) string {
