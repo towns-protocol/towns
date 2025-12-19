@@ -105,7 +105,7 @@ import { EventDedup, type EventDedupConfig } from './eventDedup'
 // Note: x402 core v2.0.0 still uses PaymentPayloadV1/PaymentRequirementsV1 types.
 // The v2 improvements are CAIP-2 networks, multi-chain support, and sessions (all implemented here).
 import type { PaymentPayloadV1, PaymentRequirementsV1 } from '@x402/core/types/v1'
-import type { PendingPayment, PaymentConfig, ActiveSession } from './payments'
+import type { PendingPayment, PaymentConfig, ActiveSession, X402Network } from './payments'
 import {
     chainIdToNetwork,
     createPaymentRequest,
@@ -476,11 +476,12 @@ export class Bot<Commands extends BotCommand[] = []> {
     /**
      * Check if a user has an active session for a command
      */
-    private hasActiveSession(userId: string, command: string): boolean {
+    private hasActiveSession(userId: string, command: string, network: X402Network): boolean {
         const sessionKey = getSessionKey(userId, command)
         const session = this.activeSessions.get(sessionKey)
 
         if (!session) return false
+        if (session.network !== network) return false
 
         // Check if session has expired
         if (Date.now() > session.expiresAt) {
@@ -500,11 +501,16 @@ export class Bot<Commands extends BotCommand[] = []> {
     /**
      * Use a session (decrements use count if limited)
      */
-    private useSession(userId: string, command: string): ActiveSession | undefined {
+    private useSession(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): ActiveSession | undefined {
         const sessionKey = getSessionKey(userId, command)
         const session = this.activeSessions.get(sessionKey)
 
         if (!session) return undefined
+        if (session.network !== network) return undefined
 
         // Decrement uses if limited
         if (session.usesRemaining !== undefined) {
@@ -525,12 +531,14 @@ export class Bot<Commands extends BotCommand[] = []> {
         command: string,
         sessionConfig: { duration?: number; maxUses?: number },
         transactionHash: string,
+        network: X402Network,
     ): ActiveSession {
         const sessionKey = getSessionKey(userId, command)
         const duration = sessionConfig.duration ?? 3600 // Default 1 hour
         const session: ActiveSession = {
             userId,
             command,
+            network,
             expiresAt: Date.now() + duration * 1000,
             usesRemaining: sessionConfig.maxUses,
             transactionHash,
@@ -1101,60 +1109,60 @@ export class Bot<Commands extends BotCommand[] = []> {
             return // Not a payment signature
         }
 
-        // Remove from pending
+        // Remove from pending to prevent double-processing on duplicate interaction responses.
         this.pendingPayments.delete(signatureId)
-
-        // Get network in CAIP-2 format (x402 v2)
-        const network = chainIdToNetwork(this.viem.chain.id)
-
-        // Validate network support (double-check in case chain switched)
-        const paymentConfig = this.paymentCommands.get(pending.command)
-        if (paymentConfig) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            validateNetworkSupport(this.viem.chain.id, paymentConfig)
-        }
-
-        // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
-        const paymentPayload: PaymentPayloadV1 = {
-            x402Version: 1,
-            scheme: 'exact',
-            network: network,
-            payload: {
-                signature: signature,
-                authorization: {
-                    from: pending.params.from,
-                    to: pending.params.to,
-                    value: pending.params.value.toString(),
-                    validAfter: pending.params.validAfter.toString(),
-                    validBefore: pending.params.validBefore.toString(),
-                    nonce: pending.params.nonce,
-                },
-            },
-        }
-
-        // Build PaymentRequirements using v1 format (x402 core v2.0.0 still uses v1 payload types)
-        const paymentRequirements: PaymentRequirementsV1 = {
-            scheme: 'exact',
-            network: network,
-            maxAmountRequired: pending.params.value.toString(),
-            resource: `https://towns.com/command/${pending.command}`,
-            description: `Payment for /${pending.command}`,
-            mimeType: 'application/json',
-            outputSchema: {},
-            payTo: pending.params.to,
-            maxTimeoutSeconds: 300,
-            asset: pending.params.verifyingContract,
-            extra: {},
-        }
-
-        // Single status message that gets updated through the flow
-        const statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
 
         // Track settlement state to distinguish payment failures from post-payment failures
         let settlementCompleted = false
         let transactionHash: string | undefined
+        let statusMsg: { eventId: string } | undefined
 
         try {
+            // Get network in CAIP-2 format (x402 v2)
+            const network = chainIdToNetwork(this.viem.chain.id)
+
+            // Validate network support (double-check in case chain switched)
+            const paymentConfig = this.paymentCommands.get(pending.command)
+            if (paymentConfig) {
+                validateNetworkSupport(this.viem.chain.id, paymentConfig)
+            }
+
+            // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
+            const paymentPayload: PaymentPayloadV1 = {
+                x402Version: 1,
+                scheme: 'exact',
+                network: network,
+                payload: {
+                    signature: signature,
+                    authorization: {
+                        from: pending.params.from,
+                        to: pending.params.to,
+                        value: pending.params.value.toString(),
+                        validAfter: pending.params.validAfter.toString(),
+                        validBefore: pending.params.validBefore.toString(),
+                        nonce: pending.params.nonce,
+                    },
+                },
+            }
+
+            // Build PaymentRequirements using v1 format (x402 core v2.0.0 still uses v1 payload types)
+            const paymentRequirements: PaymentRequirementsV1 = {
+                scheme: 'exact',
+                network: network,
+                maxAmountRequired: pending.params.value.toString(),
+                resource: `https://towns.com/command/${pending.command}`,
+                description: `Payment for /${pending.command}`,
+                mimeType: 'application/json',
+                outputSchema: {},
+                payTo: pending.params.to,
+                maxTimeoutSeconds: 300,
+                asset: pending.params.verifyingContract,
+                extra: {},
+            }
+
+            // Single status message that gets updated through the flow
+            statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
+
             // Call x402 facilitator to verify payment
             const verifyResult = await callFacilitatorVerify(
                 this.paymentConfig,
@@ -1207,6 +1215,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     pending.command,
                     pending.sessionConfig,
                     transactionHash,
+                    paymentPayload.network,
                 )
                 const duration = pending.sessionConfig.duration ?? 3600
                 const hours = Math.floor(duration / 3600)
@@ -1234,30 +1243,43 @@ export class Bot<Commands extends BotCommand[] = []> {
             const actualHandlerKey = `__paid_${pending.command}`
             const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
             if (originalHandler) {
-                await originalHandler(this.client, pending.event)
+                await originalHandler(handler, pending.event)
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
             if (settlementCompleted) {
                 // Payment succeeded but command handler failed - DO NOT suggest retry
-                await handler.editMessage(
-                    channelId,
-                    statusMsg.eventId,
-                    `⚠️ **Payment succeeded but command failed**\n` +
-                        `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
-                        `Tx: \`${transactionHash}\`\n\n` +
-                        `Error: ${errorMessage}\n` +
-                        `Please contact support - do NOT retry to avoid double charges.`,
-                )
+                if (statusMsg) {
+                    await handler.editMessage(
+                        channelId,
+                        statusMsg.eventId,
+                        `⚠️ **Payment succeeded but command failed**\n` +
+                            `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
+                            `Tx: \`${transactionHash}\`\n\n` +
+                            `Error: ${errorMessage}\n` +
+                            `Please contact support - do NOT retry to avoid double charges.`,
+                    )
+                } else {
+                    await handler.sendMessage(
+                        channelId,
+                        `⚠️ Payment succeeded but command failed. Tx: \`${transactionHash}\` Error: ${errorMessage}`,
+                    )
+                }
                 // Don't remove interaction event - payment already processed
             } else {
                 // Actual payment failure (verify or settle threw)
-                await handler.editMessage(
-                    channelId,
-                    statusMsg.eventId,
-                    `❌ Payment failed: ${errorMessage}`,
-                )
+                // Reinsert pending so we don't lose tracking if something threw before user feedback.
+                this.pendingPayments.set(signatureId, pending)
+                if (statusMsg) {
+                    await handler.editMessage(
+                        channelId,
+                        statusMsg.eventId,
+                        `❌ Payment failed: ${errorMessage}`,
+                    )
+                } else {
+                    await handler.sendMessage(channelId, `❌ Payment failed: ${errorMessage}`)
+                }
                 await handler.removeEvent(channelId, pending.interactionEventId)
             }
         }
@@ -1645,9 +1667,18 @@ export class Bot<Commands extends BotCommand[] = []> {
 
         const wrappedHandler: BotEvents<Commands>['slashCommand'] = async (handler, event) => {
             try {
+                const chainId = this.viem.chain.id
+                const network = chainIdToNetwork(chainId)
+
+                // Always validate the current network before any session bypass.
+                validateNetworkSupport(chainId, paymentConfig)
+
                 // Check for active session (x402 v2 feature)
-                if (paymentConfig.session && this.hasActiveSession(event.userId, command)) {
-                    const session = this.useSession(event.userId, command)
+                if (
+                    paymentConfig.session &&
+                    this.hasActiveSession(event.userId, command, network)
+                ) {
+                    const session = this.useSession(event.userId, command, network)
                     if (session) {
                         // Session is valid, execute command without payment
                         debug('session:used', {
@@ -1673,12 +1704,6 @@ export class Bot<Commands extends BotCommand[] = []> {
                         return
                     }
                 }
-
-                const chainId = this.viem.chain.id
-
-                // Validate network support before creating payment request
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                validateNetworkSupport(chainId, paymentConfig)
 
                 const smartAccountAddress = await getSmartAccountFromUserIdImpl(
                     this.client.config.base.chainConfig.addresses.spaceFactory,

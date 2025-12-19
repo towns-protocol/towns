@@ -50,6 +50,8 @@ export const USDC_ADDRESSES: Record<number, Address> = {
     [base.id]: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     // Ethereum mainnet USDC
     1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    // Ethereum Sepolia USDC (Circle)
+    11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     // Arbitrum One USDC
     42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     // Optimism USDC
@@ -97,6 +99,8 @@ export interface PaymentConfig {
 export interface ActiveSession {
     userId: string
     command: string
+    /** Network where the session payment was made (CAIP-2) */
+    network: X402Network
     expiresAt: number
     usesRemaining: number | undefined
     transactionHash: string
