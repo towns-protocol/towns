@@ -313,6 +313,7 @@ type chainAuth struct {
 	entitlementManagerCache *entitlementCache
 	linkedWalletCache       *entitlementCache
 	appInstalledCache       *entitlementCache
+	userIsAppCache          *entitlementCache
 
 	isEntitledToChannelCacheHit  prometheus.Counter
 	isEntitledToChannelCacheMiss prometheus.Counter
@@ -390,6 +391,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	userIsAppCache, err := newUserIsAppCache(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if linkedWalletsLimit <= 0 {
 		linkedWalletsLimit = DEFAULT_MAX_WALLETS
 	}
@@ -414,6 +420,7 @@ func NewChainAuth(
 		entitlementManagerCache: entitlementManagerCache,
 		linkedWalletCache:       linkedWalletCache,
 		appInstalledCache:       appInstalledCache,
+		userIsAppCache:          userIsAppCache,
 
 		isEntitledToChannelCacheHit:  counter.WithLabelValues("isEntitledToChannel", "hit"),
 		isEntitledToChannelCacheMiss: counter.WithLabelValues("isEntitledToChannel", "miss"),
@@ -1219,7 +1226,7 @@ func (ca *chainAuth) checkIsApp(
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
 	if args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
-		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+		isApp, appAddress, err := ca.getUserIsAppCached(ctx, args.principal)
 		if err != nil {
 			return nil, err
 		}
@@ -1304,12 +1311,12 @@ func (ca *chainAuth) checkDmValidation(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 
-	firstPartyIsApp, firstPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.firstParty)
+	firstPartyIsApp, firstPartyAppContract, err := ca.getUserIsAppCached(ctx, args.firstParty)
 	if err != nil {
 		return nil, err
 	}
 
-	secondPartyIsApp, secondPartyAppContract, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.secondParty)
+	secondPartyIsApp, secondPartyAppContract, err := ca.getUserIsAppCached(ctx, args.secondParty)
 	if err != nil {
 		return nil, err
 	}
@@ -1424,6 +1431,32 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 }
 
+func (ca *chainAuth) getUserIsAppCached(
+	ctx context.Context,
+	userId common.Address,
+) (isApp bool, appAddress common.Address, err error) {
+	cacheArgs := &ChainAuthArgs{principal: userId}
+
+	result, _, err := ca.userIsAppCache.executeUsingCache(
+		ctx,
+		nil, // cfg not needed
+		cacheArgs,
+		func(ctx context.Context, _ *config.Config, args *ChainAuthArgs) (CacheResult, error) {
+			isApp, appAddr, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+			if err != nil {
+				return nil, err
+			}
+			return &userIsAppCacheResult{isApp: isApp, appAddress: appAddr}, nil
+		},
+	)
+	if err != nil {
+		return false, common.Address{}, err
+	}
+
+	userResult := result.(*userIsAppCacheResult)
+	return userResult.isApp, userResult.appAddress, nil
+}
+
 // checkAppMembership validates that the app is a member of the space. If the app
 // is not installed on the space, it will return a false entitlement result that
 // can be propogated back up the call stack.
@@ -1489,7 +1522,7 @@ func (ca *chainAuth) linkWallets(
 			}
 		}
 		// If the user is an app, their app address is considered linked to them.
-		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+		isApp, appAddress, err := ca.getUserIsAppCached(ctx, args.principal)
 		if err != nil {
 			return nil, nil, err
 		}
