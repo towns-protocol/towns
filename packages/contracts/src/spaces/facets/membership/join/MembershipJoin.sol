@@ -115,15 +115,9 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate and capture payment
+        // Validate and capture payment (handles both free and paid memberships)
         address currency = _getMembershipCurrency();
-        uint256 capturedAmount;
-        if (!joinDetails.shouldCharge) {
-            // Capture any ETH sent for free memberships so it can be refunded
-            if (currency == CurrencyTransfer.NATIVE_TOKEN) capturedAmount = msg.value;
-        } else {
-            capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
-        }
+        uint256 capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
 
         bytes32 transactionId = _registerTransaction(
             receiver,
@@ -161,15 +155,9 @@ abstract contract MembershipJoin is
 
         PricingDetails memory joinDetails = _getPricingDetails();
 
-        // Validate and capture payment
+        // Validate and capture payment (handles both free and paid memberships)
         address currency = _getMembershipCurrency();
-        uint256 capturedAmount;
-        if (!joinDetails.shouldCharge) {
-            // Capture any ETH sent for free memberships so it can be refunded
-            if (currency == CurrencyTransfer.NATIVE_TOKEN) capturedAmount = msg.value;
-        } else {
-            capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
-        }
+        uint256 capturedAmount = _validateAndCapturePayment(currency, joinDetails.amountDue);
 
         _validateUserReferral(receiver, referral);
 
@@ -217,9 +205,10 @@ abstract contract MembershipJoin is
 
     /// @notice Validates and captures payment based on currency type
     /// @dev For ETH: validates msg.value >= required amount, returns msg.value for refund handling
-    /// @dev For ERC20: transfers tokens from sender to this contract
+    /// @dev For ERC20: rejects any ETH sent, transfers tokens from sender to this contract
+    /// @dev Handles free memberships (amountRequired = 0) correctly for both currency types
     /// @param currency The currency address (NATIVE_TOKEN for ETH, or ERC20 address)
-    /// @param amountRequired The required payment amount
+    /// @param amountRequired The required payment amount (0 for free memberships)
     /// @return The amount to capture (msg.value for ETH, amountRequired for ERC20)
     function _validateAndCapturePayment(
         address currency,
@@ -227,17 +216,15 @@ abstract contract MembershipJoin is
     ) internal returns (uint256) {
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
             // ETH payment: validate msg.value, return full amount for refund handling
-            if (msg.value < amountRequired) {
-                Membership__InsufficientPayment.selector.revertWith();
-            }
+            if (msg.value < amountRequired) Membership__InsufficientPayment.selector.revertWith();
             return msg.value;
         }
 
         // ERC20 payment: reject any ETH sent
         if (msg.value != 0) revert Membership__UnexpectedValue();
 
-        // Transfer ERC20 tokens from sender to contract
-        _transferIn(currency, msg.sender, amountRequired);
+        // Transfer ERC20 tokens from sender to contract (skip for free memberships)
+        if (amountRequired != 0) _transferIn(currency, msg.sender, amountRequired);
 
         return amountRequired;
     }

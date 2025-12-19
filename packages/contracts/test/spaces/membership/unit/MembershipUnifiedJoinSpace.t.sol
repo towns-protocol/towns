@@ -475,4 +475,17 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
         assertEq(usdcMembershipToken.balanceOf(alice), 1);
         assertEq(mockUSDC.balanceOf(alice), 0); // No USDC spent
     }
+
+    function test_joinSpace_USDC_freeMembership_revertWhenEthSent() external {
+        // Set USDC space price to 0 (free)
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(0);
+
+        // User accidentally sends ETH to free USDC membership - should revert
+        vm.deal(alice, 1 ether);
+        vm.prank(alice);
+        bytes memory data = abi.encode(alice);
+        vm.expectRevert(Membership__UnexpectedValue.selector);
+        usdcMembership.joinSpace{value: 1 ether}(JoinType.Basic, data);
+    }
 }
