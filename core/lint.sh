@@ -1,8 +1,10 @@
 #!/bin/bash -ue
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
+./golangci-version-check.sh
+
 echo "golangci-lint"
-go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0 run
+golangci-lint run
 
 echo "lint_extensions.sh"
 ./node/lint_extensions.sh
