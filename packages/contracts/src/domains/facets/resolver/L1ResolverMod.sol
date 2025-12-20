@@ -85,6 +85,8 @@ library L1ResolverMod {
     error L1Resolver__InvalidL2Registry();
     error L1Resolver__InvalidName();
     error L1Resolver__InvalidNameWrapper();
+    error L1Resolver__InvalidNode();
+    error L1Resolver__InvalidChainId();
     error L1Resolver__InvalidOwner();
     error L1Resolver__SignatureExpired();
     error L1Resolver__InvalidSignature();
@@ -118,6 +120,10 @@ library L1ResolverMod {
         uint64 chainId,
         address registryAddress
     ) internal {
+        if (node == bytes32(0)) L1Resolver__InvalidNode.selector.revertWith();
+        if (chainId == 0) L1Resolver__InvalidChainId.selector.revertWith();
+        if (registryAddress == address(0)) L1Resolver__InvalidL2Registry.selector.revertWith();
+
         address owner = ens.owner(node);
 
         if (owner == address($.nameWrapper)) {

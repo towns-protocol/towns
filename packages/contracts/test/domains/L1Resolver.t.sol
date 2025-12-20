@@ -128,6 +128,28 @@ contract L1ResolverUnitTest is L1ResolverBaseSetup {
         L1ResolverFacet(l1Resolver).setL2Registry(node, TEST_CHAIN_ID, l2Registry);
     }
 
+    function test_revertWhen_setL2RegistryZeroNode() external {
+        vm.prank(domainOwner);
+        vm.expectRevert(L1ResolverMod.L1Resolver__InvalidNode.selector);
+        L1ResolverFacet(l1Resolver).setL2Registry(bytes32(0), TEST_CHAIN_ID, l2Registry);
+    }
+
+    function test_revertWhen_setL2RegistryZeroChainId() external {
+        _setDomainOwner(testNode, domainOwner);
+
+        vm.prank(domainOwner);
+        vm.expectRevert(L1ResolverMod.L1Resolver__InvalidChainId.selector);
+        L1ResolverFacet(l1Resolver).setL2Registry(testNode, 0, l2Registry);
+    }
+
+    function test_revertWhen_setL2RegistryZeroAddress() external {
+        _setDomainOwner(testNode, domainOwner);
+
+        vm.prank(domainOwner);
+        vm.expectRevert(L1ResolverMod.L1Resolver__InvalidL2Registry.selector);
+        L1ResolverFacet(l1Resolver).setL2Registry(testNode, TEST_CHAIN_ID, address(0));
+    }
+
     /*//////////////////////////////////////////////////////////////
                               RESOLVE
     //////////////////////////////////////////////////////////////*/
