@@ -94,6 +94,7 @@
         "zod": "^4.2.1",
       },
       "devDependencies": {
+        "@towns-protocol/prettier-config": "workspace:^",
         "@types/bun": "latest",
         "prettier": "^3.7.4",
         "typescript": "^5.9.3",
