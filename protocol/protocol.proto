@@ -375,7 +375,11 @@ message DmChannelPayload {
         bytes first_party_address = 2;
         bytes second_party_address = 3;
         StreamSettings settings = 4;
+        // App contract address for first party if they are a bot/app.
+        // When set, indicates a bot-to-user DM and enables app installation checks.
         optional bytes first_party_app_address = 5;
+        // App contract address for second party if they are a bot/app.
+        // When set, indicates a user-to-bot DM and enables app installation checks.
         optional bytes second_party_app_address = 6;
     }
 

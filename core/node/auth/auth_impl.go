@@ -1353,37 +1353,36 @@ func (ca *chainAuth) checkDmCreation(
 		return nil, err
 	}
 
-	if args.firstPartyAppAddress != nil || args.secondPartyAppAddress != nil {
-		if args.firstPartyAppAddress == nil && firstPartyIsApp {
-			log.Warnw("checkDmCreation: first party claimed not bot but is registered",
-				"firstParty", args.firstParty)
-			return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
-		}
+	// If a party is a bot, they MUST provide their app address.
+	if args.firstPartyAppAddress == nil && firstPartyIsApp {
+		log.Warnw("checkDmCreation: first party claimed not bot but is registered",
+			"firstParty", args.firstParty)
+		return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
+	}
 
-		if args.firstPartyAppAddress != nil {
-			if !firstPartyIsApp || *args.firstPartyAppAddress != firstPartyAppContract {
-				log.Warnw("checkDmCreation: first party app address mismatch",
-					"firstParty", args.firstParty,
-					"claimed", args.firstPartyAppAddress,
-					"actual", firstPartyAppContract)
-				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
-			}
-		}
+	if args.secondPartyAppAddress == nil && secondPartyIsApp {
+		log.Warnw("checkDmCreation: second party claimed not bot but is registered",
+			"secondParty", args.secondParty)
+		return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
+	}
 
-		if args.secondPartyAppAddress == nil && secondPartyIsApp {
-			log.Warnw("checkDmCreation: second party claimed not bot but is registered",
-				"secondParty", args.secondParty)
-			return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
+	if args.firstPartyAppAddress != nil {
+		if !firstPartyIsApp || *args.firstPartyAppAddress != firstPartyAppContract {
+			log.Warnw("checkDmCreation: first party app address mismatch",
+				"firstParty", args.firstParty,
+				"claimed", args.firstPartyAppAddress,
+				"actual", firstPartyAppContract)
+			return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
 		}
+	}
 
-		if args.secondPartyAppAddress != nil {
-			if !secondPartyIsApp || *args.secondPartyAppAddress != secondPartyAppContract {
-				log.Warnw("checkDmCreation: second party app address mismatch",
-					"secondParty", args.secondParty,
-					"claimed", args.secondPartyAppAddress,
-					"actual", secondPartyAppContract)
-				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
-			}
+	if args.secondPartyAppAddress != nil {
+		if !secondPartyIsApp || *args.secondPartyAppAddress != secondPartyAppContract {
+			log.Warnw("checkDmCreation: second party app address mismatch",
+				"secondParty", args.secondParty,
+				"claimed", args.secondPartyAppAddress,
+				"actual", secondPartyAppContract)
+			return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
 		}
 	}
 
@@ -1402,18 +1401,28 @@ func (ca *chainAuth) checkDmCreation(
 		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
+	var lastErr error
+
 	if secondPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract)
-		if err == nil && result.IsAllowed() {
+		if err != nil {
+			lastErr = err
+		} else if result.IsAllowed() {
 			return result, nil
 		}
 	}
 
 	if firstPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract)
-		if err == nil && result.IsAllowed() {
+		if err != nil {
+			lastErr = err
+		} else if result.IsAllowed() {
 			return result, nil
 		}
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
 	}
 
 	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
@@ -1439,18 +1448,29 @@ func (ca *chainAuth) checkDmEvent(
 	}
 
 	// At least one party is an app. Check if app is installed on user.
+	var lastErr error
+
 	if secondPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, *args.secondPartyAppAddress)
-		if err == nil && result.IsAllowed() {
+		if err != nil {
+			lastErr = err
+		} else if result.IsAllowed() {
 			return result, nil
 		}
 	}
 	if firstPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, *args.firstPartyAppAddress)
-		if err == nil && result.IsAllowed() {
+		if err != nil {
+			lastErr = err
+		} else if result.IsAllowed() {
 			return result, nil
 		}
 	}
+
+	if lastErr != nil {
+		return nil, lastErr
+	}
+
 	// App is not installed on user - reject
 	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 }

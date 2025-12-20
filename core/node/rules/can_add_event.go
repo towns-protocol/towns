@@ -290,6 +290,9 @@ func (params *aeParams) dmValidationChainAuth() (*auth.ChainAuthArgs, error) {
 		addr := common.BytesToAddress(inception.SecondPartyAppAddress)
 		secondPartyAppAddr = &addr
 	}
+	if firstPartyAppAddr == nil && secondPartyAppAddr == nil {
+		return nil, nil
+	}
 
 	return auth.NewChainAuthArgsForDmEvent(firstPartyAddr, secondPartyAddr, firstPartyAppAddr, secondPartyAppAddr), nil
 }

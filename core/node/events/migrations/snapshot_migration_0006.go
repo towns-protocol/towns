@@ -4,6 +4,9 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
+// snapshot_migration_0006 copies the app address from user stream inception
+// to the stream owner's AppAddress field. This enables bot/app identification
+// in member snapshots for DM validation without additional blockchain lookups.
 func snapshot_migration_0006(iSnapshot *Snapshot) {
 	var appAddress []byte
 
