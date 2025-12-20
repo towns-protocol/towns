@@ -1,0 +1,25 @@
+{
+    "name": "@towns-protocol/ccip",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "build": "tsc --outDir ./out",
+        "start": "bun src/index.ts",
+        "typings": "wagmi generate",
+        "prettier:fix": "bun run prettier --write .",
+        "prettier:check": "bun run prettier --check ."
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "prettier": "^3.7.4",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "@wagmi/cli": "^2.8.0",
+        "evm-providers": "^0.5.8",
+        "hono": "^4.11.1",
+        "viem": "^2.43.2",
+        "zod": "^4.2.1"
+    }
+}
