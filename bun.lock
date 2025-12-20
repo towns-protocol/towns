@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "towns-protocol",
@@ -42,7 +41,7 @@
     },
     "packages/bot": {
       "name": "@towns-protocol/bot",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
@@ -95,14 +94,14 @@
       },
       "devDependencies": {
         "@towns-protocol/prettier-config": "workspace:^",
-        "@types/bun": "latest",
-        "prettier": "^3.7.4",
+        "@types/bun": "^1.3.1",
+        "prettier": "^3.5.3",
         "typescript": "^5.9.3",
       },
     },
     "packages/contracts": {
       "name": "@towns-protocol/contracts",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
         "@ethereum-attestation-service/eas-contracts": "^1.8.0",
@@ -135,7 +134,7 @@
     },
     "packages/create-towns-protocol-app": {
       "name": "create-towns-protocol-app",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "bin": "index.js",
       "dependencies": {
         "jsonc-parser": "^3.3.1",
@@ -162,7 +161,7 @@
     },
     "packages/encryption": {
       "name": "@towns-protocol/encryption",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/olm": "3.2.28",
@@ -192,7 +191,7 @@
     },
     "packages/eslint-config": {
       "name": "@towns-protocol/eslint-config",
-      "version": "0.0.442",
+      "version": "0.0.443",
     },
     "packages/examples/bot-quickstart": {
       "name": "@towns-protocol/example-bot-quickstart",
@@ -219,7 +218,7 @@
     },
     "packages/generated": {
       "name": "@towns-protocol/generated",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@ethersproject/abi": "^5.8.0",
         "@ethersproject/providers": "^5.8.0",
@@ -326,7 +325,7 @@
     },
     "packages/prettier-config": {
       "name": "@towns-protocol/prettier-config",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "prettier-plugin-solidity": "^1.4.2",
       },
@@ -336,7 +335,7 @@
     },
     "packages/proto": {
       "name": "@towns-protocol/proto",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
       },
@@ -353,7 +352,7 @@
     },
     "packages/react-sdk": {
       "name": "@towns-protocol/react-sdk",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -388,7 +387,7 @@
     },
     "packages/rpc-connector": {
       "name": "@towns-protocol/rpc-connector",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@connectrpc/connect": "^2.1.0",
       },
@@ -418,7 +417,7 @@
     },
     "packages/sdk": {
       "name": "@towns-protocol/sdk",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect": "^2.1.0",
@@ -465,7 +464,7 @@
     },
     "packages/sdk-crypto": {
       "name": "@towns-protocol/sdk-crypto",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
@@ -602,7 +601,7 @@
     },
     "packages/towns-bot-cli": {
       "name": "towns-bot",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "bin": "index.js",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -636,7 +635,7 @@
     },
     "packages/utils": {
       "name": "@towns-protocol/utils",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@ethereumjs/util": "^10.0.0",
@@ -659,7 +658,7 @@
     },
     "packages/web3": {
       "name": "@towns-protocol/web3",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
         "@towns-protocol/generated": "workspace:^",
@@ -687,7 +686,7 @@
     },
     "packages/xchain-monitor": {
       "name": "@towns-protocol/xchain-monitor",
-      "version": "0.0.442",
+      "version": "0.0.443",
       "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
