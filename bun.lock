@@ -87,11 +87,11 @@
     "packages/ccip": {
       "name": "@towns-protocol/ccip",
       "dependencies": {
-        "@wagmi/cli": "^2.8.0",
+        "@wagmi/cli": "^2.2.0",
         "evm-providers": "^0.5.8",
-        "hono": "^4.11.1",
-        "viem": "^2.43.2",
-        "zod": "^4.2.1",
+        "hono": "^4.7.11",
+        "viem": "^2.29.3",
+        "zod": "^3.25.76",
       },
       "devDependencies": {
         "@towns-protocol/prettier-config": "workspace:^",
@@ -5867,8 +5867,6 @@
     "@stoplight/yaml/@stoplight/types": ["@stoplight/types@14.1.1", "", { "dependencies": { "@types/json-schema": "^7.0.4", "utility-types": "^3.10.0" } }, "sha512-/kjtr+0t0tjKr+heVfviO9FrU/uGLc+QNX3fHJc19xsCNYqU7lVhaXxDmEID9BZTjG+/r9pK9xP/xU02XGg65g=="],
 
     "@towns-protocol/ccip/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
-
-    "@towns-protocol/ccip/zod": ["zod@4.2.1", "", {}, "sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw=="],
 
     "@ts-morph/common/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
