@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/proto",
-    "version": "0.0.443",
+    "version": "0.0.444",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
