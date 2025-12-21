@@ -597,8 +597,6 @@ func (m *MetadataShard) ProcessProposal(
 			req.Hash,
 			"txs",
 			len(req.Txs),
-			"appHash",
-			block.AppHash,
 			"err",
 			err,
 		)
