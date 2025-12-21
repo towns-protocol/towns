@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,8 +14,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
@@ -78,6 +79,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	if opts.Store == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "store is required")
 	}
+	if opts.GenesisDoc == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "genesis doc is required")
+	}
 
 	chainID := chainIDForShard(opts.ShardID)
 	if err := opts.Store.EnsureShardStorage(ctx, opts.ShardID); err != nil {
@@ -113,16 +117,24 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 		opts.ConfigOverride(cfg)
 	}
 
-	privKey := ed25519.GenPrivKeyFromSecret(opts.Wallet.PrivateKey)
-	privVal, err := privval.LoadOrGenFilePV(
-		cfg.PrivValidatorKeyFile(),
-		cfg.PrivValidatorStateFile(),
-		func() (crypto.PrivKey, error) {
-			return privKey, nil
-		},
-	)
-	if err != nil {
-		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
+	if opts.GenesisDoc.ConsensusParams == nil {
+		opts.GenesisDoc.ConsensusParams = types.DefaultConsensusParams()
+	}
+	opts.GenesisDoc.ConsensusParams.Validator.PubKeyTypes = []string{types.ABCIPubKeyTypeSecp256k1}
+	for _, validator := range opts.GenesisDoc.Validators {
+		if validator.PubKey.Type() != secp256k1.KeyType {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "validator pubkey must be secp256k1", "type", validator.PubKey.Type())
+		}
+	}
+
+	if len(opts.Wallet.PrivateKey) != secp256k1.PrivKeySize {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "wallet private key must be 32 bytes", "len", len(opts.Wallet.PrivateKey))
+	}
+	privKey := secp256k1.PrivKey(append([]byte(nil), opts.Wallet.PrivateKey...))
+
+	privVal := privval.NewFilePV(privKey, cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+	if err := loadPrivValidatorState(cfg.PrivValidatorStateFile(), &privVal.LastSignState); err != nil {
+		return nil, RiverErrorWithBase(Err_INTERNAL, "load priv validator state", err)
 	}
 
 	nodeKey := &p2p.NodeKey{PrivKey: privKey}
@@ -137,6 +149,8 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 		store:     opts.Store,
 		log:       log,
 	}
+
+	var err error
 
 	// Save genenis doc
 	err = opts.GenesisDoc.ValidateAndComplete()
@@ -195,6 +209,17 @@ func (m *MetadataShard) Node() *node.Node {
 
 func chainIDForShard(shardID uint64) string {
 	return fmt.Sprintf("%s%016x", chainIDPrefix, shardID)
+}
+
+func loadPrivValidatorState(path string, state *privval.FilePVLastSignState) error {
+	payload, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return cmtjson.Unmarshal(payload, state)
 }
 
 func decodeMetadataTx(txBytes []byte) (*MetadataTx, error) {

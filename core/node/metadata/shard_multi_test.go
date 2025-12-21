@@ -24,7 +24,7 @@ import (
 	"time"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -216,9 +216,10 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 
 	// Create genesis validators from the wallets
 	validators := make([]cmttypes.GenesisValidator, numShardInstances)
-	nodeKeys := make([]ed25519.PrivKey, numShardInstances)
+	nodeKeys := make([]secp256k1.PrivKey, numShardInstances)
 	for i, wallet := range wallets {
-		privKey := ed25519.GenPrivKeyFromSecret(wallet.PrivateKey)
+		require.Len(t, wallet.PrivateKey, secp256k1.PrivKeySize, "wallet private key must be 32 bytes")
+		privKey := secp256k1.PrivKey(append([]byte(nil), wallet.PrivateKey...))
 		nodeKeys[i] = privKey
 		validators[i] = cmttypes.GenesisValidator{
 			Address: privKey.PubKey().Address(),
@@ -235,6 +236,7 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 		ConsensusParams: cmttypes.DefaultConsensusParams(),
 		Validators:      validators,
 	}
+	genesisDoc.ConsensusParams.Validator.PubKeyTypes = []string{cmttypes.ABCIPubKeyTypeSecp256k1}
 
 	// Build persistent peers list
 	// Node IDs must be lowercase hex for CometBFT peer matching
