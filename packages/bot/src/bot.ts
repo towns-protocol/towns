@@ -462,10 +462,20 @@ export class Bot<Commands extends BotCommand[] = []> {
         this.eventDedup = new EventDedup(dedupConfig)
         this.paymentConfig = paymentConfig
 
-        if (commands && paymentConfig) {
-            for (const cmd of commands) {
-                if (cmd.paid?.price) {
-                    this.paymentCommands.set(cmd.name, cmd.paid)
+        if (commands) {
+            const hasPaidCommands = commands.some((cmd) => !!cmd.paid?.price)
+            if (hasPaidCommands && !paymentConfig) {
+                throw new Error(
+                    `Paid commands are configured, but paymentConfig (x402 facilitator config) is missing. ` +
+                        `Provide paymentConfig when creating the bot, e.g. paymentConfig: { url: 'https://www.x402.org/facilitator' }.`,
+                )
+            }
+
+            if (paymentConfig) {
+                for (const cmd of commands) {
+                    if (cmd.paid?.price) {
+                        this.paymentCommands.set(cmd.name, cmd.paid)
+                    }
                 }
             }
         }
