@@ -198,6 +198,35 @@ When a user invokes a paid command:
 3. Payment is verified and settled via the x402 facilitator
 4. Your command handler executes after successful payment
 
+### Configuring the Facilitator
+
+Configure which x402 facilitator the bot will call for `verify`/`settle`:
+
+```ts src/index.ts
+const bot = await makeTownsBot(
+  process.env.APP_PRIVATE_DATA!,
+  process.env.JWT_SECRET!,
+  {
+    commands,
+    paymentConfig: {
+      // Public facilitator (recommended default):
+      url: 'https://www.x402.org/facilitator',
+      // Optional: some facilitators require an API key
+      // apiKey: process.env.X402_API_KEY,
+    },
+  }
+)
+```
+
+If you’re using Coinbase/CDP’s hosted facilitator, set:
+
+```ts
+paymentConfig: {
+  url: 'https://api.cdp.coinbase.com/platform/v2/x402',
+  // apiKey: process.env.X402_API_KEY,
+}
+```
+
 ```ts
 // Handler only runs after payment succeeds
 bot.onSlashCommand('generate', async (handler, event) => {
@@ -289,28 +318,6 @@ export const commands = [
 ] as const satisfies BotCommand[]
 ```
 
-### Configuring the Facilitator
-
-When creating your bot, provide the x402 facilitator configuration:
-
-```ts src/index.ts
-const bot = await makeTownsBot(
-  process.env.APP_PRIVATE_DATA!,
-  process.env.JWT_SECRET!,
-  {
-    commands,
-    paymentConfig: {
-      // Testnet/public (x402.org):
-      // url: 'https://www.x402.org/facilitator',
-      //
-      // CDP (Coinbase) hosted:
-      // url: 'https://api.cdp.coinbase.com/platform/v2/x402',
-      url: process.env.X402_FACILITATOR_URL!,
-      apiKey: process.env.X402_API_KEY, // Optional (depends on facilitator)
-    },
-  }
-)
-```
 
 ## Updating Commands
 

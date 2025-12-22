@@ -1114,6 +1114,7 @@ export class Bot<Commands extends BotCommand[] = []> {
 
         // Track settlement state to distinguish payment failures from post-payment failures
         let settlementCompleted = false
+        let verified = false
         let transactionHash: string | undefined
         let statusMsg: { eventId: string } | undefined
 
@@ -1176,9 +1177,10 @@ export class Bot<Commands extends BotCommand[] = []> {
                     statusMsg.eventId,
                     `❌ Payment verification failed: ${verifyResult.invalidReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
                 return
             }
+
+            verified = true
 
             // Update status: settling
             await handler.editMessage(
@@ -1199,7 +1201,6 @@ export class Bot<Commands extends BotCommand[] = []> {
                     statusMsg.eventId,
                     `❌ Settlement failed: ${settleResult.errorReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
                 return
             }
 
@@ -1236,9 +1237,6 @@ export class Bot<Commands extends BotCommand[] = []> {
                     `Tx: \`${transactionHash}\`${sessionInfo}`,
             )
 
-            // Delete the signature request now that payment is complete
-            await handler.removeEvent(channelId, pending.interactionEventId)
-
             // Execute the original command handler (stored with __paid_ prefix)
             const actualHandlerKey = `__paid_${pending.command}`
             const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
@@ -1266,21 +1264,35 @@ export class Bot<Commands extends BotCommand[] = []> {
                         `⚠️ Payment succeeded but command failed. Tx: \`${transactionHash}\` Error: ${errorMessage}`,
                     )
                 }
-                // Don't remove interaction event - payment already processed
             } else {
-                // Actual payment failure (verify or settle threw)
-                // Reinsert pending so we don't lose tracking if something threw before user feedback.
-                this.pendingPayments.set(signatureId, pending)
+                // verify or settle threw before settlementCompleted was set
                 if (statusMsg) {
                     await handler.editMessage(
                         channelId,
                         statusMsg.eventId,
-                        `❌ Payment failed: ${errorMessage}`,
+                        verified
+                            ? `⚠️ Verified but settlement failed: ${errorMessage}\n` +
+                                  `Please check your wallet/transactions before retrying to avoid double charges.`
+                            : `❌ Payment failed: ${errorMessage}\n` +
+                                  `Please run \`/${pending.command}\` again to retry.`,
                     )
                 } else {
-                    await handler.sendMessage(channelId, `❌ Payment failed: ${errorMessage}`)
+                    await handler.sendMessage(
+                        channelId,
+                        verified
+                            ? `⚠️ Verified but settlement failed: ${errorMessage}\n` +
+                                  `Please check your wallet/transactions before retrying to avoid double charges.`
+                            : `❌ Payment failed: ${errorMessage}\n` +
+                                  `Please run \`/${pending.command}\` again to retry.`,
+                    )
                 }
+            }
+        } finally {
+            try {
+                // Always remove the signature request UI; a signature response was already received.
                 await handler.removeEvent(channelId, pending.interactionEventId)
+            } catch {
+                // Best-effort cleanup: avoid masking the real error path if removal fails.
             }
         }
     }
