@@ -41,38 +41,28 @@ interface IMembershipBase {
         string referralCode;
     }
 
-    struct PricingDetails {
-        uint256 basePrice;
-        uint256 amountDue;
-        bool shouldCharge;
-        bool isPrepaid;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error Membership__InvalidAddress();
-    error Membership__InvalidPrice();
-    error Membership__InvalidLimit();
-    error Membership__InvalidCurrency();
-    error Membership__InvalidFeeRecipient();
     error Membership__InvalidDuration();
     error Membership__InvalidMaxSupply();
     error Membership__InvalidFreeAllocation();
     error Membership__InvalidPricingModule();
-    error Membership__AlreadyMember();
     error Membership__InsufficientPayment();
     error Membership__MaxSupplyReached();
-    error Membership__InvalidTokenId();
-    error Membership__NotExpired();
-    error Membership__InsufficientAllowance();
     error Membership__InvalidPayment();
     error Membership__InvalidTransactionType();
     error Membership__Banned();
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
-    error Membership__CannotSetPriceOnFreeSpace();
+
+    /// @notice Error thrown when ETH is sent for ERC20 payment
+    error Membership__UnexpectedValue();
+
+    /// @notice Error thrown when currency is not supported for fees
+    error Membership__UnsupportedCurrency();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -83,7 +73,7 @@ interface IMembershipBase {
     event MembershipCurrencyUpdated(address indexed currency);
     event MembershipFeeRecipientUpdated(address indexed recipient);
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
-    event MembershipWithdrawal(address indexed recipient, uint256 amount);
+    event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
     event MembershipTokenRejected(address indexed recipient);
 }
@@ -206,6 +196,10 @@ interface IMembership is IMembershipBase {
     /// @notice Get the membership currency
     /// @return The membership currency
     function getMembershipCurrency() external view returns (address);
+
+    /// @notice Set the membership currency
+    /// @param currency The new membership currency address
+    function setMembershipCurrency(address currency) external;
 
     /// @notice Get the space factory
     /// @return The space factory

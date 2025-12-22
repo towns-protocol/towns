@@ -158,9 +158,12 @@ func compareStreamMiniblocks(
 		)
 	}
 
-	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
+	miniblocks, terminus, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
 	if err != nil {
 		return err
+	}
+	if !terminus {
+		return RiverError(Err_INTERNAL, "terminus should be true when reading from 0", "streamId", streamId)
 	}
 
 	mbResp, err := client.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{

@@ -95,7 +95,7 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 		toExcl := min(fromIncl+pageSize, lastMiniblockNumber+1)
 
 		// read from DB
-		miniblocks, err := s.ReadMiniblocks(ctx, streamID, fromIncl, toExcl, true)
+		miniblocks, _, err := s.ReadMiniblocks(ctx, streamID, fromIncl, toExcl, true)
 		if err != nil {
 			s.extStorageMigrationFailure.Inc()
 			return true, err

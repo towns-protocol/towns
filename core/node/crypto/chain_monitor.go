@@ -24,7 +24,8 @@ import (
 type (
 	// ChainMonitor monitors the EVM chain for new blocks and/or events.
 	ChainMonitor interface {
-		// Start starts the chain monitor in background. Goroutine is going to be running until the given ctx is cancelled.
+		// Start starts the chain monitor in background. Goroutine is going to be running until the given ctx is
+		// cancelled.
 		Start(
 			ctx context.Context,
 			client BlockchainClient,
@@ -38,7 +39,8 @@ type (
 		OnHeader(cb OnChainNewHeader)
 		// OnBlock adds a callback that is called for each new block
 		OnBlock(cb OnChainNewBlock)
-		// OnBlockWithLogs adds a callback that is called for each new block with the logs that were created in the block.
+		// OnBlockWithLogs adds a callback that is called for each new block with the logs that were created in the
+		// block.
 		OnBlockWithLogs(from blockchain.BlockNumber, cb OnChainNewBlockWithLogs)
 		// OnAllEvents matches all events for all contracts, e.g. all chain events.
 		OnAllEvents(from blockchain.BlockNumber, cb OnChainEventCallback)

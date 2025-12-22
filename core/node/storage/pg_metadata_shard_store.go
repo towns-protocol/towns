@@ -123,15 +123,12 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 	if _, err := tx.Exec(ctx, s.sqlForShard(`
 			CREATE TABLE IF NOT EXISTS {{streams}} (
 				stream_id BYTEA PRIMARY KEY,
-				genesis_miniblock_hash BYTEA NOT NULL,
-				genesis_miniblock BYTEA NOT NULL,
 				last_miniblock_hash BYTEA NOT NULL,
 				last_miniblock_num BIGINT NOT NULL,
 				replication_factor INT NOT NULL,
 				sealed BOOLEAN NOT NULL DEFAULT FALSE,
 				nodes INT[] NOT NULL,
 				CHECK (octet_length(stream_id) = 32),
-				CHECK (octet_length(genesis_miniblock_hash) = 32),
 				CHECK (octet_length(last_miniblock_hash) = 32),
 				CHECK (last_miniblock_num >= 0),
 				CHECK (replication_factor > 0),
@@ -248,8 +245,6 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 	streamId shared.StreamId,
 ) (*StreamMetadata, error) {
 	var (
-		genesisHash []byte
-		genesisMB   []byte
 		lastHash    []byte
 		lastNum     int64
 		repFactor   uint32
@@ -258,9 +253,7 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 	)
 
 	query := s.sqlForShard(
-		`SELECT genesis_miniblock_hash,
-                genesis_miniblock,
-                last_miniblock_hash,
+		`SELECT last_miniblock_hash,
                 last_miniblock_num,
                 replication_factor,
                 sealed,
@@ -271,8 +264,6 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 	)
 
 	if err := tx.QueryRow(ctx, query, streamId[:]).Scan(
-		&genesisHash,
-		&genesisMB,
 		&lastHash,
 		&lastNum,
 		&repFactor,
@@ -291,14 +282,12 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 	}
 
 	return &StreamMetadata{
-		StreamId:             streamId[:],
-		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     genesisMB,
-		LastMiniblockHash:    lastHash,
-		LastMiniblockNum:     lastNum,
-		Nodes:                nodesAddrs,
-		ReplicationFactor:    repFactor,
-		Sealed:               sealed,
+		StreamId:          streamId[:],
+		LastMiniblockHash: lastHash,
+		LastMiniblockNum:  lastNum,
+		Nodes:             nodesAddrs,
+		ReplicationFactor: repFactor,
+		Sealed:            sealed,
 	}, nil
 }
 
@@ -318,8 +307,6 @@ func (s *PostgresMetadataShardStore) ListStreams(
 				ctx,
 				s.sqlForShard(
 					`SELECT s.stream_id,
-	                            s.genesis_miniblock_hash,
-	                            s.genesis_miniblock,
 	                            s.last_miniblock_hash,
 	                            s.last_miniblock_num,
 	                            s.replication_factor,
@@ -341,8 +328,6 @@ func (s *PostgresMetadataShardStore) ListStreams(
 			for rows.Next() {
 				var (
 					streamId    []byte
-					genesisHash []byte
-					genesisMB   []byte
 					lastHash    []byte
 					lastNum     int64
 					repFactor   uint32
@@ -351,8 +336,6 @@ func (s *PostgresMetadataShardStore) ListStreams(
 				)
 				if err := rows.Scan(
 					&streamId,
-					&genesisHash,
-					&genesisMB,
 					&lastHash,
 					&lastNum,
 					&repFactor,
@@ -368,14 +351,12 @@ func (s *PostgresMetadataShardStore) ListStreams(
 				}
 
 				records = append(records, &StreamMetadata{
-					StreamId:             streamId,
-					GenesisMiniblockHash: genesisHash,
-					GenesisMiniblock:     genesisMB,
-					LastMiniblockHash:    lastHash,
-					LastMiniblockNum:     lastNum,
-					Nodes:                nodesAddrs,
-					ReplicationFactor:    repFactor,
-					Sealed:               sealed,
+					StreamId:          streamId,
+					LastMiniblockHash: lastHash,
+					LastMiniblockNum:  lastNum,
+					Nodes:             nodesAddrs,
+					ReplicationFactor: repFactor,
+					Sealed:            sealed,
 				})
 			}
 			return rows.Err()
@@ -411,8 +392,6 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 				ctx,
 				s.sqlForShard(
 					`SELECT s.stream_id,
-	                            s.genesis_miniblock_hash,
-	                            s.genesis_miniblock,
 	                            s.last_miniblock_hash,
 	                            s.last_miniblock_num,
 	                            s.replication_factor,
@@ -436,8 +415,6 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 			for rows.Next() {
 				var (
 					streamId    []byte
-					genesisHash []byte
-					genesisMB   []byte
 					lastHash    []byte
 					lastNum     int64
 					repFactor   uint32
@@ -446,8 +423,6 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 				)
 				if err := rows.Scan(
 					&streamId,
-					&genesisHash,
-					&genesisMB,
 					&lastHash,
 					&lastNum,
 					&repFactor,
@@ -463,14 +438,12 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 				}
 
 				records = append(records, &StreamMetadata{
-					StreamId:             streamId,
-					GenesisMiniblockHash: genesisHash,
-					GenesisMiniblock:     genesisMB,
-					LastMiniblockHash:    lastHash,
-					LastMiniblockNum:     lastNum,
-					Nodes:                nodesAddrs,
-					ReplicationFactor:    repFactor,
-					Sealed:               sealed,
+					StreamId:          streamId,
+					LastMiniblockHash: lastHash,
+					LastMiniblockNum:  lastNum,
+					Nodes:             nodesAddrs,
+					ReplicationFactor: repFactor,
+					Sealed:            sealed,
 				})
 			}
 			return rows.Err()
@@ -585,8 +558,6 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 				ctx,
 				s.sqlForShard(
 					`SELECT s.stream_id,
-	                            s.genesis_miniblock_hash,
-	                            s.genesis_miniblock,
 	                            s.last_miniblock_hash,
 	                            s.last_miniblock_num,
 	                            s.replication_factor,
@@ -605,8 +576,6 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 			for rows.Next() {
 				var (
 					streamID    []byte
-					genesisHash []byte
-					genesisMB   []byte
 					lastHash    []byte
 					lastNum     int64
 					repFactor   uint32
@@ -615,8 +584,6 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 				)
 				if err := rows.Scan(
 					&streamID,
-					&genesisHash,
-					&genesisMB,
 					&lastHash,
 					&lastNum,
 					&repFactor,
@@ -632,14 +599,12 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
 				}
 
 				records = append(records, &StreamMetadata{
-					StreamId:             streamID,
-					GenesisMiniblockHash: genesisHash,
-					GenesisMiniblock:     genesisMB,
-					LastMiniblockHash:    lastHash,
-					LastMiniblockNum:     lastNum,
-					Nodes:                nodesAddrs,
-					ReplicationFactor:    repFactor,
-					Sealed:               sealed,
+					StreamId:          streamID,
+					LastMiniblockHash: lastHash,
+					LastMiniblockNum:  lastNum,
+					Nodes:             nodesAddrs,
+					ReplicationFactor: repFactor,
+					Sealed:            sealed,
 				})
 			}
 
@@ -737,13 +702,18 @@ func (s *PostgresMetadataShardStore) batchValidateCreateStreamTx(
 	index int,
 	op *CreateStreamTx,
 ) {
-	streamId, err := shared.StreamIdFromBytes(op.StreamId)
+	if op == nil || op.Stream == nil {
+		pendingBlock.SetTxError(index, RiverError(Err_INVALID_ARGUMENT, "stream metadata missing"))
+		return
+	}
+	stream := op.Stream
+	streamId, err := shared.StreamIdFromBytes(stream.StreamId)
 	if err != nil {
 		pendingBlock.SetTxError(index, err)
 		return
 	}
 
-	_, err = s.nodeIndexesForAddrs(op.Nodes, false)
+	_, err = s.nodeIndexesForAddrs(stream.Nodes, false)
 	if err != nil {
 		pendingBlock.SetTxError(index, err)
 		return
@@ -802,7 +772,7 @@ func (s *PostgresMetadataShardStore) batchValidateMbUpdateTx(
 		streamId[:],
 	).QueryRow(func(row pgx.Row) error {
 		var prevHash []byte
-		var prevNum uint64
+		var prevNum int64
 		var sealed bool
 		if err := row.Scan(&prevHash, &prevNum, &sealed); err != nil {
 			if err == pgx.ErrNoRows {
@@ -1002,29 +972,25 @@ func (s *PostgresMetadataShardStore) batchCreateStreamTx(
 	shardId uint64,
 	op *CreateStreamTx,
 ) error {
-	nodeIndexes, err := s.nodeIndexesForAddrs(op.Nodes, false)
+	if op == nil || op.Stream == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "stream metadata missing")
+	}
+	stream := op.Stream
+	nodeIndexes, err := s.nodeIndexesForAddrs(stream.Nodes, false)
 	if err != nil {
 		return err
 	}
 
-	// For new streams (last_miniblock_num = 0), use genesis_miniblock_hash as last_miniblock_hash
-	lastMiniblockHash := op.LastMiniblockHash
-	if op.LastMiniblockNum == 0 {
-		lastMiniblockHash = op.GenesisMiniblockHash
-	}
-
 	batch.Queue(
 		s.sqlForShard(
-			`INSERT INTO {{streams}} (stream_id, genesis_miniblock_hash, genesis_miniblock, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			`INSERT INTO {{streams}} (stream_id, last_miniblock_hash, last_miniblock_num, replication_factor, sealed, nodes) VALUES ($1,$2,$3,$4,$5,$6)`,
 			shardId,
 		),
-		op.StreamId,
-		op.GenesisMiniblockHash,
-		op.GenesisMiniblock,
-		lastMiniblockHash,
-		op.LastMiniblockNum,
-		op.ReplicationFactor,
-		op.Sealed,
+		stream.StreamId,
+		stream.LastMiniblockHash,
+		stream.LastMiniblockNum,
+		stream.ReplicationFactor,
+		stream.Sealed,
 		nodeIndexes,
 	)
 	return nil

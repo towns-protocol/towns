@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	// MiniblockCandidateBatchSize keep track the max number of miniblockblocks that are registered in the StreamRegistry
+	// MiniblockCandidateBatchSize keep track the max number of miniblockblocks that are registered in the
+	// StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
 
@@ -26,7 +27,8 @@ const (
 )
 
 type TestMiniblockProducer interface {
-	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
+	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies
+	// it to the stream.
 	// It is intended to be called manually from the test code.
 	// TestMakeMiniblock always creates a miniblock if there are events in the minipool.
 	// TestMakeMiniblock always creates a miniblock if forceSnapshot is true. This miniblock will have a snapshot.
@@ -221,7 +223,8 @@ func (p *miniblockProducer) testCheckAllDone(jobs []*mbJob) bool {
 	return true
 }
 
-// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
+// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to
+// the stream.
 // It is intended to be called manually from the test code.
 // TestMakeMiniblock always creates a miniblock if there are events in the minipool.
 // TestMakeMiniblock always creates a miniblock if forceSnapshot is true. This miniblock will have a snapshot.

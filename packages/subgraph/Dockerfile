@@ -26,6 +26,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
@@ -85,7 +91,7 @@ RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 # ==========================================
 # Stage 2: Runtime - Minimal runtime image
 # ==========================================
-FROM oven/bun:1.3-slim AS runtime
+FROM ubuntu:24.04 AS runtime
 
 # Set working directory
 WORKDIR /river
@@ -95,7 +101,14 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     netcat-openbsd \
-    ca-certificates && \
+    ca-certificates \
+    lsb-release && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -103,7 +116,7 @@ RUN apt-get update && \
 COPY --from=builder /river/node_modules ./node_modules
 
 # Copy monorepo configuration
-COPY --from=builder /river/package.json /river/bun.lock /river/turbo.json ./
+COPY --from=builder /river/package.json /river/bun.lock /river/bunfig.toml /river/turbo.json ./
 
 # Copy only runtime-required packages
 COPY --from=builder /river/packages/contracts/deployments ./packages/contracts/deployments

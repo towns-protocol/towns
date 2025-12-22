@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
@@ -709,7 +711,7 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 	}
 	require.Len(nodesWithStream, 3)
 	require.NotEqual(nodeWithoutStream, -1)
-	allNodes := append(nodesWithStream, nodeWithoutStream)
+	allNodes := slices.Concat(nodesWithStream, []int{nodeWithoutStream})
 
 	// Let's create clients in order: 0 - all minibocks, 1 - 0-24 deleted, 2 - 10-29 deleted, 3 - no stream
 	clientDescription := []string{"all minibocks", "0-24 deleted", "10-29 deleted", "no stream"}
@@ -777,5 +779,387 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 				require.Error(err, "Node %s should fail with forwarding disabled", clientDescription[i])
 			}
 		}
+	}
+}
+
+func TestGetMiniblocksWithTrimmedStream(t *testing.T) {
+	// This test verifies that GetMiniblocks returns terminus=true and correct FromInclusive
+	// when a stream has been trimmed
+
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes:          1,
+		replicationFactor: 1,
+		start:             false, // Don't start yet - need to configure first
+	})
+	require := tt.require
+	ctx := tt.ctx
+
+	// Configure StreamHistoryMiniblocks for space streams so the trimmed range is "acceptable".
+	// Without this, isTrimmedRangeAcceptable returns false and tries to forward to remotes.
+	// We set it to 10, so trim point at 10 with 30 miniblocks is acceptable:
+	// - After trimming, snapshots are at 10, 20 (miniblock 0 snapshot is deleted)
+	// - lastSnapshot = 20, historyWindow = 10, start = 20 - 10 = 10
+	// - expectedTrimToMiniblock = FindClosestSnapshotMiniblock(ranges, 10) = 10
+	// - actualFromInclusive=10 <= expectedTrimToMiniblock=10 → true
+	tt.btc.SetConfigValue(t, ctx,
+		crypto.StreamSpaceStreamHistoryMiniblocksConfigKey,
+		crypto.ABIEncodeUint64(10),
+	)
+
+	// Now start nodes after config is set
+	tt.initNodeRecords(0, 1, river.NodeStatus_Operational)
+	tt.startNodes(0, 1)
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	spaceId, spaceLastMb := alice.createSpace()
+
+	// Create miniblocks with snapshots at regular intervals
+	// We need enough miniblocks to have multiple snapshots for trimming
+	for i := range 100 {
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+					},
+				},
+			}},
+			spaceLastMb,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+
+		// Force snapshot every 10 miniblocks to ensure we have trim points
+		forceSnapshot := i%10 == 9
+		newSpaceLastMb, err := alice.tryMakeMiniblock(spaceId, forceSnapshot, spaceLastMb.Num)
+		if err != nil || newSpaceLastMb == nil {
+			continue
+		}
+		spaceLastMb = newSpaceLastMb
+		if spaceLastMb.Num >= 29 {
+			break
+		}
+	}
+	require.GreaterOrEqual(spaceLastMb.Num, int64(29), "Should have at least 30 miniblocks")
+	testfmt.Logf(t, "Created miniblocks, last miniblock num: %d", spaceLastMb.Num)
+
+	// Verify we can read all miniblocks before trimming
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   spaceLastMb.Num + 1,
+	}
+	resp, err := alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num+1))
+	testfmt.Logf(t, "Total miniblocks before trimming: %d", len(resp.Msg.Miniblocks))
+
+	// Verify terminus is false when we get the full range starting from non-zero
+	getMbReq.FromInclusive = 5
+	resp, err = alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	require.False(resp.Msg.Terminus)
+	require.Equal(int64(5), resp.Msg.FromInclusive, "FromInclusive should match request")
+
+	// Trim the stream - remove early miniblocks
+	// Use storage.TrimStream directly since we have access to the service
+	trimToMiniblock := int64(10) // Keep miniblocks from 10 onwards
+	err = tt.nodes[0].service.storage.TrimStream(ctx, spaceId, trimToMiniblock, nil)
+	require.NoError(err)
+	testfmt.Logf(t, "Trimmed stream to miniblock %d", trimToMiniblock)
+
+	// Flush cache to ensure we read from storage
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+
+	// Test Case 1: Request from 0 should return terminus=true and FromInclusive=trimToMiniblock
+	// Use no-forward header to test local trimmed stream behavior without remote forwarding
+	getMbReqNoFwd := connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   spaceLastMb.Num + 1,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err)
+	require.True(resp.Msg.Terminus)
+	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
+	require.Len(
+		resp.Msg.Miniblocks,
+		int(spaceLastMb.Num+1-trimToMiniblock),
+		"Should return miniblocks from trim point onwards",
+	)
+	testfmt.Logf(t, "After trim - Terminus: %v, FromInclusive: %d, Miniblocks: %d",
+		resp.Msg.Terminus, resp.Msg.FromInclusive, len(resp.Msg.Miniblocks))
+
+	// Test Case 2: Request from before trim point should return terminus=true
+	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 5,
+		ToExclusive:   spaceLastMb.Num + 1,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err)
+	require.True(resp.Msg.Terminus)
+	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should be the trim point")
+
+	// Test Case 3: Request from exactly the trim point should return terminus=true
+	// (this is the beginning of available stream data since preceding miniblock was trimmed)
+	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: trimToMiniblock,
+		ToExclusive:   spaceLastMb.Num + 1,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err)
+	require.True(
+		resp.Msg.Terminus,
+		"Terminus should be true when requesting from trim point (beginning of available data)",
+	)
+	require.Equal(trimToMiniblock, resp.Msg.FromInclusive, "FromInclusive should match the trim point")
+
+	// Test Case 4: Request from after trim point should return terminus=false
+	// (preceding miniblock exists, so there's more history available)
+	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: trimToMiniblock + 5,
+		ToExclusive:   spaceLastMb.Num + 1,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err)
+	require.False(resp.Msg.Terminus)
+	require.Equal(trimToMiniblock+5, resp.Msg.FromInclusive, "FromInclusive should match request")
+
+	// Test Case 5: Request from 0 should always return terminus=true
+	getMbReqNoFwd = connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   spaceLastMb.Num + 1,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err)
+	require.True(resp.Msg.Terminus)
+}
+
+func TestGetMiniblocksTerminusForwardingToRemotes(t *testing.T) {
+	// This test verifies that when a local node has an unacceptable trimmed range,
+	// the request is forwarded to remotes that may have the full history.
+	// Scenario: Local node has trimmed data, but remotes have full history.
+
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes:          3,
+		replicationFactor: 3,
+		start:             false,
+		nodeStartOpts: &startOpts{
+			configUpdater: func(cfg *config.Config) {
+				// Disable stream reconciliation so it doesn't recover deleted miniblocks
+				cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+				cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+			},
+		},
+	})
+	require := tt.require
+	ctx := tt.ctx
+
+	// Set a small history window so trimmed ranges are "unacceptable" by default
+	// This ensures that when we trim, the forwarder will try to fetch from remotes
+	tt.btc.SetConfigValue(t, ctx,
+		crypto.StreamSpaceStreamHistoryMiniblocksConfigKey,
+		crypto.ABIEncodeUint64(5), // Small history window
+	)
+
+	// Now start nodes after config is set
+	tt.initNodeRecords(0, tt.opts.numNodes, river.NodeStatus_Operational)
+	tt.startNodes(0, tt.opts.numNodes)
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	spaceId, spaceLastMb := alice.createSpace()
+
+	// Create 30 miniblocks with snapshots every 10
+	for i := range 100 {
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+					},
+				},
+			}},
+			spaceLastMb,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+
+		forceSnapshot := i%10 == 9
+		newSpaceLastMb, err := alice.tryMakeMiniblock(spaceId, forceSnapshot, spaceLastMb.Num)
+		if err != nil || newSpaceLastMb == nil {
+			continue
+		}
+		spaceLastMb = newSpaceLastMb
+		if spaceLastMb.Num >= 29 {
+			break
+		}
+	}
+	require.GreaterOrEqual(spaceLastMb.Num, int64(29))
+	testfmt.Logf(t, "Created miniblocks, last miniblock num: %d", spaceLastMb.Num)
+
+	// Wait for all nodes to have all miniblocks replicated
+	require.Eventually(func() bool {
+		for i := range tt.opts.numNodes {
+			num, err := tt.nodes[i].service.storage.GetLastMiniblockNumber(ctx, spaceId)
+			if err != nil || num < spaceLastMb.Num {
+				return false
+			}
+		}
+		return true
+	}, 10*time.Second, 100*time.Millisecond)
+
+	// Trim miniblocks on node 0 to an unacceptable level
+	// With historyWindow=5 and lastSnapshot=20, expected trim would be around 15
+	// If we trim to 25, it's beyond acceptable range
+	trimToMiniblock := int64(25)
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+	err := tt.nodes[0].service.storage.TrimStream(ctx, spaceId, trimToMiniblock, nil)
+	require.NoError(err)
+	testfmt.Logf(t, "Trimmed node 0 to miniblock %d", trimToMiniblock)
+
+	// Verify node 0 has trimmed data
+	ranges, err := tt.nodes[0].service.storage.GetMiniblockNumberRanges(ctx, spaceId)
+	require.NoError(err)
+	require.Equal(trimToMiniblock, ranges[0].StartInclusive)
+	testfmt.Logf(t, "Node 0 ranges after trim: %+v", ranges)
+
+	// Verify other nodes still have full history
+	for i := 1; i < tt.opts.numNodes; i++ {
+		ranges, err := tt.nodes[i].service.storage.GetMiniblockNumberRanges(ctx, spaceId)
+		require.NoError(err)
+		require.Equal(int64(0), ranges[0].StartInclusive, "Node %d should have full history", i)
+	}
+
+	// Request from node 0 - should forward to remotes and get full history
+	client0 := tt.testClient(0)
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   spaceLastMb.Num + 1,
+	}
+	resp, err := client0.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num+1), "Should get full history via forwarding")
+	require.True(resp.Msg.Terminus)
+	require.Equal(int64(0), resp.Msg.FromInclusive)
+}
+
+func TestGetMiniblocksTerminusValues(t *testing.T) {
+	// This test verifies terminus values in various scenarios
+
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	require := tt.require
+	ctx := tt.ctx
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	spaceId, spaceLastMb := alice.createSpace()
+
+	// Create 10 miniblocks
+	for i := range 20 {
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+					},
+				},
+			}},
+			spaceLastMb,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+
+		newSpaceLastMb, err := alice.tryMakeMiniblock(spaceId, false, spaceLastMb.Num)
+		if err != nil || newSpaceLastMb == nil {
+			continue
+		}
+		spaceLastMb = newSpaceLastMb
+		if spaceLastMb.Num >= 9 {
+			break
+		}
+	}
+	require.GreaterOrEqual(spaceLastMb.Num, int64(9))
+
+	tests := []struct {
+		name             string
+		fromInclusive    int64
+		toExclusive      int64
+		expectedTerminus bool
+		expectedFromIncl int64
+		expectedMbCount  int
+	}{
+		{
+			name:             "Request from 0 - terminus should be true",
+			fromInclusive:    0,
+			toExclusive:      10,
+			expectedTerminus: true,
+			expectedFromIncl: 0,
+			expectedMbCount:  10,
+		},
+		{
+			name:             "Request from 5 - terminus should be false (mb 4 exists)",
+			fromInclusive:    5,
+			toExclusive:      10,
+			expectedTerminus: false,
+			expectedFromIncl: 5,
+			expectedMbCount:  5,
+		},
+		{
+			name:             "Request from 1 - terminus should be false (mb 0 exists)",
+			fromInclusive:    1,
+			toExclusive:      10,
+			expectedTerminus: false,
+			expectedFromIncl: 1,
+			expectedMbCount:  9,
+		},
+		{
+			name:             "Request single mb from 0 - terminus should be true",
+			fromInclusive:    0,
+			toExclusive:      1,
+			expectedTerminus: true,
+			expectedFromIncl: 0,
+			expectedMbCount:  1,
+		},
+		{
+			name:             "Request single mb from 5 - terminus should be false",
+			fromInclusive:    5,
+			toExclusive:      6,
+			expectedTerminus: false,
+			expectedFromIncl: 5,
+			expectedMbCount:  1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			getMbReq := &GetMiniblocksRequest{
+				StreamId:      spaceId[:],
+				FromInclusive: tc.fromInclusive,
+				ToExclusive:   tc.toExclusive,
+			}
+			resp, err := alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+			require.NoError(err)
+			require.Equal(tc.expectedTerminus, resp.Msg.Terminus, "Terminus mismatch")
+			require.Equal(tc.expectedFromIncl, resp.Msg.FromInclusive, "FromInclusive mismatch")
+			require.Len(resp.Msg.Miniblocks, tc.expectedMbCount, "Miniblock count mismatch")
+		})
 	}
 }

@@ -7,17 +7,21 @@ import {Vm} from "forge-std/Vm.sol";
 import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721A, IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
+import {IFeeManager} from "src/factory/facets/fee/IFeeManager.sol";
 import {IPartnerRegistry} from "src/factory/facets/partner/IPartnerRegistry.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IWalletLink, IWalletLinkBase} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {IEntitlement, IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementsManager, IEntitlementsManagerBase} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembership, IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
+
+// libraries
+import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
+import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
@@ -27,6 +31,9 @@ import {RuleEntitlementUtil} from "test/crosschain/RuleEntitlementUtil.sol";
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
+
+// mocks
+import {MockERC20} from "test/mocks/MockERC20.sol";
 
 contract MembershipBaseSetup is
     IMembershipBase,
@@ -48,7 +55,6 @@ contract MembershipBaseSetup is
     IERC721AQueryable internal membershipTokenQueryable;
     IPlatformRequirements internal platformReqs;
     IPartnerRegistry internal partnerRegistry;
-    IPrepay prepayFacet;
     IReferrals internal referrals;
     ITreasury internal treasury;
     // entitled user
@@ -68,6 +74,11 @@ contract MembershipBaseSetup is
     address internal userSpace;
     address internal dynamicSpace;
     address internal freeSpace;
+    address internal usdcSpace;
+
+    MockERC20 internal mockUSDC;
+    IMembership internal usdcMembership;
+    IERC721A internal usdcMembershipToken;
 
     function setUp() public virtual override {
         super.setUp();
@@ -102,18 +113,40 @@ contract MembershipBaseSetup is
         freeSpaceInfo.membership.settings.price = 0;
         freeSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
 
+        // Deploy mock USDC and configure fee
+        mockUSDC = new MockERC20("USD Coin", "USDC", 6);
+        vm.prank(deployer);
+        IFeeManager(spaceFactory).setFeeConfig(
+            FeeTypesLib.membership(address(mockUSDC)),
+            deployer,
+            FeeCalculationMethod.HYBRID,
+            1000, // 10%
+            1_500_000, // $1.50 minimum (6 decimals)
+            true
+        );
+
+        // Create USDC space
+        IArchitectBase.SpaceInfo memory usdcSpaceInfo = _createUserSpaceInfo(
+            "USDCSpace",
+            allowedUsers
+        );
+        usdcSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+        usdcSpaceInfo.membership.settings.currency = address(mockUSDC);
+
         vm.startPrank(founder);
         // user space is a space where only alice and charlie are allowed along with the founder
         userSpace = CreateSpaceFacet(spaceFactory).createSpace(userSpaceInfo);
         dynamicSpace = CreateSpaceFacet(spaceFactory).createSpace(dynamicSpaceInfo);
         freeSpace = CreateSpaceFacet(spaceFactory).createSpace(freeSpaceInfo);
+        usdcSpace = CreateSpaceFacet(spaceFactory).createSpace(usdcSpaceInfo);
         vm.stopPrank();
 
         membership = IMembership(userSpace);
         membershipToken = IERC721A(userSpace);
         membershipTokenQueryable = IERC721AQueryable(userSpace);
         freeMembership = IMembership(freeSpace);
-        prepayFacet = IPrepay(userSpace);
+        usdcMembership = IMembership(usdcSpace);
+        usdcMembershipToken = IERC721A(usdcSpace);
         referrals = IReferrals(userSpace);
         treasury = ITreasury(userSpace);
         platformReqs = IPlatformRequirements(spaceFactory);
@@ -126,6 +159,13 @@ contract MembershipBaseSetup is
         vm.startPrank(founder);
         // membership.setMembershipFreeAllocation(1);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
+        vm.stopPrank();
+        _;
+    }
+
+    modifier givenUSDCMembershipHasPrice() {
+        vm.startPrank(founder);
+        usdcMembership.setMembershipPrice(10_000_000); // $10 USDC (6 decimals)
         vm.stopPrank();
         _;
     }

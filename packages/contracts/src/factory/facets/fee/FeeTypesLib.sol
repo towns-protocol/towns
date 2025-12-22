@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 /// @notice Library defining fee type constants for the FeeManager system
 /// @dev Uses keccak256 for gas-efficient constant generation
 library FeeTypesLib {
-    /// @notice Fee for space membership purchases
+    /// @notice Fee for space membership purchases (ETH)
     bytes32 internal constant MEMBERSHIP = keccak256("FEE_TYPE.MEMBERSHIP");
 
     /// @notice Fee for app installations
@@ -25,4 +25,11 @@ library FeeTypesLib {
 
     /// @notice Fee for bot actions
     bytes32 internal constant BOT_ACTION = keccak256("FEE_TYPE.BOT_ACTION");
+
+    /// @notice Generates fee type for membership based on currency
+    /// @param currency The payment currency address
+    /// @return The fee type identifier for the given currency
+    function membership(address currency) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("FEE_TYPE.MEMBERSHIP", currency));
+    }
 }

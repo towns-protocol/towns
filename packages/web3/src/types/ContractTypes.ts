@@ -223,7 +223,6 @@ export type MembershipInfo = Pick<
     'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration' | 'pricingModule'
 > &
     TotalSupplyInfo & {
-        prepaidSupply: number
         remainingFreeSupply: number
     }
 
@@ -249,7 +248,6 @@ export interface CreateSpaceParams {
     membership: MembershipStruct
     shortDescription?: string
     longDescription?: string
-    prepaySupply?: number
 }
 
 export interface UpdateChannelMetadataParams {

@@ -2,42 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {FeatureCondition} from "./FeatureManagerStorage.sol";
+import {FeatureCondition} from "./FeatureManagerMod.sol";
 
-/// @title IFeatureManagerFacetBase
-/// @notice Base interface for the FeatureManager facet defining errors and events
-/// @dev Used by the FeatureManager facet and any other facets that need to access feature conditions
-interface IFeatureManagerFacetBase {
-    /// @notice Emitted when a feature condition is set or updated
-    /// @param featureId The unique identifier for the feature whose condition was set
-    /// @param condition The condition parameters that were set for the feature
-    event FeatureConditionSet(bytes32 indexed featureId, FeatureCondition condition);
-
-    /// @notice Emitted when a feature condition is disabled
-    /// @param featureId The unique identifier for the feature whose condition was disabled
-    event FeatureConditionDisabled(bytes32 indexed featureId);
-
-    /// @notice Error thrown when a threshold exceeds the token's total supply
-    error InvalidThreshold();
-
-    /// @notice Error thrown when a token has zero total supply
-    error InvalidTotalSupply();
-
-    /// @notice Error thrown when an invalid token address is provided (e.g., zero address)
-    error InvalidToken();
-
-    /// @notice Error thrown when the token does not implement the required interfaces (e.g., IVotes and ERC20 totalSupply)
-    error InvalidInterface();
-
-    /// @notice Error thrown when a feature condition is not active
-    error FeatureNotActive();
-
-    /// @notice Error thrown when a feature condition already exists
-    error FeatureAlreadyExists();
-}
-
-interface IFeatureManagerFacet is IFeatureManagerFacetBase {
+interface IFeatureManager {
     /// @notice Sets the condition for a feature
     /// @param featureId The unique identifier for the feature
     /// @param condition The condition struct containing token, threshold, active status, and extra data

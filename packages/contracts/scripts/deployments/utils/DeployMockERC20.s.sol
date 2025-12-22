@@ -16,7 +16,7 @@ contract DeployMockERC20 is Deployer {
         // address predeterminedAddress = vm.computeCreate2Address(salt, initCodeHash);
 
         vm.startBroadcast(deployer);
-        MockERC20 deployment = new MockERC20("TownsTest", "TToken");
+        MockERC20 deployment = new MockERC20("TownsTest", "TToken", 18);
         vm.stopBroadcast();
 
         return address(deployment);

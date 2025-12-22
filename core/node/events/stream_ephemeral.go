@@ -174,7 +174,8 @@ func (s *StreamCache) normalizeEphemeralStream(
 			}
 
 			// Start processing miniblocks from the stream.
-			// If the processing breaks in the middle, the rest of missing miniblocks will be fetched from the next sticky peer.
+			// If the processing breaks in the middle, the rest of missing miniblocks will be fetched from the next
+			// sticky peer.
 			var toNextPeer bool
 			var allFetched bool
 			for resp.Receive() {

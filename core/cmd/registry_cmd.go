@@ -1265,7 +1265,8 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 
 			return nil
 
-		// Legacy StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, (bytes32,uint64,uint64,uint64,address[]) stream)
+		// Legacy StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, (bytes32,uint64,uint64,uint64,address[])
+		// stream)
 		case common.HexToHash("0xac1b69e6e0382c43def3cccabf63091ba47b5d8b10a705d16a1076668643fe4d"):
 			// Define the tuple structure for the stream parameter
 			tuple, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{

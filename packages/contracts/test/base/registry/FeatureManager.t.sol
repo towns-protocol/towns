@@ -2,10 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IFeatureManagerFacetBase} from "src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureCondition} from "src/factory/facets/feature/FeatureManagerStorage.sol";
+import {FeatureCondition, FeatureConditionSet, FeatureConditionDisabled, FeatureNotActive, FeatureAlreadyExists, InvalidToken, InvalidInterface, InvalidTotalSupply, InvalidThreshold, ConditionType} from "src/factory/facets/feature/FeatureManagerMod.sol";
 
 // contracts
 import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFacet.sol";
@@ -16,7 +15,7 @@ import {BaseRegistryTest} from "test/base/registry/BaseRegistry.t.sol";
 // mocks
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
-contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacetBase {
+contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     FeatureManagerFacet featureManagerFacet;
 
     uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
@@ -26,7 +25,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     // keccak256("test.feature")
     bytes32 constant TEST_FEATURE_ID =
         0x69ee5871a65c89c042656feb37c9971ee294380d6b43c379eed8a7bfa140c5e7;
-    uint256 constant TEST_THRESHOLD = 100 ether;
+    uint96 constant TEST_THRESHOLD = 100 ether;
 
     address operator = _randomAddress();
     uint256 commissionRate = 1000; // 10%
@@ -36,17 +35,17 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         featureManagerFacet = FeatureManagerFacet(spaceFactory);
     }
 
-    modifier givenFeatureConditionIsSet(
-        bytes32 featureId,
-        FeatureCondition memory condition,
-        address to,
-        uint256 amount
-    ) {
-        amount = bound(amount, 1, type(uint256).max);
-        condition.threshold = bound(condition.threshold, 1, amount);
+    modifier givenTokenFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
+        vm.assume(amount > 0);
 
-        condition.token = address(townsToken);
+        FeatureCondition memory condition = FeatureCondition({
+            checker: address(townsToken),
+            threshold: amount,
+            active: true,
+            extraData: "",
+            conditionType: ConditionType.VotingPower
+        });
 
         vm.prank(bridge);
         towns.mint(to, amount);
@@ -58,40 +57,75 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         _;
     }
 
-    modifier givenTokensAreMinted(address to, uint256 amount) {
-        amount = bound(amount, 1, type(uint256).max);
+    modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint96 amount) {
+        vm.assume(featureId != ZERO_SENTINEL_BYTES32);
+        vm.assume(amount > 0);
+
+        FeatureCondition memory condition = FeatureCondition({
+            checker: address(rewardsDistributionFacet),
+            threshold: amount,
+            active: true,
+            extraData: "",
+            conditionType: ConditionType.StakingPower
+        });
+
+        vm.prank(bridge);
+        towns.mint(to, amount);
+
+        vm.prank(deployer);
+        vm.expectEmit(address(featureManagerFacet));
+        emit FeatureConditionSet(featureId, condition);
+        featureManagerFacet.setFeatureCondition(featureId, condition);
+        _;
+    }
+
+    modifier givenTokensAreMinted(address to, uint96 amount) {
+        vm.assume(amount > 0);
         vm.prank(bridge);
         towns.mint(to, amount);
         _;
     }
 
-    function test_setFeatureCondition(
+    function test_setTokenFeatureCondition(
         bytes32 featureId,
-        FeatureCondition memory condition,
         address to,
-        uint256 amount
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+        uint96 amount
+    ) external givenTokenFeatureCondition(featureId, to, amount) {
         FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
             featureId
         );
-        assertEq(currentCondition.token, address(townsToken));
-        assertEq(currentCondition.threshold, condition.threshold);
-        assertEq(currentCondition.active, condition.active);
+        assertEq(currentCondition.checker, address(townsToken));
+        assertEq(uint8(currentCondition.conditionType), uint8(ConditionType.VotingPower));
+        assertEq(currentCondition.active, true);
+        assertEq(currentCondition.extraData, "");
+    }
+
+    function test_setStakingPowerFeatureCondition(
+        bytes32 featureId,
+        address to,
+        uint96 amount
+    ) external givenStakingPowerFeatureCondition(featureId, to, amount) {
+        FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
+            featureId
+        );
+        assertEq(currentCondition.checker, address(rewardsDistributionFacet));
+        assertEq(uint8(currentCondition.conditionType), uint8(ConditionType.StakingPower));
+        assertEq(currentCondition.active, true);
+        assertEq(currentCondition.extraData, "");
     }
 
     function test_updateFeatureCondition(
         bytes32 featureId,
-        FeatureCondition memory condition,
         address to,
-        uint256 amount
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+        uint96 amount
+    ) external givenTokenFeatureCondition(featureId, to, amount) {
         FeatureCondition memory newCondition = FeatureCondition({
-            token: address(townsToken),
-            threshold: amount,
+            checker: address(rewardsDistributionFacet),
+            threshold: 20 ether,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.StakingPower
         });
-
         vm.prank(deployer);
         vm.expectEmit(address(featureManagerFacet));
         emit FeatureConditionSet(featureId, newCondition);
@@ -107,10 +141,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         featureManagerFacet.updateFeatureCondition(
             TEST_FEATURE_ID,
             FeatureCondition({
-                token: address(townsToken),
+                checker: address(townsToken),
                 threshold: TEST_THRESHOLD,
                 active: false,
-                extraData: ""
+                extraData: "",
+                conditionType: ConditionType.VotingPower
             })
         );
     }
@@ -128,10 +163,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
         for (uint256 i; i < length; i++) {
             conditions[i] = FeatureCondition({
-                token: address(townsToken),
+                checker: address(townsToken),
                 threshold: 0,
                 active: true,
-                extraData: ""
+                extraData: "",
+                conditionType: ConditionType.VotingPower
             });
 
             vm.prank(deployer);
@@ -142,7 +178,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
         for (uint256 i; i < currentConditions.length; i++) {
             FeatureCondition memory currentCondition = currentConditions[i];
-            assertEq(currentCondition.token, address(townsToken));
+            assertEq(currentCondition.checker, address(townsToken));
             assertEq(currentCondition.threshold, 0);
             assertEq(currentCondition.active, true);
         }
@@ -153,10 +189,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         givenTokensAreMinted(deployer, TEST_THRESHOLD)
     {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: 0,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -169,10 +206,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
     function test_revertWith_setFeatureCondition_invalidToken() external {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(0),
+            checker: address(0),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -181,13 +219,14 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     }
 
     function test_revertWith_setFeatureCondition_invalidInterface() external {
-        MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
+        MockERC20 mockToken = new MockERC20("Mock Token", "MTK", 18);
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(mockToken),
+            checker: address(mockToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -197,10 +236,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
 
     function test_revertWith_setFeatureCondition_invalidTotalSupply() external {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -213,10 +253,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         givenTokensAreMinted(deployer, TEST_THRESHOLD - 10 ether)
     {
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(deployer);
@@ -225,7 +266,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     }
 
     function test_disableFeatureCondition(address to) external {
-        setTestFeatureCondition(to);
+        setVotingFeatureCondition(to);
 
         vm.prank(deployer);
         vm.expectEmit(address(featureManagerFacet));
@@ -248,7 +289,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         address space = _randomAddress();
         address to = _randomAddress();
 
-        setTestFeatureCondition(to);
+        setVotingFeatureCondition(to);
 
         vm.assertFalse(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space));
 
@@ -263,7 +304,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         vm.assume(space != address(0));
         vm.assume(to != space);
 
-        setTestFeatureCondition(to);
+        setVotingFeatureCondition(to);
 
         // get feature conditions for space
         FeatureCondition[] memory conditions = featureManagerFacet.getFeatureConditionsForSpace(
@@ -299,10 +340,11 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         vm.assume(space != address(0));
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: 0,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(bridge);
@@ -314,15 +356,16 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         vm.assertTrue(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space));
     }
 
-    function setTestFeatureCondition(address to) internal {
+    function setVotingFeatureCondition(address to) internal {
         vm.assume(to != address(0));
         vm.assume(to != deployer);
 
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: TEST_THRESHOLD,
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         vm.prank(bridge);
@@ -345,27 +388,46 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     {
         uint256 depositId;
         uint96 amount = 10 ether; // 10 $TOWN
-        address depositor = _randomAddress(); // Towns token holder
+        address depositor = _randomAddress(); // Towns checker holder
 
-        // Mint tokens to depositor via bridge (simulates cross-chain token bridging)
+        // Mint tokens to depositor via bridge (simulates cross-chain checker bridging)
         bridgeTokensForUser(depositor, amount);
 
         // Configure space to delegate rewards to the operator
         pointSpaceToOperator(everyoneSpace, operator);
 
         // Create a feature condition requiring exactly the staked amount (10 TOWN)
+        bytes32 votingFeatureId = _randomBytes32();
         FeatureCondition memory condition = FeatureCondition({
-            token: address(townsToken),
+            checker: address(townsToken),
             threshold: amount, // 10 TOWN threshold
             active: true,
-            extraData: ""
+            extraData: "",
+            conditionType: ConditionType.VotingPower
         });
 
         // Set the feature condition for the test feature
         vm.prank(deployer);
-        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+        featureManagerFacet.setFeatureCondition(votingFeatureId, condition);
 
-        vm.assertFalse(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, everyoneSpace));
+        // Create feature condition for checking the staking power of the user
+        bytes32 stakingFeatureId = _randomBytes32();
+        FeatureCondition memory stakingCondition = FeatureCondition({
+            checker: address(rewardsDistributionFacet),
+            threshold: amount,
+            active: true,
+            extraData: "",
+            conditionType: ConditionType.StakingPower
+        });
+
+        vm.prank(deployer);
+        featureManagerFacet.setFeatureCondition(stakingFeatureId, stakingCondition);
+
+        // Verify that the space does not meet the voting feature condition yet
+        vm.assertFalse(featureManagerFacet.checkFeatureCondition(votingFeatureId, everyoneSpace));
+
+        // Verify that the user does not meet the staking feature condition yet
+        vm.assertFalse(featureManagerFacet.checkFeatureCondition(stakingFeatureId, depositor));
 
         // Stake tokens: depositor stakes 10 TOWN to the space, with themselves as beneficiary
         vm.startPrank(depositor);
@@ -376,7 +438,10 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         // Verify the stake was created correctly with proper delegation and commission
         verifyStake(depositor, depositId, amount, everyoneSpace, commissionRate, depositor);
 
-        // Verify that the space now meets the feature condition due to the staked tokens
-        vm.assertTrue(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, everyoneSpace));
+        // Verify that the space now meets the voting feature condition due to the staked tokens
+        vm.assertTrue(featureManagerFacet.checkFeatureCondition(votingFeatureId, everyoneSpace));
+
+        // Verify that the user now meets the staking feature condition due to the staked tokens
+        vm.assertTrue(featureManagerFacet.checkFeatureCondition(stakingFeatureId, depositor));
     }
 }

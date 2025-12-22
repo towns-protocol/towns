@@ -445,7 +445,8 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 }
 
 // schedulePromotionLocked should be called with a lock held.
-// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted upon.
+// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted
+// upon.
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.getViewLocked().LastBlock().Ref.Num+1 {
@@ -651,7 +652,11 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 // GetMiniblocks returns miniblock data directly from storage, bypassing the cache.
 // This is useful when we expect block data to be substantial and do not want to bust the cache.
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
-// terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
+// terminus:
+//   - true if fromIndex is 0
+//   - true if there is not enough blocks in the storage to fill the range because the stream is trimmed
+//   - true if there are no more blocks because they've been garbage collected
+//
 // GetMiniblocks is thread-safe.
 func (s *Stream) GetMiniblocks(
 	ctx context.Context,
@@ -659,7 +664,7 @@ func (s *Stream) GetMiniblocks(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
-	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
+	blocks, terminus, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
 	}
@@ -679,7 +684,6 @@ func (s *Stream) GetMiniblocks(
 		}
 	}
 
-	terminus := fromInclusive == 0
 	return miniblocks, terminus, nil
 }
 
@@ -1317,7 +1321,8 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 
 // GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in
+// quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
 // GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
 func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {

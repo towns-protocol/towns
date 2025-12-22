@@ -39,13 +39,6 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 				return err
 			}
 			for deviceKey := range deviceCipherTexts {
-				log.Infow(
-					"Publishing session keys for bot",
-					"streamId", streamId,
-					"deviceKey", deviceKey,
-					"sessionIdCount", len(sessionIds),
-					"sessionIds", sessionIds,
-				)
 				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, envelopeBytes); err != nil {
 					log.Errorw(
 						"Failed to publish session keys",

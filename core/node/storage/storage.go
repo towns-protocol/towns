@@ -87,7 +87,8 @@ type (
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
-		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
+		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is
+		// empty.
 		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *MiniblockDescriptor) error
 
 		// ReinitializeStreamStorage initialized or reinitializes storage for the given stream.
@@ -97,8 +98,9 @@ type (
 		// - if updateExisting is false, returns an error.
 		// - if updateExisting is true, updates the stream.
 		//
-		// If existing stream is updated, minipool is reset to empty and generation number is set to the last miniblock number + 1.
-		// If existing stream is updated, number of the last provided miniblock should exceed the last miniblock in storage;
+		// If existing stream is updated, minipool is reset to empty and generation number is set to the last miniblock
+		// number + 1. If existing stream is updated, number of the last provided miniblock should exceed the last
+		// miniblock in storage;
 		// only new miniblocks are added to the stream, existing miniblocks are left as is,
 		// miniblocks range may overlap existing miniblocks.
 		// If existing stream is updated, existing miniblock candidates are deleted.
@@ -130,8 +132,9 @@ type (
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
 		CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
 
-		// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is included.
-		// It attempts to read at least numPrecedingMiniblocks miniblocks before the snapshot, but may return less if there are not enough miniblocks in storage,
+		// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is
+		// included. It attempts to read at least numPrecedingMiniblocks miniblocks before the snapshot, but may return
+		// less if there are not enough miniblocks in storage,
 		// or more, if there are more miniblocks since the last snapshot.
 		// Also returns minipool envelopes for the current minipool.
 		ReadStreamFromLastSnapshot(
@@ -148,13 +151,18 @@ type (
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
+		// The second return value (terminus) indicates whether the returned miniblocks represent the
+		// beginning of the stream:
+		// - true if fromInclusive is 0
+		// - true if the miniblock at fromInclusive-1 does not exist (stream is trimmed)
+		// - false if the miniblock at fromInclusive-1 exists (more history available)
 		ReadMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
 			fromInclusive int64,
 			toExclusive int64,
 			omitSnapshot bool,
-		) ([]*MiniblockDescriptor, error)
+		) ([]*MiniblockDescriptor, bool, error)
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
@@ -202,7 +210,8 @@ type (
 		// Stream with the given ID must be ephemeral.
 		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *MiniblockDescriptor) error
 
-		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
+		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given
+		// stream.
 		// If stream record is created, but no miniblocks are archived, returns -1.
 		GetMaxArchivedMiniblockNumber(ctx context.Context, streamId StreamId) (int64, error)
 
@@ -260,7 +269,8 @@ type (
 		GetMiniblockNumberRanges(ctx context.Context, streamId StreamId) ([]MiniblockRange, error)
 
 		// TrimStream trims the stream by removing miniblocks and nullifying snapshots.
-		// It removes miniblocks starting from 1 inclusively to trimToMbExclusive exclusively and nullifies snapshots in the range.
+		// It removes miniblocks starting from 1 inclusively to trimToMbExclusive exclusively and nullifies snapshots in
+		// the range.
 		TrimStream(
 			ctx context.Context,
 			streamId StreamId,

@@ -46,7 +46,8 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
-// TownsHash is a hasher with a given header. Use different headers for different types of hashes to avoid replay attacks.
+// TownsHash is a hasher with a given header. Use different headers for different types of hashes to avoid replay
+// attacks.
 type TownsHash [8]byte
 
 // TownsHashForEvents is a TownsHash with the prefix 'CSBLANCA' as bytes for hashing Towns events.

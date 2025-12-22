@@ -25,6 +25,7 @@ library MembershipStorage {
         uint256 freeAllocation;
         address pricingModule;
         mapping(uint256 => uint256) renewalPriceByTokenId;
+        // deprecated
         uint256 tokenBalance;
         mapping(bytes32 => address) pendingJoinRequests;
         string membershipImage;

@@ -308,11 +308,11 @@ jobs:
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              uses: golangci/golangci-lint-action@v7
+              uses: golangci/golangci-lint-action@v9
               with:
-                  version: v2.4.0
+                  version-file: .golangci-lint-version
                   working-directory: core
-                  args: --timeout=10m --config=.golangci.yml
+                  args: --timeout=10m
 
             - name: Linting River Node W/ Custom Rules
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -324,44 +324,6 @@ jobs:
                     cat river_lint_extensions.txt
                     exit 1
                   fi
-
-            - name: Check Go Formatting
-              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              working-directory: core
-              run: |
-                  # Install formatting tools if not present
-                  if ! command -v gofumpt >/dev/null 2>&1; then
-                    go install mvdan.cc/gofumpt@latest
-                  fi
-                  if ! command -v golines >/dev/null 2>&1; then
-                    go install github.com/segmentio/golines@latest
-                  fi
-                  if ! command -v goimports >/dev/null 2>&1; then
-                    go install golang.org/x/tools/cmd/goimports@latest
-                  fi
-
-                  # Check if any files need formatting
-                  echo "Checking Go code formatting..."
-
-                  # Capture output and exit code
-                  set +e
-                  OUTPUT=$(./fmt.sh -l 2>&1)
-                  EXIT_CODE=$?
-                  set -e
-
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "❌ Go files are not properly formatted!"
-                    echo ""
-                    if [ -n "$OUTPUT" ]; then
-                      echo "The following files need formatting:"
-                      echo "$OUTPUT"
-                      echo ""
-                    fi
-                    echo "Please run './fmt.sh' in the core directory and commit the changes."
-                    exit 1
-                  fi
-
-                  echo "✅ All Go files are properly formatted."
 
             - name: Generate react-sdk docs
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}

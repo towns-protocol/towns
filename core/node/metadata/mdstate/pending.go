@@ -68,7 +68,7 @@ func (p *PendingBlockState) SetMbStatusEvent(
 	txIndex int,
 	mbIndex int,
 	streamId StreamId,
-	mbHeight uint64,
+	mbHeight int64,
 	mbHash []byte,
 	sealed bool,
 ) {

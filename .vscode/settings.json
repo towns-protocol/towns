@@ -1,58 +1,44 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "eslint.workingDirectories": [
-    "./packages/utils",
-    "./packages/encryption",
-    "./packages/proto",
-    "./packages/sdk",
-    "./packages/stream-metadata",
-    "./packages/stress",
-    "./packages/subgraph",
-    "./packages/web3",
-  ],
-  "[solidity]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "solidity.formatter": "prettier",
-  "go.lintTool": "golangci-lint",
-  "go.lintFlags": [
-    "--fast"
-  ],
-  "solidity.defaultCompiler": "remote",
-  "solidity.packageDefaultDependenciesContractsDirectory": "contracts/src",
-  "solidity.packageDefaultDependenciesDirectory": "lib,node_modules",
-  "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
-  "[makefile]": {
-    "editor.renderWhitespace": "all"
-  },
-  "go.formatTool": "custom",
-  "go.testFlags": [
-    "-v",
-    "-tags",
-    "integration",
-  ],
-  "go.buildTags": "integration",
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "tailwindCSS.experimental.classRegex": [
-    [
-      "cva\\(([^)]*)\\)",
-      "[\"'`]([^\"'`]*).*?[\"'`]"
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.workingDirectories": [
+        "./packages/utils",
+        "./packages/encryption",
+        "./packages/proto",
+        "./packages/sdk",
+        "./packages/stream-metadata",
+        "./packages/stress",
+        "./packages/subgraph",
+        "./packages/web3"
     ],
-    [
-      "cn\\(([^)]*)\\)",
-      "(?:'|\"|`)([^']*)(?:'|\"|`)"
-    ]
-  ],
-  "go.alternateTools": {
-    "customFormatter": "${workspaceFolder}/core/fmt.sh",
-  },
-  "wake.compiler.solc.remappings": [],
-  "vitest.maximumConfigs": 15,
-  "vitest.disableWorkspaceWarning": true,
-  "typescript.preferences.autoImportFileExcludePatterns": [
-    "**/@radix-ui/react-*",
-  ],
-  "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${activeRepositoryBranchName}"
+    "[solidity]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "solidity.formatter": "prettier",
+    "go.lintTool": "golangci-lint",
+    "go.lintFlags": ["--fast"],
+    "solidity.defaultCompiler": "remote",
+    "solidity.packageDefaultDependenciesContractsDirectory": "contracts/src",
+    "solidity.packageDefaultDependenciesDirectory": "lib,node_modules",
+    "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
+    "[makefile]": {
+        "editor.renderWhitespace": "all"
+    },
+    "go.formatTool": "custom",
+    "go.testFlags": ["-v", "-tags", "integration"],
+    "go.buildTags": "integration",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "tailwindCSS.experimental.classRegex": [
+        ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+        ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+    "go.alternateTools": {
+        "customFormatter": "${workspaceFolder}/core/stdin-fmt.sh"
+    },
+    "wake.compiler.solc.remappings": [],
+    "vitest.maximumConfigs": 15,
+    "vitest.disableWorkspaceWarning": true,
+    "typescript.preferences.autoImportFileExcludePatterns": ["**/@radix-ui/react-*"],
+    "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${activeRepositoryBranchName}"
 }

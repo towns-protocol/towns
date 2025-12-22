@@ -4,15 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMembership} from "../membership/IMembership.sol";
 
-// libraries
-
 // contracts
 import {EntitlementGated} from "../gated/EntitlementGated.sol";
 import {MembershipJoin} from "../membership/join/MembershipJoin.sol";
 
 /// @title SpaceEntitlementGated
 /// @notice Handles entitlement-gated access to spaces and membership token issuance
-/// @dev Inherits from ISpaceEntitlementGatedBase, MembershipJoin, and EntitlementGated
 contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
     /// @notice Processes the result of an entitlement check
     /// @dev This function is called when the result of an entitlement check is posted
@@ -34,7 +31,9 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
         if (result == NodeVoteStatus.PASSED) {
             PricingDetails memory joinDetails = _getPricingDetails();
 
-            if (joinDetails.shouldCharge) {
+            if (!joinDetails.shouldCharge) {
+                _afterChargeForJoinSpace(transactionId, receiver, 0);
+            } else {
                 uint256 payment = _getCapturedValue(transactionId);
 
                 if (payment < joinDetails.amountDue) {

@@ -36,8 +36,8 @@ contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IO
         deployer = getDeployer();
 
         riverMigrationHelper = new DeployRiverMigration();
-        oldToken = new MockERC20("Old Token", "OLD");
-        newToken = new MockERC20("New Token", "NEW");
+        oldToken = new MockERC20("Old Token", "OLD", 18);
+        newToken = new MockERC20("New Token", "NEW", 18);
 
         vm.label(address(oldToken), "Old Token");
         vm.label(address(newToken), "New Token");

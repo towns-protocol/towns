@@ -43,7 +43,8 @@ type StreamNodes interface {
 	ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address)
 
 	// Reset the list of nodes to the given nodes and local node. The nodes in range Nodes[0:replicationFactor] take
-	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that reconcile the stream into local
+	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that reconcile the stream into
+	// local
 	// storage but don't take part in quorum.
 	Reset(replicationFactor int, nodes []common.Address, localNode common.Address)
 }
@@ -192,7 +193,8 @@ func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
 
 // GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in
+// quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
 // GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
 func (s *StreamNodesWithLock) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {

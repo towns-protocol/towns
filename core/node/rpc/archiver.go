@@ -653,7 +653,8 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		}
 		// TODO: FIX: There is a bit of crazy error remapping going on which need to be fixed.
 		// When forwarding is disabled, Err_UNAVAILABLE is returned as a code.
-		// Same code for connect errors indicates that network request failed and is re-mapped to Err_DOWNSTREAM_NETWORK_ERROR
+		// Same code for connect errors indicates that network request failed and is re-mapped to
+		// Err_DOWNSTREAM_NETWORK_ERROR
 		// in AsRiverError.
 		// New error code for forwarding disabled is needed.
 		notFoundError := err != nil &&

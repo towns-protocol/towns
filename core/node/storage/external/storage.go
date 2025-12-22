@@ -966,7 +966,8 @@ func (loc MiniblockDataStorageLocation) String() string {
 	}
 }
 
-// decodeBase64JSONCredentials attempts to treat the provided string as base64 and returns the decoded bytes if they form valid JSON.
+// decodeBase64JSONCredentials attempts to treat the provided string as base64 and returns the decoded bytes if they
+// form valid JSON.
 func decodeBase64JSONCredentials(value string) []byte {
 	if value == "" {
 		return nil

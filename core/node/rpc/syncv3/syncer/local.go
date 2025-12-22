@@ -20,7 +20,8 @@ const (
 	localStreamUpdateEmitterTimeout = time.Second * 10
 )
 
-// localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
+// localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local
+// stream.
 type localStreamUpdateEmitter struct {
 	cancel         context.CancelCauseFunc
 	log            *logging.Log

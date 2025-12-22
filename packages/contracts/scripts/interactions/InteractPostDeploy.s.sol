@@ -39,6 +39,7 @@ contract InteractPostDeploy is Interaction {
         address riverAirdrop = getDeployment("riverAirdrop");
         address appRegistry = getDeployment("appRegistry");
         address subscriptionModule = getDeployment("subscriptionModule");
+        address mockUSDC = getDeployment("mockUSDC");
         address townsBase = deployTownsBase.deploy(deployer);
         address proxyDelegation = deployProxyDelegation.deploy(deployer);
 
@@ -59,6 +60,16 @@ contract InteractPostDeploy is Interaction {
         INodeOperator operatorFacet = INodeOperator(baseRegistry);
         operatorFacet.registerOperator(OPERATOR);
         operatorFacet.setOperatorStatus(OPERATOR, NodeOperatorStatus.Approved);
+
+        // Configure membership fee for mock USDC
+        IFeeManager(spaceFactory).setFeeConfig(
+            FeeTypesLib.membership(mockUSDC),
+            deployer,
+            FeeCalculationMethod.HYBRID,
+            1000, // 10%
+            1_500_000, // $1.50 (6 decimals)
+            true
+        );
         vm.stopBroadcast();
     }
 }

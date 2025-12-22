@@ -297,7 +297,8 @@ func (e *eventBusImpl) processStreamUpdateCommand(streamID StreamId, msg *SyncSt
 			delete(e.subscribers, streamID)
 		}
 	} else {
-		// If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the stream
+		// If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the
+		// stream
 		// with the given version. We need to find the subscribers for the given version and send the update to them.
 
 		subscribers.sendUpdateToVersion(version, msg)
@@ -313,10 +314,12 @@ func (e *eventBusImpl) processStreamUpdateCommand(streamID StreamId, msg *SyncSt
 
 // processTargetedStreamUpdateCommand processes the given stream update command that is targeted to a specific sync ID.
 //
-//   - SyncOp_SYNC_UPDATE message is a backfill one and should move the given subscriber from the PendingSubscribersVersion list
-//     to the given version list so it can start receiving updates.
-//   - SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
-//     regardless of their version.
+// - SyncOp_SYNC_UPDATE message is a backfill one and should move the given subscriber from the
+// PendingSubscribersVersion list
+//
+//	  to the given version list so it can start receiving updates.
+//	- SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
+//	  regardless of their version.
 func (e *eventBusImpl) processTargetedStreamUpdateCommand(streamID StreamId, msg *SyncStreamsResponse, version int) {
 	if msg == nil {
 		return

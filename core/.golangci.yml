@@ -20,6 +20,21 @@ linters:
             - builtin$
             - examples$
 formatters:
+    enable:
+        - goimports
+        - golines
+        - gofumpt
+    settings:
+        goimports:
+            local-prefixes:
+                - github.com/towns-protocol/towns
+        golines:
+            max-len: 120
+            shorten-comments: true
+            reformat-tags: true
+            chain-split-dots: true
+        gofumpt:
+            module-path: github.com/towns-protocol/towns
     exclusions:
         generated: lax
         paths:
