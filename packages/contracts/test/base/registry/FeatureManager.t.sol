@@ -25,7 +25,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     // keccak256("test.feature")
     bytes32 constant TEST_FEATURE_ID =
         0x69ee5871a65c89c042656feb37c9971ee294380d6b43c379eed8a7bfa140c5e7;
-    uint256 constant TEST_THRESHOLD = 100 ether;
+    uint96 constant TEST_THRESHOLD = 100 ether;
 
     address operator = _randomAddress();
     uint256 commissionRate = 1000; // 10%
@@ -35,9 +35,9 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
         featureManagerFacet = FeatureManagerFacet(spaceFactory);
     }
 
-    modifier givenTokenFeatureCondition(bytes32 featureId, address to, uint256 amount) {
+    modifier givenTokenFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
-        amount = bound(amount, 1, type(uint256).max);
+        vm.assume(amount > 0);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(townsToken),
@@ -57,9 +57,9 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
         _;
     }
 
-    modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint256 amount) {
+    modifier givenStakingPowerFeatureCondition(bytes32 featureId, address to, uint96 amount) {
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
-        amount = bound(amount, 1, type(uint256).max);
+        vm.assume(amount > 0);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(rewardsDistributionFacet),
@@ -79,8 +79,8 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
         _;
     }
 
-    modifier givenTokensAreMinted(address to, uint256 amount) {
-        amount = bound(amount, 1, type(uint256).max);
+    modifier givenTokensAreMinted(address to, uint96 amount) {
+        vm.assume(amount > 0);
         vm.prank(bridge);
         towns.mint(to, amount);
         _;
@@ -89,7 +89,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     function test_setTokenFeatureCondition(
         bytes32 featureId,
         address to,
-        uint256 amount
+        uint96 amount
     ) external givenTokenFeatureCondition(featureId, to, amount) {
         FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
             featureId
@@ -117,7 +117,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     function test_updateFeatureCondition(
         bytes32 featureId,
         address to,
-        uint256 amount
+        uint96 amount
     ) external givenTokenFeatureCondition(featureId, to, amount) {
         FeatureCondition memory newCondition = FeatureCondition({
             checker: address(rewardsDistributionFacet),
@@ -219,7 +219,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest {
     }
 
     function test_revertWith_setFeatureCondition_invalidInterface() external {
-        MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
+        MockERC20 mockToken = new MockERC20("Mock Token", "MTK", 18);
 
         FeatureCondition memory condition = FeatureCondition({
             checker: address(mockToken),

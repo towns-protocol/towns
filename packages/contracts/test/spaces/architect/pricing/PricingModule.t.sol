@@ -59,7 +59,7 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
     }
 
     function test_revertWhen_addPricingModule_invalidInterface() public givenOwner {
-        address mockToken = address(new MockERC20("mock", "MOCK"));
+        address mockToken = address(new MockERC20("mock", "MOCK", 18));
         vm.expectRevert(abi.encodeWithSelector(InvalidPricingModule.selector, mockToken));
         pricingModules.addPricingModule(mockToken);
     }

@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementGated} from "./IEntitlementGated.sol";
-
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
@@ -14,7 +13,12 @@ import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
-contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, ReentrancyGuard, Facet {
+abstract contract EntitlementGated is
+    IEntitlementGated,
+    EntitlementGatedBase,
+    ReentrancyGuard,
+    Facet
+{
     function __EntitlementGated_init(
         IEntitlementChecker entitlementChecker
     ) external onlyInitializing {
@@ -26,8 +30,8 @@ contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, Reentrancy
         _setEntitlementChecker(entitlementChecker);
     }
 
-    // Called by the xchain node to post the result of the entitlement check
-    // the internal function validates the transactionId and the result
+    /// @notice Called by the xchain node to post the result of the entitlement check
+    /// @dev the internal function validates the transactionId and the result
     function postEntitlementCheckResult(
         bytes32 transactionId,
         uint256 roleId,
@@ -49,7 +53,7 @@ contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, Reentrancy
         _postEntitlementCheckResultV2(transactionId, roleId, result);
     }
 
-    /// deprecated Use EntitlementDataQueryable.getCrossChainEntitlementData instead
+    /// @dev deprecated Use EntitlementDataQueryable.getCrossChainEntitlementData instead
     function getRuleData(
         bytes32 transactionId,
         uint256 roleId

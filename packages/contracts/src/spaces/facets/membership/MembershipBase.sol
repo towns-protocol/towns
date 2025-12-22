@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPricingModules} from "../../../factory/facets/architect/pricing/IPricingModules.sol";
 import {IMembershipBase} from "./IMembership.sol";
@@ -10,9 +11,10 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 // libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
+import {FeeConfig} from "../../../factory/facets/fee/FeeManagerStorage.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
 abstract contract MembershipBase is IMembershipBase {
@@ -24,7 +26,7 @@ abstract contract MembershipBase is IMembershipBase {
 
         $.spaceFactory = spaceFactory;
         $.pricingModule = info.pricingModule;
-        $.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
+        _setMembershipCurrency(info.currency);
         $.membershipMaxSupply = info.maxSupply;
 
         if (info.freeAllocation > 0) {
@@ -50,21 +52,6 @@ abstract contract MembershipBase is IMembershipBase {
     /*                         MEMBERSHIP                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _collectProtocolFee(
-        address payer,
-        uint256 membershipPrice
-    ) internal returns (uint256 protocolFee) {
-        protocolFee = _getProtocolFee(membershipPrice);
-
-        // transfer the platform fee to the platform fee recipient
-        CurrencyTransfer.transferCurrency(
-            _getMembershipCurrency(),
-            payer, // from
-            _getPlatformRequirements().getFeeRecipient(), // to
-            protocolFee
-        );
-    }
-
     function _getMembershipPrice(
         uint256 totalSupply
     ) internal view virtual returns (uint256 membershipPrice) {
@@ -75,51 +62,23 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     function _getProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
-        IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 baseFee = platform.getMembershipFee();
-        if (membershipPrice == 0) return baseFee;
-        uint256 bpsFee = BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
-        return FixedPointMathLib.max(bpsFee, baseFee);
+        bytes32 feeType = _getMembershipFeeType(_getMembershipCurrency());
+        return
+            IFeeManager(_getSpaceFactory()).calculateFee(feeType, address(0), membershipPrice, "");
+    }
+
+    /// @notice Returns the fee type for the membership currency
+    /// @dev Uses dynamic fee type for non-native currencies
+    function _getMembershipFeeType(address currency) internal pure returns (bytes32) {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) return FeeTypesLib.MEMBERSHIP;
+        return FeeTypesLib.membership(currency);
     }
 
     function _getTotalMembershipPayment(
         uint256 membershipPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
-        if (membershipPrice == 0) return (protocolFee, protocolFee);
-        return (membershipPrice + protocolFee, protocolFee);
-    }
-
-    function _transferIn(address from, uint256 amount) internal returns (uint256) {
-        MembershipStorage.Layout storage $ = MembershipStorage.layout();
-
-        // get the currency being used for membership
-        address currency = _getMembershipCurrency();
-
-        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            $.tokenBalance += amount;
-            return amount;
-        }
-
-        // handle erc20 tokens
-        uint256 balanceBefore = currency.balanceOf(address(this));
-        CurrencyTransfer.safeTransferERC20(currency, from, address(this), amount);
-        uint256 balanceAfter = currency.balanceOf(address(this));
-
-        // Calculate the amount of tokens transferred
-        uint256 finalAmount = balanceAfter - balanceBefore;
-        if (finalAmount != amount) Membership__InsufficientPayment.selector.revertWith();
-
-        $.tokenBalance += finalAmount;
-        return finalAmount;
-    }
-
-    function _getCreatorBalance() internal view returns (uint256) {
-        return MembershipStorage.layout().tokenBalance;
-    }
-
-    function _setCreatorBalance(uint256 newBalance) internal {
-        MembershipStorage.layout().tokenBalance = newBalance;
+        totalRequired = membershipPrice + protocolFee;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -202,7 +161,6 @@ abstract contract MembershipBase is IMembershipBase {
     function _setMembershipFreeAllocation(uint256 newAllocation) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
         ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
-        emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
     function _getMembershipFreeAllocation() internal view returns (uint256) {
@@ -234,8 +192,21 @@ abstract contract MembershipBase is IMembershipBase {
     /*                          CURRENCY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getMembershipCurrency() internal view returns (address) {
-        return MembershipStorage.layout().membershipCurrency;
+    /// @dev Sets the membership currency. Only currencies with an enabled fee config in FeeManager
+    /// can be set. Native token (address(0) or NATIVE_TOKEN) is always supported.
+    function _setMembershipCurrency(address currency) internal {
+        if (!(currency == address(0) || currency == CurrencyTransfer.NATIVE_TOKEN)) {
+            bytes32 feeType = FeeTypesLib.membership(currency);
+            FeeConfig memory config = IFeeManager(_getSpaceFactory()).getFeeConfig(feeType);
+            if (!config.enabled) Membership__UnsupportedCurrency.selector.revertWith();
+        }
+        MembershipStorage.layout().membershipCurrency = currency;
+    }
+
+    function _getMembershipCurrency() internal view returns (address currency) {
+        currency = MembershipStorage.layout().membershipCurrency;
+        // Normalize address(0) to NATIVE_TOKEN for backwards compatibility
+        if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

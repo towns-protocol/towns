@@ -116,7 +116,7 @@ contract FeeManagerFacet is
             true
         );
 
-        // membership fee
+        // membership fee (ETH)
         _setFeeConfig(
             FeeTypesLib.MEMBERSHIP,
             protocolRecipient,
