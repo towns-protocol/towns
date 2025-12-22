@@ -1119,13 +1119,17 @@ export class Bot<Commands extends BotCommand[] = []> {
         let statusMsg: { eventId: string } | undefined
 
         try {
+            // IMPORTANT: use the chainId the user signed for (domain separator is chain-specific).
+            // Do NOT use the bot's current chain, which may differ if configuration changed.
+            const signedChainId = pending.params.chainId
+
             // Get network in CAIP-2 format (x402 v2)
-            const network = chainIdToNetwork(this.viem.chain.id)
+            const network = chainIdToNetwork(signedChainId)
 
             // Validate network support (double-check in case chain switched)
             const paymentConfig = this.paymentCommands.get(pending.command)
             if (paymentConfig) {
-                validateNetworkSupport(this.viem.chain.id, paymentConfig)
+                validateNetworkSupport(signedChainId, paymentConfig)
             }
 
             // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
