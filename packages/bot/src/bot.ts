@@ -1125,6 +1125,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         // Track settlement state to distinguish payment failures from post-payment failures
         let settlementCompleted = false
         let verified = false
+        let transactionLabel: 'Tx' | 'Ref' = 'Tx'
         let transactionHash: string | undefined
         let statusMsg: { eventId: string } | undefined
 
@@ -1140,6 +1141,17 @@ export class Bot<Commands extends BotCommand[] = []> {
             const paymentConfig = this.paymentCommands.get(pending.command)
             if (paymentConfig) {
                 validateNetworkSupport(signedChainId, paymentConfig)
+            }
+
+            const actualHandlerKey = `__paid_${pending.command}`
+            if (!this.slashCommandHandlers.has(actualHandlerKey)) {
+                // If the paid command was unregistered while payment was pending, do NOT settle.
+                // User has signed an authorization, but we can avoid charging them.
+                await handler.sendMessage(
+                    channelId,
+                    `⚠️ /${pending.command} is no longer available. Your payment was not processed.`,
+                )
+                return
             }
 
             // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
@@ -1203,6 +1215,15 @@ export class Bot<Commands extends BotCommand[] = []> {
                 `✅ Verified • Settling $${formatUnits(pending.params.value, 6)} USDC...`,
             )
 
+            if (!this.slashCommandHandlers.has(actualHandlerKey)) {
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `⚠️ /${pending.command} is no longer available. Your payment was not processed.`,
+                )
+                return
+            }
+
             const settleResult = await callFacilitatorSettle(
                 this.paymentConfig,
                 paymentPayload,
@@ -1220,16 +1241,18 @@ export class Bot<Commands extends BotCommand[] = []> {
 
             // Mark settlement as complete - funds have been transferred
             settlementCompleted = true
-            transactionHash = settleResult.transaction
+            const settlementRef = settleResult.transaction ?? `x402:${signatureId}`
+            transactionLabel = settleResult.transaction ? 'Tx' : 'Ref'
+            transactionHash = settlementRef
 
             // Create session if configured
             let sessionInfo = ''
-            if (pending.sessionConfig && transactionHash) {
+            if (pending.sessionConfig) {
                 const session = this.createSession(
                     pending.userId,
                     pending.command,
                     pending.sessionConfig,
-                    transactionHash,
+                    settlementRef,
                     paymentPayload.network,
                 )
                 const duration = pending.sessionConfig.duration ?? 3600
@@ -1248,14 +1271,20 @@ export class Bot<Commands extends BotCommand[] = []> {
                 statusMsg.eventId,
                 `✅ **Payment Complete**\n` +
                     `/${pending.command} • $${formatUnits(pending.params.value, 6)} USDC\n` +
-                    `Tx: \`${transactionHash}\`${sessionInfo}`,
+                    `${transactionLabel}: \`${settlementRef}\`${sessionInfo}`,
             )
 
             // Execute the original command handler (stored with __paid_ prefix)
-            const actualHandlerKey = `__paid_${pending.command}`
             const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
             if (originalHandler) {
                 await originalHandler(handler, pending.event)
+            } else {
+                // Extremely unlikely race: command unregistered after settlement.
+                const msg =
+                    `⚠️ Payment was processed but /${pending.command} is no longer available.\n` +
+                    `${transactionLabel}: \`${settlementRef}\`\n` +
+                    `Please contact support.`
+                await handler.sendMessage(channelId, msg)
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -1268,14 +1297,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                         statusMsg.eventId,
                         `⚠️ **Payment succeeded but command failed**\n` +
                             `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
-                            `Tx: \`${transactionHash}\`\n\n` +
+                            `${transactionLabel}: \`${transactionHash ?? 'unknown'}\`\n\n` +
                             `Error: ${errorMessage}\n` +
                             `Please contact support - do NOT retry to avoid double charges.`,
                     )
                 } else {
                     await handler.sendMessage(
                         channelId,
-                        `⚠️ Payment succeeded but command failed. Tx: \`${transactionHash}\` Error: ${errorMessage}`,
+                        `⚠️ Payment succeeded but command failed. ${transactionLabel}: \`${transactionHash ?? 'unknown'}\` Error: ${errorMessage}`,
                     )
                 }
             } else {
