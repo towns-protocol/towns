@@ -241,8 +241,8 @@ func (args *ChainAuthArgs) Principal() common.Address {
 }
 
 func (args *ChainAuthArgs) String() string {
-	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s, botClientAddress: %s}",
+	base := fmt.Sprintf(
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s, botClientAddress: %s",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -253,6 +253,22 @@ func (args *ChainAuthArgs) String() string {
 		args.appAddress.Hex(),
 		args.botClientAddress.Hex(),
 	)
+
+	if args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
+		base += fmt.Sprintf(", firstParty: %s, secondParty: %s, requireBotParty: %t",
+			args.firstParty.Hex(),
+			args.secondParty.Hex(),
+			args.requireBotParty,
+		)
+		if args.firstPartyAppAddress != nil {
+			base += fmt.Sprintf(", firstPartyAppAddress: %s", args.firstPartyAppAddress.Hex())
+		}
+		if args.secondPartyAppAddress != nil {
+			base += fmt.Sprintf(", secondPartyAppAddress: %s", args.secondPartyAppAddress.Hex())
+		}
+	}
+
+	return base + "}"
 }
 
 func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *ChainAuthArgs {
@@ -1540,7 +1556,10 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 	}
 
 	if lastErr != nil {
-		return nil, lastErr
+		return nil, AsRiverError(lastErr).
+			Tag("method", "checkAppInstalledOnUser").
+			Tag("userAddress", userAddress.Hex()).
+			Tag("appContract", appContractAddress.Hex())
 	}
 
 	log.Debugw(
