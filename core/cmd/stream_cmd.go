@@ -1464,19 +1464,23 @@ func fetchStreamStateSummaryOnNodes(
 }
 
 func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	outputFile, err := os.Create(args[0])
 	if err != nil {
 		return err
 	}
-
-	output := json.NewEncoder(outputFile)
-
 	defer outputFile.Close()
 
-	const targetReplicationFactor = 3
+	skippedFile, err := os.Create(args[0] + ".skipped")
+	if err != nil {
+		return err
+	}
+	defer skippedFile.Close()
+
+	output := json.NewEncoder(outputFile)
+	skippedOutput := json.NewEncoder(skippedFile)
 
 	riverChain, err := crypto.NewBlockchain(
 		ctx,
@@ -1524,6 +1528,8 @@ func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []strin
 		return err
 	}
 
+	targetReplicationFactor := int(onChainConfig.Get().ReplicationFactor)
+
 	httpClient, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
 		return err
@@ -1553,6 +1559,12 @@ func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []strin
 	type streamStatus struct {
 		StreamID     StreamId
 		NodeStatuses []*nodeStatus
+	}
+
+	type skippedStream struct {
+		StreamID                  StreamId `json:"streamId"`
+		NodeCount                 int      `json:"nodeCount"`
+		ExpectedReplicationFactor int      `json:"expectedReplicationFactor"`
 	}
 
 	inSync := func(streamID StreamId, nodeStatuses []*nodeStatus) bool {
@@ -1596,6 +1608,11 @@ func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []strin
 			}
 
 			if len(stream.Nodes()) != targetReplicationFactor {
+				_ = skippedOutput.Encode(&skippedStream{
+					StreamID:                  stream.Id,
+					NodeCount:                 len(stream.Nodes()),
+					ExpectedReplicationFactor: targetReplicationFactor,
+				})
 				return true
 			}
 
@@ -1626,24 +1643,25 @@ func runStreamOutOfSyncCmd(ctx context.Context, cfg *config.Config, args []strin
 					mu.Unlock()
 				} else {
 					pool.Submit(func() {
+						var ns *nodeStatus
+
 						streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 						if err != nil {
-							panic(err)
-						}
-
-						request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
-						request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
-						request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
-
-						var ns *nodeStatus
-						if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
-							ns = &nodeStatus{
-								NodeAddress:   nodeAddress,
-								MiniblockNum:  resp.Msg.MiniblockNum,
-								MiniblockHash: common.BytesToHash(resp.Msg.Hash),
-							}
+							ns = &nodeStatus{NodeAddress: nodeAddress, Error: fmt.Sprintf("client error: %s", err)}
 						} else {
-							ns = &nodeStatus{NodeAddress: nodeAddress, Error: err.Error()}
+							request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
+							request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+							request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
+
+							if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
+								ns = &nodeStatus{
+									NodeAddress:   nodeAddress,
+									MiniblockNum:  resp.Msg.MiniblockNum,
+									MiniblockHash: common.BytesToHash(resp.Msg.Hash),
+								}
+							} else {
+								ns = &nodeStatus{NodeAddress: nodeAddress, Error: err.Error()}
+							}
 						}
 
 						mu.Lock()
