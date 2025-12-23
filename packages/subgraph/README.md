@@ -248,19 +248,16 @@ bun run dev
 If you encounter issues:
 
 1. **Contract Address Resolution**:
-
    - Run `bun run find-paths` to debug path resolution
    - Enable debug mode: `getContractAddress('contractName', network, env, { debug: true })`
    - Check that the environment is correctly set
 
 2. **Anvil Fork Issues**:
-
    - Ensure Anvil is running and accessible at the expected port
    - Check for error messages in the Anvil console
    - Try restarting the fork with `./scripts/anvil-fork.sh`
 
 3. **Indexing Issues**:
-
    - Verify that the start block is set correctly
    - Check that the contract addresses are correct
    - Look for error messages in the Ponder console
