@@ -13,8 +13,8 @@ import {ERC20} from "@towns-protocol/diamond/src/facets/token/ERC20/ERC20.sol";
 import {ERC20PermitBase} from "@towns-protocol/diamond/src/facets/token/ERC20/permit/ERC20PermitBase.sol";
 
 contract MockERC20 is ERC20, ERC20PermitBase, IntrospectionFacet {
-    constructor(string memory name, string memory symbol) {
-        __ERC20_init_unchained(name, symbol, 18);
+    constructor(string memory name, string memory symbol, uint8 decimals_) {
+        __ERC20_init_unchained(name, symbol, decimals_);
         __ERC20PermitBase_init_unchained(name);
     }
 

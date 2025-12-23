@@ -18,6 +18,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     uint256 private constant EXTRA_ETHER = 1 ether;
+    uint256 private constant USDC_PRICE = 10_000_000; // $10 USDC
 
     modifier givenMembershipHasExpired() {
         uint256 tokenId = _getAliceTokenId();
@@ -26,9 +27,31 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         _;
     }
 
+    modifier givenAliceHasUsdcMembership() {
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(USDC_PRICE);
+        uint256 totalPrice = usdcMembership.getMembershipPrice();
+        mockUSDC.mint(alice, totalPrice);
+        vm.prank(alice);
+        mockUSDC.approve(address(usdcMembership), totalPrice);
+        vm.prank(alice);
+        usdcMembership.joinSpace(JoinType.Basic, abi.encode(alice));
+        _;
+    }
+
+    modifier givenUsdcMembershipHasExpired() {
+        uint256 tokenId = _getAliceUsdcTokenId();
+        vm.warp(usdcMembership.expiresAt(tokenId));
+        _;
+    }
+
     // Helper Functions
     function _getAliceTokenId() private view returns (uint256) {
         return membershipTokenQueryable.tokensOfOwner(alice)[0];
+    }
+
+    function _getAliceUsdcTokenId() private view returns (uint256) {
+        return IERC721AQueryable(address(usdcMembership)).tokensOfOwner(alice)[0];
     }
 
     function _getRenewalPrice(uint256 tokenId) private view returns (uint256) {
@@ -46,6 +69,15 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         vm.deal(user, value);
         vm.prank(user);
         membership.renewMembership{value: value}(tokenId);
+    }
+
+    function _renewUsdcMembership(address user, uint256 tokenId) private {
+        uint256 renewalPrice = usdcMembership.getMembershipRenewalPrice(tokenId);
+        mockUSDC.mint(user, renewalPrice);
+        vm.prank(user);
+        mockUSDC.approve(address(usdcMembership), renewalPrice);
+        vm.prank(user);
+        usdcMembership.renewMembership(tokenId);
     }
 
     function _getProtocolFeeData()
@@ -173,7 +205,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
 
-    function test_revertWhen_renewMembershipNoEth()
+    function test_renewMembership_revertWhenNoEth()
         external
         givenMembershipHasPrice
         givenAliceHasPaidMembership
@@ -580,5 +612,87 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
             currentPoints + points,
             "Points should be awarded based on locked lower price"
         );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     USDC RENEWAL TESTS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_renewMembership_USDC()
+        external
+        givenAliceHasUsdcMembership
+        givenUsdcMembershipHasExpired
+    {
+        uint256 tokenId = _getAliceUsdcTokenId();
+        uint256 spaceBalanceBefore = mockUSDC.balanceOf(address(usdcMembership));
+
+        _renewUsdcMembership(alice, tokenId);
+
+        assertEq(
+            mockUSDC.balanceOf(address(usdcMembership)),
+            spaceBalanceBefore + USDC_PRICE,
+            "Space should receive base price"
+        );
+    }
+
+    function test_renewMembership_USDC_byOtherUser()
+        external
+        givenAliceHasUsdcMembership
+        givenUsdcMembershipHasExpired
+    {
+        uint256 tokenId = _getAliceUsdcTokenId();
+
+        _renewUsdcMembership(bob, tokenId);
+
+        assertEq(mockUSDC.balanceOf(bob), 0, "Bob's USDC should be spent");
+    }
+
+    function test_renewMembership_revertWhen_USDC_insufficientApproval()
+        external
+        givenAliceHasUsdcMembership
+        givenUsdcMembershipHasExpired
+    {
+        uint256 tokenId = _getAliceUsdcTokenId();
+        uint256 renewalPrice = usdcMembership.getMembershipRenewalPrice(tokenId);
+
+        mockUSDC.mint(alice, renewalPrice);
+        vm.prank(alice);
+        mockUSDC.approve(address(usdcMembership), renewalPrice - 1);
+
+        vm.prank(alice);
+        vm.expectRevert();
+        usdcMembership.renewMembership(tokenId);
+    }
+
+    function test_renewMembership_revertWhen_USDC_withEth()
+        external
+        givenAliceHasUsdcMembership
+        givenUsdcMembershipHasExpired
+    {
+        uint256 tokenId = _getAliceUsdcTokenId();
+
+        vm.deal(alice, 1 ether);
+        vm.prank(alice);
+        vm.expectRevert(Membership__UnexpectedValue.selector);
+        usdcMembership.renewMembership{value: 1 ether}(tokenId);
+    }
+
+    function test_renewMembership_freeUSDC_refundsEth() external {
+        vm.prank(founder);
+        usdcMembership.setMembershipPrice(0);
+
+        vm.prank(alice);
+        usdcMembership.joinSpace(JoinType.Basic, abi.encode(alice));
+
+        uint256 tokenId = _getAliceUsdcTokenId();
+        vm.warp(usdcMembership.expiresAt(tokenId));
+
+        uint256 ethSent = 1 ether;
+        vm.deal(alice, ethSent);
+
+        vm.prank(alice);
+        usdcMembership.renewMembership{value: ethSent}(tokenId);
+
+        assertEq(alice.balance, ethSent, "ETH should be refunded");
     }
 }

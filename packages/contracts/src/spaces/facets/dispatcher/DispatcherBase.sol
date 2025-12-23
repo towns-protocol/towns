@@ -25,9 +25,9 @@ abstract contract DispatcherBase is IDispatcherBase {
         return ds.transactionData.get(transactionId).value;
     }
 
-    function _captureValue(bytes32 transactionId) internal {
+    function _captureValue(bytes32 transactionId, uint256 value) internal {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        ds.transactionBalance[transactionId] += msg.value;
+        ds.transactionBalance[transactionId] += value;
     }
 
     function _releaseCapturedValue(bytes32 transactionId, uint256 value) internal {
@@ -62,9 +62,15 @@ abstract contract DispatcherBase is IDispatcherBase {
         return keccak256(abi.encodePacked(keyHash, inputSeed));
     }
 
+    /// @notice Registers a transaction and captures payment
+    /// @param sender The address initiating the transaction
+    /// @param data The encoded transaction data
+    /// @param capturedAmount The amount captured (ETH or ERC20)
+    /// @return transactionId The unique identifier for this transaction
     function _registerTransaction(
         address sender,
-        bytes memory data
+        bytes memory data,
+        uint256 capturedAmount
     ) internal returns (bytes32 transactionId) {
         bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
@@ -75,12 +81,14 @@ abstract contract DispatcherBase is IDispatcherBase {
 
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         StoragePointer.Bytes storage capturedDataRef = ds.transactionData.get(transactionId);
+
         // revert if the transaction already exists
         if (capturedDataRef.value.length > 0) {
             Dispatcher__TransactionAlreadyExists.selector.revertWith();
         }
-
         capturedDataRef.value = data;
-        if (msg.value != 0) _captureValue(transactionId);
+
+        // Capture payment amount
+        if (capturedAmount != 0) _captureValue(transactionId, capturedAmount);
     }
 }

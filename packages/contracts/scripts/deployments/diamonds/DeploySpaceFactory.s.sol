@@ -223,7 +223,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployPlatformRequirements.makeInitData(
                 deployer, // feeRecipient
-                500, // membershipBps 5%
+                1000, // membershipBps 10%
                 0.0005 ether, // membershipFee
                 1000, // membershipFreeAllocation
                 365 days, // membershipDuration
@@ -354,7 +354,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     facet,
                     DeployPlatformRequirements.makeInitData(
                         deployer, // feeRecipient
-                        500, // membershipBps 5%
+                        1000, // membershipBps 10%
                         0.0005 ether, // membershipFee
                         1000, // membershipFreeAllocation
                         365 days, // membershipDuration

@@ -58,6 +58,12 @@ interface IMembershipBase {
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
 
+    /// @notice Error thrown when ETH is sent for ERC20 payment
+    error Membership__UnexpectedValue();
+
+    /// @notice Error thrown when currency is not supported for fees
+    error Membership__UnsupportedCurrency();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -67,7 +73,7 @@ interface IMembershipBase {
     event MembershipCurrencyUpdated(address indexed currency);
     event MembershipFeeRecipientUpdated(address indexed recipient);
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
-    event MembershipWithdrawal(address indexed recipient, uint256 amount);
+    event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
     event MembershipTokenRejected(address indexed recipient);
 }
@@ -190,6 +196,10 @@ interface IMembership is IMembershipBase {
     /// @notice Get the membership currency
     /// @return The membership currency
     function getMembershipCurrency() external view returns (address);
+
+    /// @notice Set the membership currency
+    /// @param currency The new membership currency address
+    function setMembershipCurrency(address currency) external;
 
     /// @notice Get the space factory
     /// @return The space factory

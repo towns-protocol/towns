@@ -61,9 +61,14 @@ type MetadataShard struct {
 	store storage.MetadataStore
 	log   *logging.Log
 
-	// pendingBlock holds operations collected during FinalizeBlock to be applied in Commit.
+	// proposedBlocks holds blocks validated by ProcessProposal.
+	// If one of the blocks is finalized, state is reused without re-validation.
+	// Cleared after Commit.
+	proposedBlocks map[string]*PendingBlockState
+
+	// finalizedBlock holds block submitted by last FinalizeBlock to be applied in Commit.
 	// Set during FinalizeBlock, cleared after Commit.
-	pendingBlock *PendingBlockState
+	finalizedBlock *PendingBlockState
 }
 
 var _ abci.Application = (*MetadataShard)(nil)
@@ -496,31 +501,6 @@ func (m *MetadataShard) PrepareProposal(
 	return &abci.PrepareProposalResponse{Txs: txs}, nil
 }
 
-func (m *MetadataShard) ProcessProposal(
-	_ context.Context,
-	req *abci.ProcessProposalRequest,
-) (*abci.ProcessProposalResponse, error) {
-	m.log.Infow(
-		"processing proposal",
-		"height",
-		req.Height,
-		"blockHash",
-		req.Hash,
-		"txs",
-		len(req.Txs),
-	)
-	for _, tx := range req.Txs {
-		metaTx, err := decodeMetadataTx(tx)
-		if err != nil {
-			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
-		}
-		if err := ValidateMetadataTx(metaTx); err != nil {
-			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
-		}
-	}
-	return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_ACCEPT}, nil
-}
-
 func (m *MetadataShard) ExtendVote(context.Context, *abci.ExtendVoteRequest) (*abci.ExtendVoteResponse, error) {
 	return &abci.ExtendVoteResponse{}, nil
 }
@@ -532,6 +512,113 @@ func (m *MetadataShard) VerifyVoteExtension(
 	return &abci.VerifyVoteExtensionResponse{
 		Status: abci.VERIFY_VOTE_EXTENSION_STATUS_ACCEPT,
 	}, nil
+}
+
+type blockRequest interface {
+	GetHash() []byte
+	GetHeight() int64
+	GetMisbehavior() []abci.Misbehavior
+	GetProposerAddress() []byte
+	GetTime() time.Time
+	GetTxs() [][]byte
+}
+
+func (m *MetadataShard) preparePendingBlock(
+	ctx context.Context,
+	req blockRequest,
+) (*PendingBlockState, error) {
+	block := &PendingBlockState{
+		Height:            req.GetHeight(),
+		BlockHash:         req.GetHash(),
+		Txs:               make([]*MetadataTx, len(req.GetTxs())),
+		TxResults:         make([]*abci.ExecTxResult, len(req.GetTxs())),
+		CreatedStreams:    make(map[StreamId]*CreateStreamTx),
+		UpdatedStreams:    make(map[StreamId]*UpdateStreamNodesAndReplicationTx),
+		UpdatedMiniblocks: make(map[StreamId]*MiniblockUpdate),
+	}
+
+	for i, txBytes := range req.GetTxs() {
+		block.TxResults[i] = &abci.ExecTxResult{}
+		block.TxResults[i].Codespace = "towns"
+
+		metaTx, err := decodeMetadataTx(txBytes)
+		if err != nil {
+			block.SetTxError(i, err)
+			continue
+		}
+		if err := ValidateMetadataTx(metaTx); err != nil {
+			block.SetTxError(i, err)
+			continue
+		}
+
+		block.Txs[i] = metaTx
+		if op, ok := metaTx.Op.(*MetadataTx_SetStreamLastMiniblockBatch); ok {
+			block.TxResults[i].Events = make([]abci.Event, len(op.SetStreamLastMiniblockBatch.Miniblocks))
+		} else {
+			// Batch txes report errors through events.
+			// For non-batch txes mark result as unknown as a precaution.
+			// PreparePendingBlock should explicitly set the result.
+			block.TxResults[i].Code = uint32(Err_UNKNOWN)
+		}
+	}
+
+	err := m.store.PreparePendingBlock(ctx, m.opts.ShardID, block)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+func (m *MetadataShard) ProcessProposal(
+	ctx context.Context,
+	req *abci.ProcessProposalRequest,
+) (*abci.ProcessProposalResponse, error) {
+	// TODO: distinguish between "bad proposal" and "db problem" errors.
+	block, err := m.processProposalImpl(ctx, req)
+	if err == nil {
+		m.log.Infow(
+			"ProcessProposal accepted",
+			"height",
+			req.Height,
+			"blockHash",
+			req.Hash,
+			"txs",
+			len(req.Txs),
+			"appHash",
+			block.AppHash,
+		)
+		return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_ACCEPT}, nil
+	} else {
+		m.log.Warnw(
+			"ProcessProposal rejected",
+			"height",
+			req.Height,
+			"blockHash",
+			req.Hash,
+			"txs",
+			len(req.Txs),
+			"err",
+			err,
+		)
+		return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
+	}
+}
+
+func (m *MetadataShard) processProposalImpl(
+	ctx context.Context,
+	req *abci.ProcessProposalRequest,
+) (*PendingBlockState, error) {
+	block, err := m.preparePendingBlock(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if m.proposedBlocks == nil {
+		m.proposedBlocks = make(map[string]*PendingBlockState)
+	}
+	m.proposedBlocks[string(req.GetHash())] = block
+
+	return block, nil
 }
 
 func (m *MetadataShard) FinalizeBlock(
@@ -564,65 +651,35 @@ func (m *MetadataShard) finalizeBlockImpl(
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
 	// Validate that previous FinalizeBlock was committed
-	if m.pendingBlock != nil {
+	if m.finalizedBlock != nil {
 		return nil, RiverError(
 			Err_FAILED_PRECONDITION,
 			"FinalizeBlock called without committing previous block",
-			"pendingHeight", m.pendingBlock.Height,
+			"pendingHeight", m.finalizedBlock.Height,
 			"newHeight", req.Height,
 		)
 	}
 
-	pendingBlock := &PendingBlockState{
-		Height:            req.Height,
-		BlockHash:         req.Hash,
-		Txs:               make([]*MetadataTx, len(req.Txs)),
-		TxResults:         make([]*abci.ExecTxResult, len(req.Txs)),
-		CreatedStreams:    make(map[StreamId]*CreateStreamTx),
-		UpdatedStreams:    make(map[StreamId]*UpdateStreamNodesAndReplicationTx),
-		UpdatedMiniblocks: make(map[StreamId]*MiniblockUpdate),
-	}
-
-	for i, txBytes := range req.Txs {
-		pendingBlock.TxResults[i] = &abci.ExecTxResult{}
-		pendingBlock.TxResults[i].Codespace = "towns"
-
-		metaTx, err := decodeMetadataTx(txBytes)
+	// Use previously proposed block if available, otherwise prepare a new one.
+	block := m.proposedBlocks[string(req.GetHash())]
+	if block == nil {
+		var err error
+		block, err = m.preparePendingBlock(ctx, req)
 		if err != nil {
-			pendingBlock.SetTxError(i, err)
-			continue
-		}
-		if err := ValidateMetadataTx(metaTx); err != nil {
-			pendingBlock.SetTxError(i, err)
-			continue
-		}
-
-		pendingBlock.Txs[i] = metaTx
-		if op, ok := metaTx.Op.(*MetadataTx_SetStreamLastMiniblockBatch); ok {
-			pendingBlock.TxResults[i].Events = make([]abci.Event, len(op.SetStreamLastMiniblockBatch.Miniblocks))
-		} else {
-			// Batch txes report errors through events.
-			// For non-batch txes mark result as unknown as a precaution.
-			// PreparePendingBlock should explicitly set the result.
-			pendingBlock.TxResults[i].Code = uint32(Err_UNKNOWN)
+			return nil, err
 		}
 	}
 
-	err := m.store.PreparePendingBlock(ctx, m.opts.ShardID, pendingBlock)
-	if err != nil {
-		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
-	}
-
-	m.pendingBlock = pendingBlock
+	m.finalizedBlock = block
 
 	return &abci.FinalizeBlockResponse{
-		TxResults: pendingBlock.TxResults,
-		AppHash:   pendingBlock.AppHash,
+		TxResults: block.TxResults,
+		AppHash:   block.AppHash,
 	}, nil
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	if m.pendingBlock == nil {
+	if m.finalizedBlock == nil {
 		m.log.Errorw("commit called without finalize block")
 		return nil, RiverError(
 			Err_FAILED_PRECONDITION,
@@ -630,27 +687,27 @@ func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abc
 		)
 	}
 
-	err := m.store.CommitPendingBlock(ctx, m.opts.ShardID, m.pendingBlock)
-
+	err := m.store.CommitPendingBlock(ctx, m.opts.ShardID, m.finalizedBlock)
 	if err == nil {
 		m.log.Infow(
 			"committed block",
-			"height", m.pendingBlock.Height,
-			"blockHash", m.pendingBlock.BlockHash,
-			"appHash", m.pendingBlock.AppHash,
+			"height", m.finalizedBlock.Height,
+			"blockHash", m.finalizedBlock.BlockHash,
+			"appHash", m.finalizedBlock.AppHash,
 		)
 	} else {
 		m.log.Errorw(
 			"failed to commit block",
 			"err", err,
-			"height", m.pendingBlock.Height,
-			"blockHash", m.pendingBlock.BlockHash,
-			"appHash", m.pendingBlock.AppHash,
+			"height", m.finalizedBlock.Height,
+			"blockHash", m.finalizedBlock.BlockHash,
+			"appHash", m.finalizedBlock.AppHash,
 		)
 	}
 
 	// Drop pending state even if commit fails. This allows FinalizeBlock to be retried.
-	m.pendingBlock = nil
+	m.finalizedBlock = nil
+	m.proposedBlocks = nil
 
 	if err != nil {
 		return nil, AsRiverError(err).Func("Commit")

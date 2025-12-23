@@ -11,8 +11,9 @@ interface ITreasury {
     /// @notice Withdraw funds from the treasury to a specified account
     /// @dev Can only be called by the owner of the contract. Will revert if account is zero address
     /// or if balance is 0
+    /// @param currency The currency to withdraw (NATIVE_TOKEN for ETH, or ERC20 address)
     /// @param account The address to withdraw funds to
-    function withdraw(address account) external;
+    function withdraw(address currency, address account) external;
 
     /// @notice Handle the receipt of a single ERC721 token
     /// @dev Implements the IERC721Receiver interface to safely receive ERC721 tokens
