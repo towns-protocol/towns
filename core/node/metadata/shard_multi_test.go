@@ -270,8 +270,9 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 			tempDir = t.TempDir()
 		} else {
 			tempDir = filepath.Join(tempDir, fmt.Sprintf("shard-%d", i))
+			err := os.MkdirAll(tempDir, 0o755)
+			require.NoError(t, err)
 		}
-		os.MkdirAll(fmt.Sprintf("./temptest/%d", i), 0o755)
 		// Create full CometBFT node via NewMetadataShard
 		shard, err := NewMetadataShard(ctx, MetadataShardOpts{
 			ShardID:         multiTestShardID,

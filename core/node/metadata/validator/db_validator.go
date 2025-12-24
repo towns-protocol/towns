@@ -11,7 +11,6 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/libs/protoio"
 	"github.com/cometbft/cometbft/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
 	gogoproto "github.com/cosmos/gogoproto/proto"
 	"google.golang.org/protobuf/proto"
@@ -35,8 +34,12 @@ func voteToStep(vote *cmtproto.Vote) int32 {
 		return stepPrevote
 	case types.PrecommitType:
 		return stepPrecommit
+	case types.UnknownType:
+		fallthrough
+	case types.ProposalType:
+		fallthrough
 	default:
-		panic(fmt.Sprintf("Unknown vote type: %v", vote.Type))
+		panic(fmt.Sprintf("Invalid vote type: %v", vote.Type))
 	}
 }
 
@@ -101,7 +104,7 @@ type DbValidator struct {
 	ctx           context.Context
 }
 
-var _ cmttypes.PrivValidator = (*DbValidator)(nil)
+var _ types.PrivValidator = (*DbValidator)(nil)
 
 // NewDbValidator generates a new validator from the given key and store.
 func NewDbValidator(
