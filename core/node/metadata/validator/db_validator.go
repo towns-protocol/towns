@@ -263,7 +263,13 @@ func (pv *DbValidator) signVote(chainID string, vote *cmtproto.Vote, signExtensi
 	if err != nil {
 		return err
 	}
-	if err := pv.saveSigned(height, round, step, signBytes, sig); err != nil {
+	if err := pv.saveSigned(&protocol.ValidatorLastSignState{
+		Height:      height,
+		Round:       round,
+		Step:        step,
+		SignedBytes: signBytes,
+		Signature:   sig,
+	}); err != nil {
 		return err
 	}
 	vote.Signature = sig
@@ -308,7 +314,13 @@ func (pv *DbValidator) signProposal(chainID string, proposal *cmtproto.Proposal)
 	if err != nil {
 		return err
 	}
-	if err := pv.saveSigned(height, round, step, signBytes, sig); err != nil {
+	if err := pv.saveSigned(&protocol.ValidatorLastSignState{
+		Height:      height,
+		Round:       round,
+		Step:        step,
+		SignedBytes: signBytes,
+		Signature:   sig,
+	}); err != nil {
 		return err
 	}
 	proposal.Signature = sig
@@ -316,20 +328,17 @@ func (pv *DbValidator) signProposal(chainID string, proposal *cmtproto.Proposal)
 }
 
 // Persist height/round/step and signature.
-func (pv *DbValidator) saveSigned(height int64, round int32, step int32,
-	signBytes []byte, sig []byte,
-) error {
-	pv.LastSignState.Height = height
-	pv.LastSignState.Round = round
-	pv.LastSignState.Step = step
-	pv.LastSignState.Signature = sig
-	pv.LastSignState.SignedBytes = signBytes
-
-	state, err := proto.Marshal(pv.LastSignState)
+func (pv *DbValidator) saveSigned(newState *protocol.ValidatorLastSignState) error {
+	state, err := proto.Marshal(newState)
 	if err != nil {
 		return err
 	}
-	return pv.store.SetShardValidatorState(pv.ctx, pv.shardId, state)
+	err = pv.store.SetShardValidatorState(pv.ctx, pv.shardId, state)
+	if err != nil {
+		return err
+	}
+	pv.LastSignState = newState
+	return nil
 }
 
 // -----------------------------------------------------------------------------------------
