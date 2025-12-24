@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -263,11 +265,19 @@ func setupMultiNodeCometBFTTest(t *testing.T) *multiNodeTestEnv {
 			}
 		}
 
+		tempDir := os.Getenv("RIVER_TEST_TEMP_DIR")
+		if tempDir == "" {
+			tempDir = t.TempDir()
+		} else {
+			tempDir = filepath.Join(tempDir, fmt.Sprintf("shard-%d", i))
+			err := os.MkdirAll(tempDir, 0o755)
+			require.NoError(t, err)
+		}
 		// Create full CometBFT node via NewMetadataShard
 		shard, err := NewMetadataShard(ctx, MetadataShardOpts{
 			ShardID:         multiTestShardID,
 			P2PPort:         baseP2PPort + i,
-			RootDir:         t.TempDir(),
+			RootDir:         tempDir,
 			GenesisDoc:      genesisDoc,
 			Wallet:          wallets[i],
 			PersistentPeers: peers,

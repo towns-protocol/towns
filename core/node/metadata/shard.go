@@ -13,12 +13,10 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -29,6 +27,7 @@ import (
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/metadata/mdstate"
+	"github.com/towns-protocol/towns/core/node/metadata/validator"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -119,20 +118,14 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	}
 
 	privKey := ed25519.GenPrivKeyFromSecret(opts.Wallet.PrivateKey)
-	privVal, err := privval.LoadOrGenFilePV(
-		cfg.PrivValidatorKeyFile(),
-		cfg.PrivValidatorStateFile(),
-		func() (crypto.PrivKey, error) {
-			return privKey, nil
-		},
-	)
+	privVal, err := validator.NewDbValidator(ctx, privKey, opts.ShardID, opts.Store)
 	if err != nil {
-		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
+		return nil, RiverErrorWithBase(Err_INTERNAL, "create db validator", err)
 	}
 
 	nodeKey := &p2p.NodeKey{PrivKey: privKey}
 
-	log := logging.FromCtx(ctx).Named("md").With("shardId", opts.ShardID)
+	log := logging.FromCtx(ctx).With("shardId", opts.ShardID)
 	ctx = logging.CtxWithLog(ctx, log)
 
 	shard := &MetadataShard{

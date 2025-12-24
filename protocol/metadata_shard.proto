@@ -99,3 +99,12 @@ message UpdateStreamNodesAndReplicationTx {
     // Optional replication factor change. If 0, keep current.
     uint32 replication_factor = 3;
 }
+
+// ValidatorLastSignState stores the last signed state of a validator.
+message ValidatorLastSignState {
+    int64 height = 1;
+    int32 round = 2;
+    int32 step = 3;
+    bytes signature = 4;
+    bytes signed_bytes = 5;
+}
