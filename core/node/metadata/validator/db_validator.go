@@ -41,7 +41,7 @@ func voteToStep(vote *cmtproto.Vote) int8 {
 	}
 }
 
-// FilePVLastSignState stores the mutable part of PrivValidator.
+// LastSignState stores the mutable part of PrivValidator.
 type LastSignState struct {
 	Height    int64             `json:"height"`
 	Round     int32             `json:"round"`
@@ -59,7 +59,7 @@ func (lss *LastSignState) reset() {
 }
 
 // CheckHRS checks the given height, round, step (HRS) against that of the
-// FilePVLastSignState. It returns an error if the arguments constitute a regression,
+// LastSignState. It returns an error if the arguments constitute a regression,
 // or if they match but the SignBytes are empty.
 // The returned boolean indicates whether the last Signature should be reused -
 // it returns true if the HRS matches the arguments and the SignBytes are not empty (indicating
@@ -110,6 +110,7 @@ func (lss *LastSignState) CheckHRS(height int64, round int32, step int8) (bool, 
 // to prevent double signing.
 // It includes the LastSignature and LastSignBytes so we don't lose the signature
 // if the process crashes after signing but before the resulting consensus message is processed.
+// This is the same as privval.FilePV from CometBFT, but uses db storage instead of disk.
 type DbValidator struct {
 	Key           crypto.PrivKey
 	LastSignState *LastSignState
@@ -199,7 +200,7 @@ func (pv *DbValidator) SignBytes(bytes []byte) ([]byte, error) {
 	return pv.Key.Sign(bytes)
 }
 
-// String returns a string representation of the FilePV.
+// String returns a string representation of the DbValidator.
 func (pv *DbValidator) String() string {
 	return fmt.Sprintf(
 		"PrivValidator{%v LH:%v, LR:%v, LS:%v}",
