@@ -32,6 +32,14 @@ WHERE a.device_key = b.device_key
   AND a.session_ids = b.session_ids
   AND a.ctid > b.ctid;
 
--- Step 6: Add unique constraint on (device_key, stream_id, session_ids)
-ALTER TABLE app_session_keys
-ADD CONSTRAINT unique_device_stream_session_ids UNIQUE (device_key, stream_id, session_ids);
+-- Step 6: Create helper function to hash session_ids for indexing
+-- (B-tree indexes have a 2704 byte limit, large session_ids arrays can exceed this)
+CREATE OR REPLACE FUNCTION hash_session_ids(arr VARCHAR[]) RETURNS TEXT AS $$
+BEGIN
+    RETURN md5(array_to_string(arr, ','));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Step 7: Add unique index on (device_key, stream_id, hash(session_ids))
+CREATE UNIQUE INDEX unique_device_stream_session_ids
+ON app_session_keys (device_key, stream_id, hash_session_ids(session_ids));
