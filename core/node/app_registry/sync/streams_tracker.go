@@ -48,7 +48,8 @@ type EncryptedMessageQueue interface {
 
 type AppRegistryStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	queue EncryptedMessageQueue
+	queue             EncryptedMessageQueue
+	appRegistryConfig config.AppRegistryConfig
 }
 
 func NewAppRegistryStreamsTracker(
@@ -64,7 +65,8 @@ func NewAppRegistryStreamsTracker(
 	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
-		queue: store,
+		queue:             store,
+		appRegistryConfig: config,
 	}
 
 	if err := tracker.StreamsTrackerImpl.Init(
@@ -85,12 +87,19 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, _ bool) bool {
+func (tracker *AppRegistryStreamsTracker) coldStreamsEnabled() bool {
+	return tracker.appRegistryConfig.ColdStreamsEnabled
+}
+
+func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, isInit bool) bool {
 	streamType := streamId.Type()
 
+	// Track channel streams, but skip on init when cold streams is enabled.
+	// They will be loaded on-demand when new messages arrive via OnStreamLastMiniblockUpdated.
 	if streamType == shared.STREAM_CHANNEL_BIN {
-		return true
+		return !(isInit && tracker.coldStreamsEnabled())
 	}
+
 	if streamType != shared.STREAM_USER_INBOX_BIN {
 		return false
 	}
@@ -98,14 +107,8 @@ func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, strea
 	if err != nil {
 		return false
 	}
-
-	// Check if this user is a registered bot/app
 	isForwardable, _, err := tracker.queue.IsForwardableApp(ctx, userAddress)
-	if err != nil {
-		return false
-	}
-
-	return isForwardable
+	return err == nil && isForwardable
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
