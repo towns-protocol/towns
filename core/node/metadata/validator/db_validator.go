@@ -7,30 +7,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/gogoproto/proto"
-
-	"github.com/towns-protocol/towns/core/node/storage"
-
 	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/cometbft/cometbft/crypto"
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/protoio"
 	"github.com/cometbft/cometbft/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
+	gogoproto "github.com/cosmos/gogoproto/proto"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // TODO: type ?
 const (
-	stepNone      int8 = 0 // Used to distinguish the initial state
-	stepPropose   int8 = 1
-	stepPrevote   int8 = 2
-	stepPrecommit int8 = 3
+	stepNone      int32 = 0 // Used to distinguish the initial state
+	stepPropose   int32 = 1
+	stepPrevote   int32 = 2
+	stepPrecommit int32 = 3
 )
 
 // A vote is either stepPrevote or stepPrecommit.
-func voteToStep(vote *cmtproto.Vote) int8 {
+func voteToStep(vote *cmtproto.Vote) int32 {
 	switch vote.Type {
 	case types.PrevoteType:
 		return stepPrevote
@@ -41,23 +40,6 @@ func voteToStep(vote *cmtproto.Vote) int8 {
 	}
 }
 
-// LastSignState stores the mutable part of PrivValidator.
-type LastSignState struct {
-	Height    int64             `json:"height"`
-	Round     int32             `json:"round"`
-	Step      int8              `json:"step"`
-	Signature []byte            `json:"signature,omitempty"`
-	SignBytes cmtbytes.HexBytes `json:"signbytes,omitempty"`
-}
-
-func (lss *LastSignState) reset() {
-	lss.Height = 0
-	lss.Round = 0
-	lss.Step = 0
-	lss.Signature = nil
-	lss.SignBytes = nil
-}
-
 // CheckHRS checks the given height, round, step (HRS) against that of the
 // LastSignState. It returns an error if the arguments constitute a regression,
 // or if they match but the SignBytes are empty.
@@ -65,7 +47,7 @@ func (lss *LastSignState) reset() {
 // it returns true if the HRS matches the arguments and the SignBytes are not empty (indicating
 // we have already signed for this HRS, and can reuse the existing signature).
 // It panics if the HRS matches the arguments, there's a SignBytes, but no Signature.
-func (lss *LastSignState) CheckHRS(height int64, round int32, step int8) (bool, error) {
+func CheckHRS(lss *protocol.ValidatorLastSignState, height int64, round int32, step int32) (bool, error) {
 	if lss.Height > height {
 		return false, fmt.Errorf("height regression. Got %v, last height %v", height, lss.Height)
 	}
@@ -96,7 +78,7 @@ func (lss *LastSignState) CheckHRS(height int64, round int32, step int8) (bool, 
 		return false, nil
 	}
 
-	if lss.SignBytes == nil {
+	if lss.SignedBytes == nil {
 		return false, errors.New("no SignBytes found")
 	}
 
@@ -113,7 +95,7 @@ func (lss *LastSignState) CheckHRS(height int64, round int32, step int8) (bool, 
 // This is the same as privval.FilePV from CometBFT, but uses db storage instead of disk.
 type DbValidator struct {
 	Key           crypto.PrivKey
-	LastSignState *LastSignState
+	LastSignState *protocol.ValidatorLastSignState
 	shardId       uint64
 	store         storage.MetadataStore
 	ctx           context.Context
@@ -145,19 +127,23 @@ func NewDbValidator(
 }
 
 // Loads validator state from the store, or returns an empty LastSignState when none is stored.
-func loadDbState(ctx context.Context, shardId uint64, store storage.MetadataStore) (*LastSignState, error) {
-	pvState := &LastSignState{}
+func loadDbState(
+	ctx context.Context,
+	shardId uint64,
+	store storage.MetadataStore,
+) (*protocol.ValidatorLastSignState, error) {
+	pvState := &protocol.ValidatorLastSignState{}
 
-	stateJSONBytes, err := store.GetShardValidatorState(ctx, shardId)
+	state, err := store.GetShardValidatorState(ctx, shardId)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(stateJSONBytes) == 0 {
+	if len(state) == 0 {
 		return pvState, nil
 	}
 
-	err = cmtjson.Unmarshal(stateJSONBytes, pvState)
+	err = proto.Unmarshal(state, pvState)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +208,7 @@ func (pv *DbValidator) signVote(chainID string, vote *cmtproto.Vote, signExtensi
 
 	lss := pv.LastSignState
 
-	sameHRS, err := lss.CheckHRS(height, round, step)
+	sameHRS, err := CheckHRS(lss, height, round, step)
 	if err != nil {
 		return err
 	}
@@ -255,9 +241,9 @@ func (pv *DbValidator) signVote(chainID string, vote *cmtproto.Vote, signExtensi
 	// If they only differ by timestamp, use last timestamp and signature
 	// Otherwise, return error
 	if sameHRS {
-		if bytes.Equal(signBytes, lss.SignBytes) {
+		if bytes.Equal(signBytes, lss.SignedBytes) {
 			vote.Signature = lss.Signature
-		} else if timestamp, ok := checkVotesOnlyDifferByTimestamp(lss.SignBytes, signBytes); ok {
+		} else if timestamp, ok := checkVotesOnlyDifferByTimestamp(lss.SignedBytes, signBytes); ok {
 			// Compares the canonicalized votes (i.e. without vote extensions
 			// or vote extension signatures).
 			vote.Timestamp = timestamp
@@ -290,7 +276,7 @@ func (pv *DbValidator) signProposal(chainID string, proposal *cmtproto.Proposal)
 
 	lss := pv.LastSignState
 
-	sameHRS, err := lss.CheckHRS(height, round, step)
+	sameHRS, err := CheckHRS(lss, height, round, step)
 	if err != nil {
 		return err
 	}
@@ -303,9 +289,9 @@ func (pv *DbValidator) signProposal(chainID string, proposal *cmtproto.Proposal)
 	// If they only differ by timestamp, use last timestamp and signature
 	// Otherwise, return error
 	if sameHRS {
-		if bytes.Equal(signBytes, lss.SignBytes) {
+		if bytes.Equal(signBytes, lss.SignedBytes) {
 			proposal.Signature = lss.Signature
-		} else if timestamp, ok := checkProposalsOnlyDifferByTimestamp(lss.SignBytes, signBytes); ok {
+		} else if timestamp, ok := checkProposalsOnlyDifferByTimestamp(lss.SignedBytes, signBytes); ok {
 			proposal.Timestamp = timestamp
 			proposal.Signature = lss.Signature
 		} else {
@@ -327,20 +313,20 @@ func (pv *DbValidator) signProposal(chainID string, proposal *cmtproto.Proposal)
 }
 
 // Persist height/round/step and signature.
-func (pv *DbValidator) saveSigned(height int64, round int32, step int8,
+func (pv *DbValidator) saveSigned(height int64, round int32, step int32,
 	signBytes []byte, sig []byte,
 ) error {
 	pv.LastSignState.Height = height
 	pv.LastSignState.Round = round
 	pv.LastSignState.Step = step
 	pv.LastSignState.Signature = sig
-	pv.LastSignState.SignBytes = signBytes
+	pv.LastSignState.SignedBytes = signBytes
 
-	jsonBytes, err := cmtjson.Marshal(pv.LastSignState)
+	state, err := proto.Marshal(pv.LastSignState)
 	if err != nil {
 		return err
 	}
-	return pv.store.SetShardValidatorState(pv.ctx, pv.shardId, jsonBytes)
+	return pv.store.SetShardValidatorState(pv.ctx, pv.shardId, state)
 }
 
 // -----------------------------------------------------------------------------------------
@@ -364,7 +350,7 @@ func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.T
 	lastVote.Timestamp = now
 	newVote.Timestamp = now
 
-	return lastTime, proto.Equal(&newVote, &lastVote)
+	return lastTime, gogoproto.Equal(&newVote, &lastVote)
 }
 
 // returns the timestamp from the lastSignBytes.
@@ -384,5 +370,5 @@ func checkProposalsOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (ti
 	lastProposal.Timestamp = now
 	newProposal.Timestamp = now
 
-	return lastTime, proto.Equal(&newProposal, &lastProposal)
+	return lastTime, gogoproto.Equal(&newProposal, &lastProposal)
 }

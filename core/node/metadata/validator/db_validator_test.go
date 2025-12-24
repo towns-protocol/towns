@@ -46,7 +46,7 @@ func TestDbValidatorLoadsState(t *testing.T) {
 	assert.Equal(t, privVal.LastSignState.Round, reloaded.LastSignState.Round)
 	assert.Equal(t, privVal.LastSignState.Step, reloaded.LastSignState.Step)
 	assert.Equal(t, privVal.LastSignState.Signature, reloaded.LastSignState.Signature)
-	assert.Equal(t, privVal.LastSignState.SignBytes, reloaded.LastSignState.SignBytes)
+	assert.Equal(t, privVal.LastSignState.SignedBytes, reloaded.LastSignState.SignedBytes)
 }
 
 func TestSignVote(t *testing.T) {
