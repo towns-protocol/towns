@@ -51,7 +51,7 @@ type MetadataStore interface {
 	CommitPendingBlock(ctx context.Context, shardId uint64, pendingBlock *mdstate.PendingBlockState) error
 
 	GetShardValidatorState(ctx context.Context, shardId uint64) ([]byte, error)
-	SetShardValidatorState(ctx context.Context, shardId uint64, stateJSON []byte) error
+	SetShardValidatorState(ctx context.Context, shardId uint64, state []byte) error
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -570,7 +570,7 @@ func (s *PostgresMetadataShardStore) GetShardValidatorState(
 func (s *PostgresMetadataShardStore) SetShardValidatorState(
 	ctx context.Context,
 	shardID uint64,
-	stateJSON []byte,
+	state []byte,
 ) error {
 	return s.store.txRunner(
 		ctx,
@@ -578,7 +578,7 @@ func (s *PostgresMetadataShardStore) SetShardValidatorState(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			updateSQL := `UPDATE metadata SET validator_state = $1 WHERE shard_id = $2`
-			_, err := tx.Exec(ctx, updateSQL, stateJSON, shardID)
+			_, err := tx.Exec(ctx, updateSQL, state, shardID)
 			return err
 		},
 		nil,
