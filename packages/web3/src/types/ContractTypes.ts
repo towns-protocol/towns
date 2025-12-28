@@ -320,7 +320,7 @@ export type SendTipMemberParams = {
 
 export type SendTipBotParams = {
     appId: string
-    spaceId: string
+    spaceId?: string
     receiver: Address
     currency: Address
     amount: bigint
