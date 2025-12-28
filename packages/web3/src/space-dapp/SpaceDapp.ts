@@ -1947,8 +1947,15 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             case 'any': {
                 // TipRecipientType.Any = 2
                 recipientType = 2
-                const { receiver, currency, amount, messageId, channelId } = tipParams
-                const sender = await signer.getAddress()
+                const {
+                    receiver,
+                    currency,
+                    amount,
+                    messageId,
+                    channelId,
+                    sender: senderOverride,
+                } = tipParams
+                const sender = senderOverride ?? (await signer.getAddress())
                 if (!this.config.addresses.accountModules) {
                     throw new Error('AccountModules address is not configured')
                 }
