@@ -55,6 +55,7 @@ describe('transactions_Tip', () => {
     let dummyReceipt: ethers.ContractReceipt
     let dummyTipEvent: TipSentEventObject
     let dummyTipEventCopy: TipSentEventObject
+    let dmChannelId: string
 
     beforeAll(async () => {
         // setup once
@@ -468,5 +469,67 @@ describe('transactions_Tip', () => {
             expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(totalNetTipAmount)
             expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(2n)
         })
+    })
+
+    // DM tip tests (type: 'any') - tips sent in a DM context
+    // these tips go through the AccountModules contract instead of a space's tipping contract
+    test('addDmTip', async () => {
+        const { streamId } = await bob.dms.createDM(alice.userId)
+        dmChannelId = streamId
+        const dmChannel = bob.dms.getDm(dmChannelId)
+        await waitFor(() => expect(dmChannel.members.data.initialized).toBe(true))
+        const { eventId: dmMessageId } = await dmChannel.sendMessage('hello in DM')
+        await expect(
+            dmChannel.sendTip(
+                dmMessageId,
+                {
+                    receiver: aliceIdentity.rootWallet.address as Address,
+                    currency: ETH_ADDRESS as Address,
+                    amount: 500n,
+                    chainId,
+                },
+                bobIdentity.signer,
+            ),
+        ).resolves.not.toThrow()
+
+        // Verify the tip event appears in the DM channel's timeline
+        const stream = bob.riverConnection.client!.stream(dmChannelId)
+        if (!stream) throw new Error('no stream found')
+        const tipEvent = await waitForValue(() => {
+            const isTipBlockchainTransaction = (e: TimelineEvent) =>
+                e.content?.kind === RiverTimelineEvent.TipEvent
+            const tipEvents = stream.view.timeline.filter(isTipBlockchainTransaction)
+            expect(tipEvents.length).toBeGreaterThan(0)
+            const tip = tipEvents[0]
+            if (
+                !tip ||
+                tip.content?.kind !== RiverTimelineEvent.TipEvent ||
+                !tip.content.transaction
+            )
+                throw new Error('no tip event found')
+            return tip.content
+        })
+        expect(tipEvent.fromUserId).toEqual(bobIdentity.rootWallet.address)
+    })
+
+    test('dmChannelSnapshot', async () => {
+        // Force a snapshot of the DM channel
+        await bob.riverConnection.client!.debugForceMakeMiniblock(dmChannelId, {
+            forceSnapshot: true,
+        })
+
+        // Refetch the stream using getStream, make sure it parses the snapshot correctly
+        const stream = await bob.riverConnection.client!.getStream(dmChannelId)
+        if (!stream) throw new Error('no stream found')
+
+        // DM tips don't have protocol fees, so the full amount should be recorded
+        expect(stream.membershipContent.tips[ETH_ADDRESS]).toEqual(500n)
+        expect(stream.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
+        const bobMember = stream.membershipContent.joined.get(bobIdentity.rootWallet.address)
+        const aliceMember = stream.membershipContent.joined.get(aliceIdentity.rootWallet.address)
+        expect(bobMember?.tipsSent?.[ETH_ADDRESS]).toEqual(500n)
+        expect(bobMember?.tipsSentCount?.[ETH_ADDRESS]).toEqual(1n)
+        expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(500n)
+        expect(aliceMember?.tipsReceivedCount?.[ETH_ADDRESS]).toEqual(1n)
     })
 })
