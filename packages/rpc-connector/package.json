@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/rpc-connector",
-    "version": "0.0.447",
+    "version": "0.0.448",
     "type": "module",
     "main": "./dist/node/index.cjs",
     "types": "./dist/node/index.d.ts",
