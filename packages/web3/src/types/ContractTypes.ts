@@ -313,6 +313,7 @@ export type SendTipMemberParams = {
     receiver: Address
     currency: Address
     amount: bigint
+    // Used for nodes to validate tip event
     messageId: string
     channelId: string
 }
@@ -323,6 +324,16 @@ export type SendTipBotParams = {
     receiver: Address
     currency: Address
     amount: bigint
+    // Used for nodes to validate tip event
+    messageId: string
+    channelId: string
+}
+
+export type SendTipAnyParams = {
+    receiver: Address
+    currency: Address
+    amount: bigint
+    // Used for nodes to validate tip event
     messageId: string
     channelId: string
 }
@@ -330,3 +341,4 @@ export type SendTipBotParams = {
 export type SendTipParams =
     | ({ type: 'member' } & SendTipMemberParams)
     | ({ type: 'bot' } & SendTipBotParams)
+    | ({ type: 'any' } & SendTipAnyParams)

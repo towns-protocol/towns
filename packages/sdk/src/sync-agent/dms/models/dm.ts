@@ -11,6 +11,8 @@ import type {
     PlainMessage,
 } from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
+import { ITippingShim, type Address } from '@towns-protocol/web3'
+import { ethers } from 'ethers'
 
 const logger = dlogger('csb:dm')
 
@@ -143,6 +145,50 @@ export class Dm extends PersistedObservable<DmModel> {
         const result = await this.riverConnection
             .withStream(channelId)
             .call((client) => client.redactMessage(channelId, eventId))
+        return result
+    }
+
+    /** Sends a tip in a DM context.
+     * @param messageId - The event id of the message to tip
+     * @param tip - The tip parameters
+     * @param signer - The signer to use for the transaction
+     */
+    async sendTip(
+        messageId: string,
+        tip: { receiver: Address; currency: Address; amount: bigint; chainId: number },
+        signer: ethers.Signer,
+    ) {
+        const spaceDapp = this.riverConnection.spaceDapp
+        const accountModulesAddress = spaceDapp.config.addresses.accountModules
+        if (!accountModulesAddress) {
+            throw new Error('AccountModules address is not configured')
+        }
+        const tx = await spaceDapp.sendTip({
+            tipParams: {
+                type: 'any',
+                currency: tip.currency,
+                amount: tip.amount,
+                messageId,
+                channelId: this.data.id,
+                receiver: tip.receiver,
+            },
+            signer,
+        })
+        const receipt = await tx.wait(3)
+        const senderAddress = await signer.getAddress()
+
+        const tippingShim = new ITippingShim(accountModulesAddress, spaceDapp.provider)
+        const tipEvent = tippingShim.getTipEvent(receipt, senderAddress)
+        if (!tipEvent) {
+            throw new Error('tipEvent not found')
+        }
+
+        const channelId = this.data.id
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) =>
+                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
+            )
         return result
     }
 
