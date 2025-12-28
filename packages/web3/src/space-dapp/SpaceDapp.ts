@@ -1907,7 +1907,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 recipientType = 1
                 const { spaceId, receiver, appId, currency, amount, messageId, channelId } =
                     tipParams
-                // For DM bot tips, spaceId may be undefined - use sender's account
                 if (spaceId) {
                     const space = this.getSpace(spaceId)
                     if (!space) {
@@ -1915,8 +1914,13 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                     }
                     tippingContract = space.Tipping
                 } else {
-                    const sender = await signer.getAddress()
-                    tippingContract = new ITippingShim(sender, this.provider)
+                    if (!this.config.addresses.accountModules) {
+                        throw new Error('AccountModules address is not configured')
+                    }
+                    tippingContract = new ITippingShim(
+                        this.config.addresses.accountModules,
+                        this.provider,
+                    )
                 }
                 const metadataData = ethers.utils.defaultAbiCoder.encode(
                     ['bytes32', 'bytes32'],
