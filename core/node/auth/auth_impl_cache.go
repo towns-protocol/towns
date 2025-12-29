@@ -336,7 +336,7 @@ func newAppInstalledCache(ctx context.Context, cfg *config.ChainConfig) (*entitl
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
 
-	positiveCacheTTL := 1 * time.Hour
+	positiveCacheTTL := 15 * time.Minute
 	// This value is irrelevant as we don't use the negative cache for app installed checks.
 	negativeCacheTTL := 2 * time.Second
 

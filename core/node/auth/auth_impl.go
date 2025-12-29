@@ -1420,7 +1420,7 @@ func (ca *chainAuth) checkDmCreation(
 	var lastErr error
 
 	if secondPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract)
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract, true)
 		if err != nil {
 			lastErr = err
 		} else if result.IsAllowed() {
@@ -1429,7 +1429,7 @@ func (ca *chainAuth) checkDmCreation(
 	}
 
 	if firstPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract)
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract, true)
 		if err != nil {
 			lastErr = err
 		} else if result.IsAllowed() {
@@ -1467,7 +1467,7 @@ func (ca *chainAuth) checkDmEvent(
 	var lastErr error
 
 	if secondPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, *args.secondPartyAppAddress)
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, *args.secondPartyAppAddress, false)
 		if err != nil {
 			lastErr = err
 		} else if result.IsAllowed() {
@@ -1475,7 +1475,7 @@ func (ca *chainAuth) checkDmEvent(
 		}
 	}
 	if firstPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, *args.firstPartyAppAddress)
+		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, *args.firstPartyAppAddress, false)
 		if err != nil {
 			lastErr = err
 		} else if result.IsAllowed() {
@@ -1513,6 +1513,7 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 	cfg *config.Config,
 	userAddress common.Address,
 	appContractAddress common.Address,
+	bustCache bool,
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 
@@ -1527,6 +1528,10 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 		cacheArgs := &ChainAuthArgs{
 			principal:  wallet,
 			appAddress: appContractAddress,
+		}
+		// Bust cache on DM stream creation to ensure fresh app installation status.
+		if bustCache {
+			ca.appInstalledCache.bust(cacheArgs)
 		}
 		result, _, err := ca.appInstalledCache.executeUsingCache(
 			ctx,
