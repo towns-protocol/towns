@@ -12,7 +12,7 @@ import { encodeFunctionData, namehash, toHex } from 'viem'
 import { packetToBytes } from 'viem/ens'
 import { il1ResolverServiceAbi, iAddrResolverAbi } from '../src/generated'
 
-const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000'
+const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:8787'
 
 // Defaults - customize these for your test
 const name = process.argv[2] ?? 'alice.towns-dev.eth'
