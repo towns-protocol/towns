@@ -13,7 +13,7 @@ import { z } from 'zod'
 
 import { type Env, envVar } from '../env'
 import { handleQuery } from '../ccip-read/query'
-import { il1ResolverServiceAbi } from '../generated'
+import { il1ResolverServiceAbi } from '../abi'
 
 const schema = z.object({
     sender: z

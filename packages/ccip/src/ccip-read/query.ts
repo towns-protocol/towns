@@ -21,7 +21,7 @@ import {
 
 import { type Env, envVar } from '../env'
 import { dnsDecodeName } from './utils'
-import { iExtendedResolverAbi } from '../generated'
+import { iExtendedResolverAbi } from '../abi'
 
 const supportedChains = [
     arbitrum,

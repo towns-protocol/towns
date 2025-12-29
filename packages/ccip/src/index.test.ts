@@ -3,7 +3,7 @@ import { decodeAbiParameters, decodeFunctionData, encodeFunctionData, namehash, 
 import { packetToBytes } from 'viem/ens'
 
 import app from './index'
-import { iAddrResolverAbi, il1ResolverServiceAbi } from './generated'
+import { iAddrResolverAbi, il1ResolverServiceAbi } from './abi'
 
 // Test constants - replace with real values for E2E testing
 const TEST_SENDER = '0xDB34Da70Cfd694190742E94B7f17769Bc3d84D27' //

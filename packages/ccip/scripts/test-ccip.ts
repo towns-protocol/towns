@@ -10,7 +10,7 @@
  */
 import { encodeFunctionData, namehash, toHex } from 'viem'
 import { packetToBytes } from 'viem/ens'
-import { il1ResolverServiceAbi, iAddrResolverAbi } from '../src/generated'
+import { il1ResolverServiceAbi, iAddrResolverAbi } from '../src/abi'
 
 const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:8787'
 
