@@ -6,7 +6,7 @@ import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IE
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {INameWrapper} from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
-import {IL1ResolverService} from "src/domains/facets/resolver/IL1ResolverService.sol";
+import {IL1ResolverService} from "src/domains/facets/l1/IL1ResolverService.sol";
 
 // libraries
 import {NameCoder} from "@ensdomains/ens-contracts/utils/NameCoder.sol";
@@ -20,7 +20,7 @@ import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCut
 import {DiamondLoupeFacet} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeFacet.sol";
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
-import {L1ResolverFacet} from "src/domains/facets/resolver/L1ResolverFacet.sol";
+import {L1ResolverFacet} from "src/domains/facets/l1/L1ResolverFacet.sol";
 import {ENS} from "@ensdomains/ens-contracts/registry/ENS.sol";
 
 // deployments

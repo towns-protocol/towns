@@ -9,7 +9,7 @@ import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 // contracts
-import {L1ResolverFacet} from "src/domains/facets/resolver/L1ResolverFacet.sol";
+import {L1ResolverFacet} from "src/domains/facets/l1/L1ResolverFacet.sol";
 
 library DeployL1ResolverFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
