@@ -4,7 +4,7 @@ This file provides guidance to ai tools when working with code in this repositor
 
 ## Project Overview
 
-The `@towns-protocol/ccip` package implements a CCIP-Read (ERC-3668) gateway service for cross-chain ENS resolution. It provides a Hono-based HTTP API that:
+The `@towns-protocol/ccip` package implements a CCIP-Read ([ERC-3668](https://eips.ethereum.org/EIPS/eip-3668)) gateway service for cross-chain ENS resolution. It provides a Hono-based HTTP API that:
 
 1. **Processes CCIP-Read requests**: Receives ERC-3668 compatible function calls destined for an L2 ENS resolver
 2. **Queries L2 resolvers**: Forwards resolver calls to the appropriate L2 chain (Arbitrum, Base, Optimism, Polygon, etc.)
