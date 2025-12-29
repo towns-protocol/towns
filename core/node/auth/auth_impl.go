@@ -1553,7 +1553,6 @@ func (ca *chainAuth) checkAppInstalledOnUser(
 			)
 			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 		}
-		lastErr = nil
 	}
 
 	if lastErr != nil {
