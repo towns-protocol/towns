@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,6 +19,11 @@ type UserAccountContract interface {
 		userAccountAddress common.Address,
 		appAddress common.Address,
 	) (bool, error)
+	GetAppExpiration(
+		ctx context.Context,
+		userAccountAddress common.Address,
+		appAddress common.Address,
+	) (*big.Int, error)
 }
 
 type UserAccountContractImpl struct {
@@ -80,4 +86,31 @@ func (uac *UserAccountContractImpl) IsAppInstalled(
 	}
 
 	return isInstalled, nil
+}
+
+// GetAppExpiration returns the expiration timestamp for an app installation on the user's smart account.
+// Returns a uint48 timestamp (seconds since epoch).
+func (uac *UserAccountContractImpl) GetAppExpiration(
+	ctx context.Context,
+	userAccountAddress common.Address,
+	appAddress common.Address,
+) (*big.Int, error) {
+	appAccount, err := base.NewAppAccount(userAccountAddress, uac.backend)
+	if err != nil {
+		return nil, AsRiverError(err).Tag("method", "NewAppAccount").Tag("userAccount", userAccountAddress.Hex())
+	}
+
+	expiration, err := appAccount.GetAppExpiration(
+		&bind.CallOpts{Context: ctx},
+		appAddress,
+	)
+	if err != nil {
+		return nil, AsRiverError(
+			uac.decodeError(err),
+		).Tag("method", "GetAppExpiration").
+			Tag("userAccount", userAccountAddress.Hex()).
+			Tag("appAddress", appAddress.Hex())
+	}
+
+	return expiration, nil
 }

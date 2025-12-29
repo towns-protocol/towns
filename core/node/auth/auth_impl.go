@@ -1487,7 +1487,7 @@ func (ca *chainAuth) checkDmEvent(
 	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 }
 
-// checkAppInstalledOnUserUncached checks if an app is installed on a single wallet.
+// checkAppInstalledOnUserUncached checks if an app is installed on a single wallet and not expired.
 // args.principal = wallet address, args.appAddress = app contract address
 func (ca *chainAuth) checkAppInstalledOnUserUncached(
 	ctx context.Context,
@@ -1498,10 +1498,24 @@ func (ca *chainAuth) checkAppInstalledOnUserUncached(
 	if err != nil {
 		return nil, err
 	}
-	if isInstalled {
-		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	if !isInstalled {
+		return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
 	}
-	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+
+	// Check if the app installation has expired
+	expiration, err := ca.userAccountContract.GetAppExpiration(ctx, args.principal, args.appAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// expiration == 0 means no expiration (perpetual install)
+	// expiration > 0 && expiration < now means expired
+	now := big.NewInt(time.Now().Unix())
+	if expiration.Cmp(big.NewInt(0)) > 0 && expiration.Cmp(now) < 0 {
+		return boolCacheResult{false, EntitlementResultReason_APP_EXPIRED}, nil
+	}
+
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 }
 
 func (ca *chainAuth) checkAppInstalledOnUser(

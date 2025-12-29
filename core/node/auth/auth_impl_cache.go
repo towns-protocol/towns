@@ -40,6 +40,7 @@ const (
 	EntitlementResultReason_APP_ENTITLEMENTS
 	EntitlementResultReason_IS_NOT_BOT_OWNER
 	EntitlementResultReason_APP_NOT_INSTALLED_ON_USER
+	EntitlementResultReason_APP_EXPIRED
 	EntitlementResultReason_NO_BOT_PARTY
 	EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT
 	EntitlementResultReason_MAX // MAX - leave at the end
@@ -60,6 +61,7 @@ var entitlementResultReasonDescriptions = []string{
 	"APP_ENTITLEMENTS",
 	"IS_NOT_BOT_OWNER",
 	"APP_NOT_INSTALLED_ON_USER",
+	"APP_EXPIRED",
 	"NO_BOT_PARTY",
 	"PARTY_IS_UNREGISTERED_BOT",
 }
