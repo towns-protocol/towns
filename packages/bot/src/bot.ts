@@ -519,6 +519,59 @@ export class Bot<Commands extends BotCommand[] = []> {
     }
 
     /**
+     * Get a valid session without consuming a use.
+     * (Used so we don't burn a prepaid session use if the command handler fails.)
+     */
+    private getActiveSession(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): ActiveSession | undefined {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.activeSessions.get(sessionKey)
+
+        if (!session) return undefined
+        if (session.network !== network) return undefined
+
+        // Check if session has expired
+        if (Date.now() > session.expiresAt) {
+            this.activeSessions.delete(sessionKey)
+            return undefined
+        }
+
+        // Check if session has uses remaining
+        if (session.usesRemaining !== undefined && session.usesRemaining <= 0) {
+            this.activeSessions.delete(sessionKey)
+            return undefined
+        }
+
+        return session
+    }
+
+    /**
+     * Consume a session use (decrements use count if limited).
+     * Call this only AFTER a session-protected command successfully completes.
+     */
+    private consumeSession(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): ActiveSession | undefined {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.getActiveSession(userId, command, network)
+        if (!session) return undefined
+
+        if (session.usesRemaining !== undefined) {
+            session.usesRemaining--
+            if (session.usesRemaining <= 0) {
+                this.activeSessions.delete(sessionKey)
+            }
+        }
+
+        return session
+    }
+
+    /**
      * Use a session (decrements use count if limited)
      */
     private useSession(
@@ -1731,6 +1784,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
 
         const wrappedHandler: BotEvents<Commands>['slashCommand'] = async (handler, event) => {
+            let sessionFlow = false
             try {
                 const chainId = this.viem.chain.id
                 const network = chainIdToNetwork(chainId)
@@ -1749,20 +1803,27 @@ export class Bot<Commands extends BotCommand[] = []> {
                     paymentConfig.session &&
                     this.hasActiveSession(event.userId, command, network)
                 ) {
-                    const session = this.useSession(event.userId, command, network)
+                    const session = this.getActiveSession(event.userId, command, network)
                     if (session) {
+                        const usesRemainingAfter =
+                            session.usesRemaining !== undefined
+                                ? session.usesRemaining - 1
+                                : undefined
+
+                        sessionFlow = true
+
                         // Session is valid, execute command without payment
                         debug('session:used', {
                             userId: event.userId,
                             command,
-                            usesRemaining: session.usesRemaining,
+                            usesRemaining: usesRemainingAfter,
                             expiresAt: new Date(session.expiresAt).toISOString(),
                         })
 
                         // Show session usage info
                         const usesInfo =
-                            session.usesRemaining !== undefined
-                                ? ` (${session.usesRemaining} uses remaining)`
+                            usesRemainingAfter !== undefined
+                                ? ` (${usesRemainingAfter} uses remaining)`
                                 : ''
                         await handler.sendMessage(
                             event.channelId,
@@ -1772,6 +1833,9 @@ export class Bot<Commands extends BotCommand[] = []> {
 
                         // Execute the original command handler
                         await fn(handler, event)
+
+                        // Only consume the session after the handler succeeds.
+                        this.consumeSession(event.userId, command, network)
                         return
                     }
                 }
@@ -1805,7 +1869,13 @@ export class Bot<Commands extends BotCommand[] = []> {
             } catch (error) {
                 await handler.sendMessage(
                     event.channelId,
-                    `❌ Failed to request payment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    sessionFlow
+                        ? `❌ Command failed while using session access: ${
+                              error instanceof Error ? error.message : 'Unknown error'
+                          }`
+                        : `❌ Failed to request payment: ${
+                              error instanceof Error ? error.message : 'Unknown error'
+                          }`,
                 )
             }
         }
