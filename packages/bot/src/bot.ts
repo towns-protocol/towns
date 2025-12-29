@@ -548,29 +548,6 @@ export class Bot<Commands extends BotCommand[] = []> {
         return session
     }
 
-    /**
-     * Consume a session use (decrements use count if limited).
-     * Call this only AFTER a session-protected command successfully completes.
-     */
-    private consumeSession(
-        userId: string,
-        command: string,
-        network: X402Network,
-    ): ActiveSession | undefined {
-        const sessionKey = getSessionKey(userId, command)
-        const session = this.getActiveSession(userId, command, network)
-        if (!session) return undefined
-
-        if (session.usesRemaining !== undefined) {
-            session.usesRemaining--
-            if (session.usesRemaining <= 0) {
-                this.activeSessions.delete(sessionKey)
-            }
-        }
-
-        return session
-    }
-
     // Per-session atomicity helpers to prevent concurrent over-use.
     // This bot runs in a single Node process, but async handlers can interleave.
     // We serialize mutations per sessionKey via a simple promise queue (mutex).
@@ -645,31 +622,6 @@ export class Bot<Commands extends BotCommand[] = []> {
                 }
             }
         })
-    }
-
-    /**
-     * Use a session (decrements use count if limited)
-     */
-    private useSession(
-        userId: string,
-        command: string,
-        network: X402Network,
-    ): ActiveSession | undefined {
-        const sessionKey = getSessionKey(userId, command)
-        const session = this.activeSessions.get(sessionKey)
-
-        if (!session) return undefined
-        if (session.network !== network) return undefined
-
-        // Decrement uses if limited
-        if (session.usesRemaining !== undefined) {
-            session.usesRemaining--
-            if (session.usesRemaining <= 0) {
-                this.activeSessions.delete(sessionKey)
-            }
-        }
-
-        return session
     }
 
     /**
