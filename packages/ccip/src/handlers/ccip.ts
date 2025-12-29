@@ -39,21 +39,128 @@ export const getCcipRead = async (req: HonoRequest, env: Env): Promise<Response>
 
     const { sender, data } = safeParse.data
 
-    const decodedStuffedResolveCall = decodeFunctionData({
-        abi: il1ResolverServiceAbi,
-        data,
-    })
+    // Decode the stuffed resolve call with error handling for malformed input
+    let dnsEncodedName: Hex
+    let encodedResolveCall: Hex
+    let targetChainId: bigint
+    let targetRegistryAddress: Hex
 
-    const [dnsEncodedName, encodedResolveCall, targetChainId, targetRegistryAddress] =
-        decodedStuffedResolveCall.args
+    try {
+        const decodedStuffedResolveCall = decodeFunctionData({
+            abi: il1ResolverServiceAbi,
+            data,
+        })
 
-    const result = await handleQuery({
-        dnsEncodedName,
-        encodedResolveCall,
-        targetChainId,
-        targetRegistryAddress,
-        env,
-    })
+        // Validate that args exist and have the expected structure
+        if (!decodedStuffedResolveCall.args || decodedStuffedResolveCall.args.length < 4) {
+            console.error('CCIP decode error: Missing or incomplete args', {
+                functionName: decodedStuffedResolveCall.functionName,
+                argsLength: decodedStuffedResolveCall.args?.length ?? 0,
+                sender,
+                data,
+            })
+            return Response.json(
+                { message: 'Invalid request: decoded args missing or incomplete' },
+                { status: 400 },
+            )
+        }
+
+        const [
+            rawDnsEncodedName,
+            rawEncodedResolveCall,
+            rawTargetChainId,
+            rawTargetRegistryAddress,
+        ] = decodedStuffedResolveCall.args
+
+        // Type validation for decoded arguments
+        if (
+            typeof rawDnsEncodedName !== 'string' ||
+            !isHex(rawDnsEncodedName) ||
+            typeof rawEncodedResolveCall !== 'string' ||
+            !isHex(rawEncodedResolveCall) ||
+            typeof rawTargetChainId !== 'bigint' ||
+            typeof rawTargetRegistryAddress !== 'string' ||
+            !isHex(rawTargetRegistryAddress)
+        ) {
+            console.error('CCIP decode error: Invalid argument types', {
+                dnsEncodedName: rawDnsEncodedName,
+                encodedResolveCall: rawEncodedResolveCall,
+                targetChainId: String(rawTargetChainId),
+                targetRegistryAddress: rawTargetRegistryAddress,
+                sender,
+            })
+            return Response.json(
+                { message: 'Invalid request: decoded argument types are incorrect' },
+                { status: 400 },
+            )
+        }
+
+        dnsEncodedName = rawDnsEncodedName
+        encodedResolveCall = rawEncodedResolveCall
+        targetChainId = rawTargetChainId
+        targetRegistryAddress = rawTargetRegistryAddress
+    } catch (decodeError) {
+        console.error('CCIP decode error: Failed to decode function data', {
+            error: decodeError instanceof Error ? decodeError.message : String(decodeError),
+            sender,
+            data,
+        })
+        return Response.json(
+            {
+                message: 'Invalid request: failed to decode function data',
+                error: decodeError instanceof Error ? decodeError.message : 'Unknown decode error',
+            },
+            { status: 400 },
+        )
+    }
+
+    // Query the L2 resolver
+    let result: Hex
+    try {
+        result = await handleQuery({
+            dnsEncodedName,
+            encodedResolveCall,
+            targetChainId,
+            targetRegistryAddress,
+            env,
+        })
+    } catch (queryError) {
+        console.error('CCIP query error: handleQuery failed', {
+            error: queryError instanceof Error ? queryError.message : String(queryError),
+            dnsEncodedName,
+            targetChainId: String(targetChainId),
+            targetRegistryAddress,
+            sender,
+        })
+        return Response.json(
+            {
+                message: 'Query failed: unable to resolve from L2',
+                error: queryError instanceof Error ? queryError.message : 'Unknown query error',
+            },
+            { status: 502 },
+        )
+    }
+
+    // Validate the query result - '0x' indicates unsupported chain or empty result
+    if (!result || result === '0x') {
+        console.error('CCIP query error: empty or unsupported result', {
+            result,
+            dnsEncodedName,
+            targetChainId: String(targetChainId),
+            targetRegistryAddress,
+            sender,
+        })
+        return Response.json(
+            {
+                message: 'Query failed: unsupported chain or empty result from resolver',
+                context: {
+                    targetChainId: String(targetChainId),
+                    targetRegistryAddress,
+                },
+            },
+            { status: 404 },
+        )
+    }
 
     const ttl = 1000
     const validUntil = Math.floor(Date.now() / 1000 + ttl)
