@@ -105,12 +105,16 @@ import { EventDedup, type EventDedupConfig } from './eventDedup'
 // Note: x402 core v2.0.0 still uses PaymentPayloadV1/PaymentRequirementsV1 types.
 // The v2 improvements are CAIP-2 networks, multi-chain support, and sessions (all implemented here).
 import type { PaymentPayloadV1, PaymentRequirementsV1 } from '@x402/core/types/v1'
-import type { PendingPayment, PaymentConfig, ActiveSession, X402Network } from './payments'
 import {
+    validateSessionConfig,
     chainIdToNetwork,
     createPaymentRequest,
     getSessionKey,
     validateNetworkSupport,
+    type PendingPayment,
+    type PaymentConfig,
+    type ActiveSession,
+    type X402Network,
 } from './payments'
 import type { FacilitatorConfig, FacilitatorConfigInput } from './x402'
 import { normalizeFacilitatorConfig, callFacilitatorSettle, callFacilitatorVerify } from './x402'
@@ -474,6 +478,12 @@ export class Bot<Commands extends BotCommand[] = []> {
             if (paymentConfig) {
                 for (const cmd of commands) {
                     if (cmd.paid?.price) {
+                        if (cmd.paid.session) {
+                            validateSessionConfig(
+                                cmd.paid.session,
+                                `Invalid session config for command "${cmd.name}"`,
+                            )
+                        }
                         this.paymentCommands.set(cmd.name, cmd.paid)
                     }
                 }
@@ -1727,6 +1737,12 @@ export class Bot<Commands extends BotCommand[] = []> {
 
                 // Always validate the current network before any session bypass.
                 validateNetworkSupport(chainId, paymentConfig)
+                if (paymentConfig.session) {
+                    validateSessionConfig(
+                        paymentConfig.session,
+                        `Invalid session config for command "${command}"`,
+                    )
+                }
 
                 // Check for active session (x402 v2 feature)
                 if (

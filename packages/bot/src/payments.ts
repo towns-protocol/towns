@@ -78,6 +78,17 @@ export interface SessionConfig {
     maxUses?: number
 }
 
+export function validateSessionConfig(session: SessionConfig, context: string): void {
+    if (session.duration !== undefined && session.duration <= 0) {
+        throw new Error(
+            `${context}: session.duration must be > 0 seconds (got ${session.duration}).`,
+        )
+    }
+    if (session.maxUses !== undefined && session.maxUses <= 0) {
+        throw new Error(`${context}: session.maxUses must be > 0 (got ${session.maxUses}).`)
+    }
+}
+
 /**
  * Extended payment configuration for x402 v2
  * Supports multi-chain and session-based payments
