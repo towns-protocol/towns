@@ -5,15 +5,15 @@ pragma solidity ^0.8.29;
 import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IExtendedResolver.sol";
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IL1ResolverService} from "src/domains/facets/resolver/IL1ResolverService.sol";
+import {IL1ResolverService} from "src/domains/facets/l1/IL1ResolverService.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {OffchainLookup} from "@ensdomains/ens-contracts/ccipRead/EIP3668.sol";
 
 // contracts
-import {L1ResolverFacet} from "src/domains/facets/resolver/L1ResolverFacet.sol";
-import {L1ResolverMod} from "src/domains/facets/resolver/L1ResolverMod.sol";
+import {L1ResolverFacet} from "src/domains/facets/l1/L1ResolverFacet.sol";
+import {L1ResolverMod} from "src/domains/facets/l1/L1ResolverMod.sol";
 
 // test setup
 import {L1ResolverBaseSetup} from "./L1ResolverBaseSetup.sol";
