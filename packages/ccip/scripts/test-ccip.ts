@@ -15,7 +15,7 @@ import { il1ResolverServiceAbi, iAddrResolverAbi } from '../src/generated'
 const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000'
 
 // Defaults - customize these for your test
-const name = process.argv[2] ?? 'alice.towns.eth'
+const name = process.argv[2] ?? 'alice.towns-dev.eth'
 const chainId = BigInt(process.argv[3] ?? '84532') // Base Sepolia
 const sender = '0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61' // L1 resolver address
 const registry = '0xaa864d13d357a735e2aec4236bd730cf65c11dac' // L2 registry

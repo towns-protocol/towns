@@ -19,6 +19,8 @@
         // Some stricter flags (disabled by default)
         "noUnusedLocals": false,
         "noUnusedParameters": false,
-        "noPropertyAccessFromIndexSignature": false
+        "noPropertyAccessFromIndexSignature": false,
+        // Cloudflare Workers types
+        "types": ["@cloudflare/workers-types"]
     }
 }
