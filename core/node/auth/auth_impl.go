@@ -1417,13 +1417,12 @@ func (ca *chainAuth) checkDmCreation(
 		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
-	var lastErr error
-
 	if secondPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract, true)
 		if err != nil {
-			lastErr = err
-		} else if result.IsAllowed() {
+			return nil, err
+		}
+		if result.IsAllowed() {
 			return result, nil
 		}
 	}
@@ -1431,14 +1430,11 @@ func (ca *chainAuth) checkDmCreation(
 	if firstPartyIsApp {
 		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract, true)
 		if err != nil {
-			lastErr = err
-		} else if result.IsAllowed() {
+			return nil, err
+		}
+		if result.IsAllowed() {
 			return result, nil
 		}
-	}
-
-	if lastErr != nil {
-		return nil, lastErr
 	}
 
 	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
