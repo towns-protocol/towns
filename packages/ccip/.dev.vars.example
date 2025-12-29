@@ -1,0 +1,6 @@
+# Copy this file to .dev.vars and fill in your values
+# .dev.vars is gitignored and used by wrangler dev for local development
+
+ALCHEMY_API_KEY=your_alchemy_api_key_here
+SIGNER_PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
+

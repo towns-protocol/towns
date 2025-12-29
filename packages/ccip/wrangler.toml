@@ -1,0 +1,26 @@
+name = "ccip-read-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Secrets are set via:
+#   wrangler secret put ALCHEMY_API_KEY
+#   wrangler secret put SIGNER_PRIVATE_KEY
+#
+# For local development, create a .dev.vars file with:
+#   ALCHEMY_API_KEY=your_key
+#   SIGNER_PRIVATE_KEY=0x...
+
+# Staging environment
+[env.staging]
+name = "ccip-read-gateway-staging"
+
+# Production environment (default)
+[env.production]
+name = "ccip-read-gateway"
+

@@ -3,18 +3,24 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "bun --watch src/index.ts",
+        "dev": "wrangler dev",
+        "dev:bun": "bun --watch src/index.ts",
         "build": "tsc --outDir ./out",
         "start": "bun src/index.ts",
+        "deploy": "wrangler deploy",
+        "deploy:staging": "wrangler deploy --env staging",
+        "tail": "wrangler tail",
         "typings": "wagmi generate",
         "prettier:fix": "bun run prettier --write .",
         "prettier:check": "bun run prettier --check ."
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^4.20241218.0",
         "@towns-protocol/prettier-config": "workspace:^",
         "@types/bun": "^1.3.1",
         "prettier": "^3.5.3",
-        "typescript": "~5.8.3"
+        "typescript": "~5.8.3",
+        "wrangler": "^3.99.0"
     },
     "dependencies": {
         "@wagmi/cli": "^2.2.0",

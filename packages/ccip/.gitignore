@@ -1,0 +1,6 @@
+# Wrangler local state
+.wrangler/
+
+# Local development secrets (use .dev.vars.example as template)
+.dev.vars
+
