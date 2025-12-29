@@ -571,6 +571,84 @@ export class Bot<Commands extends BotCommand[] = []> {
         return session
     }
 
+    // Per-session atomicity helpers to prevent concurrent over-use.
+    // This bot runs in a single Node process, but async handlers can interleave.
+    // We serialize mutations per sessionKey via a simple promise queue (mutex).
+    private readonly sessionLocks: Map<string, Promise<void>> = new Map()
+    private readonly sessionInFlight: Map<string, number> = new Map()
+
+    private async withSessionLock<T>(sessionKey: string, fn: () => Promise<T>): Promise<T> {
+        const prev = this.sessionLocks.get(sessionKey) ?? Promise.resolve()
+        let release!: () => void
+        const next = new Promise<void>((resolve) => {
+            release = resolve
+        })
+        this.sessionLocks.set(
+            sessionKey,
+            prev.then(() => next),
+        )
+        await prev
+        try {
+            return await fn()
+        } finally {
+            release()
+            if (this.sessionLocks.get(sessionKey) === next) {
+                this.sessionLocks.delete(sessionKey)
+            }
+        }
+    }
+
+    private async reserveSessionUse(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): Promise<{ session: ActiveSession; usesRemainingAfter?: number } | undefined> {
+        const sessionKey = getSessionKey(userId, command)
+        return await this.withSessionLock(sessionKey, async () => {
+            const session = this.getActiveSession(userId, command, network)
+            if (!session) return undefined
+
+            if (session.usesRemaining === undefined) {
+                // Unlimited sessions don't need reservation accounting.
+                return { session }
+            }
+
+            const inFlight = this.sessionInFlight.get(sessionKey) ?? 0
+            const available = session.usesRemaining - inFlight
+            if (available <= 0) return undefined
+
+            const newInFlight = inFlight + 1
+            this.sessionInFlight.set(sessionKey, newInFlight)
+            return { session, usesRemainingAfter: session.usesRemaining - newInFlight }
+        })
+    }
+
+    private async finalizeReservedSessionUse(
+        userId: string,
+        command: string,
+        network: X402Network,
+        success: boolean,
+    ): Promise<void> {
+        const sessionKey = getSessionKey(userId, command)
+        await this.withSessionLock(sessionKey, async () => {
+            const session = this.getActiveSession(userId, command, network)
+            const inFlight = this.sessionInFlight.get(sessionKey) ?? 0
+            const newInFlight = Math.max(0, inFlight - 1)
+            if (newInFlight === 0) this.sessionInFlight.delete(sessionKey)
+            else this.sessionInFlight.set(sessionKey, newInFlight)
+
+            if (!success || !session) return
+
+            if (session.usesRemaining !== undefined) {
+                session.usesRemaining--
+                if (session.usesRemaining <= 0) {
+                    this.activeSessions.delete(sessionKey)
+                    this.sessionInFlight.delete(sessionKey)
+                }
+            }
+        })
+    }
+
     /**
      * Use a session (decrements use count if limited)
      */
@@ -1803,12 +1881,9 @@ export class Bot<Commands extends BotCommand[] = []> {
                     paymentConfig.session &&
                     this.hasActiveSession(event.userId, command, network)
                 ) {
-                    const session = this.getActiveSession(event.userId, command, network)
-                    if (session) {
-                        const usesRemainingAfter =
-                            session.usesRemaining !== undefined
-                                ? session.usesRemaining - 1
-                                : undefined
+                    const reservation = await this.reserveSessionUse(event.userId, command, network)
+                    if (reservation) {
+                        const { session, usesRemainingAfter } = reservation
 
                         sessionFlow = true
 
@@ -1832,10 +1907,24 @@ export class Bot<Commands extends BotCommand[] = []> {
                         )
 
                         // Execute the original command handler
-                        await fn(handler, event)
-
-                        // Only consume the session after the handler succeeds.
-                        this.consumeSession(event.userId, command, network)
+                        try {
+                            await fn(handler, event)
+                            await this.finalizeReservedSessionUse(
+                                event.userId,
+                                command,
+                                network,
+                                true,
+                            )
+                        } catch (err) {
+                            // Refund the reserved use on failure.
+                            await this.finalizeReservedSessionUse(
+                                event.userId,
+                                command,
+                                network,
+                                false,
+                            )
+                            throw err
+                        }
                         return
                     }
                 }
