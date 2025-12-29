@@ -583,16 +583,14 @@ export class Bot<Commands extends BotCommand[] = []> {
         const next = new Promise<void>((resolve) => {
             release = resolve
         })
-        this.sessionLocks.set(
-            sessionKey,
-            prev.then(() => next),
-        )
+        const chained = prev.then(() => next)
+        this.sessionLocks.set(sessionKey, chained)
         await prev
         try {
             return await fn()
         } finally {
             release()
-            if (this.sessionLocks.get(sessionKey) === next) {
+            if (this.sessionLocks.get(sessionKey) === chained) {
                 this.sessionLocks.delete(sessionKey)
             }
         }
