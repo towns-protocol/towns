@@ -20,7 +20,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false,
-        // Cloudflare Workers types
-        "types": ["@cloudflare/workers-types"]
+        // Cloudflare Workers + Bun types (for scripts)
+        "types": ["@cloudflare/workers-types", "bun"]
     }
 }

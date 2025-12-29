@@ -23,16 +23,6 @@ import { type Env, envVar } from '../env'
 import { dnsDecodeName } from './utils'
 import { iExtendedResolverAbi } from '../generated'
 
-// Common ENS resolver function selectors for logging
-const RESOLVER_SELECTORS: Record<Hex, string> = {
-    [toFunctionSelector('addr(bytes32)')]: 'addr(bytes32)',
-    [toFunctionSelector('addr(bytes32,uint256)')]: 'addr(bytes32,uint256)',
-    [toFunctionSelector('text(bytes32,string)')]: 'text(bytes32,string)',
-    [toFunctionSelector('contenthash(bytes32)')]: 'contenthash(bytes32)',
-    [toFunctionSelector('name(bytes32)')]: 'name(bytes32)',
-    [toFunctionSelector('pubkey(bytes32)')]: 'pubkey(bytes32)',
-}
-
 const supportedChains = [
     arbitrum,
     arbitrumSepolia,
