@@ -214,7 +214,12 @@ library L1ResolverMod {
         }
 
         // Create the signature hash (matching the gateway's signing format)
-        bytes32 hash = _makeSignatureHash(address(this), expires, extraData, result);
+        bytes32 hash = _makeSignatureHash(
+            address(this),
+            expires,
+            keccak256(extraData),
+            keccak256(result)
+        );
 
         // Verify signature using SignatureCheckerLib
         // Supports both EOA (ECDSA) and smart contract wallets (ERC-1271)
@@ -232,12 +237,9 @@ library L1ResolverMod {
     function _makeSignatureHash(
         address target,
         uint64 expires,
-        bytes memory request,
-        bytes memory result
+        bytes32 request,
+        bytes32 result
     ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(hex"1900", target, expires, keccak256(request), keccak256(result))
-            );
+        return keccak256(abi.encodePacked(hex"1900", target, expires, request, result));
     }
 }
