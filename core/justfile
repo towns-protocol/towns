@@ -695,6 +695,17 @@ print-logs:
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
     tail -n 10 ${LOGS[@]} | bunx pino-pretty
 
+# Print last 100 or N lines from instance INSTANCE_NUM log, use 00, 01, etc. for INSTANCE_NUM
+print-log INSTANCE_NUM *N:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    NUM="{{N}}"
+    if [ -z "${NUM}" ]; then
+        NUM=100
+    fi
+    tail -n ${NUM} ${INSTANCE_BASE}/${INSTANCE_NUM}/logs/dev.log | yarn exec pino-pretty
+
 # Tail stderr from all instances
 tail-stderr:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
