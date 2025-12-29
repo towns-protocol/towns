@@ -87,7 +87,6 @@
     "packages/ccip": {
       "name": "@towns-protocol/ccip",
       "dependencies": {
-        "@wagmi/cli": "^2.2.0",
         "evm-providers": "^0.5.8",
         "hono": "^4.7.11",
         "viem": "^2.29.3",
