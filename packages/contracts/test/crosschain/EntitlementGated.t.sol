@@ -10,6 +10,7 @@ import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {MockEntitlementGated} from "test/mocks/MockEntitlementGated.sol";
@@ -35,6 +36,7 @@ contract EntitlementGatedTest is
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 Request Entitlement Check V2               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function test_requestEntitlementCheckV2RuleDataV2() external {
         bytes32 transactionHash = keccak256(abi.encodePacked(tx.origin, block.number));
 
@@ -354,6 +356,148 @@ contract EntitlementGatedTest is
         vm.prank(nodes[3]);
         vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
         gated.postEntitlementCheckResult(requestId, roleIds[0], NodeVoteStatus.PASSED);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              Unified requestEntitlementCheck               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_fuzz_requestEntitlementCheck_revertWhen_duplicateRequestId(
+        address caller,
+        bytes32 transactionId
+    ) external {
+        vm.assume(caller != address(0));
+        vm.deal(address(gated), 2 ether);
+
+        uint256 requestId = 0;
+        address currency = CurrencyTransfer.NATIVE_TOKEN;
+        uint256 amount = 1 ether;
+        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+
+        vm.startPrank(address(gated));
+
+        // First request succeeds
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
+
+        // Second request with same transactionId + requestId should revert
+        vm.expectRevert(EntitlementChecker_DuplicateRequestId.selector);
+        entitlementChecker.requestEntitlementCheck(CheckType.V3, data);
+
+        vm.stopPrank();
+    }
+
+    function test_fuzz_requestEntitlementCheck_revertWhen_ethAmountMismatch(
+        address caller,
+        bytes32 transactionId
+    ) external {
+        vm.assume(caller != address(0));
+        vm.deal(address(gated), 2 ether);
+        uint256 requestId = 0;
+        address currency = CurrencyTransfer.NATIVE_TOKEN;
+        uint256 amount = 1 ether;
+        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+
+        vm.prank(address(gated));
+        // Send 0.5 ether but encode 1 ether - should revert
+        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
+        entitlementChecker.requestEntitlementCheck{value: 0.5 ether}(CheckType.V3, data);
+    }
+
+    function test_fuzz_requestEntitlementCheck_unifiedV1(
+        address walletAddress,
+        bytes32 transactionId
+    ) external {
+        vm.assume(walletAddress != address(0));
+
+        vm.prank(address(gated));
+        address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
+        uint256 roleId = 0;
+
+        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
+
+        vm.expectEmit(address(entitlementChecker));
+        emit EntitlementCheckRequested(
+            walletAddress,
+            address(this),
+            transactionId,
+            roleId,
+            selectedNodes
+        );
+
+        entitlementChecker.requestEntitlementCheck(CheckType.V1, data);
+    }
+
+    function test_fuzz_requestEntitlementCheck_unifiedV2(
+        address caller,
+        bytes32 transactionId
+    ) external {
+        vm.assume(caller != address(0));
+        vm.deal(address(gated), 1 ether);
+        uint256 requestId = 0;
+        bytes memory extraData = abi.encode(caller);
+        bytes memory data = abi.encode(caller, transactionId, requestId, extraData);
+
+        vm.recordLogs();
+        vm.prank(address(gated));
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V2, data);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(walletAddress, caller);
+    }
+
+    function test_fuzz_requestEntitlementCheck_unifiedV3(
+        address caller,
+        bytes32 transactionId
+    ) external {
+        vm.assume(caller != address(0));
+        vm.deal(address(gated), 1 ether);
+        uint256 requestId = 0;
+        address currency = CurrencyTransfer.NATIVE_TOKEN;
+        uint256 amount = 1 ether;
+        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+
+        vm.recordLogs();
+        vm.prank(address(gated));
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(walletAddress, caller);
+    }
+
+    function test_fuzz_requestEntitlementCheck_revertWhen_v1WithEth(
+        address walletAddress,
+        bytes32 transactionId
+    ) external {
+        vm.assume(walletAddress != address(0));
+        vm.deal(address(this), 1 ether);
+
+        address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
+        uint256 roleId = 0;
+        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
+
+        // V1 should not accept ETH
+        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V1, data);
+    }
+
+    function test_fuzz_requestEntitlementCheck_revertWhen_erc20WithEth(
+        address caller,
+        bytes32 transactionId
+    ) external {
+        vm.assume(caller != address(0));
+        vm.deal(address(gated), 1 ether);
+
+        uint256 requestId = 0;
+        address currency = address(0x1234); // Non-native token
+        uint256 amount = 0; // No ERC20 amount
+        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+
+        vm.prank(address(gated));
+        // V3 with ERC20 currency should not accept ETH
+        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
     }
 
     // =============================================================
