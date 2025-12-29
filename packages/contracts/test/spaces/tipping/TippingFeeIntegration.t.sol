@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {TippingFeeIntegrationBaseTest} from "./TippingFeeIntegrationBase.t.sol";
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IFeeManagerBase} from "src/factory/facets/fee/IFeeManager.sol";
 
 // libraries
@@ -21,12 +22,14 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
     function test_sendMemberTip_chargesFee() external {
         uint256 receiverBalanceBefore = tipReceiver.balance;
         uint256 feeRecipientBalanceBefore = feeRecipient.balance;
+        uint256 pointsBefore = IERC20(riverAirdrop).balanceOf(tipper);
 
         _sendMemberTip(tipper, tipReceiver, TIP_AMOUNT);
 
         assertEq(tipper.balance, 0); // Paid full tip amount
         assertEq(tipReceiver.balance, receiverBalanceBefore + (TIP_AMOUNT - EXPECTED_FEE)); // Received tip minus fee
         assertEq(feeRecipient.balance, feeRecipientBalanceBefore + EXPECTED_FEE); // Received fee
+        assertGt(IERC20(riverAirdrop).balanceOf(tipper), pointsBefore); // Points minted for ETH tips
     }
 
     function test_sendMemberTip_updatesStats() external {
@@ -66,12 +69,14 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
     function test_legacyTip_chargesFee() external {
         uint256 receiverBalanceBefore = tipReceiver.balance;
         uint256 feeRecipientBalanceBefore = feeRecipient.balance;
+        uint256 pointsBefore = IERC20(riverAirdrop).balanceOf(tipper);
 
         _sendLegacyTip(tipper, tipReceiver, TIP_AMOUNT);
 
         assertEq(tipper.balance, 0);
         assertEq(tipReceiver.balance, receiverBalanceBefore + (TIP_AMOUNT - EXPECTED_FEE));
         assertEq(feeRecipient.balance, feeRecipientBalanceBefore + EXPECTED_FEE);
+        assertGt(IERC20(riverAirdrop).balanceOf(tipper), pointsBefore); // Points minted for ETH tips
     }
 
     function test_legacyTip_updatesStats() external {
@@ -204,6 +209,7 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
     function test_sendMemberTipERC20_chargesFee() external {
         uint256 receiverBalanceBefore = mockUSDC.balanceOf(tipReceiver);
         uint256 feeRecipientBalanceBefore = mockUSDC.balanceOf(feeRecipient);
+        uint256 pointsBefore = IERC20(riverAirdrop).balanceOf(tipper);
 
         _sendMemberTipERC20(tipper, tipReceiver, ERC20_TIP_AMOUNT);
 
@@ -213,6 +219,7 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
             receiverBalanceBefore + (ERC20_TIP_AMOUNT - ERC20_EXPECTED_FEE)
         ); // Received tip minus fee
         assertEq(mockUSDC.balanceOf(feeRecipient), feeRecipientBalanceBefore + ERC20_EXPECTED_FEE); // Received fee
+        assertEq(IERC20(riverAirdrop).balanceOf(tipper), pointsBefore); // No points for ERC20 tips
     }
 
     function test_sendMemberTipERC20_updatesStats() external {
@@ -270,6 +277,7 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
     function test_legacyTipERC20_chargesFee() external {
         uint256 receiverBalanceBefore = mockUSDC.balanceOf(tipReceiver);
         uint256 feeRecipientBalanceBefore = mockUSDC.balanceOf(feeRecipient);
+        uint256 pointsBefore = IERC20(riverAirdrop).balanceOf(tipper);
 
         _sendLegacyTipERC20(tipper, tipReceiver, ERC20_TIP_AMOUNT);
 
@@ -279,6 +287,7 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
             receiverBalanceBefore + (ERC20_TIP_AMOUNT - ERC20_EXPECTED_FEE)
         );
         assertEq(mockUSDC.balanceOf(feeRecipient), feeRecipientBalanceBefore + ERC20_EXPECTED_FEE);
+        assertEq(IERC20(riverAirdrop).balanceOf(tipper), pointsBefore); // No points for ERC20 tips
     }
 
     function test_legacyTipERC20_updatesStats() external {
@@ -317,9 +326,11 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
     function test_sendMixedCurrencyTips_trackedSeparately() external {
         // Send ETH tip
         _sendMemberTip(tipper, tipReceiver, TIP_AMOUNT);
+        uint256 pointsAfterETHTip = IERC20(riverAirdrop).balanceOf(tipper);
 
         // Send USDC tip
         _sendMemberTipERC20(tipper, tipReceiver, ERC20_TIP_AMOUNT);
+        uint256 pointsAfterERC20Tip = IERC20(riverAirdrop).balanceOf(tipper);
 
         // Verify separate tracking
         uint256 ethTips = tipping.tipsByWalletAndCurrency(
@@ -330,6 +341,10 @@ contract TippingFeeIntegrationTest is TippingFeeIntegrationBaseTest, IFeeManager
 
         assertEq(ethTips, TIP_AMOUNT - EXPECTED_FEE);
         assertEq(usdcTips, ERC20_TIP_AMOUNT - ERC20_EXPECTED_FEE);
+
+        // Only ETH tip mints points
+        assertGt(pointsAfterETHTip, 0);
+        assertEq(pointsAfterERC20Tip, pointsAfterETHTip);
     }
 
     function test_sendMixedCurrencyTips_feeRecipientReceivesBoth() external {

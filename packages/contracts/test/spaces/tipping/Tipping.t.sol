@@ -188,8 +188,8 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         assertEq(mockERC20.balanceOf(platformRecipient), protocolFee, "protocol fee");
         assertEq(
             IERC20(address(points)).balanceOf(sender) - initialPointBalance,
-            (protocolFee * 2_000_000) / 3,
-            "points minted"
+            0,
+            "no points minted for ERC20 tips"
         );
         assertEq(tipping.tipsByCurrencyAndTokenId(tokenId, address(mockERC20)), tipAmount);
         assertEq(tipping.totalTipsByCurrency(address(mockERC20)), 1);
