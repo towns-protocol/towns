@@ -73,6 +73,7 @@ interface INodeRegistry is INodeRegistryBase {
      * @dev This should be called once after the contract upgrade. It assigns sequential indices
      * starting from 1 to all nodes in their current array order. Subsequent registrations will
      * continue from the last assigned index.
+     * Function can only be called once and reverts with ALREADY_EXISTS on subsequent calls.
      */
     function backfillPermanentIndices() external;
 
