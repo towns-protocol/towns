@@ -210,6 +210,12 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 
 	switch inception := iInception.(type) {
 	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserMetadataPayload_Inception:
+		// All user inception types implement GetAppAddress
+		type hasAppAddress interface {
+			GetAppAddress() []byte
+		}
+		userInception := iInception.(hasAppAddress)
+
 		// for all user streams, get the address from the stream id
 		userAddress, err := shared.GetUserAddressFromStreamIdBytes(iInception.GetStreamId())
 		if err != nil {
@@ -217,14 +223,17 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 		}
 		snapshot.Joined = insertMember(nil, &MemberPayload_Snapshot_Member{
 			UserAddress: userAddress.Bytes(),
+			AppAddress:  userInception.GetAppAddress(),
 		})
 		return snapshot, nil
 	case *DmChannelPayload_Inception:
 		// for dm channels, add both parties are members
 		snapshot.Joined = insertMember(nil, &MemberPayload_Snapshot_Member{
 			UserAddress: inception.FirstPartyAddress,
+			AppAddress:  inception.FirstPartyAppAddress,
 		}, &MemberPayload_Snapshot_Member{
 			UserAddress: inception.SecondPartyAddress,
+			AppAddress:  inception.SecondPartyAppAddress,
 		})
 		return snapshot, nil
 	case *MediaPayload_Inception:

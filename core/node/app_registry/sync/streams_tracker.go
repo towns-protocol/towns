@@ -96,7 +96,7 @@ func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, strea
 
 	// Track channel streams, but skip on init when cold streams is enabled.
 	// They will be loaded on-demand when new messages arrive via OnStreamLastMiniblockUpdated.
-	if streamType == shared.STREAM_CHANNEL_BIN {
+	if streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_DM_CHANNEL_BIN {
 		return !(isInit && tracker.coldStreamsEnabled())
 	}
 

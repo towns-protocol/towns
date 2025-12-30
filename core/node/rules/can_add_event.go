@@ -264,11 +264,37 @@ func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPay
 			fail(invalidContentType(content))
 	case *DmChannelPayload_Message:
 		return aeBuilder().
-			check(params.creatorIsMember)
+			check(params.creatorIsMember).
+			requireChainAuth(params.dmValidationChainAuth)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
 	}
+}
+
+func (params *aeParams) dmValidationChainAuth() (*auth.ChainAuthArgs, error) {
+	inception, err := params.streamView.GetDMChannelInception()
+	if err != nil {
+		return nil, err
+	}
+
+	firstPartyAddr := common.BytesToAddress(inception.FirstPartyAddress)
+	secondPartyAddr := common.BytesToAddress(inception.SecondPartyAddress)
+
+	var firstPartyAppAddr, secondPartyAppAddr *common.Address
+	if len(inception.FirstPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(inception.FirstPartyAppAddress)
+		firstPartyAppAddr = &addr
+	}
+	if len(inception.SecondPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(inception.SecondPartyAppAddress)
+		secondPartyAppAddr = &addr
+	}
+	if firstPartyAppAddr == nil && secondPartyAppAddr == nil {
+		return nil, nil
+	}
+
+	return auth.NewChainAuthArgsForDmEvent(firstPartyAddr, secondPartyAddr, firstPartyAppAddr, secondPartyAppAddr), nil
 }
 
 func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilderAE {

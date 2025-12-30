@@ -39,6 +39,8 @@ const (
 	EntitlementResultReason_MISMATCHED_APP_ADDRESS
 	EntitlementResultReason_APP_ENTITLEMENTS
 	EntitlementResultReason_IS_NOT_BOT_OWNER
+	EntitlementResultReason_APP_NOT_INSTALLED_ON_USER
+	EntitlementResultReason_APP_EXPIRED
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
@@ -56,6 +58,9 @@ var entitlementResultReasonDescriptions = []string{
 	"MISMATCHED_APP_ADDRESS",
 	"APP_ENTITLEMENTS",
 	"IS_NOT_BOT_OWNER",
+	"APP_NOT_INSTALLED_ON_USER",
+	"APP_EXPIRED",
+	"MAX",
 }
 
 func (r EntitlementResultReason) String() string {
@@ -159,6 +164,28 @@ func (lwcv *linkedWalletCacheValue) Reason() EntitlementResultReason {
 
 func (lwcv *linkedWalletCacheValue) GetTimestamp() time.Time {
 	return time.Now()
+}
+
+// userIsAppCacheResult stores whether a user is registered as a bot and their app contract address.
+type userIsAppCacheResult struct {
+	isApp      bool
+	appAddress common.Address
+}
+
+func (r *userIsAppCacheResult) IsAllowed() bool {
+	return true
+}
+
+func (r *userIsAppCacheResult) Reason() EntitlementResultReason {
+	return EntitlementResultReason_NONE
+}
+
+func (r *userIsAppCacheResult) GetTimestamp() time.Time {
+	return time.Now()
+}
+
+func (r *userIsAppCacheResult) GetUserIsAppResult() (isApp bool, appAddress common.Address) {
+	return r.isApp, r.appAddress
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
@@ -278,6 +305,70 @@ func newEntitlementManagerCache(ctx context.Context, cfg *config.ChainConfig) (*
 	if cfg.NegativeEntitlementCacheTTLSeconds > 0 {
 		negativeCacheTTL = time.Duration(cfg.NegativeEntitlementManagerCacheTTLSeconds) * time.Second
 	}
+
+	return &entitlementCache{
+		positiveCache,
+		negativeCache,
+		positiveCacheTTL,
+		negativeCacheTTL,
+	}, nil
+}
+
+func newAppInstalledCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
+	log := logging.FromCtx(ctx)
+
+	positiveCacheSize := 10000
+
+	// We do not use the negative entitlement cache for app installed checks.
+	negativeCacheSize := 1
+
+	positiveCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](positiveCacheSize)
+	if err != nil {
+		log.Errorw("error creating app installed positive cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	// We don't use this, but make it anyway to initialize the entitlementCache.
+	negativeCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](negativeCacheSize)
+	if err != nil {
+		log.Errorw("error creating app installed negative cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	positiveCacheTTL := 15 * time.Minute
+	// This value is irrelevant as we don't use the negative cache for app installed checks.
+	negativeCacheTTL := 2 * time.Second
+
+	return &entitlementCache{
+		positiveCache,
+		negativeCache,
+		positiveCacheTTL,
+		negativeCacheTTL,
+	}, nil
+}
+
+// newUserIsAppCache stores whether a user is registered as a bot.
+// Uses 1 day TTL - bot registration status rarely changes
+func newUserIsAppCache(ctx context.Context) (*entitlementCache, error) {
+	log := logging.FromCtx(ctx)
+
+	positiveCacheSize := 10000
+	negativeCacheSize := 1 // Not used
+
+	positiveCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](positiveCacheSize)
+	if err != nil {
+		log.Errorw("error creating userIsApp cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	negativeCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](negativeCacheSize)
+	if err != nil {
+		log.Errorw("error creating userIsApp negative cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	positiveCacheTTL := 24 * time.Hour
+	negativeCacheTTL := 2 * time.Second // Not used
 
 	return &entitlementCache{
 		positiveCache,
