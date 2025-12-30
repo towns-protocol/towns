@@ -96,12 +96,10 @@ Main bot logic with:
 To add your own features:
 
 1. **Add a slash command:**
-
    - Add to `src/commands.ts`
    - Go to `src/index.ts` and create a handler with `bot.onSlashCommand('yourcommand', async (handler, event) => { ... })`
 
 2. **Add message triggers:**
-
    - Add conditions in the `bot.onMessage()` handler
 
 3. **Handle more events:**
