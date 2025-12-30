@@ -121,17 +121,36 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable {
         if (checkType == CheckType.V1) {
             if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
-            (address receiver, bytes32 transactionId, uint256 roleId, address[] memory nodes) = abi
-                .decode(data, (address, bytes32, uint256, address[]));
+            // equivalent: abi.decode(data, (address, bytes32, uint256, address[]))
+            address receiver;
+            bytes32 transactionId;
+            uint256 roleId;
+            address[] calldata nodes;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                roleId := calldataload(add(data.offset, 0x40))
+                // nodes is dynamic: offset at 0x60, array starts at data.offset + offset
+                let nodesPtr := add(data.offset, calldataload(add(data.offset, 0x60)))
+                nodes.length := calldataload(nodesPtr)
+                nodes.offset := add(nodesPtr, 0x20)
+            }
             emit EntitlementCheckRequested(receiver, msg.sender, transactionId, roleId, nodes);
         } else if (checkType == CheckType.V2) {
-            (
-                address receiver,
-                bytes32 transactionId,
-                uint256 requestId,
-                bytes memory extraData
-            ) = abi.decode(data, (address, bytes32, uint256, bytes));
-            address sender = abi.decode(extraData, (address));
+            // equivalent: abi.decode(data, (address, bytes32, uint256, bytes))
+            // extraData contains: (address sender)
+            address receiver;
+            bytes32 transactionId;
+            uint256 requestId;
+            address sender;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                requestId := calldataload(add(data.offset, 0x40))
+                // extraData offset at 0x60, sender is first word after length
+                let extraDataPtr := add(data.offset, calldataload(add(data.offset, 0x60)))
+                sender := shr(96, shl(96, calldataload(add(extraDataPtr, 0x20))))
+            }
             _requestEntitlementCheck(
                 receiver,
                 transactionId,
@@ -141,14 +160,21 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
                 sender
             );
         } else if (checkType == CheckType.V3) {
-            (
-                address receiver,
-                bytes32 transactionId,
-                uint256 requestId,
-                address currency,
-                uint256 amount,
-                address sender
-            ) = abi.decode(data, (address, bytes32, uint256, address, uint256, address));
+            // equivalent: abi.decode(data, (address, bytes32, uint256, address, uint256, address))
+            address receiver;
+            bytes32 transactionId;
+            uint256 requestId;
+            address currency;
+            uint256 amount;
+            address sender;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                requestId := calldataload(add(data.offset, 0x40))
+                currency := shr(96, shl(96, calldataload(add(data.offset, 0x60))))
+                amount := calldataload(add(data.offset, 0x80))
+                sender := shr(96, shl(96, calldataload(add(data.offset, 0xa0))))
+            }
             _requestEntitlementCheck(receiver, transactionId, requestId, currency, amount, sender);
         } else {
             EntitlementChecker_InvalidCheckType.selector.revertWith();

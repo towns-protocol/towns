@@ -15,8 +15,7 @@ import {MembershipJoin} from "src/spaces/facets/membership/join/MembershipJoin.s
 
 contract MockLegacyMembership is MembershipJoin {
     function joinSpaceLegacy(address receiver) external payable {
-        ReferralTypes memory emptyReferral;
-        _joinSpaceWithReferral(receiver, emptyReferral);
+        _joinSpace(receiver);
     }
 
     function _checkEntitlement(
