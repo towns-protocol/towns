@@ -438,7 +438,8 @@ contract L2ResolverTest is L2ResolverBaseSetup {
         bytes32 aliceNode = _createSubdomain("alice", alice);
 
         // IPFS CIDv1 example: ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
-        bytes memory ipfsHash = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
+        bytes
+            memory ipfsHash = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
 
         vm.prank(alice);
         contentHashResolver.setContenthash(aliceNode, ipfsHash);
@@ -457,8 +458,10 @@ contract L2ResolverTest is L2ResolverBaseSetup {
     function test_setContenthash_overwrite() external {
         bytes32 aliceNode = _createSubdomain("alice", alice);
 
-        bytes memory ipfsHash1 = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
-        bytes memory ipfsHash2 = hex"e30101701220abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567";
+        bytes
+            memory ipfsHash1 = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
+        bytes
+            memory ipfsHash2 = hex"e30101701220abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567";
 
         // Set initial hash
         vm.prank(alice);
@@ -468,13 +471,18 @@ contract L2ResolverTest is L2ResolverBaseSetup {
         // Overwrite with new hash
         vm.prank(alice);
         contentHashResolver.setContenthash(aliceNode, ipfsHash2);
-        assertEq(contentHashResolver.contenthash(aliceNode), ipfsHash2, "Hash should be overwritten");
+        assertEq(
+            contentHashResolver.contenthash(aliceNode),
+            ipfsHash2,
+            "Hash should be overwritten"
+        );
     }
 
     function test_revertWhen_setContenthash_notAuthorized() external {
         bytes32 aliceNode = _createSubdomain("alice", alice);
 
-        bytes memory ipfsHash = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
+        bytes
+            memory ipfsHash = hex"e3010170122023e0160eec32d7875c1c3a86c0dd5d35a64f6a9f0eb7c0e3c3f7f79a0d6f5d3a";
 
         vm.prank(bob);
         vm.expectRevert(L2RegistryMod.L2RegistryMod_NotAuthorized.selector);

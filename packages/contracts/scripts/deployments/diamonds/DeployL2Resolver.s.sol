@@ -174,7 +174,9 @@ contract DeployL2Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
             } else if (facetName.eq("ExtendedResolverFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployExtendedResolverFacet.selectors()));
             } else if (facetName.eq("ContentHashResolverFacet")) {
-                addCut(makeCut(facet, FacetCutAction.Add, DeployContentHashResolverFacet.selectors()));
+                addCut(
+                    makeCut(facet, FacetCutAction.Add, DeployContentHashResolverFacet.selectors())
+                );
             }
         }
 
