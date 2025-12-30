@@ -88,11 +88,11 @@ func NewChainAuthArgsForApp(userId common.Address, appContractAddress common.Add
 	}
 }
 
-// NewChainAuthArgsForIsBotOwner creates chain auth args to check if the principal (userId)
+// NewChainAuthArgsForIsAppOwner creates chain auth args to check if the principal (userId)
 // is the owner of the bot whose client address is botClientAddress.
-func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
+func NewChainAuthArgsForIsAppOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:             chainAuthKindIsBotOwner,
+		kind:             chainAuthKindIsAppOwner,
 		principal:        userId,
 		botClientAddress: botClientAddress,
 	}
@@ -204,8 +204,7 @@ const (
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
 	chainAuthKindIsApp
-	chainAuthKindIsNotApp
-	chainAuthKindIsBotOwner
+	chainAuthKindIsAppOwner
 	chainAuthKindIsAppInstalled
 	chainAuthKindDmCreation
 	chainAuthKindDmEvent
@@ -1258,7 +1257,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner || args.kind == chainAuthKindIsAppInstalled || args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsAppOwner || args.kind == chainAuthKindIsAppInstalled || args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
@@ -1274,7 +1273,7 @@ func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
 	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	if args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
+	if args.kind == chainAuthKindIsApp {
 		isApp, appAddress, err := ca.getUserIsAppCached(ctx, args.principal)
 		if err != nil {
 			return nil, err
@@ -1292,26 +1291,18 @@ func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
 				"isApp", isApp,
 			)
 
-		if args.kind == chainAuthKindIsApp {
-			if isApp {
-				if appAddress == args.appAddress {
-					return boolCacheResult{true, EntitlementResultReason_NONE}, nil
-				} else {
-					return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
-				}
+		if isApp {
+			if appAddress == args.appAddress {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 			} else {
-				return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
+				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
 			}
 		} else {
-			if isApp {
-				return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
-			} else {
-				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
-			}
+			return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
 		}
 	}
 
-	if args.kind == chainAuthKindIsBotOwner {
+	if args.kind == chainAuthKindIsAppOwner {
 		log := logging.FromCtx(ctx)
 
 		appOwner, err := ca.appRegistryContract.GetAppOwnerByClient(ctx, args.botClientAddress)
@@ -1321,7 +1312,7 @@ func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
 
 		zeroAddress := common.Address{}
 		if appOwner == zeroAddress {
-			return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
+			return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP_OWNER}, nil
 		}
 
 		wallets, err := ca.getLinkedWallets(ctx, cfg, args)
@@ -1343,7 +1334,7 @@ func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
 			}
 		}
 
-		return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
+		return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP_OWNER}, nil
 	}
 
 	if args.kind == chainAuthKindDmCreation {
