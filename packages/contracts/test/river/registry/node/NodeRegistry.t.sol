@@ -268,7 +268,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         assertEq(nodeAfter2.permanentIndex, 2);
     }
 
-    function test_backfillPermanentIndices_idempotent(
+    function test_revertWhen_backfillPermanentIndicesCalledTwice(
         address nodeOperator,
         address node
     )
@@ -276,34 +276,35 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         givenNodeOperatorIsApproved(nodeOperator)
         givenNodeIsRegistered(nodeOperator, node, url)
     {
-        // Call backfill twice
+        // Call backfill first time - should succeed
         vm.prank(nodeOperator);
         nodeRegistry.backfillPermanentIndices();
 
+        // Call backfill second time - should revert
         vm.prank(nodeOperator);
+        vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
         nodeRegistry.backfillPermanentIndices();
-
-        // Index should still be 1, not incremented again
-        assertEq(nodeRegistry.getLastNodeIndex(), 1);
-        Node memory nodeData = nodeRegistry.getNode(node);
-        assertEq(nodeData.permanentIndex, 1);
     }
 
-    function test_revertWhen_backfillPermanentIndicesNotOperator(
+    function test_backfillPermanentIndices_anyoneCanCall(
         address nodeOperator,
         address node,
-        address notOperator
+        address caller
     )
         external
         givenNodeOperatorIsApproved(nodeOperator)
         givenNodeIsRegistered(nodeOperator, node, url)
     {
-        vm.assume(notOperator != nodeOperator);
-        vm.assume(!operatorRegistry.isOperator(notOperator));
+        vm.assume(caller != address(0));
 
-        vm.prank(notOperator);
-        vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
+        // Anyone can call backfill
+        vm.prank(caller);
         nodeRegistry.backfillPermanentIndices();
+
+        // Verify it worked
+        assertEq(nodeRegistry.getLastNodeIndex(), 1);
+        Node memory nodeData = nodeRegistry.getNode(node);
+        assertEq(nodeData.permanentIndex, 1);
     }
 
     function test_registerNodeAfterBackfill(

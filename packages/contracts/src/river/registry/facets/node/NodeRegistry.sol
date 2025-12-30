@@ -132,9 +132,14 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         return nodes;
     }
 
-    function backfillPermanentIndices() external onlyOperator(msg.sender) {
+    function backfillPermanentIndices() external {
+        // Can only be called once - after execution, lastNodeIndex > 0
+        if (ds.lastNodeIndex > 0) {
+            RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+        }
+
         uint256 nodeCount = ds.nodes.length();
-        uint32 currentIndex = ds.lastNodeIndex;
+        uint32 currentIndex = 0;
 
         for (uint256 i = 0; i < nodeCount; ++i) {
             address nodeAddress = ds.nodes.at(i);
