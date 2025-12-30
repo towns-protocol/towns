@@ -60,8 +60,7 @@ var entitlementResultReasonDescriptions = []string{
 	"IS_NOT_BOT_OWNER",
 	"APP_NOT_INSTALLED_ON_USER",
 	"APP_EXPIRED",
-	"NO_BOT_PARTY",
-	"PARTY_IS_UNREGISTERED_BOT",
+	"MAX",
 }
 
 func (r EntitlementResultReason) String() string {
