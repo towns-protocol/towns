@@ -40,7 +40,7 @@ func TestEntitlementResultReasons(t *testing.T) {
 	assert.Equal(
 		t,
 		EntitlementResultReason_MAX,
-		EntitlementResultReason(len(entitlementResultReasonDescriptions)),
+		EntitlementResultReason(len(entitlementResultReasonDescriptions) - 1), // -1 to exclude the MAX value
 	)
 }
 
