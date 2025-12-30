@@ -39,4 +39,3 @@ contract ContentHashResolverFacet is IContentHashResolver, Facet {
         return ContentHashResolverMod.getStorage().contenthash(version, node);
     }
 }
-

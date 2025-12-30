@@ -69,4 +69,3 @@ library DeployL2RegistryFacet {
         return LibDeploy.deployCode("L2RegistryFacet.sol", "");
     }
 }
-

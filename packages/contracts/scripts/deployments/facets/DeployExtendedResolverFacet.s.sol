@@ -31,4 +31,3 @@ library DeployExtendedResolverFacet {
         return LibDeploy.deployCode("ExtendedResolverFacet.sol", "");
     }
 }
-
