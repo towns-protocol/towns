@@ -1369,16 +1369,11 @@ func (ca *chainAuth) checkDmCreation(
 		return nil, err
 	}
 
-	// If a party is a bot, they MUST provide their app address.
+	// If the first party (initiator) is a bot, they must provide their app address.
+	// The second party's app address is optional - it will be looked up if not provided.
 	if args.firstPartyAppAddress == nil && firstPartyIsApp {
 		log.Warnw("checkDmCreation: first party claimed not bot but is registered",
 			"firstParty", args.firstParty)
-		return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
-	}
-
-	if args.secondPartyAppAddress == nil && secondPartyIsApp {
-		log.Warnw("checkDmCreation: second party claimed not bot but is registered",
-			"secondParty", args.secondParty)
 		return boolCacheResult{false, EntitlementResultReason_PARTY_IS_UNREGISTERED_BOT}, nil
 	}
 
