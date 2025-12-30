@@ -34,15 +34,17 @@ contract L2RegistryFacet is IERC721A, Facet {
     /// @param subdomain The subdomain label (e.g., "alice" for "alice.towns.eth")
     /// @param owner The address that will own the subdomain NFT
     /// @param records Encoded resolver calls to set initial records (addr, text, etc.)
+    /// @param metadata Arbitrary bytes for registrar use (e.g., expiration, tier, etc.)
     function createSubdomain(
         bytes32 domainHash,
         string calldata subdomain,
         address owner,
-        bytes[] calldata records
+        bytes[] calldata records,
+        bytes calldata metadata
     ) external {
         L2RegistryMod.Layout storage $ = L2RegistryMod.getStorage();
         $.onlyOwnerOrRegistrar(domainHash);
-        $.createSubdomain(domainHash, subdomain, owner, records);
+        $.createSubdomain(domainHash, subdomain, owner, records, metadata);
     }
 
     /// @notice Adds an address as an approved registrar that can mint subdomains
@@ -61,6 +63,23 @@ contract L2RegistryFacet is IERC721A, Facet {
         $.removeRegistrar(registrar);
     }
 
+    /// @notice Sets or updates the metadata for a subdomain (registrar only)
+    /// @dev Metadata is arbitrary bytes that the registrar can interpret (e.g., expiration, tier, etc.)
+    /// @param node The namehash of the subdomain
+    /// @param data The metadata bytes to store
+    function setMetadata(bytes32 node, bytes calldata data) external {
+        L2RegistryMod.Layout storage $ = L2RegistryMod.getStorage();
+        $.onlyRegistrar();
+        $.setMetadata(node, data);
+    }
+
+    /// @notice Returns the metadata bytes for a subdomain
+    /// @param node The namehash of the subdomain
+    /// @return The metadata bytes (empty if not set)
+    function getMetadata(bytes32 node) external view returns (bytes memory) {
+        return L2RegistryMod.getStorage().getMetadata(node);
+    }
+
     /// @notice Returns the owner of the root domain
     function domainOwner() external view returns (address) {
         L2RegistryMod.Layout storage $ = L2RegistryMod.getStorage();
@@ -71,7 +90,13 @@ contract L2RegistryFacet is IERC721A, Facet {
     /// @param nameHash The namehash of the subdomain
     function subdomainOwner(bytes32 nameHash) external view returns (address) {
         L2RegistryMod.Layout storage $ = L2RegistryMod.getStorage();
-        return $.token.ownerOf(uint256(nameHash));
+        return $.token.owners.get(uint256(nameHash));
+    }
+
+    /// @notice Returns the namehash of the base domain
+    /// @return The namehash of the base domain
+    function baseDomainHash() external view returns (bytes32) {
+        return L2RegistryMod.getStorage().baseNode;
     }
 
     /// @notice Computes the namehash of a domain name
@@ -87,6 +112,17 @@ contract L2RegistryFacet is IERC721A, Facet {
     /// @return The decoded domain name
     function decodeName(bytes calldata node) external pure returns (string memory) {
         return NameCoder.decode(node);
+    }
+
+    /// @notice Helper to derive a node from a parent node and label
+    /// @param domainHash The namehash of the domain, e.g. `namehash("name.eth")` for "name.eth"
+    /// @param subdomain The label of the subnode, e.g. "x" for "x.name.eth"
+    /// @return The resulting subnode, e.g. `namehash("x.name.eth")` for "x.name.eth"
+    function encodeSubdomain(
+        bytes32 domainHash,
+        string calldata subdomain
+    ) external pure returns (bytes32) {
+        return L2RegistryMod.encodeNode(domainHash, subdomain);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -150,12 +186,12 @@ contract L2RegistryFacet is IERC721A, Facet {
 
     /// @inheritdoc IERC721A
     function name() external pure returns (string memory) {
-        return "Towns Domain";
+        return "Towns Domain Registry";
     }
 
     /// @inheritdoc IERC721A
     function symbol() external pure returns (string memory) {
-        return "TD";
+        return "TDR";
     }
 
     /// @inheritdoc IERC721A

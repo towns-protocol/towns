@@ -23,10 +23,11 @@ library L2RegistryMod {
         0xd006f5666f0513641f83237d8fe37b671902940d193477fdbf21bf0fa624e400;
 
     /// @notice Storage layout for the L2 registry
-    /// @dev baseNode is the root domain hash (e.g., namehash("towns.eth")), names maps node to DNS-encoded name, registrars are approved minters, token is the ERC721 storage
+    /// @dev baseNode is the root domain hash (e.g., namehash("towns.eth")), names maps node to DNS-encoded name, metadata is arbitrary bytes set by registrar, registrars are approved minters, token is the ERC721 storage
     struct Layout {
         bytes32 baseNode;
         mapping(bytes32 node => bytes name) names;
+        mapping(bytes32 node => bytes) metadata;
         mapping(address registrar => bool approved) registrars;
         MinimalERC721Storage token;
     }
@@ -58,6 +59,9 @@ library L2RegistryMod {
     /// @notice Emitted when the base node is set
     event BaseNodeUpdated(bytes32 baseNode);
 
+    /// @notice Emitted when metadata is set or updated for a node
+    event MetadataSet(bytes32 indexed node, bytes metadata);
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -70,6 +74,7 @@ library L2RegistryMod {
     error L2RegistryMod_NotOwner();
     error L2RegistryMod_DomainAlreadyExists();
     error L2RegistryMod_NotAuthorized();
+    error L2RegistryMod_NotRegistrar();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -88,7 +93,7 @@ library L2RegistryMod {
         bytes memory dnsEncodedName = NameCoder.encode(domain);
         domainHash = NameCoder.namehash(dnsEncodedName, 0);
 
-        if ($.token.ownerOf(uint256(domainHash)) != address(0))
+        if ($.token.owners.get(uint256(domainHash)) != address(0))
             L2RegistryMod_DomainAlreadyExists.selector.revertWith();
 
         $.baseNode = domainHash;
@@ -97,33 +102,41 @@ library L2RegistryMod {
     }
 
     /// @notice Creates a subdomain from a parent domain hash and label
-    /// @dev Only callable by the owner of the parent domain hash
+    /// @dev Only callable by the owner of the parent domain or an approved registrar. Once minted, a subdomain cannot be re-registered.
     /// @param domainHash The hash of the domain, e.g. `namehash("name.eth")` for "name.eth"
     /// @param subdomain The subdomain of the subdomain, e.g. "x" for "x.name.eth"
     /// @param owner The address that will own the subdomain
     /// @param records The encoded calldata for resolver setters
+    /// @param metadata Arbitrary bytes that registrar can use (e.g., expiration, tier, etc.)
     /// @return subdomainHash The resulting subdomain hash, e.g. `namehash("x.name.eth")` for "x.name.eth"
     function createSubdomain(
         Layout storage $,
         bytes32 domainHash,
         string calldata subdomain,
         address owner,
-        bytes[] calldata records
+        bytes[] calldata records,
+        bytes calldata metadata
     ) internal returns (bytes32 subdomainHash) {
         subdomainHash = encodeNode(domainHash, subdomain);
-        bytes32 labelhash = keccak256(bytes(subdomain));
-        bytes memory dnsEncodedName = encodeName(subdomain, $.names[domainHash]);
         uint256 subnodeId = uint256(subdomainHash);
 
-        if ($.token.ownerOf(subnodeId) != address(0))
+        // Revert if subdomain already exists
+        if ($.token.owners.get(subnodeId) != address(0)) {
             L2RegistryMod_NotAvailable.selector.revertWith();
+        }
 
+        // mint NFT and update storage
         $.token.mint(owner, subnodeId);
-        setRecords(subdomainHash, records);
-        $.names[subdomainHash] = dnsEncodedName;
+        $.names[subdomainHash] = encodeName(subdomain, $.names[domainHash]);
+        if (metadata.length > 0) $.metadata[subdomainHash] = metadata;
 
-        emit NewOwner(domainHash, labelhash, owner);
-        emit SubnodeCreated(subdomainHash, dnsEncodedName, owner);
+        // delegatecall to resolver setters
+        setRecords(subdomainHash, records);
+
+        // Events
+        emit NewOwner(domainHash, keccak256(bytes(subdomain)), owner);
+        emit SubnodeCreated(subdomainHash, $.names[subdomainHash], owner);
+        if (metadata.length > 0) emit MetadataSet(subdomainHash, metadata);
     }
 
     /// @notice Executes multiple resolver record setter calls via delegatecall (multicall pattern)
@@ -173,6 +186,22 @@ library L2RegistryMod {
         return $.registrars[registrar];
     }
 
+    /// @notice Sets or updates the metadata for a node
+    /// @dev Only callable by registrar. Metadata is arbitrary bytes that the registrar can interpret (e.g., expiration, tier, etc.)
+    /// @param node The namehash of the subdomain
+    /// @param data The metadata bytes to store
+    function setMetadata(Layout storage $, bytes32 node, bytes calldata data) internal {
+        $.metadata[node] = data;
+        emit MetadataSet(node, data);
+    }
+
+    /// @notice Returns the metadata bytes for a node
+    /// @param node The namehash of the subdomain
+    /// @return The metadata bytes (empty if not set)
+    function getMetadata(Layout storage $, bytes32 node) internal view returns (bytes memory) {
+        return $.metadata[node];
+    }
+
     /// @notice Returns the token URI for a domain NFT as a base64-encoded JSON with the decoded domain name
     function tokenURI(Layout storage $, uint256 tokenId) internal view returns (string memory) {
         if ($.token.ownerOf(tokenId) == address(0)) L2RegistryMod_NotOwner.selector.revertWith();
@@ -218,6 +247,11 @@ library L2RegistryMod {
         if ($.token.ownerOf(uint256($.baseNode)) != msg.sender) {
             revert L2RegistryMod_NotOwner();
         }
+    }
+
+    /// @notice Reverts if caller is not an approved registrar
+    function onlyRegistrar(Layout storage $) internal view {
+        if (!$.registrars[msg.sender]) L2RegistryMod_NotRegistrar.selector.revertWith();
     }
 
     /// @notice Reverts if caller is not authorized to modify the given node
