@@ -14,6 +14,7 @@ import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {MockEntitlementGated} from "test/mocks/MockEntitlementGated.sol";
+import {MockERC20} from "test/mocks/MockERC20.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
 
@@ -23,6 +24,8 @@ contract EntitlementGatedTest is
     EntitlementTestUtils,
     BaseSetup
 {
+    uint256 internal constant REQUEST_ID = 0;
+
     MockEntitlementGated public gated;
 
     function setUp() public override {
@@ -160,7 +163,7 @@ contract EntitlementGatedTest is
         assertEq(realRequestId, transactionHash);
     }
 
-    function test_requestEntitlementCheckV1RuleDataV2_revertWhen_alreadyRegistered() external {
+    function test_requestEntitlementCheckV1RuleDataV2_revertIf_alreadyRegistered() external {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
@@ -345,14 +348,14 @@ contract EntitlementGatedTest is
     /*              Unified requestEntitlementCheck               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_requestEntitlementCheck_revertWhen_duplicateRequestId(
+    function test_requestEntitlementCheck_revertIf_duplicateRequestId(
         address caller,
-        bytes32 transactionId
+        bytes32 transactionId,
+        uint256 requestId
     ) external {
         vm.assume(caller != address(0));
         deal(address(gated), 2 ether);
 
-        uint256 requestId = 0;
         address currency = CurrencyTransfer.NATIVE_TOKEN;
         uint256 amount = 1 ether;
         bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
@@ -369,21 +372,62 @@ contract EntitlementGatedTest is
         vm.stopPrank();
     }
 
-    function test_requestEntitlementCheck_revertWhen_ethAmountMismatch(
+    function test_requestEntitlementCheck_revertIf_ethAmountMismatch(
         address caller,
-        bytes32 transactionId
+        bytes32 transactionId,
+        uint256 encodedAmount,
+        uint256 sentAmount
     ) external {
         vm.assume(caller != address(0));
-        deal(address(gated), 2 ether);
-        uint256 requestId = 0;
-        address currency = CurrencyTransfer.NATIVE_TOKEN;
-        uint256 amount = 1 ether;
-        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+        vm.assume(encodedAmount != sentAmount);
+        deal(address(gated), sentAmount);
+
+        bytes memory data = abi.encode(
+            caller,
+            transactionId,
+            REQUEST_ID,
+            CurrencyTransfer.NATIVE_TOKEN,
+            encodedAmount,
+            caller
+        );
 
         vm.prank(address(gated));
-        // Send 0.5 ether but encode 1 ether - should revert
         vm.expectRevert(EntitlementChecker_InvalidValue.selector);
-        entitlementChecker.requestEntitlementCheck{value: 0.5 ether}(CheckType.V3, data);
+        entitlementChecker.requestEntitlementCheck{value: sentAmount}(CheckType.V3, data);
+    }
+
+    function test_requestEntitlementCheck_revertIf_v1WithEth(
+        address walletAddress,
+        bytes32 transactionId
+    ) external {
+        vm.assume(walletAddress != address(0));
+        deal(address(this), 1 ether);
+
+        address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
+        uint256 roleId = 0;
+        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
+
+        // V1 should not accept ETH
+        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V1, data);
+    }
+
+    function test_requestEntitlementCheck_revertIf_erc20WithEth(
+        address caller,
+        bytes32 transactionId,
+        address currency
+    ) external {
+        vm.assume(caller != address(0));
+        vm.assume(currency != CurrencyTransfer.NATIVE_TOKEN);
+        deal(address(gated), 1 ether);
+
+        uint256 amount = 0;
+        bytes memory data = abi.encode(caller, transactionId, REQUEST_ID, currency, amount, caller);
+
+        vm.prank(address(gated));
+        // V3 with ERC20 currency should not accept ETH
+        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
+        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
     }
 
     function test_requestEntitlementCheck_unifiedV1(
@@ -416,9 +460,8 @@ contract EntitlementGatedTest is
     ) external {
         vm.assume(caller != address(0));
         deal(address(gated), 1 ether);
-        uint256 requestId = 0;
         bytes memory extraData = abi.encode(caller);
-        bytes memory data = abi.encode(caller, transactionId, requestId, extraData);
+        bytes memory data = abi.encode(caller, transactionId, REQUEST_ID, extraData);
 
         vm.recordLogs();
         vm.prank(address(gated));
@@ -435,10 +478,9 @@ contract EntitlementGatedTest is
     ) external {
         vm.assume(caller != address(0));
         deal(address(gated), 1 ether);
-        uint256 requestId = 0;
         address currency = CurrencyTransfer.NATIVE_TOKEN;
         uint256 amount = 1 ether;
-        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+        bytes memory data = abi.encode(caller, transactionId, REQUEST_ID, currency, amount, caller);
 
         vm.recordLogs();
         vm.prank(address(gated));
@@ -449,38 +491,51 @@ contract EntitlementGatedTest is
         assertEq(walletAddress, caller);
     }
 
-    function test_requestEntitlementCheck_revertWhen_v1WithEth(
-        address walletAddress,
-        bytes32 transactionId
-    ) external {
-        vm.assume(walletAddress != address(0));
-        deal(address(this), 1 ether);
-
-        address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
-        uint256 roleId = 0;
-        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
-
-        // V1 should not accept ETH
-        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
-        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V1, data);
-    }
-
-    function test_requestEntitlementCheck_revertWhen_erc20WithEth(
+    function test_requestEntitlementCheck_erc20Transfer(
         address caller,
-        bytes32 transactionId
+        bytes32 transactionId,
+        uint256 amount
     ) external {
         vm.assume(caller != address(0));
-        deal(address(gated), 1 ether);
+        amount = bound(amount, 1, type(uint256).max);
 
-        uint256 requestId = 0;
-        address currency = address(0x1234); // Non-native token
-        uint256 amount = 0; // No ERC20 amount
-        bytes memory data = abi.encode(caller, transactionId, requestId, currency, amount, caller);
+        // Deploy mock ERC20
+        MockERC20 mockToken = new MockERC20("Mock USDC", "USDC", 6);
 
+        // Mint tokens to gated contract and approve entitlementChecker
+        mockToken.mint(address(gated), amount);
         vm.prank(address(gated));
-        // V3 with ERC20 currency should not accept ETH
-        vm.expectRevert(EntitlementChecker_InvalidValue.selector);
-        entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
+        mockToken.approve(address(entitlementChecker), amount);
+
+        bytes memory data = abi.encode(
+            caller,
+            transactionId,
+            REQUEST_ID,
+            address(mockToken),
+            amount,
+            caller
+        );
+
+        // Verify balances before
+        assertEq(mockToken.balanceOf(address(gated)), amount);
+        assertEq(mockToken.balanceOf(address(entitlementChecker)), 0);
+
+        vm.recordLogs();
+        vm.prank(address(gated));
+        entitlementChecker.requestEntitlementCheck(CheckType.V3, data);
+
+        // Verify tokens transferred via safeTransferFrom
+        assertEq(mockToken.balanceOf(address(gated)), 0, "Tokens should be transferred from gated");
+        assertEq(
+            mockToken.balanceOf(address(entitlementChecker)),
+            amount,
+            "Tokens should be held by entitlementChecker"
+        );
+
+        // Verify event emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(walletAddress, caller);
     }
 
     // =============================================================

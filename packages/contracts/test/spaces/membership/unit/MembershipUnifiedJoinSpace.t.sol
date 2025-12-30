@@ -316,5 +316,4 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
 
         assertLt(gasOverhead, 5000, "Unified method gas overhead too high");
     }
-
 }
