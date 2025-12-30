@@ -609,6 +609,11 @@ type AppRegistryConfig struct {
 
 	// EnqueuedMessageRetention configures retention for enqueued messages
 	EnqueuedMessageRetention EnqueuedMessageRetentionConfig
+
+	// ColdStreamsEnabled if set to true, the service will not subscribe to all channel
+	// streams on init. Instead, channels are loaded on-demand when new messages arrive.
+	// Default is false.
+	ColdStreamsEnabled bool
 }
 
 // EnqueuedMessageRetentionConfig configures TTL and limits for the enqueued_messages table.
