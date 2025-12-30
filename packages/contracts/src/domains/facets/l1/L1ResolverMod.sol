@@ -7,7 +7,7 @@ import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrR
 import {IL1ResolverService} from "./IL1ResolverService.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {NameCoder} from "@ensdomains/ens-contracts/utils/NameCoder.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {OffchainLookup} from "@ensdomains/ens-contracts/ccipRead/EIP3668.sol";
@@ -25,14 +25,14 @@ library L1ResolverMod {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // keccak256(abi.encode(uint256(keccak256("towns.domains.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
+    bytes32 internal constant STORAGE_SLOT =
         0xad5af01a9aec1f0fbc422f62e21406a58de498f1c0ee36ca202bc49bd857fd00;
 
     // ENS protocol address
-    ENS constant ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
+    ENS internal constant ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
 
     // ENS name wrapper node
-    bytes32 constant NAME_WRAPPER_NODE =
+    bytes32 internal constant NAME_WRAPPER_NODE =
         0xdee478ba2734e34d81c6adc77a32d75b29007895efa2fe60921f1c315e1ec7d9; // namewrapper.eth
 
     /// @notice L2 registry information
