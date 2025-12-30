@@ -19,6 +19,8 @@ interface INodeRegistryBase {
     event NodeStatusUpdated(address indexed nodeAddress, NodeStatus status);
     event NodeUrlUpdated(address indexed nodeAddress, string url);
     event NodeRemoved(address indexed nodeAddress);
+    event NodePermanentIndexBackfilled(address indexed nodeAddress, uint32 indexed permanentIndex);
+    event NodeCometBftPubKeyUpdated(address indexed nodeAddress, bytes32 cometBftPubKey);
 }
 
 interface INodeRegistry is INodeRegistryBase {
@@ -66,4 +68,28 @@ interface INodeRegistry is INodeRegistryBase {
      * a block.
      */
     function getAllNodes() external view returns (Node[] memory);
+
+    /**
+     * @notice Backfill permanent indices for all existing nodes that don't have one assigned.
+     * @dev This should be called once after the contract upgrade. It assigns sequential indices
+     * starting from 1 to all nodes in their current array order. Subsequent registrations will
+     * continue from the last assigned index.
+     * Can only be called by an operator.
+     */
+    function backfillPermanentIndices() external;
+
+    /**
+     * @notice Set or update the CometBFT public key for a node.
+     * @dev Can only be called by the node itself.
+     * @param nodeAddress The address of the node to update
+     * @param cometBftPubKey The 32-byte CometBFT public key
+     */
+    function setNodeCometBftPubKey(address nodeAddress, bytes32 cometBftPubKey) external;
+
+    /**
+     * @notice Get the last assigned permanent node index.
+     * @dev Returns 0 if backfill has not been called yet.
+     * @return The last assigned permanent node index
+     */
+    function getLastNodeIndex() external view returns (uint32);
 }

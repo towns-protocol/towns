@@ -49,6 +49,8 @@ struct Node {
     string url; // dynamically sized, points to a separate location
     address nodeAddress; // 20 bytes
     address operator; // 20 bytes
+    uint32 permanentIndex; // 4 bytes, permanent index assigned to this node. 0 = not initialized
+    bytes32 cometBftPubKey; // 32 bytes, CometBFT public key for consensus
 }
 
 /**
@@ -88,6 +90,9 @@ struct AppStorage {
     uint256 deprecatedSlot;
     // Map of node address to its stream ids
     mapping(address => EnumerableSet.Bytes32Set) streamIdsByNode;
+    // Last assigned permanent node index. Used to assign unique indices to new nodes.
+    // 0 means backfill has not been called yet; after backfill, this tracks the highest assigned index.
+    uint32 lastNodeIndex;
 }
 
 library RiverRegistryStorage {
