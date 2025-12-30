@@ -15,16 +15,32 @@ EOF
 }
 
 if [[ $# -eq 0 ]]; then
+  git_root="$(git rev-parse --show-toplevel)"
+
   list_modified_go_files() {
     {
+      # Unstaged changes
       git diff --name-only --diff-filter=ACMR
+      # Staged changes
+      git diff --cached --name-only --diff-filter=ACMR
+      # Untracked files
       git ls-files --others --exclude-standard
+      # Committed changes vs origin/main (if it exists)
+      if git rev-parse --verify origin/main >/dev/null 2>&1; then
+        git diff --name-only --diff-filter=ACMR origin/main...HEAD
+      elif git rev-parse --verify main >/dev/null 2>&1; then
+        git diff --name-only --diff-filter=ACMR main...HEAD
+      fi
     } | awk 'NF && /\.go$/ { print }' | sort -u
   }
 
   files=()
   while IFS= read -r file; do
-    files+=("$file")
+    # Paths from git are relative to repo root - check existence there
+    # Only include files in core/ directory, strip the core/ prefix for golangci-lint
+    if [[ -f "$git_root/$file" ]] && [[ "$file" == core/* ]]; then
+      files+=("${file#core/}")
+    fi
   done < <(list_modified_go_files)
 
   if [[ ${#files[@]} -eq 0 ]]; then

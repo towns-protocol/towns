@@ -49,10 +49,16 @@ needs_install=false
 if ! command -v golangci-lint >/dev/null 2>&1; then
   needs_install=true
 else
-  installed_version="$(golangci-lint version --short | tr -d '[:space:]')"
-  installed_version="${installed_version#v}"
-  if [[ "$installed_version" != "$required_version" ]]; then
+  # Try --format short first (newer versions), fall back to --short (older versions)
+  if ! installed_version="$(golangci-lint version --format short 2>/dev/null || golangci-lint version --short 2>/dev/null)"; then
+    echo "WARNING: Unable to determine golangci-lint version, will attempt to install." >&2
     needs_install=true
+  else
+    installed_version="$(echo "$installed_version" | tr -d '[:space:]')"
+    installed_version="${installed_version#v}"
+    if [[ "$installed_version" != "$required_version" ]]; then
+      needs_install=true
+    fi
   fi
 fi
 
