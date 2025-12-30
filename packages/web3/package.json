@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.444",
+    "version": "0.0.449",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

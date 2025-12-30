@@ -26,6 +26,10 @@ export type XchainConfig = {
     // ethereum mainnet only. For test networks, this will also include ethereum
     // sepolia.
     ethereumNetworkIds: number[]
+    // Whether to skip fetch setup when creating providers.
+    // Required for Cloudflare Workers where ethers.js's default fetch setup
+    // conflicts with the Worker's native fetch implementation.
+    skipFetchSetup?: boolean
 }
 
 const zeroAddress = ethers.constants.AddressZero
@@ -1248,7 +1252,10 @@ async function findProviderFromChainId(xchainConfig: XchainConfig, chainId: bigi
     }
 
     const url = xchainConfig.supportedRpcUrls[Number(chainId)]
-    const provider = new ethers.providers.StaticJsonRpcProvider(url)
+    const provider = new ethers.providers.StaticJsonRpcProvider({
+        url,
+        skipFetchSetup: xchainConfig.skipFetchSetup === true,
+    })
     await provider.ready
     return provider
 }
@@ -1260,7 +1267,12 @@ async function findEtherChainProviders(xchainConfig: XchainConfig) {
             log.info(`(WARN) findEtherChainProviders: No supported RPC URL for chain id ${chainId}`)
         } else {
             const url = xchainConfig.supportedRpcUrls[chainId]
-            etherChainProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
+            etherChainProviders.push(
+                new ethers.providers.StaticJsonRpcProvider({
+                    url,
+                    skipFetchSetup: xchainConfig.skipFetchSetup === true,
+                }),
+            )
         }
     }
     await Promise.all(etherChainProviders.map((p) => p.ready))
@@ -1274,7 +1286,12 @@ export async function findEthereumProviders(xchainConfig: XchainConfig) {
             log.error(`findEthereumProviders: No supported RPC URL for chain id ${chainId}`)
         } else {
             const url = xchainConfig.supportedRpcUrls[chainId]
-            ethereumProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
+            ethereumProviders.push(
+                new ethers.providers.StaticJsonRpcProvider({
+                    url,
+                    skipFetchSetup: xchainConfig.skipFetchSetup === true,
+                }),
+            )
         }
     }
     await Promise.all(ethereumProviders.map((p) => p.ready))

@@ -545,6 +545,23 @@ func TestMetadataShardCountsAndState(t *testing.T) {
 	require.EqualValues(t, 2, state.LastHeight) // Height updated by CommitPendingBlock
 }
 
+func TestMetadataShardValidatorState(t *testing.T) {
+	store, ctx := setupMetadataShardStoreTest(t)
+	const shardID = 1
+
+	state, err := store.GetShardValidatorState(ctx, shardID)
+	require.NoError(t, err)
+	require.Len(t, state, 0)
+
+	payload := []byte(`{"height":"1","round":2,"step":3}`)
+	err = store.SetShardValidatorState(ctx, shardID, payload)
+	require.NoError(t, err)
+
+	loaded, err := store.GetShardValidatorState(ctx, shardID)
+	require.NoError(t, err)
+	require.Equal(t, payload, loaded)
+}
+
 func TestMetadataShardHeightMismatch(t *testing.T) {
 	store, ctx := setupMetadataShardStoreTest(t)
 	const shardID = 1

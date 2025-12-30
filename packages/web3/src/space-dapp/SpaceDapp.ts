@@ -69,7 +69,7 @@ import { PlatformRequirements } from '../platform-requirements/PlatformRequireme
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
-import { TipSentEventObject } from '../space/ITippingShim'
+import { TipSentEventObject, ITippingShim } from '../space/ITippingShim'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -1852,24 +1852,10 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
     /**
      * Send a tip using the new sendTip interface
-     * @param args - The tip parameters
-     * @param args.spaceId - The space id
-     * @param args.type - The recipient type: 'member' or 'bot'
-     * For member tips:
-     * @param args.receiver - The receiver's wallet address
-     * @param args.tokenId - The token id to tip. Obtainable from getTokenIdOfOwner
-     * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
-     * @param args.amount - The amount to tip
-     * @param args.messageId - The message id - needs to be hex encoded to 64 characters
-     * @param args.channelId - The channel id - needs to be hex encoded to 64 characters
-     * For bot tips:
-     * @param args.receiver - The bot's wallet address
-     * @param args.appId - The app id - needs to be hex encoded to 64 characters
-     * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
-     * @param args.amount - The amount to tip
-     * @param args.messageId - The message id - needs to be hex encoded to 64 characters
-     * @param args.channelId - The channel id - needs to be hex encoded to 64 characters
-     * @param signer - The signer to use for the tip
+     * @param args.tipParams - The tip parameters (SendTipParams)
+     * @param args.signer - The signer to use for the tip
+     * @param args.txnOpts - Optional transaction options
+     * @param args.overrideExecution - Optional execution override
      * @returns The transaction
      */
     public async sendTip<T = ContractTransaction>(args: {
@@ -1879,20 +1865,22 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         overrideExecution?: OverrideExecution<T>
     }) {
         const { tipParams, signer, txnOpts, overrideExecution } = args
-        const { spaceId } = tipParams
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
 
         let recipientType: number
         let encodedData: string
+        let tippingContract: ITippingShim
 
         switch (tipParams.type) {
             case 'member': {
                 // TipRecipientType.Member = 0
                 recipientType = 0
-                const { receiver, tokenId, currency, amount, messageId, channelId } = tipParams
+                const { spaceId, receiver, tokenId, currency, amount, messageId, channelId } =
+                    tipParams
+                const space = this.getSpace(spaceId)
+                if (!space) {
+                    throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+                }
+                tippingContract = space.Tipping
                 const metadataData = ethers.utils.defaultAbiCoder.encode(
                     ['bytes32', 'bytes32', 'uint256'],
                     [ensureHexPrefix(messageId), ensureHexPrefix(channelId), tokenId],
@@ -1917,7 +1905,23 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             case 'bot': {
                 // TipRecipientType.Bot = 1
                 recipientType = 1
-                const { receiver, appId, currency, amount, messageId, channelId } = tipParams
+                const { spaceId, receiver, appId, currency, amount, messageId, channelId } =
+                    tipParams
+                if (spaceId) {
+                    const space = this.getSpace(spaceId)
+                    if (!space) {
+                        throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+                    }
+                    tippingContract = space.Tipping
+                } else {
+                    if (!this.config.addresses.accountModules) {
+                        throw new Error('AccountModules address is not configured')
+                    }
+                    tippingContract = new ITippingShim(
+                        this.config.addresses.accountModules,
+                        this.provider,
+                    )
+                }
                 const metadataData = ethers.utils.defaultAbiCoder.encode(
                     ['bytes32', 'bytes32'],
                     [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
@@ -1939,9 +1943,43 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 )
                 break
             }
+            // DM tips (type: 'any') - calls the AccountModules contract directly
+            case 'any': {
+                // TipRecipientType.Any = 2
+                recipientType = 2
+                const {
+                    receiver,
+                    currency,
+                    amount,
+                    messageId,
+                    channelId,
+                    sender: senderOverride,
+                } = tipParams
+                const sender = senderOverride ?? (await signer.getAddress())
+                if (!this.config.addresses.accountModules) {
+                    throw new Error('AccountModules address is not configured')
+                }
+                tippingContract = new ITippingShim(
+                    this.config.addresses.accountModules,
+                    this.provider,
+                )
+                // Encode messageId and channelId into bytes data
+                const data = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
+                )
+                // Encode struct AnyTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address currency, address sender, address receiver, uint256 amount, bytes data)',
+                    ],
+                    [[currency, sender, receiver, amount, data]],
+                )
+                break
+            }
         }
 
-        return space.Tipping.executeCall({
+        return tippingContract.executeCall({
             signer,
             functionName: 'sendTip',
             args: [recipientType, encodedData],

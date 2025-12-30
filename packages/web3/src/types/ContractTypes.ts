@@ -313,16 +313,29 @@ export type SendTipMemberParams = {
     receiver: Address
     currency: Address
     amount: bigint
+    // Used for nodes to validate tip event
     messageId: string
     channelId: string
 }
 
 export type SendTipBotParams = {
     appId: string
-    spaceId: string
+    spaceId?: string
     receiver: Address
     currency: Address
     amount: bigint
+    // Used for nodes to validate tip event
+    messageId: string
+    channelId: string
+}
+
+export type SendTipAnyParams = {
+    receiver: Address
+    currency: Address
+    amount: bigint
+    /** Sender address override (for smart account userops where msg.sender differs from signer) */
+    sender?: Address
+    // Used for nodes to validate tip event
     messageId: string
     channelId: string
 }
@@ -330,3 +343,4 @@ export type SendTipBotParams = {
 export type SendTipParams =
     | ({ type: 'member' } & SendTipMemberParams)
     | ({ type: 'bot' } & SendTipBotParams)
+    | ({ type: 'any' } & SendTipAnyParams)

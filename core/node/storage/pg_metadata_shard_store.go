@@ -49,6 +49,9 @@ type MetadataStore interface {
 
 	PreparePendingBlock(ctx context.Context, shardId uint64, pendingBlock *mdstate.PendingBlockState) error
 	CommitPendingBlock(ctx context.Context, shardId uint64, pendingBlock *mdstate.PendingBlockState) error
+
+	GetShardValidatorState(ctx context.Context, shardId uint64) ([]byte, error)
+	SetShardValidatorState(ctx context.Context, shardId uint64, state []byte) error
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -113,6 +116,7 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 			shard_id BIGINT PRIMARY KEY,
 			last_height BIGINT NOT NULL DEFAULT 0,
 			last_app_hash BYTEA NOT NULL DEFAULT ''::BYTEA,
+			validator_state BYTEA NOT NULL DEFAULT ''::BYTEA,
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)`); err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
@@ -542,6 +546,44 @@ func (s *PostgresMetadataShardStore) GetShardState(ctx context.Context, shardID 
 		"shardId", shardID,
 	)
 	return state, err
+}
+
+func (s *PostgresMetadataShardStore) GetShardValidatorState(
+	ctx context.Context,
+	shardID uint64,
+) ([]byte, error) {
+	var state []byte
+	err := s.store.txRunner(
+		ctx,
+		"MetadataShard.GetShardValidatorState",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			query := `SELECT validator_state FROM metadata WHERE shard_id = $1`
+			return tx.QueryRow(ctx, query, shardID).Scan(&state)
+		},
+		nil,
+		"shardId", shardID,
+	)
+	return state, err
+}
+
+func (s *PostgresMetadataShardStore) SetShardValidatorState(
+	ctx context.Context,
+	shardID uint64,
+	state []byte,
+) error {
+	return s.store.txRunner(
+		ctx,
+		"MetadataShard.SetShardValidatorState",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			updateSQL := `UPDATE metadata SET validator_state = $1 WHERE shard_id = $2`
+			_, err := tx.Exec(ctx, updateSQL, state, shardID)
+			return err
+		},
+		nil,
+		"shardId", shardID,
+	)
 }
 
 func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(

@@ -238,14 +238,16 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         // Reset ERC20 approval
         if (!isNative) SafeTransferLib.safeApprove(currency, spaceFactory, 0);
 
-        // Mint points for fee payment
-        address airdropDiamond = _getAirdropDiamond();
-        uint256 points = _getPoints(
-            airdropDiamond,
-            ITownsPointsBase.Action.Tip,
-            abi.encode(protocolFee)
-        );
-        _mintPoints(airdropDiamond, msg.sender, points);
+        // Mint points for fee payment (only for ETH tips)
+        if (isNative) {
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Tip,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, msg.sender, points);
+        }
     }
 
     /// @dev Validates common tip requirements
