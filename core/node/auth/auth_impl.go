@@ -100,8 +100,8 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 
 func NewChainAuthArgsForIsAppInstalled(userId common.Address, installedAppAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:             chainAuthKindIsAppInstalled,
-		principal:        userId,
+		kind:       chainAuthKindIsAppInstalled,
+		principal:  userId,
 		appAddress: installedAppAddress,
 	}
 }
@@ -109,9 +109,9 @@ func NewChainAuthArgsForIsAppInstalled(userId common.Address, installedAppAddres
 // NewChainAuthArgsForDmStreamCreation creates chain auth args for DM stream creation.
 // Validate app address using blockchain call and checks app installation on user.
 func NewChainAuthArgsForDmStreamCreation(
-	firstParty, 
+	firstParty,
 	secondParty common.Address,
-	firstPartyAppAddress, 
+	firstPartyAppAddress,
 	secondPartyAppAddress *common.Address,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
@@ -1265,7 +1265,8 @@ func (ca *chainAuth) checkStreamIsEnabled(
 	}
 }
 
-// checkNonEntitlementRelatedChainAuth checks things like if the user is an app and returns a cache result if the auth check was related
+// checkNonEntitlementRelatedChainAuth checks things like if the user is an app and returns a cache result if the auth
+// check was related
 // to whether or not a user is an app. Otherwise it will return a valid boolean, and the contract address of
 // the app if it is registered, or an error if the method encounters one.
 func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
