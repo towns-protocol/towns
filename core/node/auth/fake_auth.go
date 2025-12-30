@@ -29,7 +29,6 @@ func (a *fakeChainAuth) IsEntitled(
 
 func (a *fakeChainAuth) VerifyReceipt(
 	ctx context.Context,
-	cfg *config.Config,
 	receipt *protocol.BlockchainTransactionReceipt,
 ) (bool, error) {
 	return true, nil

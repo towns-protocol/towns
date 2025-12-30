@@ -172,7 +172,7 @@ func (s *Service) addParsedEvent(
 	}
 
 	if verifications.Receipt != nil {
-		isVerified, err := s.chainAuth.VerifyReceipt(ctx, s.config, verifications.Receipt)
+		isVerified, err := s.chainAuth.VerifyReceipt(ctx, verifications.Receipt)
 		if err != nil {
 			return nil, err
 		}

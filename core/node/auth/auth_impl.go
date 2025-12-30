@@ -51,7 +51,7 @@ type ChainAuth interface {
 			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
 	*/
 	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (IsEntitledResult, error)
-	VerifyReceipt(ctx context.Context, cfg *config.Config, receipt *BlockchainTransactionReceipt) (bool, error)
+	VerifyReceipt(ctx context.Context, receipt *BlockchainTransactionReceipt) (bool, error)
 }
 
 type isEntitledResult struct {
@@ -411,7 +411,6 @@ func NewChainAuth(
 
 func (ca *chainAuth) VerifyReceipt(
 	ctx context.Context,
-	cfg *config.Config,
 	userReceipt *BlockchainTransactionReceipt,
 ) (bool, error) {
 	client, err := ca.evaluator.GetClient(userReceipt.GetChainId())
