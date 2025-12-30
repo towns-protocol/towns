@@ -679,19 +679,19 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		return nil, err
 	}
 
-	// Check for dmPartnerAddress in metadata - this allows users to create their user stream
+	// Check for installedAppAddress in metadata - this allows users to create their user stream
 	// when they want to DM a bot. The dmPartner must be a bot and the bot module must be installed.
-	if dmPartnerBytes, ok := ru.requestMetadata["dmPartnerAddress"]; ok {
-		if len(dmPartnerBytes) != 20 {
+	if installedAppAddressBytes, ok := ru.requestMetadata["installedAppAddress"]; ok {
+		if len(installedAppAddressBytes) != 20 {
 			return nil, RiverError(
 				Err_BAD_STREAM_CREATION_PARAMS,
-				"invalid dmPartnerAddress length",
-				"length", len(dmPartnerBytes),
+				"invalid installedAppAddress length",
+				"length", len(installedAppAddressBytes),
 				"expectedLength", 20,
 			)
 		}
-		dmPartnerAddress := common.BytesToAddress(dmPartnerBytes)
-		return auth.NewChainAuthArgsForDmStreamCreation(userAddress, dmPartnerAddress, nil, nil, true), nil
+		installedAppAddress := common.BytesToAddress(installedAppAddressBytes)
+		return auth.NewChainAuthArgsForIsAppInstalled(userAddress, installedAppAddress), nil
 	}
 
 	// we don't have a good way to check to see if they have on chain assets yet,
@@ -784,7 +784,6 @@ func (ru *csDmChannelRules) dmStreamCreationChainAuth() (*auth.ChainAuthArgs, er
 		secondPartyAddr,
 		firstPartyAppAddr,
 		secondPartyAppAddr,
-		false,
 	), nil
 }
 

@@ -7794,12 +7794,16 @@ type DmChannelPayload_Inception struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	StreamId              []byte          `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
-	FirstPartyAddress     []byte          `protobuf:"bytes,2,opt,name=first_party_address,json=firstPartyAddress,proto3" json:"first_party_address,omitempty"`
-	SecondPartyAddress    []byte          `protobuf:"bytes,3,opt,name=second_party_address,json=secondPartyAddress,proto3" json:"second_party_address,omitempty"`
-	Settings              *StreamSettings `protobuf:"bytes,4,opt,name=settings,proto3" json:"settings,omitempty"`
-	FirstPartyAppAddress  []byte          `protobuf:"bytes,5,opt,name=first_party_app_address,json=firstPartyAppAddress,proto3,oneof" json:"first_party_app_address,omitempty"`
-	SecondPartyAppAddress []byte          `protobuf:"bytes,6,opt,name=second_party_app_address,json=secondPartyAppAddress,proto3,oneof" json:"second_party_app_address,omitempty"`
+	StreamId           []byte          `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
+	FirstPartyAddress  []byte          `protobuf:"bytes,2,opt,name=first_party_address,json=firstPartyAddress,proto3" json:"first_party_address,omitempty"`
+	SecondPartyAddress []byte          `protobuf:"bytes,3,opt,name=second_party_address,json=secondPartyAddress,proto3" json:"second_party_address,omitempty"`
+	Settings           *StreamSettings `protobuf:"bytes,4,opt,name=settings,proto3" json:"settings,omitempty"`
+	// App contract address for first party if they are a bot/app.
+	// When set, indicates a bot-to-user DM and enables app installation checks.
+	FirstPartyAppAddress []byte `protobuf:"bytes,5,opt,name=first_party_app_address,json=firstPartyAppAddress,proto3,oneof" json:"first_party_app_address,omitempty"`
+	// App contract address for second party if they are a bot/app.
+	// When set, indicates a user-to-bot DM and enables app installation checks.
+	SecondPartyAppAddress []byte `protobuf:"bytes,6,opt,name=second_party_app_address,json=secondPartyAppAddress,proto3,oneof" json:"second_party_app_address,omitempty"`
 }
 
 func (x *DmChannelPayload_Inception) Reset() {
