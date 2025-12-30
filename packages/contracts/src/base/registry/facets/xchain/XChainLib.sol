@@ -2,12 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGatedBase} from "../../../../spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementChecker} from "../checker/IEntitlementChecker.sol";
+
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
-// contracts
 
 library XChainLib {
     // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) &
@@ -22,12 +21,20 @@ library XChainLib {
         mapping(uint256 requestId => bool voteCompleted) voteCompleted;
     }
 
+    /// @dev Stores crosschain entitlement check request data
+    /// @param value Amount escrowed (ETH or ERC20)
+    /// @param blockNumber Block when request was created
+    /// @param caller Space contract that initiated the request
+    /// @param completed Whether the request has been finalized
+    /// @param receiver Wallet address being checked for entitlement
+    /// @param currency Token address (NATIVE_TOKEN for ETH)
     struct Request {
         uint256 value;
         uint256 blockNumber;
         address caller;
         bool completed;
         address receiver;
+        address currency;
     }
 
     struct Layout {

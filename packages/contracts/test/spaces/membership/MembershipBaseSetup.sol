@@ -203,8 +203,18 @@ contract MembershipBaseSetup is
     }
 
     modifier givenJoinspaceHasAdditionalCrosschainEntitlements() {
+        _addCrosschainEntitlements(userSpace);
+        _;
+    }
+
+    modifier givenUSDCSpaceHasCrosschainEntitlements() {
+        _addCrosschainEntitlements(usdcSpace);
+        _;
+    }
+
+    function _addCrosschainEntitlements(address space) internal {
         vm.startPrank(founder);
-        IEntitlementsManagerBase.Entitlement[] memory entitlements = IEntitlementsManager(userSpace)
+        IEntitlementsManagerBase.Entitlement[] memory entitlements = IEntitlementsManager(space)
             .getEntitlements();
         IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
@@ -227,18 +237,17 @@ contract MembershipBaseSetup is
         string[] memory permissions = new string[](1);
         permissions[0] = Permissions.JoinSpace;
 
-        IRoles(userSpace).createRole(
+        IRoles(space).createRole(
             "joinspace-crosschain-multi-entitlement-1",
             permissions,
             createEntitlements1
         );
-        IRoles(userSpace).createRole(
+        IRoles(space).createRole(
             "joinspace-crosschain-multi-entitlement-2",
             permissions,
             createEntitlements2
         );
         vm.stopPrank();
-        _;
     }
 
     modifier givenFounderIsCaller() {

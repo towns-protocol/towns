@@ -2,6 +2,24 @@
 pragma solidity ^0.8.23;
 
 interface IEntitlementCheckerBase {
+    /// @notice CheckType enum for unified entitlement check dispatch
+    /// @dev To encode data for each type:
+    ///   switch (checkType) {
+    ///     case CheckType.V1:
+    ///       data = abi.encode(walletAddress, transactionId, roleId, nodes);
+    ///     case CheckType.V2:
+    ///       data = abi.encode(walletAddress, transactionId, requestId, extraData);
+    ///       // where extraData = abi.encode(senderAddress)
+    ///     case CheckType.V3:
+    ///       data = abi.encode(walletAddress, transactionId, requestId, currency, amount, senderAddress);
+    ///   }
+    enum CheckType {
+        V1, // Legacy check with explicit nodes
+        V2, // ETH escrow (uses msg.value, currency is always NATIVE_TOKEN)
+        V3 // ETH or ERC20 escrow (uses currency + amount)
+    }
+
+    error EntitlementChecker_InvalidCheckType();
     error EntitlementChecker_NodeAlreadyRegistered();
     error EntitlementChecker_NodeNotRegistered();
     error EntitlementChecker_InsufficientNumberOfNodes();
@@ -12,6 +30,7 @@ interface IEntitlementCheckerBase {
     error EntitlementChecker_InsufficientFunds();
     error EntitlementChecker_NoRefundsAvailable();
     error EntitlementChecker_InvalidValue();
+    error EntitlementChecker_DuplicateRequestId();
 
     // Events
     event NodeRegistered(address indexed nodeAddress);
@@ -87,6 +106,11 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
         uint256 requestId,
         bytes memory extraData
     ) external payable;
+
+    /// @notice Unified entitlement check request with enum-based dispatch
+    /// @param checkType The type of check to perform (V1, V2, or V3)
+    /// @param data Encoded parameters specific to the check type (see CheckType enum docs)
+    function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable;
 
     /// @notice Get all nodes registered to a specific operator
     /// @param operator The address of the operator

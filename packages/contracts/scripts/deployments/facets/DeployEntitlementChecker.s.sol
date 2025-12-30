@@ -15,14 +15,17 @@ library DeployEntitlementChecker {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
         arr.p(EntitlementChecker.registerNode.selector);
         arr.p(EntitlementChecker.unregisterNode.selector);
         arr.p(EntitlementChecker.isValidNode.selector);
         arr.p(EntitlementChecker.getNodeCount.selector);
         arr.p(EntitlementChecker.getNodeAtIndex.selector);
         arr.p(EntitlementChecker.getRandomNodes.selector);
-        arr.p(EntitlementChecker.requestEntitlementCheck.selector);
+        // requestEntitlementCheck V1 (legacy)
+        arr.p(bytes4(keccak256("requestEntitlementCheck(address,bytes32,uint256,address[])")));
+        // requestEntitlementCheck unified (enum dispatch)
+        arr.p(bytes4(keccak256("requestEntitlementCheck(uint8,bytes)")));
         arr.p(EntitlementChecker.requestEntitlementCheckV2.selector);
         arr.p(EntitlementChecker.getNodesByOperator.selector);
 

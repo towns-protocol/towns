@@ -2,16 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlementGatedBase} from "../../../../spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementChecker} from "./IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
-
-import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {XChainLib} from "src/base/registry/facets/xchain/XChainLib.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "../operator/NodeOperatorStorage.sol";
+import {XChainLib} from "../xchain/XChainLib.sol";
+import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -21,6 +22,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     // =============================================================
     //                           Initializer
@@ -129,8 +131,79 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         uint256 requestId,
         bytes memory extraData
     ) external payable {
-        address space = msg.sender;
         address senderAddress = abi.decode(extraData, (address));
+        _requestEntitlementCheck(
+            walletAddress,
+            transactionId,
+            requestId,
+            CurrencyTransfer.NATIVE_TOKEN,
+            msg.value,
+            senderAddress
+        );
+    }
+
+    /// @inheritdoc IEntitlementChecker
+    function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable {
+        if (checkType == CheckType.V1) {
+            if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
+            (
+                address walletAddress,
+                bytes32 transactionId,
+                uint256 roleId,
+                address[] memory nodes
+            ) = abi.decode(data, (address, bytes32, uint256, address[]));
+            emit EntitlementCheckRequested(walletAddress, msg.sender, transactionId, roleId, nodes);
+        } else if (checkType == CheckType.V2) {
+            (
+                address walletAddress,
+                bytes32 transactionId,
+                uint256 requestId,
+                bytes memory extraData
+            ) = abi.decode(data, (address, bytes32, uint256, bytes));
+            address senderAddress = abi.decode(extraData, (address));
+            _requestEntitlementCheck(
+                walletAddress,
+                transactionId,
+                requestId,
+                CurrencyTransfer.NATIVE_TOKEN,
+                msg.value,
+                senderAddress
+            );
+        } else if (checkType == CheckType.V3) {
+            (
+                address walletAddress,
+                bytes32 transactionId,
+                uint256 requestId,
+                address currency,
+                uint256 amount,
+                address senderAddress
+            ) = abi.decode(data, (address, bytes32, uint256, address, uint256, address));
+            _requestEntitlementCheck(
+                walletAddress,
+                transactionId,
+                requestId,
+                currency,
+                amount,
+                senderAddress
+            );
+        } else {
+            EntitlementChecker_InvalidCheckType.selector.revertWith();
+        }
+    }
+
+    // =============================================================
+    //                           Internal
+    // =============================================================
+
+    function _requestEntitlementCheck(
+        address walletAddress,
+        bytes32 transactionId,
+        uint256 requestId,
+        address currency,
+        uint256 amount,
+        address senderAddress
+    ) internal {
+        address space = msg.sender;
 
         XChainLib.Layout storage layout = XChainLib.layout();
 
@@ -139,25 +212,34 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         // Only create the request if it doesn't exist yet
         XChainLib.Request storage request = layout.requests[transactionId];
         if (request.caller == address(0)) {
-            // First time creating this request
-            layout.requests[transactionId] = XChainLib.Request({
-                caller: space,
-                blockNumber: block.number,
-                value: msg.value,
-                completed: false,
-                receiver: walletAddress
-            });
-        } else {
-            if (msg.value != 0) {
-                EntitlementChecker_InvalidValue.selector.revertWith();
+            request.caller = space;
+            request.blockNumber = block.number;
+            request.value = amount;
+            request.receiver = walletAddress;
+            request.currency = currency;
+
+            if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+                if (amount != msg.value) EntitlementChecker_InvalidValue.selector.revertWith();
+            } else {
+                // ERC20: reject any ETH sent
+                if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
+                // ERC20: pull tokens from Space
+                if (amount != 0) currency.safeTransferFrom(space, address(this), amount);
             }
+        } else {
+            // Request already exists from a previous requestId on this transactionId.
+            // Escrow was established on the first request - reject any additional ETH
+            // to prevent funds being sent but not tracked.
+            if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
         }
 
         address[] memory randomNodes = _getRandomNodes(5);
 
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Check storage check = layout.checks[transactionId];
 
-        check.requestIds.add(requestId);
+        if (!check.requestIds.add(requestId)) {
+            EntitlementChecker_DuplicateRequestId.selector.revertWith();
+        }
 
         for (uint256 i; i < randomNodes.length; ++i) {
             check.nodes[requestId].add(randomNodes[i]);

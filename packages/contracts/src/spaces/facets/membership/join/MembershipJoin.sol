@@ -289,13 +289,8 @@ abstract contract MembershipJoin is
         return false;
     }
 
-    /// @notice Handles crosschain entitlement checks with proper payment distribution
-    /// @param receiver The address to check entitlements for
-    /// @param sender The address sending the transaction
-    /// @param transactionId The transaction identifier
-    /// @param requiredAmount The required payment amount
-    /// @return isEntitled Whether user is entitled (always false for crosschain)
-    /// @return isCrosschainPending Whether crosschain checks are pending
+    /// @dev Checks all crosschain entitlements across roles. User passes if any check succeeds.
+    /// Payment is escrowed only once (on first check) and returned when any check completes.
     function _checkCrosschainEntitlements(
         IRolesBase.Role[] memory roles,
         address receiver,
@@ -303,7 +298,7 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         uint256 requiredAmount
     ) internal returns (bool isEntitled, bool isCrosschainPending) {
-        bool paymentSent = false;
+        bool paymentSent;
 
         for (uint256 i; i < roles.length; ++i) {
             if (roles[i].disabled) continue;
@@ -312,28 +307,16 @@ abstract contract MembershipJoin is
                 IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
 
                 if (entitlement.isCrosschain()) {
-                    if (!paymentSent) {
-                        // Send only the required amount to crosschain check
-                        // Excess will be handled by existing refund mechanisms
-                        _requestEntitlementCheckV2(
-                            receiver,
-                            sender,
-                            transactionId,
-                            IRuleEntitlement(address(entitlement)),
-                            roles[i].id,
-                            requiredAmount
-                        );
-                        paymentSent = true;
-                    } else {
-                        _requestEntitlementCheckV2(
-                            receiver,
-                            sender,
-                            transactionId,
-                            IRuleEntitlement(address(entitlement)),
-                            roles[i].id,
-                            0
-                        );
-                    }
+                    _requestEntitlementCheck(
+                        receiver,
+                        sender,
+                        transactionId,
+                        IRuleEntitlement(address(entitlement)),
+                        roles[i].id,
+                        _getMembershipCurrency(),
+                        paymentSent ? 0 : requiredAmount
+                    );
+                    paymentSent = true;
                     isCrosschainPending = true;
                 }
             }
