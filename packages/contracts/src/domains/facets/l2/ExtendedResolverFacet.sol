@@ -7,7 +7,13 @@ pragma solidity ^0.8.29;
 
 // contracts
 
+/// @title ExtendedResolver
+/// @notice Implements EIP-3668 (CCIP Read) resolve function for on-chain resolution without offchain lookup
+/// @dev Executes the encoded resolver call directly via staticcall and returns the result or propagates revert
 contract ExtendedResolver {
+    /// @notice Resolves ENS data by executing the encoded call directly on this contract
+    /// @param data The encoded resolver function call (e.g., addr(bytes32), text(bytes32,string))
+    /// @return The result of the resolver call
     function resolve(
         bytes memory /* name */,
         bytes memory data
