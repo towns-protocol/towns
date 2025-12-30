@@ -91,28 +91,28 @@ library L2RegistryMod {
     /// @param subdomain The subdomain of the subdomain, e.g. "x" for "x.name.eth"
     /// @param owner The address that will own the subdomain
     /// @param records The encoded calldata for resolver setters
-    /// @return subDomainHash The resulting subdomain hash, e.g. `namehash("x.name.eth")` for "x.name.eth"
+    /// @return subdomainHash The resulting subdomain hash, e.g. `namehash("x.name.eth")` for "x.name.eth"
     function createSubdomain(
         Layout storage $,
         bytes32 domainHash,
         string calldata subdomain,
         address owner,
         bytes[] calldata records
-    ) internal returns (bytes32 subDomainHash) {
-        subDomainHash = encodeNode(domainHash, subdomain);
+    ) internal returns (bytes32 subdomainHash) {
+        subdomainHash = encodeNode(domainHash, subdomain);
         bytes32 labelhash = keccak256(bytes(subdomain));
         bytes memory dnsEncodedName = encodeName(subdomain, $.names[domainHash]);
-        uint256 subnodeId = uint256(subDomainHash);
+        uint256 subnodeId = uint256(subdomainHash);
 
         if ($.token.ownerOf(subnodeId) != address(0))
             L2RegistryMod_NotAvailable.selector.revertWith();
 
         $.token.mint(owner, subnodeId);
-        setRecords(subDomainHash, records);
-        $.names[subDomainHash] = dnsEncodedName;
+        setRecords(subdomainHash, records);
+        $.names[subdomainHash] = dnsEncodedName;
 
         emit NewOwner(domainHash, labelhash, owner);
-        emit SubnodeCreated(subDomainHash, dnsEncodedName, owner);
+        emit SubnodeCreated(subdomainHash, dnsEncodedName, owner);
     }
 
     function setRecords(
