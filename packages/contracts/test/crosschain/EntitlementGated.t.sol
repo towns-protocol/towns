@@ -37,15 +37,14 @@ contract EntitlementGatedTest is
     /*                 Request Entitlement Check V2               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_requestEntitlementCheckV2RuleDataV2() external {
+    function test_requestEntitlementCheckV2RuleDataV2(address caller) external {
+        vm.assume(caller != address(0));
         bytes32 transactionHash = keccak256(abi.encodePacked(tx.origin, block.number));
 
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
-        address caller = _randomAddress();
-
-        vm.deal(caller, 1 ether);
+        deal(caller, 1 ether);
 
         vm.recordLogs();
         vm.prank(caller);
@@ -87,15 +86,14 @@ contract EntitlementGatedTest is
         assertEq(address(gated).balance, 1 ether);
     }
 
-    function test_requestEntitlementCheckV2RuleDataV1() external {
+    function test_requestEntitlementCheckV2RuleDataV1(address caller) external {
+        vm.assume(caller != address(0));
         bytes32 transactionHash = keccak256(abi.encodePacked(tx.origin, block.number));
 
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
-        address caller = _randomAddress();
-
-        vm.deal(caller, 1 ether);
+        deal(caller, 1 ether);
 
         vm.recordLogs();
         vm.prank(caller);
@@ -181,7 +179,7 @@ contract EntitlementGatedTest is
     // =============================================================
     //                 Post Entitlement Check Result
     // =============================================================
-    function test_postEntitlementCheckV1ResultRuleDataV2_passing() external {
+    function test_postEntitlementCheckV1ResultRuleDataV2(bool pass) external {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
@@ -192,25 +190,10 @@ contract EntitlementGatedTest is
             RuleEntitlementUtil.getMockERC721RuleData()
         );
 
-        _nodeVotes(requestId, 0, nodes, NodeVoteStatus.PASSED);
+        _nodeVotes(requestId, 0, nodes, pass ? NodeVoteStatus.PASSED : NodeVoteStatus.FAILED);
     }
 
-    function test_postEntitlementCheckV1ResultRuleDataV2_failing() external {
-        uint256[] memory roleIds = new uint256[](1);
-        roleIds[0] = 0;
-
-        vm.prank(address(gated));
-        address[] memory nodes = entitlementChecker.getRandomNodes(5);
-
-        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds,
-            RuleEntitlementUtil.getMockERC721RuleData()
-        );
-
-        _nodeVotes(requestId, 0, nodes, NodeVoteStatus.FAILED);
-    }
-
-    function test_fuzz_postEntitlementCheckV1ResultRuleDataV2_revert_transactionNotRegistered(
+    function test_postEntitlementCheckV1ResultRuleDataV2_revert_transactionNotRegistered(
         bytes32 requestId,
         address node
     ) external {
@@ -362,12 +345,12 @@ contract EntitlementGatedTest is
     /*              Unified requestEntitlementCheck               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_fuzz_requestEntitlementCheck_revertWhen_duplicateRequestId(
+    function test_requestEntitlementCheck_revertWhen_duplicateRequestId(
         address caller,
         bytes32 transactionId
     ) external {
         vm.assume(caller != address(0));
-        vm.deal(address(gated), 2 ether);
+        deal(address(gated), 2 ether);
 
         uint256 requestId = 0;
         address currency = CurrencyTransfer.NATIVE_TOKEN;
@@ -386,12 +369,12 @@ contract EntitlementGatedTest is
         vm.stopPrank();
     }
 
-    function test_fuzz_requestEntitlementCheck_revertWhen_ethAmountMismatch(
+    function test_requestEntitlementCheck_revertWhen_ethAmountMismatch(
         address caller,
         bytes32 transactionId
     ) external {
         vm.assume(caller != address(0));
-        vm.deal(address(gated), 2 ether);
+        deal(address(gated), 2 ether);
         uint256 requestId = 0;
         address currency = CurrencyTransfer.NATIVE_TOKEN;
         uint256 amount = 1 ether;
@@ -403,7 +386,7 @@ contract EntitlementGatedTest is
         entitlementChecker.requestEntitlementCheck{value: 0.5 ether}(CheckType.V3, data);
     }
 
-    function test_fuzz_requestEntitlementCheck_unifiedV1(
+    function test_requestEntitlementCheck_unifiedV1(
         address walletAddress,
         bytes32 transactionId
     ) external {
@@ -427,12 +410,12 @@ contract EntitlementGatedTest is
         entitlementChecker.requestEntitlementCheck(CheckType.V1, data);
     }
 
-    function test_fuzz_requestEntitlementCheck_unifiedV2(
+    function test_requestEntitlementCheck_unifiedV2(
         address caller,
         bytes32 transactionId
     ) external {
         vm.assume(caller != address(0));
-        vm.deal(address(gated), 1 ether);
+        deal(address(gated), 1 ether);
         uint256 requestId = 0;
         bytes memory extraData = abi.encode(caller);
         bytes memory data = abi.encode(caller, transactionId, requestId, extraData);
@@ -446,12 +429,12 @@ contract EntitlementGatedTest is
         assertEq(walletAddress, caller);
     }
 
-    function test_fuzz_requestEntitlementCheck_unifiedV3(
+    function test_requestEntitlementCheck_unifiedV3(
         address caller,
         bytes32 transactionId
     ) external {
         vm.assume(caller != address(0));
-        vm.deal(address(gated), 1 ether);
+        deal(address(gated), 1 ether);
         uint256 requestId = 0;
         address currency = CurrencyTransfer.NATIVE_TOKEN;
         uint256 amount = 1 ether;
@@ -466,12 +449,12 @@ contract EntitlementGatedTest is
         assertEq(walletAddress, caller);
     }
 
-    function test_fuzz_requestEntitlementCheck_revertWhen_v1WithEth(
+    function test_requestEntitlementCheck_revertWhen_v1WithEth(
         address walletAddress,
         bytes32 transactionId
     ) external {
         vm.assume(walletAddress != address(0));
-        vm.deal(address(this), 1 ether);
+        deal(address(this), 1 ether);
 
         address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
         uint256 roleId = 0;
@@ -482,12 +465,12 @@ contract EntitlementGatedTest is
         entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V1, data);
     }
 
-    function test_fuzz_requestEntitlementCheck_revertWhen_erc20WithEth(
+    function test_requestEntitlementCheck_revertWhen_erc20WithEth(
         address caller,
         bytes32 transactionId
     ) external {
         vm.assume(caller != address(0));
-        vm.deal(address(gated), 1 ether);
+        deal(address(gated), 1 ether);
 
         uint256 requestId = 0;
         address currency = address(0x1234); // Non-native token
