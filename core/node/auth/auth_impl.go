@@ -1412,27 +1412,18 @@ func (ca *chainAuth) checkDmCreation(
 		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
+	// At least one party is a bot. Check if bot's app is installed on the user.
+	var userAddress common.Address
+	var appContract common.Address
 	if secondPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, secondPartyAppContract, true)
-		if err != nil {
-			return nil, err
-		}
-		if result.IsAllowed() {
-			return result, nil
-		}
+		userAddress = args.firstParty
+		appContract = secondPartyAppContract
+	} else {
+		userAddress = args.secondParty
+		appContract = firstPartyAppContract
 	}
 
-	if firstPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, firstPartyAppContract, true)
-		if err != nil {
-			return nil, err
-		}
-		if result.IsAllowed() {
-			return result, nil
-		}
-	}
-
-	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, appContract, true)
 }
 
 // Check if app is installed on user for events on existing DM streams.
@@ -1455,31 +1446,17 @@ func (ca *chainAuth) checkDmEvent(
 	}
 
 	// At least one party is an app. Check if app is installed on user.
-	var lastErr error
-
+	var userAddress common.Address
+	var appAddress common.Address
 	if secondPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.firstParty, *args.secondPartyAppAddress, false)
-		if err != nil {
-			lastErr = err
-		} else if result.IsAllowed() {
-			return result, nil
-		}
-	}
-	if firstPartyIsApp {
-		result, err := ca.checkAppInstalledOnUser(ctx, cfg, args.secondParty, *args.firstPartyAppAddress, false)
-		if err != nil {
-			lastErr = err
-		} else if result.IsAllowed() {
-			return result, nil
-		}
+		userAddress = args.firstParty
+		appAddress = *args.secondPartyAppAddress
+	} else {
+		userAddress = args.secondParty
+		appAddress = *args.firstPartyAppAddress
 	}
 
-	if lastErr != nil {
-		return nil, lastErr
-	}
-
-	// App is not installed on user - reject
-	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, appAddress, false)
 }
 
 // checkAppInstalledOnUserUncached checks if an app is installed on a single wallet and not expired.
