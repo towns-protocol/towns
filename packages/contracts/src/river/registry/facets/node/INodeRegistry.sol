@@ -19,7 +19,6 @@ interface INodeRegistryBase {
     event NodeStatusUpdated(address indexed nodeAddress, NodeStatus status);
     event NodeUrlUpdated(address indexed nodeAddress, string url);
     event NodeRemoved(address indexed nodeAddress);
-    event NodePermanentIndexBackfilled(address indexed nodeAddress, uint32 indexed permanentIndex);
     event NodeCometBftPubKeyUpdated(address indexed nodeAddress, bytes32 cometBftPubKey);
 }
 

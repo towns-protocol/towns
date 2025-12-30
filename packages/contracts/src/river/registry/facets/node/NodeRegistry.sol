@@ -51,6 +51,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         ds.nodes.add(nodeAddress); // TODO: remove this line
         ds.nodeByAddress[nodeAddress] = newNode;
 
+        // TODO: Consider adding permanentIndex to the event
         emit NodeAdded(nodeAddress, msg.sender, url, status);
     }
 
@@ -149,7 +150,6 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
             if (node.permanentIndex == 0) {
                 currentIndex++;
                 node.permanentIndex = currentIndex;
-                emit NodePermanentIndexBackfilled(nodeAddress, currentIndex);
             }
         }
 
