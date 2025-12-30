@@ -43,6 +43,18 @@ contract L1ResolverFacet is IExtendedResolver, OwnableBase, Facet {
         L1ResolverMod.getStorage().setL2Registry(node, chainId, registryAddress);
     }
 
+    /// @notice Sets the gateway URL
+    /// @param gatewayUrl The URL of the CCIP gateway
+    function setGatewayURL(string calldata gatewayUrl) external onlyOwner {
+        L1ResolverMod.getStorage().setGatewayURL(gatewayUrl);
+    }
+
+    /// @notice Sets the gateway signer
+    /// @param gatewaySigner The address of the gateway signer
+    function setGatewaySigner(address gatewaySigner) external onlyOwner {
+        L1ResolverMod.getStorage().setGatewaySigner(gatewaySigner);
+    }
+
     /// @inheritdoc IExtendedResolver
     /// @dev Always reverts with OffchainLookup to trigger CCIP-Read
     function resolve(
@@ -61,18 +73,6 @@ contract L1ResolverFacet is IExtendedResolver, OwnableBase, Facet {
         bytes calldata extraData
     ) external view returns (bytes memory) {
         return L1ResolverMod.getStorage().resolveWithProof(response, extraData);
-    }
-
-    /// @notice Sets the gateway URL
-    /// @param gatewayUrl The URL of the CCIP gateway
-    function setGatewayURL(string calldata gatewayUrl) external onlyOwner {
-        L1ResolverMod.getStorage().setGatewayURL(gatewayUrl);
-    }
-
-    /// @notice Sets the gateway signer
-    /// @param gatewaySigner The address of the gateway signer
-    function setGatewaySigner(address gatewaySigner) external onlyOwner {
-        L1ResolverMod.getStorage().setGatewaySigner(gatewaySigner);
     }
 
     /// @notice Returns the L2 registry for a given node
