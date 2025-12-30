@@ -58,10 +58,20 @@ export function getDefaultXChainIds(baseChainId: number): number[] {
     return ids
 }
 
+export type XchainConfigOptions = {
+    /**
+     * Whether to skip fetch setup when creating providers.
+     * Required for Cloudflare Workers where ethers.js's default fetch setup
+     * conflicts with the Worker's native fetch implementation.
+     */
+    skipFetchSetup?: boolean
+}
+
 function marshallXChainConfig(
     supportedXChainIds: number[],
     supportedXChainRpcMapping: { [chainId: number]: string },
     chainInfo = DEFAULT_BLOCKCHAIN_INFO,
+    options: XchainConfigOptions = {},
 ): XchainConfig {
     const filteredByRiverSupported = Object.entries(supportedXChainRpcMapping ?? {}).filter(
         ([chainId, rpcUrl]) => isDefined(rpcUrl) && supportedXChainIds.includes(+chainId),
@@ -93,13 +103,20 @@ function marshallXChainConfig(
         supportedRpcUrls,
         etherNativeNetworkIds,
         ethereumNetworkIds,
+        skipFetchSetup: options.skipFetchSetup,
     }
 }
 
 export function getXchainConfig(
     baseChainId: number,
     supportedXChainRpcMapping: { [chainId: number]: string },
+    options: XchainConfigOptions = {},
 ): XchainConfig {
     const xChainIds = getDefaultXChainIds(baseChainId)
-    return marshallXChainConfig(xChainIds, supportedXChainRpcMapping)
+    return marshallXChainConfig(
+        xChainIds,
+        supportedXChainRpcMapping,
+        DEFAULT_BLOCKCHAIN_INFO,
+        options,
+    )
 }
