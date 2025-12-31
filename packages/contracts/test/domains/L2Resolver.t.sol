@@ -6,6 +6,7 @@ import {IExtendedResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IE
 import {IAddrResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import {ITextResolver} from "@ensdomains/ens-contracts/resolvers/profiles/ITextResolver.sol";
 import {IContentHashResolver} from "@ensdomains/ens-contracts/resolvers/profiles/IContentHashResolver.sol";
+import {IL2Registry} from "src/domains/facets/l2/IL2Registry.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // libraries
@@ -54,6 +55,18 @@ contract L2ResolverTest is L2ResolverBaseSetup {
         assertTrue(
             IERC165(l2Resolver).supportsInterface(type(IExtendedResolver).interfaceId),
             "Should support IExtendedResolver"
+        );
+
+        // Verify resolver supports IL2Registry interface
+        assertTrue(
+            IERC165(l2Resolver).supportsInterface(type(IL2Registry).interfaceId),
+            "Should support IL2Registry"
+        );
+
+        // Verify resolver supports IContentHashResolver interface
+        assertTrue(
+            IERC165(l2Resolver).supportsInterface(type(IContentHashResolver).interfaceId),
+            "Should support IContentHashResolver"
         );
     }
 
