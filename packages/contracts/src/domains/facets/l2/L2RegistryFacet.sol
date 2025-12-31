@@ -3,6 +3,7 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IERC721A} from "../../../diamond/facets/token/ERC721A/IERC721A.sol";
+import {IL2Registry} from "./IL2Registry.sol";
 
 // libraries
 import {L2RegistryMod} from "./modules/L2RegistryMod.sol";
@@ -15,7 +16,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 /// @title L2RegistryFacet
 /// @notice L2 ENS-compatible domain registry that mints subdomains as NFTs
 /// @dev Manages a single root domain (e.g., "towns.eth") and its subdomains; each subdomain is an ERC721 token
-contract L2RegistryFacet is IERC721A, Facet {
+contract L2RegistryFacet is IL2Registry, Facet {
     using L2RegistryMod for L2RegistryMod.Layout;
     using ERC721Lib for MinimalERC721Storage;
 
@@ -26,6 +27,7 @@ contract L2RegistryFacet is IERC721A, Facet {
         string calldata domain,
         address admin
     ) external onlyInitializing {
+        _addInterface(type(IL2Registry).interfaceId);
         L2RegistryMod.getStorage().createDomain(domain, admin);
     }
 
