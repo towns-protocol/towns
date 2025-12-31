@@ -1570,6 +1570,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
+        const [spaceCurrency, { price }] = await Promise.all([
+            space.Membership.read.getMembershipCurrency(),
+            this.getJoinSpacePriceDetails(spaceId),
+        ])
+
         const blockNumber = await space.provider?.getBlockNumber()
         const startIssuedListener = space.Membership.listenForMembershipToken({
             receiver: recipient,
@@ -1578,16 +1583,16 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()
-        const { price } = await this.getJoinSpacePriceDetails(spaceId)
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
         const wrapStart = Date.now()
         const issuedListener = startIssuedListener()
+
         const result = await wrapTransaction(async () => {
             // Set gas limit instead of using estimateGas
             // As the estimateGas is not reliable for this contract
             return await space.Membership.write(signer)['joinSpace(address)'](recipient, {
                 gasLimit: 1_500_000,
-                value: price,
+                value: spaceCurrency.toLowerCase() === ETH_ADDRESS.toLowerCase() ? price : 0,
             })
         }, txnOpts)
 
