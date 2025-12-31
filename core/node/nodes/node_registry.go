@@ -6,6 +6,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+
 	"connectrpc.com/connect"
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
@@ -85,20 +87,19 @@ func LoadNodeRegistry(
 	}
 
 	ret := &nodeRegistryImpl{
-		contract:                 contract,
-		onChainConfig:            onChainConfig,
-		localNodeAddress:         localNodeAddress,
-		httpClient:               httpClient,
-		httpClientWithCert:       httpClientWithCert,
-		nodesLocked:              make(map[common.Address]*NodeRecord, len(nodes)),
-		appliedBlockNumLocked:    appliedBlockNum,
-		nextPermanentIndexLocked: 1,
-		connectOpts:              connectOpts,
+		contract:              contract,
+		onChainConfig:         onChainConfig,
+		localNodeAddress:      localNodeAddress,
+		httpClient:            httpClient,
+		httpClientWithCert:    httpClientWithCert,
+		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
+		appliedBlockNumLocked: appliedBlockNum,
+		connectOpts:           connectOpts,
 	}
 
 	localFound := false
 	for _, node := range nodes {
-		nn, _ := ret.addNodeLocked(node.NodeAddress, node.Url, node.Status, node.Operator)
+		nn, _ := ret.addNodeLocked(node.NodeAddress, node.Url, node.Status, node.Operator, node.PermanentIndex)
 		localFound = localFound || nn.local
 	}
 	ret.resetLocked()
@@ -165,6 +166,7 @@ func (n *nodeRegistryImpl) addNodeLocked(
 	url string,
 	status uint8,
 	operator common.Address,
+	permanentIndex uint32,
 ) (*NodeRecord, bool) {
 	if existingNode, ok := n.nodesLocked[addr]; ok {
 		return existingNode, false
@@ -175,9 +177,8 @@ func (n *nodeRegistryImpl) addNodeLocked(
 		operator:       operator,
 		url:            url,
 		status:         status,
-		permanentIndex: n.nextPermanentIndexLocked,
+		permanentIndex: int(permanentIndex),
 	}
-	n.nextPermanentIndexLocked++
 	if addr == n.localNodeAddress {
 		nn.local = true
 	} else {
@@ -192,9 +193,18 @@ func (n *nodeRegistryImpl) addNodeLocked(
 func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, e *river.NodeRegistryV1NodeAdded) {
 	log := logging.FromCtx(ctx)
 
+	// TODO: Remove this call after NodeAdded event is updated to include permanent index.
+	node, err := n.contract.NodeRegistry.GetNode(&bind.CallOpts{Context: ctx}, e.NodeAddress)
+	if err != nil {
+		log.Errorw("NodeRegistry: Got NodeAdded event but failed to get node record from the node registry contract",
+			"err", err, "address", e.NodeAddress)
+		return
+	}
+
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	nodeRecord, added := n.addNodeLocked(e.NodeAddress, e.Url, e.Status, e.Operator)
+
+	nodeRecord, added := n.addNodeLocked(e.NodeAddress, e.Url, e.Status, e.Operator, node.PermanentIndex)
 	if added {
 		n.resetLocked()
 		// TODO: add operator to NodeAdded event
@@ -346,13 +356,12 @@ func (n *nodeRegistryImpl) CloneWithClients(
 	defer n.mu.RUnlock()
 
 	clone := &nodeRegistryImpl{
-		contract:                 n.contract,
-		onChainConfig:            n.onChainConfig,
-		localNodeAddress:         n.localNodeAddress,
-		httpClient:               httpClient,
-		httpClientWithCert:       httpClientWithCert,
-		appliedBlockNumLocked:    n.appliedBlockNumLocked,
-		nextPermanentIndexLocked: n.nextPermanentIndexLocked,
+		contract:              n.contract,
+		onChainConfig:         n.onChainConfig,
+		localNodeAddress:      n.localNodeAddress,
+		httpClient:            httpClient,
+		httpClientWithCert:    httpClientWithCert,
+		appliedBlockNumLocked: n.appliedBlockNumLocked,
 	}
 
 	clone.connectOpts = make([]connect.ClientOption, len(n.connectOpts))
