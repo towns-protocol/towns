@@ -6,10 +6,9 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
 	"connectrpc.com/connect"
 	"connectrpc.com/otelconnect"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/blockchain"
