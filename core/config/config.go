@@ -369,7 +369,7 @@ type PerformanceTrackingConfig struct {
 	// Exporter is configured with OTLP env variables as described here:
 	// go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
 	OtlpEnableGrpc bool `json:",omitempty"`
-	// If set, connet to OTLP endpoint using http instead of https
+	// If set, connect to OTLP endpoint using http instead of https
 	// Also can be configured by env var from the links above
 	OtlpInsecure bool `json:",omitempty"`
 
@@ -772,7 +772,7 @@ type RiverRegistryConfig struct {
 	// Stop retrying failed GetPaginatedStreams calls after this duration.
 	MaxRetryElapsedTime time.Duration
 
-	// Timeout for a singe call to GetPaginatedStreams.
+	// Timeout for a single call to GetPaginatedStreams.
 	SingleCallTimeout time.Duration
 
 	// ProgressReportInterval is the interval at which to report progress of the GetPaginatedStreams calls.
