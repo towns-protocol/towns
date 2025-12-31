@@ -57,25 +57,25 @@ contract EntitlementGatedTest is
         );
         Vm.Log[] memory requestLogs = vm.getRecordedLogs();
         (
-            address walletAddress,
-            address spaceAddress,
-            address resolverAddress,
+            address receiver,
+            address space,
+            address resolver,
             bytes32 transactionId,
             uint256 roleId,
             address[] memory selectedNodes
         ) = _getRequestV2EventData(requestLogs);
 
-        assertEq(walletAddress, caller);
+        assertEq(receiver, caller);
         assertEq(realRequestId, transactionHash);
-        assertEq(spaceAddress, address(gated));
-        assertEq(resolverAddress, address(entitlementChecker));
+        assertEq(space, address(gated));
+        assertEq(resolver, address(entitlementChecker));
 
-        IEntitlementGated _entitlementGated = IEntitlementGated(resolverAddress);
+        IEntitlementGated _entitlementGated = IEntitlementGated(resolver);
 
         for (uint256 i; i < 3; ++i) {
             vm.startPrank(selectedNodes[i]);
             if (i == 2) {
-                vm.expectEmit(address(spaceAddress));
+                vm.expectEmit(address(space));
                 emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
             }
             _entitlementGated.postEntitlementCheckResult(
@@ -107,25 +107,25 @@ contract EntitlementGatedTest is
         Vm.Log[] memory requestLogs = vm.getRecordedLogs();
 
         (
-            address walletAddress,
-            address spaceAddress,
-            address resolverAddress,
+            address receiver,
+            address space,
+            address resolver,
             bytes32 transactionId,
             uint256 roleId,
             address[] memory selectedNodes
         ) = _getRequestV2EventData(requestLogs);
 
-        assertEq(walletAddress, caller);
+        assertEq(receiver, caller);
         assertEq(realRequestId, transactionHash);
-        assertEq(spaceAddress, address(gated));
-        assertEq(resolverAddress, address(entitlementChecker));
+        assertEq(space, address(gated));
+        assertEq(resolver, address(entitlementChecker));
 
-        IEntitlementGated _entitlementGated = IEntitlementGated(resolverAddress);
+        IEntitlementGated _entitlementGated = IEntitlementGated(resolver);
 
         for (uint256 i; i < 3; ++i) {
             vm.startPrank(selectedNodes[i]);
             if (i == 2) {
-                vm.expectEmit(address(spaceAddress));
+                vm.expectEmit(address(space));
                 emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
             }
             _entitlementGated.postEntitlementCheckResult(
@@ -397,15 +397,15 @@ contract EntitlementGatedTest is
     }
 
     function test_requestEntitlementCheck_revertIf_v1WithEth(
-        address walletAddress,
+        address receiver,
         bytes32 transactionId
     ) external {
-        vm.assume(walletAddress != address(0));
+        vm.assume(receiver != address(0));
         deal(address(this), 1 ether);
 
         address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
         uint256 roleId = 0;
-        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
+        bytes memory data = abi.encode(receiver, transactionId, roleId, selectedNodes);
 
         // V1 should not accept ETH
         vm.expectRevert(EntitlementChecker_InvalidValue.selector);
@@ -431,20 +431,20 @@ contract EntitlementGatedTest is
     }
 
     function test_requestEntitlementCheck_unifiedV1(
-        address walletAddress,
+        address receiver,
         bytes32 transactionId
     ) external {
-        vm.assume(walletAddress != address(0));
+        vm.assume(receiver != address(0));
 
         vm.prank(address(gated));
         address[] memory selectedNodes = entitlementChecker.getRandomNodes(5);
         uint256 roleId = 0;
 
-        bytes memory data = abi.encode(walletAddress, transactionId, roleId, selectedNodes);
+        bytes memory data = abi.encode(receiver, transactionId, roleId, selectedNodes);
 
         vm.expectEmit(address(entitlementChecker));
         emit EntitlementCheckRequested(
-            walletAddress,
+            receiver,
             address(this),
             transactionId,
             roleId,
@@ -468,8 +468,8 @@ contract EntitlementGatedTest is
         entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V2, data);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
-        assertEq(walletAddress, caller);
+        (address receiver, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(receiver, caller);
     }
 
     function test_requestEntitlementCheck_unifiedV3(
@@ -487,8 +487,8 @@ contract EntitlementGatedTest is
         entitlementChecker.requestEntitlementCheck{value: 1 ether}(CheckType.V3, data);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
-        assertEq(walletAddress, caller);
+        (address receiver, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(receiver, caller);
     }
 
     function test_requestEntitlementCheck_erc20Transfer(
@@ -534,8 +534,8 @@ contract EntitlementGatedTest is
 
         // Verify event emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (address walletAddress, , , , , ) = _getRequestV2EventData(logs);
-        assertEq(walletAddress, caller);
+        (address receiver, , , , , ) = _getRequestV2EventData(logs);
+        assertEq(receiver, caller);
     }
 
     // =============================================================

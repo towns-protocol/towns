@@ -6,12 +6,12 @@ interface IEntitlementCheckerBase {
     /// @dev To encode data for each type:
     ///   switch (checkType) {
     ///     case CheckType.V1:
-    ///       data = abi.encode(walletAddress, transactionId, roleId, nodes);
+    ///       data = abi.encode(receiver, transactionId, roleId, nodes);
     ///     case CheckType.V2:
-    ///       data = abi.encode(walletAddress, transactionId, requestId, extraData);
-    ///       // where extraData = abi.encode(senderAddress)
+    ///       data = abi.encode(receiver, transactionId, requestId, extraData);
+    ///       // where extraData = abi.encode(sender)
     ///     case CheckType.V3:
-    ///       data = abi.encode(walletAddress, transactionId, requestId, currency, amount, senderAddress);
+    ///       data = abi.encode(receiver, transactionId, requestId, currency, amount, sender);
     ///   }
     enum CheckType {
         V1, // Legacy check with explicit nodes
@@ -38,17 +38,17 @@ interface IEntitlementCheckerBase {
 
     /// @notice Event emitted when an entitlement check is requested
     event EntitlementCheckRequested(
-        address callerAddress,
-        address contractAddress,
+        address receiver,
+        address space,
         bytes32 transactionId,
         uint256 roleId,
         address[] selectedNodes
     );
 
     event EntitlementCheckRequestedV2(
-        address walletAddress,
-        address spaceAddress,
-        address resolverAddress,
+        address receiver,
+        address space,
+        address resolver,
         bytes32 transactionId,
         uint256 roleId,
         address[] selectedNodes
@@ -63,6 +63,35 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
     /// @notice Unregister an existing node from the system
     /// @param node The address of the node to unregister
     function unregisterNode(address node) external;
+
+    /// @notice Request an entitlement check for a transaction
+    /// @param receiver The address to check entitlements for (membership recipient)
+    /// @param transactionId The unique identifier of the transaction
+    /// @param roleId The role ID to check entitlements against
+    /// @param nodes Array of node addresses that will perform the check
+    function requestEntitlementCheck(
+        address receiver,
+        bytes32 transactionId,
+        uint256 roleId,
+        address[] memory nodes
+    ) external;
+
+    /// @notice Request an entitlement check with additional data (V2)
+    /// @param receiver The address to check entitlements for (membership recipient)
+    /// @param transactionId The unique identifier of the transaction
+    /// @param requestId The unique identifier for this specific request
+    /// @param extraData Additional data required for the check
+    function requestEntitlementCheckV2(
+        address receiver,
+        bytes32 transactionId,
+        uint256 requestId,
+        bytes memory extraData
+    ) external payable;
+
+    /// @notice Unified entitlement check request with enum-based dispatch
+    /// @param checkType The type of check to perform (V1, V2, or V3)
+    /// @param data Encoded parameters specific to the check type (see CheckType enum docs)
+    function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable;
 
     /// @notice Check if a node address is registered and valid
     /// @param node The address of the node to check
@@ -82,35 +111,6 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
     /// @param count The number of random nodes to return
     /// @return address[] Array of randomly selected node addresses
     function getRandomNodes(uint256 count) external view returns (address[] memory);
-
-    /// @notice Request an entitlement check for a transaction
-    /// @param callerAddress The address initiating the check
-    /// @param transactionId The unique identifier of the transaction
-    /// @param roleId The role ID to check entitlements against
-    /// @param nodes Array of node addresses that will perform the check
-    function requestEntitlementCheck(
-        address callerAddress,
-        bytes32 transactionId,
-        uint256 roleId,
-        address[] memory nodes
-    ) external;
-
-    /// @notice Request an entitlement check with additional data (V2)
-    /// @param walletAddress The wallet address to check entitlements for
-    /// @param transactionId The unique identifier of the transaction
-    /// @param requestId The unique identifier for this specific request
-    /// @param extraData Additional data required for the check
-    function requestEntitlementCheckV2(
-        address walletAddress,
-        bytes32 transactionId,
-        uint256 requestId,
-        bytes memory extraData
-    ) external payable;
-
-    /// @notice Unified entitlement check request with enum-based dispatch
-    /// @param checkType The type of check to perform (V1, V2, or V3)
-    /// @param data Encoded parameters specific to the check type (see CheckType enum docs)
-    function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable;
 
     /// @notice Get all nodes registered to a specific operator
     /// @param operator The address of the operator
