@@ -405,7 +405,7 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	eventBytes, err := proto.Marshal(&StreamEvent{
 		CreatorAddress:   event.Event.GetCreatorAddress(),
 		CreatedAtEpochMs: event.Event.GetCreatedAtEpochMs(),
-		Payload:          event.Event.GetPayload(),
+		Payload:          removeUnusedFieldsInPayloadForAPNS(event.Event.GetPayload()),
 	})
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL)
@@ -439,6 +439,26 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	}
 
 	return apnPayload, nil
+}
+
+// removeUnusedFieldsInPayloadForAPNS removes large fields do not need to be sent to the client.
+// This is to avoid APNS rejecting the payload as too large.
+func removeUnusedFieldsInPayloadForAPNS(payload IsStreamEvent_Payload) IsStreamEvent_Payload {
+	switch payload := payload.(type) {
+	case *StreamEvent_MemberPayload:
+		// clean out receipts for member payloads — a receipt can easily be 7-8kb in size
+		switch content := payload.MemberPayload.Content.(type) {
+			case *MemberPayload_MemberBlockchainTransaction_:
+				content.MemberBlockchainTransaction.Transaction.Receipt = nil
+				content.MemberBlockchainTransaction.Transaction.SolanaReceipt = nil
+				payload.MemberPayload.Content = content
+			default:
+				break
+		}
+	default:
+		break
+	}
+	return payload
 }
 
 func (p *MessageToNotificationsProcessor) sendNotification(
