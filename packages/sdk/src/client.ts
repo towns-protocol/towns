@@ -496,7 +496,7 @@ export class Client
 
     async initializeUser(opts?: {
         spaceId?: Uint8Array | string
-        dmPartnerAddress?: Uint8Array | string
+        installedAppAddress?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
         appAddress?: Uint8Array | string
         skipSync?: boolean
@@ -513,12 +513,12 @@ export class Client
         const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
 
         const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
-        const dmPartnerAddress = opts?.dmPartnerAddress
-            ? ethereumAddressAsBytes(opts.dmPartnerAddress)
+        const installedAppAddress = opts?.installedAppAddress
+            ? ethereumAddressAsBytes(opts.installedAppAddress)
             : undefined
         const initUserMetadata = {
             spaceId,
-            dmPartnerAddress,
+            installedAppAddress,
         }
 
         const initializeUserStartTime = performance.now()
@@ -567,7 +567,7 @@ export class Client
     }
 
     private async initUserStream(
-        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ) {
         this.userStreamId = makeUserStreamId(this.userId)
@@ -583,7 +583,7 @@ export class Client
     private async initUserInboxStream(
         metadata?: {
             spaceId?: Uint8Array
-            dmPartnerAddress?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -600,7 +600,7 @@ export class Client
     private async initUserMetadataStream(
         metadata?: {
             spaceId?: Uint8Array
-            dmPartnerAddress?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -667,7 +667,7 @@ export class Client
     private async initUserSettingsStream(
         metadata?: {
             spaceId?: Uint8Array
-            dmPartnerAddress?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -701,7 +701,7 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
@@ -724,7 +724,7 @@ export class Client
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
@@ -747,7 +747,7 @@ export class Client
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
@@ -770,7 +770,7 @@ export class Client
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
