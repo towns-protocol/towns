@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/xchain-monitor",
-    "version": "0.0.450",
+    "version": "0.0.451",
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
