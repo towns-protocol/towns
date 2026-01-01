@@ -293,6 +293,8 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
             isMentioned: boolean
+            /** Convenience flag to check if it event triggered on a DM channel*/
+            isDm: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -392,6 +394,8 @@ export type BasePayload = {
     createdAt: Date
     /** The raw event payload */
     event: StreamEvent
+    /** Convenience flag to check if the event triggered on a DM channel*/
+    isDm: boolean
 }
 
 export class Bot<Commands extends BotCommand[] = []> {
@@ -587,6 +591,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     parsed: parsed,
                     event: parsed.event,
                     createdAt,
+                    isDm: isDMChannelStreamId(streamId),
                 })
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
@@ -629,6 +634,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 eventId: parsed.hashStr,
                                 createdAt,
                                 event: parsed.event,
+                                isDm: isDMChannelStreamId(streamId),
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -670,6 +676,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 channelId: streamId,
                                 eventId: parsed.hashStr,
                                 createdAt,
+                                isDm: isDMChannelStreamId(streamId),
                                 response: {
                                     recipient: payload.recipient,
                                     payload: response,
@@ -704,6 +711,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                             createdAt,
+                                            isDm: isDMChannelStreamId(streamId),
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
@@ -719,6 +727,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                             createdAt,
+                                            isDm: isDMChannelStreamId(streamId),
                                         })
                                     }
                                 }
@@ -773,6 +782,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                                     channelId: streamId,
                                                     eventId: parsed.hashStr,
                                                     createdAt,
+                                                    isDm: isDMChannelStreamId(streamId),
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress,
@@ -843,6 +853,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                         channelId: streamId,
                         message: payload.value.content.value.body,
                         createdAt,
+                        isDm: isDMChannelStreamId(streamId),
                         mentions,
                         isMentioned,
                         replyId,
@@ -883,6 +894,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                         channelId: streamId,
                         eventId: parsed.hashStr,
                         createdAt,
+                        isDm: isDMChannelStreamId(streamId),
                         typeUrl,
                         message: value ?? new Uint8Array(),
                     })
@@ -909,6 +921,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                                     channelId: streamId,
                                     eventId: parsed.hashStr,
                                     createdAt,
+                                    isDm: isDMChannelStreamId(streamId),
                                     typeUrl,
                                     data: result.value,
                                 })
@@ -936,6 +949,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
                     createdAt,
+                    isDm: isDMChannelStreamId(streamId),
                 })
                 break
             }
@@ -962,6 +976,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     mentions,
                     isMentioned,
                     createdAt,
+                    isDm: isDMChannelStreamId(streamId),
                     replyId: payload.value.post?.replyId,
                     threadId: payload.value.post?.threadId,
                 })
@@ -981,6 +996,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     createdAt,
+                    isDm: isDMChannelStreamId(streamId),
                 })
                 break
             }
