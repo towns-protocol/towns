@@ -6,10 +6,14 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
+    ETH_ADDRESS,
+    ZERO_ADDRESS,
+    isUSDC,
+    isETH,
+    getSpaceCurrency,
 } from './utils'
 import { fetchAgentData } from './agentData'
 
-const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 const ENVIRONMENT = process.env.PONDER_ENVIRONMENT || 'alpha'
 
 // Setup hook: Create critical indexes before indexing starts
@@ -36,17 +40,30 @@ ponder.on('SpaceOwner:setup', async ({ context }) => {
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get a block number suitable for reading the SpaceOwner contract
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
-    const { SpaceOwner } = context.contracts
+    const { SpaceOwner, Space } = context.contracts
 
     try {
-        // Fetch space info from contract
-        const space = await context.client.readContract({
-            abi: SpaceOwner.abi,
-            address: SpaceOwner.address,
-            functionName: 'getSpaceInfo',
-            args: [event.args.space],
-            blockNumber,
-        })
+        // Fetch space info and currency in parallel
+        const [space, currency] = await Promise.all([
+            context.client.readContract({
+                abi: SpaceOwner.abi,
+                address: SpaceOwner.address,
+                functionName: 'getSpaceInfo',
+                args: [event.args.space],
+                blockNumber,
+            }),
+            context.client
+                .readContract({
+                    abi: Space.abi,
+                    address: event.args.space,
+                    functionName: 'getMembershipCurrency',
+                    blockNumber,
+                })
+                .catch(() => ZERO_ADDRESS), // Default to zero on error (will be normalized to ETH)
+        ])
+
+        // Normalize currency: zero address means ETH
+        const normalizedCurrency = currency === ZERO_ADDRESS ? ETH_ADDRESS : currency
 
         // Use INSERT ... ON CONFLICT DO NOTHING
         // id is the primary key for spaces
@@ -64,6 +81,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
                 longDescription: space.longDescription,
                 createdAt: space.createdAt,
                 paused: false, // Newly created spaces are not paused
+                currency: normalizedCurrency, // Initialize currency cache
             })
             .onConflictDoNothing()
     } catch (error) {
@@ -147,6 +165,40 @@ ponder.on('SpaceOwner:Transfer', async ({ event, context }) => {
             .where(eq(schema.space.tokenId, event.args.tokenId))
     } catch (error) {
         console.error(`Error processing SpaceOwner:Transfer at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+// Handler for MembershipCurrencyUpdated - updates the cached currency on Space entity
+ponder.on('Space:MembershipCurrencyUpdated', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+    const newCurrency = event.args.currency
+
+    try {
+        // Normalize currency: zero address means ETH
+        const normalizedCurrency = newCurrency === ZERO_ADDRESS ? ETH_ADDRESS : newCurrency
+
+        const result = await context.db.sql
+            .update(schema.space)
+            .set({
+                currency: normalizedCurrency,
+            })
+            .where(eq(schema.space.id, spaceId))
+
+        if (result.changes === 0) {
+            console.warn(
+                `Space not found for MembershipCurrencyUpdated at block ${blockNumber}: ${spaceId}`,
+            )
+        } else {
+            console.info(
+                `Updated space ${spaceId} currency to ${normalizedCurrency} at block ${blockNumber}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing Space:MembershipCurrencyUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 
@@ -1294,7 +1346,11 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         const spaceId = event.log.address // The space contract that emitted the event
 
         // Get the ETH amount from the transaction value (payment to join)
+        // TODO: Implement USDC join tracking - for USDC-based spaces, transaction.value
+        // will be 0 and the join amount needs to be extracted from a different source
+        // (e.g., decode transaction input or use a separate event with currency/amount)
         const ethAmount = event.transaction.value || 0n
+        const usdcAmount = 0n
 
         // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
         // This leverages the existing primary key constraint (txHash, logIndex)
@@ -1307,6 +1363,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 eventType: 'join',
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
+                usdcAmount: usdcAmount,
                 eventData: {
                     type: 'join',
                     recipient: event.args.recipient,
@@ -1338,11 +1395,13 @@ ponder.on('Space:Tip', async ({ event, context }) => {
     try {
         const spaceId = event.log.address // The space contract that emitted the event
         const sender = event.args.sender
+        const currency = event.args.currency as string
 
-        let ethAmount = 0n
-        if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
-            ethAmount = event.args.amount
-        }
+        // Determine currency type and amounts
+        const currencyIsETH = isETH(currency)
+        const currencyIsUSDC = isUSDC(currency, ENVIRONMENT)
+        const ethAmount = currencyIsETH ? event.args.amount : 0n
+        const usdcAmount = currencyIsUSDC ? event.args.amount : 0n
 
         // Check if sender is a bot (exists in apps table)
         const senderApp = await context.db.sql.query.app.findFirst({
@@ -1361,6 +1420,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 eventType: 'tip',
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
+                usdcAmount: usdcAmount,
                 eventData: {
                     type: 'tip',
                     sender: sender,
@@ -1376,27 +1436,44 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Directly update space metrics with inline calculations
-        // This eliminates the need to query current values first
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space metrics - route to correct currency column
+        if (currencyIsETH) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        } else if (currencyIsUSDC) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    tipUSDCVolume: sql`COALESCE(${schema.space.tipUSDCVolume}, 0) + ${usdcAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        }
 
-        // Update tip leaderboard for sender
+        // Update tip leaderboard for sender - route to correct columns
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
-                totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
-                ...(senderType === 'Member'
-                    ? {
-                          memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
-                          memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
-                      }
-                    : {}),
+                // Route amounts to correct currency columns
+                ...(currencyIsETH && {
+                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                }),
+                ...(currencyIsUSDC && {
+                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
+                }),
+                ...(senderType === 'Member' &&
+                    currencyIsETH && {
+                        memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
+                        memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                    }),
+                ...(senderType === 'Member' &&
+                    currencyIsUSDC && {
+                        memberTotalSentUSDC: sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`,
+                    }),
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1411,12 +1488,15 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
-                totalSent: ethAmount,
+                totalSent: currencyIsETH ? ethAmount : 0n,
+                totalSentUSDC: currencyIsUSDC ? usdcAmount : 0n,
                 tipsSentCount: 1,
                 memberTipsSent: senderType === 'Member' ? 1 : 0,
-                memberTotalSent: senderType === 'Member' ? ethAmount : 0n,
+                memberTotalSent: senderType === 'Member' && currencyIsETH ? ethAmount : 0n,
+                memberTotalSentUSDC: senderType === 'Member' && currencyIsUSDC ? usdcAmount : 0n,
                 botTipsSent: 0,
                 botTotalSent: 0n,
+                botTotalSentUSDC: 0n,
                 lastActivity: blockTimestamp,
             })
         }
@@ -1443,7 +1523,7 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
 
         if (!app) {
             console.warn(
-                `⚠️  Bot tip sent to unregistered app at block ${blockNumber}. ` +
+                `Bot tip sent to unregistered app at block ${blockNumber}. ` +
                     `Receiver: ${receiver}, Amount: ${amount}, Currency: ${currency}`,
             )
         } else if (
@@ -1451,13 +1531,16 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
             app.appId === '0x0000000000000000000000000000000000000000000000000000000000000000'
         ) {
             console.warn(
-                `⚠️  Bot tip sent to app without appId at block ${blockNumber}. ` +
+                `Bot tip sent to app without appId at block ${blockNumber}. ` +
                     `Receiver: ${receiver}, AppId: ${app.appId}`,
             )
         }
 
-        const isETH = currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
-        const ethAmount = isETH ? amount : 0n
+        // Determine currency type and amounts
+        const currencyIsETH = isETH(currency)
+        const currencyIsUSDC = isUSDC(currency, ENVIRONMENT)
+        const ethAmount = currencyIsETH ? amount : 0n
+        const usdcAmount = currencyIsUSDC ? amount : 0n
 
         // Check if sender is a bot (exists in apps table)
         const senderApp = await context.db.sql.query.app.findFirst({
@@ -1475,6 +1558,7 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
                 eventType: 'tip',
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
+                usdcAmount: usdcAmount,
                 eventData: {
                     type: 'tip',
                     sender,
@@ -1487,31 +1571,56 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space bot tip volume
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space bot tip volume - route to correct column
+        if (currencyIsETH) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        } else if (currencyIsUSDC) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    botTipUSDCVolume: sql`COALESCE(${schema.space.botTipUSDCVolume}, 0) + ${usdcAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        }
 
-        // Update app tip metrics
-        await context.db.sql
-            .update(schema.app)
-            .set({
-                tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
-                tipsVolume: sql`COALESCE(${schema.app.tipsVolume}, 0) + ${ethAmount}`,
-            })
-            .where(eq(schema.app.address, receiver))
+        // Update app tip metrics - route to correct column
+        if (currencyIsETH) {
+            await context.db.sql
+                .update(schema.app)
+                .set({
+                    tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
+                    tipsVolume: sql`COALESCE(${schema.app.tipsVolume}, 0) + ${ethAmount}`,
+                })
+                .where(eq(schema.app.address, receiver))
+        } else if (currencyIsUSDC) {
+            await context.db.sql
+                .update(schema.app)
+                .set({
+                    tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
+                    tipsVolumeUSDC: sql`COALESCE(${schema.app.tipsVolumeUSDC}, 0) + ${usdcAmount}`,
+                })
+                .where(eq(schema.app.address, receiver))
+        }
 
-        // Update tip leaderboard for sender (bot tips)
+        // Update tip leaderboard for sender (bot tips) - route to correct columns
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
-                totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
-                botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                ...(currencyIsETH && {
+                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                    botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                }),
+                ...(currencyIsUSDC && {
+                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
+                    botTotalSentUSDC: sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`,
+                }),
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1526,12 +1635,15 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
-                totalSent: ethAmount,
+                totalSent: currencyIsETH ? ethAmount : 0n,
+                totalSentUSDC: currencyIsUSDC ? usdcAmount : 0n,
                 tipsSentCount: 1,
                 memberTipsSent: 0,
                 memberTotalSent: 0n,
+                memberTotalSentUSDC: 0n,
                 botTipsSent: 1,
-                botTotalSent: ethAmount,
+                botTotalSent: currencyIsETH ? ethAmount : 0n,
+                botTotalSentUSDC: currencyIsUSDC ? usdcAmount : 0n,
                 lastActivity: blockTimestamp,
             })
         }
@@ -1569,7 +1681,8 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 spaceId: spaceId,
                 eventType: 'review',
                 blockTimestamp: blockTimestamp,
-                ethAmount: 0n, // Reviews don't have ETH value
+                ethAmount: 0n, // Reviews don't have monetary value
+                usdcAmount: 0n,
                 eventData: {
                     type: 'review',
                     user: event.args.user,
@@ -1638,8 +1751,25 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
 
 ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
 
     try {
+        // Fetch currency for this subscription
+        const currency = await getSpaceCurrency(
+            context,
+            event.args.space as `0x${string}`,
+            blockNumber,
+        )
+
+        // Skip record if currency fetch failed (prefer no data to incorrect data)
+        if (currency === null) {
+            console.error(
+                `Skipping SubscriptionConfigured for ${event.args.account}_${event.args.entityId}: ` +
+                    `currency fetch failed`,
+            )
+            return
+        }
+
         // Note: If a user reconfigures a subscription with the same entityId,
         // this will overwrite the previous subscription record (matches contract behavior)
         await context.db
@@ -1649,6 +1779,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 entityId: event.args.entityId,
                 space: event.args.space,
                 tokenId: event.args.tokenId,
+                currency: currency,
                 totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
                 expiresAt: event.args.expiresAt,
@@ -1660,6 +1791,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
             .onConflictDoUpdate({
                 space: event.args.space,
                 tokenId: event.args.tokenId,
+                currency: currency,
                 nextRenewalTime: event.args.nextRenewalTime,
                 expiresAt: event.args.expiresAt,
                 active: true,
