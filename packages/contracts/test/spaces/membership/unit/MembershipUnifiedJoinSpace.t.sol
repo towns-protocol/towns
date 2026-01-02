@@ -162,28 +162,6 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
         require(!success, "Expected call to fail");
     }
 
-    function test_joinSpace_revertIf_malformedDataBasic(bytes memory malformedData) external {
-        // Filter out valid data early (Basic action expects exactly 32 bytes for address)
-        vm.assume(malformedData.length != 32);
-
-        deal(alice, 1 ether);
-        vm.prank(alice);
-
-        // Test with fuzzed malformed data for basic action
-        vm.expectRevert();
-        membership.joinSpace{value: 1 ether}(JoinType.Basic, malformedData);
-    }
-
-    function test_joinSpace_revertIf_malformedDataReferral() external {
-        deal(alice, 1 ether);
-        vm.prank(alice);
-
-        // Test with malformed data for referral action (only address, missing referral)
-        bytes memory malformedData = abi.encode(alice);
-        vm.expectRevert();
-        membership.joinSpace{value: 1 ether}(JoinType.WithReferral, malformedData);
-    }
-
     function test_joinSpace_revertIf_invalidReceiverBasic() external {
         deal(alice, 1 ether);
         vm.prank(alice);

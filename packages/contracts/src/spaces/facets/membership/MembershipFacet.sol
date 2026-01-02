@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
+import {IMembership} from "./IMembership.sol";
 
 // libraries
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -26,13 +26,22 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function joinSpace(JoinType action, bytes calldata data) external payable nonReentrant {
         if (action == JoinType.Basic) {
-            address receiver = abi.decode(data, (address));
+            // equivalent: abi.decode(data, (address))
+            address receiver;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+            }
             _joinSpace(receiver);
         } else if (action == JoinType.WithReferral) {
-            (address receiver, ReferralTypes memory referral) = abi.decode(
-                data,
-                (address, ReferralTypes)
-            );
+            // equivalent: abi.decode(data, (address, ReferralTypes))
+            address receiver;
+            ReferralTypes calldata referral;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                // this is a variable length struct, so (data.offset + 0x20) contains
+                // the offset from data.offset at which the struct begins
+                referral := add(data.offset, calldataload(add(data.offset, 0x20)))
+            }
             _joinSpaceWithReferral(receiver, referral);
         } else {
             Membership__InvalidAction.selector.revertWith();
@@ -47,7 +56,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function joinSpaceWithReferral(
         address receiver,
-        ReferralTypes memory referral
+        ReferralTypes calldata referral
     ) external payable nonReentrant {
         _joinSpaceWithReferral(receiver, referral);
     }

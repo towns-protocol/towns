@@ -97,7 +97,7 @@ interface IMembership is IMembershipBase {
     /// @param referral The referral data
     function joinSpaceWithReferral(
         address receiver,
-        ReferralTypes memory referral
+        ReferralTypes calldata referral
     ) external payable;
 
     /// @notice Renew a space membership

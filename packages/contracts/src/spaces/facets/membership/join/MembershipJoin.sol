@@ -150,7 +150,7 @@ abstract contract MembershipJoin is
     /// @notice Handles the process of joining a space with a referral
     /// @param receiver The address that will receive the membership token
     /// @param referral The referral information
-    function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
+    function _joinSpaceWithReferral(address receiver, ReferralTypes calldata referral) internal {
         _validateJoinSpace(receiver);
 
         PricingDetails memory joinDetails = _getPricingDetails();
@@ -229,7 +229,10 @@ abstract contract MembershipJoin is
         return amountRequired;
     }
 
-    function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
+    function _validateUserReferral(
+        address receiver,
+        ReferralTypes calldata referral
+    ) internal view {
         if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
             Membership__InvalidAddress.selector.revertWith();
         }
