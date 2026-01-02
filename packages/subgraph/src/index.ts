@@ -1339,21 +1339,25 @@ ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
+// Handler for MembershipTokenIssuedCcy - tracks join volumes with currency
+// This handler receives currency and amount directly from the event, enabling
+// accurate tracking of both ETH and USDC membership payments.
+ponder.on('Space:MembershipTokenIssuedCcy', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+    const currency = event.args.currency as string
+    const joinAmount = event.args.amount
 
     try {
-        const spaceId = event.log.address // The space contract that emitted the event
+        // Determine currency type
+        const currencyIsETH = isETH(currency)
+        const currencyIsUSDC = isUSDC(currency, ENVIRONMENT)
 
-        // Get the ETH amount from the transaction value (payment to join)
-        // TODO: Implement USDC join tracking - for USDC-based spaces, transaction.value
-        // will be 0 and the join amount needs to be extracted from a different source
-        // (e.g., decode transaction input or use a separate event with currency/amount)
-        const ethAmount = event.transaction.value || 0n
-        const usdcAmount = 0n
+        // Route amounts based on currency
+        const ethAmount = currencyIsETH ? joinAmount : 0n
+        const usdcAmount = currencyIsUSDC ? joinAmount : 0n
 
-        // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
-        // This leverages the existing primary key constraint (txHash, logIndex)
+        // Record analytics event with currency info
         await context.db
             .insert(schema.analyticsEvent)
             .values({
@@ -1368,22 +1372,41 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                     type: 'join',
                     recipient: event.args.recipient,
                     tokenId: event.args.tokenId.toString(),
+                    currency: currency,
+                    amount: joinAmount.toString(),
                 },
             })
             .onConflictDoNothing()
 
-        // Directly update space metrics with inline calculations
-        // This eliminates the need to query current values first
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
-                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space metrics - route to correct volume column based on currency
+        if (currencyIsETH) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
+                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        } else if (currencyIsUSDC) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    joinUSDCVolume: sql`COALESCE(${schema.space.joinUSDCVolume}, 0) + ${usdcAmount}`,
+                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        } else {
+            // Unknown currency - still increment member count
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        }
     } catch (error) {
         console.error(
-            `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
+            `Error processing Space:MembershipTokenIssuedCcy at timestamp ${blockTimestamp}:`,
             error,
         )
     }
