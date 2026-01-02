@@ -28,7 +28,7 @@ contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
 
     // Placeholder gateway URL - should be configured for production
-    string private GATEWAY_URL = "https://gateway.towns.com/{sender}/{data}";
+    string private GATEWAY_URL = "https://ccip.towns.app/v1/ccip-read/{sender}/{data}";
     address private GATEWAY_SIGNER;
 
     bytes32 internal constant METADATA_NAME = bytes32("L1Resolver");
