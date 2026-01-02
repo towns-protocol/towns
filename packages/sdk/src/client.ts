@@ -512,6 +512,9 @@ export class Client
         }
         const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
 
+        if (opts?.installedAppAddress && !isEthereumAddress(opts.installedAppAddress)) {
+            throw Error('installedAppAddress must be an ethereum address')
+        }
         const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
         const installedAppAddress = opts?.installedAppAddress
             ? ethereumAddressAsBytes(opts.installedAppAddress)
