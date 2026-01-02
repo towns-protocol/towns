@@ -1454,26 +1454,30 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         }
 
         // Update tip leaderboard for sender - route to correct columns
+        // Using ternary with undefined (Drizzle ignores undefined values) instead of conditional spread
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 // Route amounts to correct currency columns
-                ...(currencyIsETH && {
-                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
-                }),
-                ...(currencyIsUSDC && {
-                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
-                }),
-                ...(senderType === 'Member' &&
-                    currencyIsETH && {
-                        memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
-                        memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
-                    }),
-                ...(senderType === 'Member' &&
-                    currencyIsUSDC && {
-                        memberTotalSentUSDC: sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`,
-                    }),
+                totalSent: currencyIsETH
+                    ? sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`
+                    : undefined,
+                totalSentUSDC: currencyIsUSDC
+                    ? sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`
+                    : undefined,
+                memberTipsSent:
+                    senderType === 'Member'
+                        ? sql`${schema.tipLeaderboard.memberTipsSent} + 1`
+                        : undefined,
+                memberTotalSent:
+                    senderType === 'Member' && currencyIsETH
+                        ? sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`
+                        : undefined,
+                memberTotalSentUSDC:
+                    senderType === 'Member' && currencyIsUSDC
+                        ? sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`
+                        : undefined,
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1608,19 +1612,24 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
         }
 
         // Update tip leaderboard for sender (bot tips) - route to correct columns
+        // Using ternary with undefined (Drizzle ignores undefined values) instead of conditional spread
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
-                ...(currencyIsETH && {
-                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
-                    botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
-                }),
-                ...(currencyIsUSDC && {
-                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
-                    botTotalSentUSDC: sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`,
-                }),
+                totalSent: currencyIsETH
+                    ? sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`
+                    : undefined,
+                botTotalSent: currencyIsETH
+                    ? sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`
+                    : undefined,
+                totalSentUSDC: currencyIsUSDC
+                    ? sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`
+                    : undefined,
+                botTotalSentUSDC: currencyIsUSDC
+                    ? sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`
+                    : undefined,
                 lastActivity: blockTimestamp,
             })
             .where(

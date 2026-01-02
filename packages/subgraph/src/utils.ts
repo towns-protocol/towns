@@ -14,12 +14,14 @@ export const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const
 
 // Mainnet environments use Base mainnet USDC, others use Base Sepolia USDC
-const MAINNET_ENVIRONMENTS = ['omega', 'gamma']
+// Note: Only omega is fully configured. Add other environments here when their
+// config files, block number mappings, and app registry support are added.
+const MAINNET_ENVIRONMENTS = ['omega']
 
 /**
  * Determines if a currency address is USDC based on environment.
  * @param currency - The currency address to check
- * @param environment - The deployment environment (alpha, beta, omega, gamma, local_dev)
+ * @param environment - The deployment environment (alpha, beta, omega, local_dev)
  * @returns true if the currency is USDC
  */
 export function isUSDC(currency: string | undefined | null, environment: string): boolean {
