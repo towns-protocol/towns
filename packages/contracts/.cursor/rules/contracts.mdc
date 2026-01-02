@@ -177,6 +177,8 @@ A typical facet in this codebase is split into several files for clarity and upg
 - **Facet Contract**: Exposes external/protected functions and inherits the base.
 - **Interfaces**: Define external APIs.
 
+**Note**: A Library with a Mod suffix can act as both storage handler and internal business logic
+
 **Example: Votes Facet**
 
 - [`VotesStorage.sol`](mdc:src/diamond/facets/governance/votes/VotesStorage.sol)
@@ -226,6 +228,7 @@ A typical facet in this codebase is split into several files for clarity and upg
 - **Guidelines**
   - Use the diamond storage pattern to avoid collisions
   - Split facet implementation into Storage Library, Base Contract, Facet Contract, and Interfaces
+  - Or split facet into Module Library, Facet Contract and Interfaces
   - Place business logic in a base contract.
   - Expose only protected/external calls in the facet contract.
   - Define interfaces for external APIs.
