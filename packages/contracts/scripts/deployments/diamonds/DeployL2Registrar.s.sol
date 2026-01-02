@@ -28,7 +28,6 @@ contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
 
     address private REGISTRY;
-
     bytes32 internal constant METADATA_NAME = bytes32("L2Registrar");
 
     function versionName() public pure override returns (string memory) {
@@ -37,6 +36,11 @@ contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function setRegistry(address registry) external {
         REGISTRY = registry;
+    }
+
+    function getRegistry() internal returns (address) {
+        if (REGISTRY == address(0)) return getDeployment("l2Resolver");
+        else return REGISTRY;
     }
 
     function addImmutableCuts(address deployer) internal {
@@ -98,7 +102,7 @@ contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployL2RegistrarFacet.selectors()),
             facet,
-            DeployL2RegistrarFacet.makeInitData(REGISTRY)
+            DeployL2RegistrarFacet.makeInitData(getRegistry())
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -146,4 +150,3 @@ contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
         return address(diamond);
     }
 }
-
