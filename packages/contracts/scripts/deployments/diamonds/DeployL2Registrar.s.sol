@@ -10,7 +10,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
-import {DeployL1ResolverFacet} from "../facets/DeployL1ResolverFacet.s.sol";
+import {DeployL2RegistrarFacet} from "../facets/DeployL2RegistrarFacet.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -22,27 +22,25 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 
-contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
+contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
 
-    // Placeholder gateway URL - should be configured for production
-    string private GATEWAY_URL = "https://ccip.towns.app/v1/ccip-read/{sender}/{data}";
-    address private GATEWAY_SIGNER;
-
-    bytes32 internal constant METADATA_NAME = bytes32("L1Resolver");
+    address private REGISTRY;
+    bytes32 internal constant METADATA_NAME = bytes32("L2Registrar");
 
     function versionName() public pure override returns (string memory) {
-        return "l1Resolver";
+        return "l2Registrar";
     }
 
-    function setGatewayURL(string memory gatewayUrl) external {
-        GATEWAY_URL = gatewayUrl;
+    function setRegistry(address registry) external {
+        REGISTRY = registry;
     }
 
-    function setGatewaySigner(address gatewaySigner) external {
-        GATEWAY_SIGNER = gatewaySigner;
+    function getRegistry() internal returns (address) {
+        if (REGISTRY == address(0)) return getDeployment("l2Resolver");
+        else return REGISTRY;
     }
 
     function addImmutableCuts(address deployer) internal {
@@ -83,13 +81,10 @@ contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        // Use deployer as gateway signer if not set
-        address gatewaySigner = GATEWAY_SIGNER == address(0) ? deployer : GATEWAY_SIGNER;
-
         // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
-        facetHelper.add("L1ResolverFacet");
+        facetHelper.add("L2RegistrarFacet");
 
         // Deploy the batch of facets
         facetHelper.deployBatch(deployer);
@@ -102,12 +97,12 @@ contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployMetadata.makeInitData(METADATA_NAME, "")
         );
 
-        // Add L1ResolverFacet
-        facet = facetHelper.getDeployedAddress("L1ResolverFacet");
+        // Add L2RegistrarFacet
+        facet = facetHelper.getDeployedAddress("L2RegistrarFacet");
         addFacet(
-            makeCut(facet, FacetCutAction.Add, DeployL1ResolverFacet.selectors()),
+            makeCut(facet, FacetCutAction.Add, DeployL2RegistrarFacet.selectors()),
             facet,
-            DeployL1ResolverFacet.makeInitData(GATEWAY_URL, gatewaySigner)
+            DeployL2RegistrarFacet.makeInitData(getRegistry())
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -134,8 +129,8 @@ contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
             string memory facetName = facetNames[i];
             address facet = facetHelper.getDeployedAddress(facetName);
 
-            if (facetName.eq("L1ResolverFacet")) {
-                addCut(makeCut(facet, FacetCutAction.Add, DeployL1ResolverFacet.selectors()));
+            if (facetName.eq("L2RegistrarFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployL2RegistrarFacet.selectors()));
             }
         }
 
@@ -143,6 +138,8 @@ contract DeployL1Resolver is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function __deploy(address deployer) internal override returns (address) {
+        require(REGISTRY != address(0), "DeployL2Registrar: registry not set");
+
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
