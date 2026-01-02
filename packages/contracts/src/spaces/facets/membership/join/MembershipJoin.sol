@@ -418,12 +418,7 @@ abstract contract MembershipJoin is
         emit MembershipTokenIssued(receiver, tokenId);
 
         // emit event with currency and amount for indexing
-        emit MembershipTokenIssuedCcy(
-            receiver,
-            tokenId,
-            _getMembershipCurrency(),
-            amountPaid
-        );
+        emit MembershipTokenIssuedCcy(receiver, tokenId, _getMembershipCurrency(), amountPaid);
     }
 
     /// @notice Validates if a user can join the space

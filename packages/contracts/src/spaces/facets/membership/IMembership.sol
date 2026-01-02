@@ -75,11 +75,6 @@ interface IMembershipBase {
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
     event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
-    /// @notice Emitted when a membership token is issued with currency information
-    /// @param recipient The address receiving the membership token
-    /// @param tokenId The ID of the minted token
-    /// @param currency The currency used for payment (address(0) or NATIVE_TOKEN for ETH)
-    /// @param amount The amount paid for the membership
     event MembershipTokenIssuedCcy(
         address indexed recipient,
         uint256 indexed tokenId,
