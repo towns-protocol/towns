@@ -75,6 +75,12 @@ interface IMembershipBase {
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
     event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
+    event MembershipTokenIssuedCcy(
+        address indexed recipient,
+        uint256 indexed tokenId,
+        address indexed currency,
+        uint256 amount
+    );
     event MembershipTokenRejected(address indexed recipient);
 }
 

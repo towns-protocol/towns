@@ -140,7 +140,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpace(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, joinDetails.amountDue);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -186,7 +186,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, joinDetails.amountDue);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -400,7 +400,8 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    function _issueToken(address receiver) internal {
+    /// @param amountPaid The amount paid for the membership (used for event emission)
+    function _issueToken(address receiver, uint256 amountPaid) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
@@ -415,6 +416,9 @@ abstract contract MembershipJoin is
 
         // emit event
         emit MembershipTokenIssued(receiver, tokenId);
+
+        // emit event with currency and amount for indexing
+        emit MembershipTokenIssuedCcy(receiver, tokenId, _getMembershipCurrency(), amountPaid);
     }
 
     /// @notice Validates if a user can join the space
