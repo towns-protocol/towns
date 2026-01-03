@@ -13,8 +13,7 @@ import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {TippingStorage} from "./TippingStorage.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {ProtocolFeeLib} from "../ProtocolFeeLib.sol";
 
 // contracts
 import {PointsBase} from "../points/PointsBase.sol";
@@ -22,8 +21,6 @@ import {PointsBase} from "../points/PointsBase.sol";
 abstract contract TippingBase is ITippingBase, PointsBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for bytes4;
-
-    uint256 internal constant MAX_FEE_TOLERANCE = 100; // 1% tolerance
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Functions                    */
@@ -205,41 +202,28 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         address currency,
         uint256 amount
     ) internal returns (uint256 protocolFee) {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
-        address spaceFactory = ds.spaceFactory;
+        address spaceFactory = MembershipStorage.layout().spaceFactory;
 
-        // Calculate expected fee
-        uint256 expectedFee = IFeeManager(spaceFactory).calculateFee(
+        // Calculate fee first
+        protocolFee = IFeeManager(spaceFactory).calculateFee(
             FeeTypesLib.TIP_MEMBER,
             msg.sender,
             amount,
             ""
         );
 
-        if (expectedFee == 0) return 0;
-
-        // Add slippage tolerance (1%)
-        uint256 maxFee = expectedFee + BasisPoints.calculate(expectedFee, MAX_FEE_TOLERANCE);
-
-        // Approve ERC20 if needed (native token sends value with call)
-        bool isNative = currency == CurrencyTransfer.NATIVE_TOKEN;
-        if (!isNative) SafeTransferLib.safeApproveWithRetry(currency, spaceFactory, maxFee);
-
-        // Charge fee (excess native token will be refunded)
-        protocolFee = IFeeManager(spaceFactory).chargeFee{value: isNative ? maxFee : 0}(
+        // Charge with pre-calculated fee
+        protocolFee = ProtocolFeeLib.charge(
+            spaceFactory,
             FeeTypesLib.TIP_MEMBER,
             msg.sender,
-            amount,
             currency,
-            maxFee,
-            ""
+            amount,
+            protocolFee
         );
-
-        // Reset ERC20 approval
-        if (!isNative) SafeTransferLib.safeApprove(currency, spaceFactory, 0);
 
         // Mint points for fee payment (only for ETH tips)
-        if (isNative) {
+        if (protocolFee > 0 && currency == CurrencyTransfer.NATIVE_TOKEN) {
             address airdropDiamond = _getAirdropDiamond();
             uint256 points = _getPoints(
                 airdropDiamond,
