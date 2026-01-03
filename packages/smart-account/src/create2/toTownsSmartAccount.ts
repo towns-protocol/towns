@@ -27,20 +27,20 @@ import type { SmartAccountType } from '../types'
  * ```
  */
 export async function toTownsSmartAccount(config: {
-  client: PublicClient
-  owner: LocalAccount
-  preferredType?: SmartAccountType
-  address?: Address
+    client: PublicClient
+    owner: LocalAccount
+    preferredType?: SmartAccountType
+    address?: Address
 }) {
-  const { client, owner, preferredType = 'modular', address: forceAddress } = config
+    const { client, owner, preferredType = 'modular', address: forceAddress } = config
 
-  // Discover or use forced address
-  const discovered = forceAddress
-    ? { address: forceAddress, type: preferredType, deployed: false }
-    : await discoverAccount(client, owner.address, preferredType)
+    // Discover or use forced address
+    const discovered = forceAddress
+        ? { address: forceAddress, type: preferredType, deployed: false }
+        : await discoverAccount(client, owner.address, preferredType)
 
-  // Route to correct implementation based on discovered/preferred type
-  return discovered.type === 'modular'
-    ? await toModularSmartAccount({ client, owner, address: discovered.address })
-    : await toSimpleSmartAccount({ client, owner, address: discovered.address })
+    // Route to correct implementation based on discovered/preferred type
+    return discovered.type === 'modular'
+        ? await toModularSmartAccount({ client, owner, address: discovered.address })
+        : await toSimpleSmartAccount({ client, owner, address: discovered.address })
 }
