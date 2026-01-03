@@ -52,6 +52,7 @@ import {
     type CreateTownsClientParams,
     waitForRoleCreated,
     isDMChannelStreamId,
+    isGDMChannelStreamId,
     make_DMChannelPayload_Message,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
@@ -382,22 +383,39 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
     ) => void | Promise<void>
 }
 
-export type BasePayload = {
-    /** The user ID of the user that triggered the event */
-    userId: Address
-    /** The space ID that the event was triggered in */
-    spaceId: string
-    /** channelId that the event was triggered in */
-    channelId: string
-    /** The ID of the event that triggered */
-    eventId: string
-    /** The creation time of the event */
-    createdAt: Date
-    /** The raw event payload */
-    event: StreamEvent
-    /** Convenience flag to check if the event triggered on a DM channel*/
-    isDm: boolean
-}
+export type BasePayload =
+    | {
+          /** The user ID of the user that triggered the event */
+          userId: Address
+          /** The space ID that the event was triggered in */
+          spaceId: null
+          /** channelId that the event was triggered in */
+          channelId: string
+          /** The ID of the event that triggered */
+          eventId: string
+          /** The creation time of the event */
+          createdAt: Date
+          /** The raw event payload */
+          event: StreamEvent
+          /** Convenience flag to check if the event triggered on a DM channel*/
+          isDm: true
+      }
+    | {
+          /** The user ID of the user that triggered the event */
+          userId: Address
+          /** The space ID that the event was triggered in */
+          spaceId: string
+          /** channelId that the event was triggered in */
+          channelId: string
+          /** The ID of the event that triggered */
+          eventId: string
+          /** The creation time of the event */
+          createdAt: Date
+          /** The raw event payload */
+          event: StreamEvent
+          /** Convenience flag to check if the event triggered on a DM channel*/
+          isDm: false
+      }
 
 export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
@@ -585,14 +603,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     eventId: parsed.hashStr,
                 })
                 this.emitter.emit('streamEvent', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    eventId: parsed.hashStr,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     parsed: parsed,
-                    event: parsed.event,
-                    createdAt,
-                    isDm: isDMChannelStreamId(streamId),
                 })
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
@@ -628,14 +646,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 refEventId,
                             })
                             this.emitter.emit('eventRevoke', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
+                                ...createBasePayload(
+                                    userIdFromAddress(parsed.event.creatorAddress),
+                                    streamId,
+                                    parsed.hashStr,
+                                    createdAt,
+                                    parsed.event,
+                                ),
                                 refEventId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                                event: parsed.event,
-                                isDm: isDMChannelStreamId(streamId),
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -671,13 +689,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                             const decrypted = bin_fromBase64(decryptedBase64)
                             const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
-                                event: parsed.event,
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                                isDm: isDMChannelStreamId(streamId),
+                                ...createBasePayload(
+                                    userIdFromAddress(parsed.event.creatorAddress),
+                                    streamId,
+                                    parsed.hashStr,
+                                    createdAt,
+                                    parsed.event,
+                                ),
                                 response: {
                                     recipient: payload.recipient,
                                     payload: response,
@@ -706,13 +724,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelJoin', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                            isDm: isDMChannelStreamId(streamId),
+                                            ...createBasePayload(
+                                                userIdFromAddress(membership.userAddress),
+                                                streamId,
+                                                parsed.hashStr,
+                                                createdAt,
+                                                parsed.event,
+                                            ),
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
@@ -722,13 +740,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelLeave', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                            isDm: isDMChannelStreamId(streamId),
+                                            ...createBasePayload(
+                                                userIdFromAddress(membership.userAddress),
+                                                streamId,
+                                                parsed.hashStr,
+                                                createdAt,
+                                                parsed.event,
+                                            ),
                                         })
                                     }
                                 }
@@ -777,13 +795,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                                 this.emitter.emit('tip', this.client, {
-                                                    event: parsed.event,
-                                                    userId: senderUserId,
-                                                    spaceId: spaceIdFromChannelId(streamId),
-                                                    channelId: streamId,
-                                                    eventId: parsed.hashStr,
-                                                    createdAt,
-                                                    isDm: isDMChannelStreamId(streamId),
+                                                    ...createBasePayload(
+                                                        senderUserId,
+                                                        streamId,
+                                                        parsed.hashStr,
+                                                        createdAt,
+                                                        parsed.event,
+                                                    ),
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress,
@@ -847,14 +865,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
-                        event: parsed.event,
-                        userId,
-                        eventId: parsed.hashStr,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
+                        ...createBasePayload(
+                            userId,
+                            streamId,
+                            parsed.hashStr,
+                            createdAt,
+                            parsed.event,
+                        ),
                         message: payload.value.content.value.body,
-                        createdAt,
-                        isDm: isDMChannelStreamId(streamId),
                         mentions,
                         isMentioned,
                         replyId,
@@ -889,13 +907,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                     const { typeUrl, value } = gmContent
 
                     this.emitter.emit('rawGmMessage', this.client, {
-                        event: parsed.event,
-                        userId,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        eventId: parsed.hashStr,
-                        createdAt,
-                        isDm: isDMChannelStreamId(streamId),
+                        ...createBasePayload(
+                            userId,
+                            streamId,
+                            parsed.hashStr,
+                            createdAt,
+                            parsed.event,
+                        ),
                         typeUrl,
                         message: value ?? new Uint8Array(),
                     })
@@ -916,13 +934,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                             } else {
                                 debug('emit:gmMessage', { userId, channelId: streamId })
                                 void typedHandler.handler(this.client, {
-                                    event: parsed.event,
-                                    userId,
-                                    spaceId: spaceIdFromChannelId(streamId),
-                                    channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                    createdAt,
-                                    isDm: isDMChannelStreamId(streamId),
+                                    ...createBasePayload(
+                                        userId,
+                                        streamId,
+                                        parsed.hashStr,
+                                        createdAt,
+                                        parsed.event,
+                                    ),
                                     typeUrl,
                                     data: result.value,
                                 })
@@ -942,15 +960,15 @@ export class Bot<Commands extends BotCommand[] = []> {
                     messageId: payload.value.refEventId,
                 })
                 this.emitter.emit('reaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
-                    createdAt,
-                    isDm: isDMChannelStreamId(streamId),
                 })
                 break
             }
@@ -967,17 +985,17 @@ export class Bot<Commands extends BotCommand[] = []> {
                     isMentioned,
                 })
                 this.emitter.emit('messageEdit', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
                     mentions,
                     isMentioned,
-                    createdAt,
-                    isDm: isDMChannelStreamId(streamId),
                     replyId: payload.value.post?.replyId,
                     threadId: payload.value.post?.threadId,
                 })
@@ -990,14 +1008,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     refEventId: payload.value.refEventId,
                 })
                 this.emitter.emit('redaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     refEventId: payload.value.refEventId,
-                    createdAt,
-                    isDm: isDMChannelStreamId(streamId),
                 })
                 break
             }
@@ -3024,4 +3042,44 @@ const processMentions = (
             throw new Error(`Invalid mention type: ${JSON.stringify(mention)}`)
         }
     })
+}
+
+const getSpaceIdFromStreamId = (streamId: string): string | null => {
+    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+        return null
+    }
+    return spaceIdFromChannelId(streamId)
+}
+
+const createBasePayload = (
+    userId: Address,
+    streamId: string,
+    eventId: string,
+    createdAt: Date,
+    event: StreamEvent,
+): BasePayload => {
+    const isDm = isDMChannelStreamId(streamId)
+    const spaceId = getSpaceIdFromStreamId(streamId)
+
+    if (isDm) {
+        return {
+            userId,
+            spaceId: null,
+            channelId: streamId,
+            eventId,
+            createdAt,
+            event,
+            isDm: true,
+        }
+    } else {
+        return {
+            userId,
+            spaceId: spaceId as string,
+            channelId: streamId,
+            eventId,
+            createdAt,
+            event,
+            isDm: false,
+        }
+    }
 }
