@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.452",
+    "version": "0.0.453",
     "type": "module",
     "scripts": {
         "build": "bun ./scripts/prepare.js",
