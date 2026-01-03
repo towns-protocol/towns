@@ -32,16 +32,26 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
         }
 
+        // Assign permanent index if backfill has been called (lastNodeIndex > 0)
+        uint32 permanentIndex = 0;
+        if (ds.lastNodeIndex > 0) {
+            ds.lastNodeIndex++;
+            permanentIndex = ds.lastNodeIndex;
+        }
+
         Node memory newNode = Node({
             nodeAddress: nodeAddress,
             url: url,
             status: status,
-            operator: msg.sender
+            operator: msg.sender,
+            permanentIndex: permanentIndex,
+            cometBftPubKey: bytes32(0)
         });
 
         ds.nodes.add(nodeAddress); // TODO: remove this line
         ds.nodeByAddress[nodeAddress] = newNode;
 
+        // TODO: Consider adding permanentIndex to the event
         emit NodeAdded(nodeAddress, msg.sender, url, status);
     }
 
@@ -121,6 +131,48 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         }
 
         return nodes;
+    }
+
+    function backfillPermanentIndices() external {
+        // Can only be called once - after execution, lastNodeIndex > 0
+        if (ds.lastNodeIndex > 0) {
+            RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+        }
+
+        uint256 nodeCount = ds.nodes.length();
+        uint32 currentIndex = 0;
+
+        for (uint256 i = 0; i < nodeCount; ++i) {
+            address nodeAddress = ds.nodes.at(i);
+            Node storage node = ds.nodeByAddress[nodeAddress];
+
+            // Only assign index to nodes that don't have one (permanentIndex == 0)
+            if (node.permanentIndex == 0) {
+                currentIndex++;
+                node.permanentIndex = currentIndex;
+            }
+        }
+
+        ds.lastNodeIndex = currentIndex;
+    }
+
+    function setNodeCometBftPubKey(
+        address nodeAddress,
+        bytes32 cometBftPubKey
+    ) external onlyNode(nodeAddress) {
+        // Only the node itself can set its CometBFT public key
+        if (msg.sender != nodeAddress) {
+            RiverRegistryErrors.BAD_AUTH.revertWith();
+        }
+
+        Node storage node = ds.nodeByAddress[nodeAddress];
+        node.cometBftPubKey = cometBftPubKey;
+
+        emit NodeCometBftPubKeyUpdated(nodeAddress, cometBftPubKey);
+    }
+
+    function getLastNodeIndex() external view returns (uint32) {
+        return ds.lastNodeIndex;
     }
 
     function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {

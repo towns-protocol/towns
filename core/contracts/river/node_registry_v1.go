@@ -31,15 +31,17 @@ var (
 
 // Node is an auto generated low-level Go binding around an user-defined struct.
 type Node struct {
-	Status      uint8
-	Url         string
-	NodeAddress common.Address
-	Operator    common.Address
+	Status         uint8
+	Url            string
+	NodeAddress    common.Address
+	Operator       common.Address
+	PermanentIndex uint32
+	CometBftPubKey [32]byte
 }
 
 // NodeRegistryV1MetaData contains all meta data concerning the NodeRegistryV1 contract.
 var NodeRegistryV1MetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getAllNodeAddresses\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllNodes\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structNode[]\",\"components\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structNode\",\"components\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeStatus\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeUrl\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"NodeAdded\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumNodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRemoved\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeStatusUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumNodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUrlUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"backfillPermanentIndices\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAllNodeAddresses\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllNodes\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structNode[]\",\"components\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permanentIndex\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"cometBftPubKey\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLastNodeIndex\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structNode\",\"components\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permanentIndex\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"cometBftPubKey\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setNodeCometBftPubKey\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"cometBftPubKey\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeStatus\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumNodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeUrl\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"NodeAdded\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumNodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeCometBftPubKeyUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"cometBftPubKey\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRemoved\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeStatusUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumNodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUrlUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false}]",
 }
 
 // NodeRegistryV1ABI is the input ABI used to generate the binding from.
@@ -221,7 +223,7 @@ func (_NodeRegistryV1 *NodeRegistryV1CallerSession) GetAllNodeAddresses() ([]com
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((uint8,string,address,address)[])
+// Solidity: function getAllNodes() view returns((uint8,string,address,address,uint32,bytes32)[])
 func (_NodeRegistryV1 *NodeRegistryV1Caller) GetAllNodes(opts *bind.CallOpts) ([]Node, error) {
 	var out []interface{}
 	err := _NodeRegistryV1.contract.Call(opts, &out, "getAllNodes")
@@ -238,21 +240,52 @@ func (_NodeRegistryV1 *NodeRegistryV1Caller) GetAllNodes(opts *bind.CallOpts) ([
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((uint8,string,address,address)[])
+// Solidity: function getAllNodes() view returns((uint8,string,address,address,uint32,bytes32)[])
 func (_NodeRegistryV1 *NodeRegistryV1Session) GetAllNodes() ([]Node, error) {
 	return _NodeRegistryV1.Contract.GetAllNodes(&_NodeRegistryV1.CallOpts)
 }
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((uint8,string,address,address)[])
+// Solidity: function getAllNodes() view returns((uint8,string,address,address,uint32,bytes32)[])
 func (_NodeRegistryV1 *NodeRegistryV1CallerSession) GetAllNodes() ([]Node, error) {
 	return _NodeRegistryV1.Contract.GetAllNodes(&_NodeRegistryV1.CallOpts)
 }
 
+// GetLastNodeIndex is a free data retrieval call binding the contract method 0x44be9beb.
+//
+// Solidity: function getLastNodeIndex() view returns(uint32)
+func (_NodeRegistryV1 *NodeRegistryV1Caller) GetLastNodeIndex(opts *bind.CallOpts) (uint32, error) {
+	var out []interface{}
+	err := _NodeRegistryV1.contract.Call(opts, &out, "getLastNodeIndex")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// GetLastNodeIndex is a free data retrieval call binding the contract method 0x44be9beb.
+//
+// Solidity: function getLastNodeIndex() view returns(uint32)
+func (_NodeRegistryV1 *NodeRegistryV1Session) GetLastNodeIndex() (uint32, error) {
+	return _NodeRegistryV1.Contract.GetLastNodeIndex(&_NodeRegistryV1.CallOpts)
+}
+
+// GetLastNodeIndex is a free data retrieval call binding the contract method 0x44be9beb.
+//
+// Solidity: function getLastNodeIndex() view returns(uint32)
+func (_NodeRegistryV1 *NodeRegistryV1CallerSession) GetLastNodeIndex() (uint32, error) {
+	return _NodeRegistryV1.Contract.GetLastNodeIndex(&_NodeRegistryV1.CallOpts)
+}
+
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address))
+// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address,uint32,bytes32))
 func (_NodeRegistryV1 *NodeRegistryV1Caller) GetNode(opts *bind.CallOpts, nodeAddress common.Address) (Node, error) {
 	var out []interface{}
 	err := _NodeRegistryV1.contract.Call(opts, &out, "getNode", nodeAddress)
@@ -269,14 +302,14 @@ func (_NodeRegistryV1 *NodeRegistryV1Caller) GetNode(opts *bind.CallOpts, nodeAd
 
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address))
+// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address,uint32,bytes32))
 func (_NodeRegistryV1 *NodeRegistryV1Session) GetNode(nodeAddress common.Address) (Node, error) {
 	return _NodeRegistryV1.Contract.GetNode(&_NodeRegistryV1.CallOpts, nodeAddress)
 }
 
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address))
+// Solidity: function getNode(address nodeAddress) view returns((uint8,string,address,address,uint32,bytes32))
 func (_NodeRegistryV1 *NodeRegistryV1CallerSession) GetNode(nodeAddress common.Address) (Node, error) {
 	return _NodeRegistryV1.Contract.GetNode(&_NodeRegistryV1.CallOpts, nodeAddress)
 }
@@ -343,6 +376,27 @@ func (_NodeRegistryV1 *NodeRegistryV1CallerSession) IsNode(nodeAddress common.Ad
 	return _NodeRegistryV1.Contract.IsNode(&_NodeRegistryV1.CallOpts, nodeAddress)
 }
 
+// BackfillPermanentIndices is a paid mutator transaction binding the contract method 0x62424576.
+//
+// Solidity: function backfillPermanentIndices() returns()
+func (_NodeRegistryV1 *NodeRegistryV1Transactor) BackfillPermanentIndices(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _NodeRegistryV1.contract.Transact(opts, "backfillPermanentIndices")
+}
+
+// BackfillPermanentIndices is a paid mutator transaction binding the contract method 0x62424576.
+//
+// Solidity: function backfillPermanentIndices() returns()
+func (_NodeRegistryV1 *NodeRegistryV1Session) BackfillPermanentIndices() (*types.Transaction, error) {
+	return _NodeRegistryV1.Contract.BackfillPermanentIndices(&_NodeRegistryV1.TransactOpts)
+}
+
+// BackfillPermanentIndices is a paid mutator transaction binding the contract method 0x62424576.
+//
+// Solidity: function backfillPermanentIndices() returns()
+func (_NodeRegistryV1 *NodeRegistryV1TransactorSession) BackfillPermanentIndices() (*types.Transaction, error) {
+	return _NodeRegistryV1.Contract.BackfillPermanentIndices(&_NodeRegistryV1.TransactOpts)
+}
+
 // RegisterNode is a paid mutator transaction binding the contract method 0xeecc66f4.
 //
 // Solidity: function registerNode(address nodeAddress, string url, uint8 status) returns()
@@ -383,6 +437,27 @@ func (_NodeRegistryV1 *NodeRegistryV1Session) RemoveNode(nodeAddress common.Addr
 // Solidity: function removeNode(address nodeAddress) returns()
 func (_NodeRegistryV1 *NodeRegistryV1TransactorSession) RemoveNode(nodeAddress common.Address) (*types.Transaction, error) {
 	return _NodeRegistryV1.Contract.RemoveNode(&_NodeRegistryV1.TransactOpts, nodeAddress)
+}
+
+// SetNodeCometBftPubKey is a paid mutator transaction binding the contract method 0x2936781a.
+//
+// Solidity: function setNodeCometBftPubKey(address nodeAddress, bytes32 cometBftPubKey) returns()
+func (_NodeRegistryV1 *NodeRegistryV1Transactor) SetNodeCometBftPubKey(opts *bind.TransactOpts, nodeAddress common.Address, cometBftPubKey [32]byte) (*types.Transaction, error) {
+	return _NodeRegistryV1.contract.Transact(opts, "setNodeCometBftPubKey", nodeAddress, cometBftPubKey)
+}
+
+// SetNodeCometBftPubKey is a paid mutator transaction binding the contract method 0x2936781a.
+//
+// Solidity: function setNodeCometBftPubKey(address nodeAddress, bytes32 cometBftPubKey) returns()
+func (_NodeRegistryV1 *NodeRegistryV1Session) SetNodeCometBftPubKey(nodeAddress common.Address, cometBftPubKey [32]byte) (*types.Transaction, error) {
+	return _NodeRegistryV1.Contract.SetNodeCometBftPubKey(&_NodeRegistryV1.TransactOpts, nodeAddress, cometBftPubKey)
+}
+
+// SetNodeCometBftPubKey is a paid mutator transaction binding the contract method 0x2936781a.
+//
+// Solidity: function setNodeCometBftPubKey(address nodeAddress, bytes32 cometBftPubKey) returns()
+func (_NodeRegistryV1 *NodeRegistryV1TransactorSession) SetNodeCometBftPubKey(nodeAddress common.Address, cometBftPubKey [32]byte) (*types.Transaction, error) {
+	return _NodeRegistryV1.Contract.SetNodeCometBftPubKey(&_NodeRegistryV1.TransactOpts, nodeAddress, cometBftPubKey)
 }
 
 // UpdateNodeStatus is a paid mutator transaction binding the contract method 0x581f8b9b.
@@ -576,6 +651,151 @@ func (_NodeRegistryV1 *NodeRegistryV1Filterer) WatchNodeAdded(opts *bind.WatchOp
 func (_NodeRegistryV1 *NodeRegistryV1Filterer) ParseNodeAdded(log types.Log) (*NodeRegistryV1NodeAdded, error) {
 	event := new(NodeRegistryV1NodeAdded)
 	if err := _NodeRegistryV1.contract.UnpackLog(event, "NodeAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// NodeRegistryV1NodeCometBftPubKeyUpdatedIterator is returned from FilterNodeCometBftPubKeyUpdated and is used to iterate over the raw logs and unpacked data for NodeCometBftPubKeyUpdated events raised by the NodeRegistryV1 contract.
+type NodeRegistryV1NodeCometBftPubKeyUpdatedIterator struct {
+	Event *NodeRegistryV1NodeCometBftPubKeyUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *NodeRegistryV1NodeCometBftPubKeyUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(NodeRegistryV1NodeCometBftPubKeyUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(NodeRegistryV1NodeCometBftPubKeyUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *NodeRegistryV1NodeCometBftPubKeyUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *NodeRegistryV1NodeCometBftPubKeyUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// NodeRegistryV1NodeCometBftPubKeyUpdated represents a NodeCometBftPubKeyUpdated event raised by the NodeRegistryV1 contract.
+type NodeRegistryV1NodeCometBftPubKeyUpdated struct {
+	NodeAddress    common.Address
+	CometBftPubKey [32]byte
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterNodeCometBftPubKeyUpdated is a free log retrieval operation binding the contract event 0x59fdfe8dc31c73e0c191476c7185d5dd1242052b47edc1de5a45c770cc0e7edc.
+//
+// Solidity: event NodeCometBftPubKeyUpdated(address indexed nodeAddress, bytes32 cometBftPubKey)
+func (_NodeRegistryV1 *NodeRegistryV1Filterer) FilterNodeCometBftPubKeyUpdated(opts *bind.FilterOpts, nodeAddress []common.Address) (*NodeRegistryV1NodeCometBftPubKeyUpdatedIterator, error) {
+
+	var nodeAddressRule []interface{}
+	for _, nodeAddressItem := range nodeAddress {
+		nodeAddressRule = append(nodeAddressRule, nodeAddressItem)
+	}
+
+	logs, sub, err := _NodeRegistryV1.contract.FilterLogs(opts, "NodeCometBftPubKeyUpdated", nodeAddressRule)
+	if err != nil {
+		return nil, err
+	}
+	return &NodeRegistryV1NodeCometBftPubKeyUpdatedIterator{contract: _NodeRegistryV1.contract, event: "NodeCometBftPubKeyUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchNodeCometBftPubKeyUpdated is a free log subscription operation binding the contract event 0x59fdfe8dc31c73e0c191476c7185d5dd1242052b47edc1de5a45c770cc0e7edc.
+//
+// Solidity: event NodeCometBftPubKeyUpdated(address indexed nodeAddress, bytes32 cometBftPubKey)
+func (_NodeRegistryV1 *NodeRegistryV1Filterer) WatchNodeCometBftPubKeyUpdated(opts *bind.WatchOpts, sink chan<- *NodeRegistryV1NodeCometBftPubKeyUpdated, nodeAddress []common.Address) (event.Subscription, error) {
+
+	var nodeAddressRule []interface{}
+	for _, nodeAddressItem := range nodeAddress {
+		nodeAddressRule = append(nodeAddressRule, nodeAddressItem)
+	}
+
+	logs, sub, err := _NodeRegistryV1.contract.WatchLogs(opts, "NodeCometBftPubKeyUpdated", nodeAddressRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(NodeRegistryV1NodeCometBftPubKeyUpdated)
+				if err := _NodeRegistryV1.contract.UnpackLog(event, "NodeCometBftPubKeyUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNodeCometBftPubKeyUpdated is a log parse operation binding the contract event 0x59fdfe8dc31c73e0c191476c7185d5dd1242052b47edc1de5a45c770cc0e7edc.
+//
+// Solidity: event NodeCometBftPubKeyUpdated(address indexed nodeAddress, bytes32 cometBftPubKey)
+func (_NodeRegistryV1 *NodeRegistryV1Filterer) ParseNodeCometBftPubKeyUpdated(log types.Log) (*NodeRegistryV1NodeCometBftPubKeyUpdated, error) {
+	event := new(NodeRegistryV1NodeCometBftPubKeyUpdated)
+	if err := _NodeRegistryV1.contract.UnpackLog(event, "NodeCometBftPubKeyUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
