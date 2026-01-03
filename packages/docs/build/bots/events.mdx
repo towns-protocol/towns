@@ -16,12 +16,17 @@ This guide covers what you need to know about events and how to handle them in y
 All events share a common `BasePayload` structure:
 
 - `userId`: The user who triggered the event.
-- `spaceId`: The space that the event occurred in.
+- `spaceId`: The space that the event occurred in. **Note:** This is `null` for Direct Message (DM) channels, as these channels don't belong to a space.
 - `channelId`: The channel that the event occurred in.
 - `eventId`: The unique event ID.
 - `createdAt`: The date and time the event occurred.
+- `isDm`: A flag indicating if the event occurred in a DM channel.
 
 Different event types extend this base with additional fields.
+
+<Note>
+When handling events in DM channels, `spaceId` will be `null`. Use the `isDm` flag to check if an event is from a DM channel.
+</Note>
 
 ## Message Forwarding Modes
 
