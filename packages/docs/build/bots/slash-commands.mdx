@@ -167,7 +167,9 @@ bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions
 
 ## Paid Commands
 
-You can create commands that require USDC payments in any network. Payments are processed through the [x402 protocol](https://x402.org).
+You can create commands that require USDC payments. Payments are processed through the [x402 protocol v2](https://x402.org), supporting multi-chain payments and reusable sessions.
+
+> Note: This bot flow uses a **facilitator** to verify and settle payments after a user signs an authorization inside Towns. It does **not** use the standard x402 HTTP middleware headers (`PAYMENT-SIGNATURE` / `PAYMENT-RESPONSE`) because Towns bots are not HTTP endpoints.
 
 ### Defining Paid Commands
 
@@ -196,14 +198,33 @@ When a user invokes a paid command:
 3. Payment is verified and settled via the x402 facilitator
 4. Your command handler executes after successful payment
 
-```ts src/commands.ts
-export const commands = [
+### Configuring the Facilitator
+
+Configure which x402 facilitator the bot will call for `verify`/`settle`:
+
+```ts src/index.ts
+const bot = await makeTownsBot(
+  process.env.APP_PRIVATE_DATA!,
+  process.env.JWT_SECRET!,
   {
-    name: 'generate',
-    description: 'Generate AI content',
-    paid: { price: '$0.20' }
+    commands,
+    paymentConfig: {
+      // Public facilitator (recommended default):
+      url: 'https://www.x402.org/facilitator',
+      // Optional: some facilitators require an API key
+      // apiKey: process.env.X402_API_KEY,
+    },
   }
-]
+)
+```
+
+If you’re using Coinbase/CDP’s hosted facilitator, set:
+
+```ts
+paymentConfig: {
+  url: 'https://api.cdp.coinbase.com/platform/v2/x402',
+  // apiKey: process.env.X402_API_KEY,
+}
 ```
 
 ```ts
@@ -216,6 +237,87 @@ bot.onSlashCommand('generate', async (handler, event) => {
   )
 })
 ```
+
+### Sessions (Pay Once, Use Many)
+
+Enable session-based access to reduce friction for users who call your command frequently. With sessions, users pay once and can use the command multiple times within a time window.
+
+```ts src/commands.ts
+export const commands = [
+  {
+    name: 'generate',
+    description: 'Generate AI content',
+    paid: {
+      price: '$1.00',
+      session: {
+        duration: 3600,  // 1 hour session
+        maxUses: 10      // Optional: limit uses per session
+      }
+    }
+  }
+] as const satisfies BotCommand[]
+```
+
+When a user with an active session invokes the command:
+- The command executes immediately without payment
+- Session usage is tracked and displayed to the user
+- After session expires or uses are exhausted, payment is required again
+
+### Multi-Chain Support
+
+Accept payments on multiple blockchain networks. The x402 v2 protocol uses [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md) network identifiers.
+
+```ts src/commands.ts
+import { EVM_NETWORKS } from '@towns-protocol/bot'
+
+export const commands = [
+  {
+    name: 'premium',
+    description: 'Premium feature',
+    paid: {
+      price: '$5.00',
+      networks: [
+        EVM_NETWORKS.base,           // eip155:8453
+        EVM_NETWORKS['base-sepolia'], // eip155:84532
+        EVM_NETWORKS.ethereum,        // eip155:1
+        EVM_NETWORKS.arbitrum,        // eip155:42161
+      ]
+    }
+  }
+] as const satisfies BotCommand[]
+```
+
+**Supported Networks:**
+
+| Network | CAIP-2 Identifier |
+|---------|-------------------|
+| Base | `eip155:8453` |
+| Base Sepolia | `eip155:84532` |
+| Ethereum | `eip155:1` |
+| Ethereum Sepolia | `eip155:11155111` |
+| Arbitrum One | `eip155:42161` |
+| Optimism | `eip155:10` |
+| Polygon | `eip155:137` |
+
+> Note: Solana CAIP-2 identifiers are part of the broader x402 v2 ecosystem, but the Towns bot paid-command flow currently supports **EVM networks** only.
+
+### Custom Payment Recipient
+
+By default, payments go to your bot's app address. You can specify a different recipient:
+
+```ts src/commands.ts
+export const commands = [
+  {
+    name: 'donate',
+    description: 'Donate to charity',
+    paid: {
+      price: '$10.00',
+      payTo: '0x742d35Cc6634C0532925a3b844Bc9e7595f...' // Custom recipient
+    }
+  }
+] as const satisfies BotCommand[]
+```
+
 
 ## Updating Commands
 

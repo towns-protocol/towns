@@ -101,20 +101,28 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
+// x402 v2: Using v1 payment payload types (v2 facilitators accept v1 format for backwards compatibility)
+// Note: x402 core v2.0.0 still uses PaymentPayloadV1/PaymentRequirementsV1 types.
+// The v2 improvements are CAIP-2 networks, multi-chain support, and sessions (all implemented here).
+import type { PaymentPayloadV1, PaymentRequirementsV1 } from '@x402/core/types/v1'
+import {
+    validateSessionConfig,
+    chainIdToNetwork,
+    createPaymentRequest,
+    getSessionKey,
+    validateNetworkSupport,
+    type PendingPayment,
+    type PaymentConfig,
+    type ActiveSession,
+    type X402Network,
+} from './payments'
+import type { FacilitatorConfig, FacilitatorConfigInput } from './x402'
+import { normalizeFacilitatorConfig, callFacilitatorSettle, callFacilitatorVerify } from './x402'
 import {
     type FlattenedInteractionRequest,
     isFlattenedRequest,
     flattenedToPayloadContent,
 } from './interaction-api'
-import type {
-    FacilitatorConfig,
-    PaymentPayload,
-    PaymentRequirements,
-    RouteConfig,
-} from 'x402/types'
-import type { PendingPayment } from './payments'
-import { chainIdToNetwork, createPaymentRequest } from './payments'
-import { useFacilitator } from 'x402/verify'
 
 import {
     http,
@@ -145,8 +153,21 @@ import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
+/**
+ * Extended bot command with x402 v2 payment support
+ * Supports sessions (pay once, use many) and multi-chain payments
+ */
 export type BotCommand = PlainMessage<SlashCommand> & {
-    paid?: RouteConfig
+    /**
+     * Payment configuration for paid commands
+     *
+     * Simple payment: `paid: \{ price: '$0.50' \}`
+     *
+     * With session (pay once, use for 1 hour): `paid: \{ price: '$1.00', session: \{ duration: 3600 \} \}`
+     *
+     * Multi-chain support: `paid: \{ price: '$0.25', networks: ['eip155:8453', 'eip155:84532'] \}`
+     */
+    paid?: PaymentConfig
 }
 
 export type BotHandler = ReturnType<typeof buildBotActions>
@@ -422,10 +443,11 @@ export class Bot<Commands extends BotCommand[] = []> {
     private readonly identityConfig?: BotIdentityConfig
     private readonly eventDedup: EventDedup
 
-    // Payment related members
+    // Payment related members (x402 v2)
     private readonly paymentConfig?: FacilitatorConfig
     private readonly pendingPayments: Map<string, PendingPayment> = new Map()
-    private readonly paymentCommands = new Map<string, RouteConfig>()
+    private readonly paymentCommands = new Map<string, PaymentConfig>()
+    private readonly activeSessions: Map<string, ActiveSession> = new Map()
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -448,15 +470,186 @@ export class Bot<Commands extends BotCommand[] = []> {
         this.eventDedup = new EventDedup(dedupConfig)
         this.paymentConfig = paymentConfig
 
-        if (commands && paymentConfig) {
-            for (const cmd of commands) {
-                if (cmd.paid?.price) {
-                    this.paymentCommands.set(cmd.name, cmd.paid)
+        if (commands) {
+            const hasPaidCommands = commands.some((cmd) => !!cmd.paid?.price)
+            if (hasPaidCommands && !paymentConfig) {
+                throw new Error(
+                    `Paid commands are configured, but paymentConfig (x402 facilitator config) is missing. ` +
+                        `Provide paymentConfig when creating the bot, e.g. paymentConfig: { url: 'https://www.x402.org/facilitator' }.`,
+                )
+            }
+
+            if (paymentConfig) {
+                for (const cmd of commands) {
+                    if (cmd.paid?.price) {
+                        if (cmd.paid.session) {
+                            validateSessionConfig(
+                                cmd.paid.session,
+                                `Invalid session config for command "${cmd.name}"`,
+                            )
+                        }
+                        this.paymentCommands.set(cmd.name, cmd.paid)
+                    }
                 }
             }
         }
 
         this.onInteractionResponse(this.handlePaymentResponse.bind(this))
+    }
+
+    /**
+     * Check if a user has an active session for a command
+     */
+    private hasActiveSession(userId: string, command: string, network: X402Network): boolean {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.activeSessions.get(sessionKey)
+
+        if (!session) return false
+        if (session.network !== network) return false
+
+        // Check if session has expired
+        if (Date.now() > session.expiresAt) {
+            this.activeSessions.delete(sessionKey)
+            return false
+        }
+
+        // Check if session has uses remaining
+        if (session.usesRemaining !== undefined && session.usesRemaining <= 0) {
+            this.activeSessions.delete(sessionKey)
+            return false
+        }
+
+        return true
+    }
+
+    /**
+     * Get a valid session without consuming a use.
+     * (Used so we don't burn a prepaid session use if the command handler fails.)
+     */
+    private getActiveSession(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): ActiveSession | undefined {
+        const sessionKey = getSessionKey(userId, command)
+        const session = this.activeSessions.get(sessionKey)
+
+        if (!session) return undefined
+        if (session.network !== network) return undefined
+
+        // Check if session has expired
+        if (Date.now() > session.expiresAt) {
+            this.activeSessions.delete(sessionKey)
+            return undefined
+        }
+
+        // Check if session has uses remaining
+        if (session.usesRemaining !== undefined && session.usesRemaining <= 0) {
+            this.activeSessions.delete(sessionKey)
+            return undefined
+        }
+
+        return session
+    }
+
+    // Per-session atomicity helpers to prevent concurrent over-use.
+    // This bot runs in a single Node process, but async handlers can interleave.
+    // We serialize mutations per sessionKey via a simple promise queue (mutex).
+    private readonly sessionLocks: Map<string, Promise<void>> = new Map()
+    private readonly sessionInFlight: Map<string, number> = new Map()
+
+    private async withSessionLock<T>(sessionKey: string, fn: () => Promise<T>): Promise<T> {
+        const prev = this.sessionLocks.get(sessionKey) ?? Promise.resolve()
+        let release!: () => void
+        const next = new Promise<void>((resolve) => {
+            release = resolve
+        })
+        const chained = prev.then(() => next)
+        this.sessionLocks.set(sessionKey, chained)
+        await prev
+        try {
+            return await fn()
+        } finally {
+            release()
+            if (this.sessionLocks.get(sessionKey) === chained) {
+                this.sessionLocks.delete(sessionKey)
+            }
+        }
+    }
+
+    private async reserveSessionUse(
+        userId: string,
+        command: string,
+        network: X402Network,
+    ): Promise<{ session: ActiveSession; usesRemainingAfter?: number } | undefined> {
+        const sessionKey = getSessionKey(userId, command)
+        return await this.withSessionLock(sessionKey, async () => {
+            const session = this.getActiveSession(userId, command, network)
+            if (!session) return undefined
+
+            if (session.usesRemaining === undefined) {
+                // Unlimited sessions don't need reservation accounting.
+                return { session }
+            }
+
+            const inFlight = this.sessionInFlight.get(sessionKey) ?? 0
+            const available = session.usesRemaining - inFlight
+            if (available <= 0) return undefined
+
+            const newInFlight = inFlight + 1
+            this.sessionInFlight.set(sessionKey, newInFlight)
+            return { session, usesRemainingAfter: session.usesRemaining - newInFlight }
+        })
+    }
+
+    private async finalizeReservedSessionUse(
+        userId: string,
+        command: string,
+        network: X402Network,
+        success: boolean,
+    ): Promise<void> {
+        const sessionKey = getSessionKey(userId, command)
+        await this.withSessionLock(sessionKey, async () => {
+            const session = this.getActiveSession(userId, command, network)
+            const inFlight = this.sessionInFlight.get(sessionKey) ?? 0
+            const newInFlight = Math.max(0, inFlight - 1)
+            if (newInFlight === 0) this.sessionInFlight.delete(sessionKey)
+            else this.sessionInFlight.set(sessionKey, newInFlight)
+
+            if (!success || !session) return
+
+            if (session.usesRemaining !== undefined) {
+                session.usesRemaining--
+                if (session.usesRemaining <= 0) {
+                    this.activeSessions.delete(sessionKey)
+                    this.sessionInFlight.delete(sessionKey)
+                }
+            }
+        })
+    }
+
+    /**
+     * Create a new session after successful payment
+     */
+    private createSession(
+        userId: string,
+        command: string,
+        sessionConfig: { duration?: number; maxUses?: number },
+        transactionHash: string,
+        network: X402Network,
+    ): ActiveSession {
+        const sessionKey = getSessionKey(userId, command)
+        const duration = sessionConfig.duration ?? 3600 // Default 1 hour
+        const session: ActiveSession = {
+            userId,
+            command,
+            network,
+            expiresAt: Date.now() + duration * 1000,
+            usesRemaining: sessionConfig.maxUses,
+            transactionHash,
+        }
+        this.activeSessions.set(sessionKey, session)
+        return session
     }
 
     start() {
@@ -1033,51 +1226,83 @@ export class Bot<Commands extends BotCommand[] = []> {
             return // Not a payment signature
         }
 
-        // Remove from pending
+        // Remove from pending to prevent double-processing on duplicate interaction responses.
         this.pendingPayments.delete(signatureId)
-
-        const facilitator = useFacilitator(this.paymentConfig)
-
-        // Build PaymentPayload for x402
-        const paymentPayload: PaymentPayload = {
-            x402Version: 1,
-            scheme: 'exact',
-            network: chainIdToNetwork(this.viem.chain.id),
-            payload: {
-                signature: signature,
-                authorization: {
-                    from: pending.params.from,
-                    to: pending.params.to,
-                    value: pending.params.value.toString(),
-                    validAfter: pending.params.validAfter.toString(),
-                    validBefore: pending.params.validBefore.toString(),
-                    nonce: pending.params.nonce,
-                },
-            },
-        }
-
-        // Build PaymentRequirements for x402
-        const paymentRequirements: PaymentRequirements = {
-            scheme: 'exact',
-            network: paymentPayload.network,
-            maxAmountRequired: pending.params.value.toString(),
-            resource: `https://towns.com/command/${pending.command}`,
-            description: `Payment for /${pending.command}`,
-            mimeType: 'application/json',
-            payTo: pending.params.to,
-            maxTimeoutSeconds: 300,
-            asset: pending.params.verifyingContract,
-        }
-
-        // Single status message that gets updated through the flow
-        const statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
 
         // Track settlement state to distinguish payment failures from post-payment failures
         let settlementCompleted = false
+        let verified = false
+        let transactionLabel: 'Tx' | 'Ref' = 'Tx'
         let transactionHash: string | undefined
+        let statusMsg: { eventId: string } | undefined
 
         try {
-            const verifyResult = await facilitator.verify(paymentPayload, paymentRequirements)
+            // IMPORTANT: use the chainId the user signed for (domain separator is chain-specific).
+            // Do NOT use the bot's current chain, which may differ if configuration changed.
+            const signedChainId = pending.params.chainId
+
+            // Get network in CAIP-2 format (x402 v2)
+            const network = chainIdToNetwork(signedChainId)
+
+            // Validate network support (double-check in case chain switched)
+            const paymentConfig = this.paymentCommands.get(pending.command)
+            if (paymentConfig) {
+                validateNetworkSupport(signedChainId, paymentConfig)
+            }
+
+            const actualHandlerKey = `__paid_${pending.command}`
+            if (!this.slashCommandHandlers.has(actualHandlerKey)) {
+                // If the paid command was unregistered while payment was pending, do NOT settle.
+                // User has signed an authorization, but we can avoid charging them.
+                await handler.sendMessage(
+                    channelId,
+                    `⚠️ /${pending.command} is no longer available. Your payment was not processed.`,
+                )
+                return
+            }
+
+            // Build PaymentPayload using v1 format (x402 core v2.0.0 still uses v1 payload types)
+            const paymentPayload: PaymentPayloadV1 = {
+                x402Version: 1,
+                scheme: 'exact',
+                network: network,
+                payload: {
+                    signature: signature,
+                    authorization: {
+                        from: pending.params.from,
+                        to: pending.params.to,
+                        value: pending.params.value.toString(),
+                        validAfter: pending.params.validAfter.toString(),
+                        validBefore: pending.params.validBefore.toString(),
+                        nonce: pending.params.nonce,
+                    },
+                },
+            }
+
+            // Build PaymentRequirements using v1 format (x402 core v2.0.0 still uses v1 payload types)
+            const paymentRequirements: PaymentRequirementsV1 = {
+                scheme: 'exact',
+                network: network,
+                maxAmountRequired: pending.params.value.toString(),
+                resource: `https://towns.com/command/${pending.command}`,
+                description: `Payment for /${pending.command}`,
+                mimeType: 'application/json',
+                outputSchema: {},
+                payTo: pending.params.to,
+                maxTimeoutSeconds: 300,
+                asset: pending.params.verifyingContract,
+                extra: {},
+            }
+
+            // Single status message that gets updated through the flow
+            statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
+
+            // Call x402 facilitator to verify payment
+            const verifyResult = await callFacilitatorVerify(
+                this.paymentConfig,
+                paymentPayload,
+                paymentRequirements,
+            )
 
             if (!verifyResult.isValid) {
                 await handler.editMessage(
@@ -1085,9 +1310,10 @@ export class Bot<Commands extends BotCommand[] = []> {
                     statusMsg.eventId,
                     `❌ Payment verification failed: ${verifyResult.invalidReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
                 return
             }
+
+            verified = true
 
             // Update status: settling
             await handler.editMessage(
@@ -1096,7 +1322,20 @@ export class Bot<Commands extends BotCommand[] = []> {
                 `✅ Verified • Settling $${formatUnits(pending.params.value, 6)} USDC...`,
             )
 
-            const settleResult = await facilitator.settle(paymentPayload, paymentRequirements)
+            if (!this.slashCommandHandlers.has(actualHandlerKey)) {
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `⚠️ /${pending.command} is no longer available. Your payment was not processed.`,
+                )
+                return
+            }
+
+            const settleResult = await callFacilitatorSettle(
+                this.paymentConfig,
+                paymentPayload,
+                paymentRequirements,
+            )
 
             if (!settleResult.success) {
                 await handler.editMessage(
@@ -1104,13 +1343,34 @@ export class Bot<Commands extends BotCommand[] = []> {
                     statusMsg.eventId,
                     `❌ Settlement failed: ${settleResult.errorReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
                 return
             }
 
             // Mark settlement as complete - funds have been transferred
             settlementCompleted = true
-            transactionHash = settleResult.transaction
+            const settlementRef = settleResult.transaction ?? `x402:${signatureId}`
+            transactionLabel = settleResult.transaction ? 'Tx' : 'Ref'
+            transactionHash = settlementRef
+
+            // Create session if configured
+            let sessionInfo = ''
+            if (pending.sessionConfig) {
+                const session = this.createSession(
+                    pending.userId,
+                    pending.command,
+                    pending.sessionConfig,
+                    settlementRef,
+                    paymentPayload.network,
+                )
+                const duration = pending.sessionConfig.duration ?? 3600
+                const hours = Math.floor(duration / 3600)
+                const mins = Math.floor((duration % 3600) / 60)
+                const durationStr =
+                    hours > 0 ? `${hours}h${mins > 0 ? ` ${mins}m` : ''}` : `${mins}m`
+                const usesStr =
+                    session.usesRemaining !== undefined ? ` (${session.usesRemaining} uses)` : ''
+                sessionInfo = `\n🔓 Session active for ${durationStr}${usesStr}`
+            }
 
             // Final success - show receipt
             await handler.editMessage(
@@ -1118,41 +1378,71 @@ export class Bot<Commands extends BotCommand[] = []> {
                 statusMsg.eventId,
                 `✅ **Payment Complete**\n` +
                     `/${pending.command} • $${formatUnits(pending.params.value, 6)} USDC\n` +
-                    `Tx: \`${transactionHash}\``,
+                    `${transactionLabel}: \`${settlementRef}\`${sessionInfo}`,
             )
 
-            // Delete the signature request now that payment is complete
-            await handler.removeEvent(channelId, pending.interactionEventId)
-
             // Execute the original command handler (stored with __paid_ prefix)
-            const actualHandlerKey = `__paid_${pending.command}`
             const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
             if (originalHandler) {
-                await originalHandler(this.client, pending.event)
+                await originalHandler(handler, pending.event)
+            } else {
+                // Extremely unlikely race: command unregistered after settlement.
+                const msg =
+                    `⚠️ Payment was processed but /${pending.command} is no longer available.\n` +
+                    `${transactionLabel}: \`${settlementRef}\`\n` +
+                    `Please contact support.`
+                await handler.sendMessage(channelId, msg)
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
             if (settlementCompleted) {
                 // Payment succeeded but command handler failed - DO NOT suggest retry
-                await handler.editMessage(
-                    channelId,
-                    statusMsg.eventId,
-                    `⚠️ **Payment succeeded but command failed**\n` +
-                        `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
-                        `Tx: \`${transactionHash}\`\n\n` +
-                        `Error: ${errorMessage}\n` +
-                        `Please contact support - do NOT retry to avoid double charges.`,
-                )
-                // Don't remove interaction event - payment already processed
+                if (statusMsg) {
+                    await handler.editMessage(
+                        channelId,
+                        statusMsg.eventId,
+                        `⚠️ **Payment succeeded but command failed**\n` +
+                            `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
+                            `${transactionLabel}: \`${transactionHash ?? 'unknown'}\`\n\n` +
+                            `Error: ${errorMessage}\n` +
+                            `Please contact support - do NOT retry to avoid double charges.`,
+                    )
+                } else {
+                    await handler.sendMessage(
+                        channelId,
+                        `⚠️ Payment succeeded but command failed. ${transactionLabel}: \`${transactionHash ?? 'unknown'}\` Error: ${errorMessage}`,
+                    )
+                }
             } else {
-                // Actual payment failure (verify or settle threw)
-                await handler.editMessage(
-                    channelId,
-                    statusMsg.eventId,
-                    `❌ Payment failed: ${errorMessage}`,
-                )
+                // verify or settle threw before settlementCompleted was set
+                if (statusMsg) {
+                    await handler.editMessage(
+                        channelId,
+                        statusMsg.eventId,
+                        verified
+                            ? `⚠️ Verified but settlement failed: ${errorMessage}\n` +
+                                  `Please check your wallet/transactions before retrying to avoid double charges.`
+                            : `❌ Payment failed: ${errorMessage}\n` +
+                                  `Please run \`/${pending.command}\` again to retry.`,
+                    )
+                } else {
+                    await handler.sendMessage(
+                        channelId,
+                        verified
+                            ? `⚠️ Verified but settlement failed: ${errorMessage}\n` +
+                                  `Please check your wallet/transactions before retrying to avoid double charges.`
+                            : `❌ Payment failed: ${errorMessage}\n` +
+                                  `Please run \`/${pending.command}\` again to retry.`,
+                    )
+                }
+            }
+        } finally {
+            try {
+                // Always remove the signature request UI; a signature response was already received.
                 await handler.removeEvent(channelId, pending.interactionEventId)
+            } catch {
+                // Best-effort cleanup: avoid masking the real error path if removal fails.
             }
         }
     }
@@ -1325,7 +1615,10 @@ export class Bot<Commands extends BotCommand[] = []> {
             // New flattened format: (streamId, payload, opts?)
             return this.client.sendInteractionRequest(
                 streamId,
-                contentOrPayload,
+                flattenedToPayloadContent(contentOrPayload),
+                contentOrPayload.recipient
+                    ? bin_fromHexString(contentOrPayload.recipient)
+                    : undefined,
                 recipientOrOpts as MessageOpts | undefined,
                 tags,
             )
@@ -1534,16 +1827,81 @@ export class Bot<Commands extends BotCommand[] = []> {
             return unset
         }
 
-        this.slashCommandHandlers.set(command, async (handler, event) => {
+        const wrappedHandler: BotEvents<Commands>['slashCommand'] = async (handler, event) => {
+            let sessionFlow = false
             try {
                 const chainId = this.viem.chain.id
+                const network = chainIdToNetwork(chainId)
+
+                // Always validate the current network before any session bypass.
+                validateNetworkSupport(chainId, paymentConfig)
+                if (paymentConfig.session) {
+                    validateSessionConfig(
+                        paymentConfig.session,
+                        `Invalid session config for command "${command}"`,
+                    )
+                }
+
+                // Check for active session (x402 v2 feature)
+                if (
+                    paymentConfig.session &&
+                    this.hasActiveSession(event.userId, command, network)
+                ) {
+                    const reservation = await this.reserveSessionUse(event.userId, command, network)
+                    if (reservation) {
+                        const { session, usesRemainingAfter } = reservation
+
+                        sessionFlow = true
+
+                        // Session is valid, execute command without payment
+                        debug('session:used', {
+                            userId: event.userId,
+                            command,
+                            usesRemaining: usesRemainingAfter,
+                            expiresAt: new Date(session.expiresAt).toISOString(),
+                        })
+
+                        // Show session usage info
+                        const usesInfo =
+                            usesRemainingAfter !== undefined
+                                ? ` (${usesRemainingAfter} uses remaining)`
+                                : ''
+                        await handler.sendMessage(
+                            event.channelId,
+                            `🔓 Using session access${usesInfo}`,
+                            { ephemeral: true },
+                        )
+
+                        // Execute the original command handler
+                        try {
+                            await fn(handler, event)
+                            await this.finalizeReservedSessionUse(
+                                event.userId,
+                                command,
+                                network,
+                                true,
+                            )
+                        } catch (err) {
+                            // Refund the reserved use on failure.
+                            await this.finalizeReservedSessionUse(
+                                event.userId,
+                                command,
+                                network,
+                                false,
+                            )
+                            throw err
+                        }
+                        return
+                    }
+                }
+
                 const smartAccountAddress = await getSmartAccountFromUserIdImpl(
                     this.client.config.base.chainConfig.addresses.spaceFactory,
                     this.viem,
                     event.userId,
                 )
 
-                const { signatureId, params, eventId } = await createPaymentRequest(
+                const { signatureId, params, eventId, sessionConfig } = await createPaymentRequest(
                     handler,
                     event,
                     chainId,
@@ -1553,7 +1911,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     command,
                 )
 
-                // Store pending payment
+                // Store pending payment with session config
                 this.pendingPayments.set(signatureId, {
                     command: command,
                     channelId: event.channelId,
@@ -1561,24 +1919,35 @@ export class Bot<Commands extends BotCommand[] = []> {
                     interactionEventId: eventId,
                     event: event,
                     params: params,
+                    sessionConfig: sessionConfig,
                 })
             } catch (error) {
                 await handler.sendMessage(
                     event.channelId,
-                    `❌ Failed to request payment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    sessionFlow
+                        ? `❌ Command failed while using session access: ${
+                              error instanceof Error ? error.message : 'Unknown error'
+                          }`
+                        : `❌ Failed to request payment: ${
+                              error instanceof Error ? error.message : 'Unknown error'
+                          }`,
                 )
             }
-        })
+        }
+
+        this.slashCommandHandlers.set(command, wrappedHandler)
 
         const actualHandlerKey = `__paid_${command}`
         this.slashCommandHandlers.set(actualHandlerKey, fn)
 
         const unset = () => {
-            if (
-                this.slashCommandHandlers.has(command) &&
-                this.slashCommandHandlers.get(command) === fn
-            ) {
+            // Remove the payment wrapper (stored under the command name)
+            if (this.slashCommandHandlers.get(command) === wrappedHandler) {
                 this.slashCommandHandlers.delete(command)
+            }
+            // Remove the actual paid handler (stored under __paid_<command>)
+            if (this.slashCommandHandlers.get(actualHandlerKey) === fn) {
+                this.slashCommandHandlers.delete(actualHandlerKey)
             }
         }
         return unset
@@ -1731,7 +2100,13 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         commands?: Commands
         identity?: BotIdentityConfig
         dedup?: EventDedupConfig
-        paymentConfig?: FacilitatorConfig
+        /**
+         * Configure the x402 facilitator used for paid commands.
+         *
+         * Important: you must provide a `url` for the facilitator verify/settle HTTP API.
+         * (There is no reliable hard-coded default.)
+         */
+        paymentConfig?: FacilitatorConfigInput
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1813,6 +2188,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
     }
 
     await client.uploadDeviceKeys()
+    const paymentConfig = normalizeFacilitatorConfig(opts.paymentConfig)
     return new Bot<Commands>(
         client,
         viem,
@@ -1821,7 +2197,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         opts.commands,
         opts.identity,
         opts.dedup,
-        opts.paymentConfig,
+        paymentConfig,
     )
 }
 
@@ -2502,7 +2878,6 @@ const buildBotActions = (
         let recipient: Uint8Array | undefined
         let opts: MessageOpts | undefined
         let tags: PlainMessage<Tags> | undefined
-
         if (isFlattenedRequest(contentOrPayload)) {
             // New flattened format
             content = flattenedToPayloadContent(contentOrPayload)
@@ -2518,7 +2893,6 @@ const buildBotActions = (
             opts = optsOrTags as MessageOpts | undefined
             tags = maybeTags
         }
-
         // Get encryption settings (same as sendMessageEvent)
         const miniblockInfo = await client.getMiniblockInfo(streamId)
         const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
@@ -2778,18 +3152,21 @@ const buildBotActions = (
         if (receipt.status !== 'success') {
             throw new Error(`Channel creation transaction failed: ${hash}`)
         }
+        const inceptionArgs: Parameters<typeof make_ChannelPayload_Inception>[0] = {
+            streamId: streamIdAsBytes(channelId),
+            settings: undefined,
+            channelSettings: {
+                autojoin: params.autojoin ?? false,
+                hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
+            },
+        }
+        // NOTE: Historically, the inception payload shape has varied (some versions include `spaceId`).
+        // To avoid breaking builds across generated proto/type updates, set it dynamically.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        ;(inceptionArgs as any).spaceId = streamIdAsBytes(spaceId)
+
         const events = await Promise.all([
-            makeEvent(
-                client.signerContext,
-                make_ChannelPayload_Inception({
-                    streamId: streamIdAsBytes(channelId),
-                    settings: undefined,
-                    channelSettings: {
-                        autojoin: params.autojoin ?? false,
-                        hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
-                    },
-                }),
-            ),
+            makeEvent(client.signerContext, make_ChannelPayload_Inception(inceptionArgs)),
             makeEvent(
                 client.signerContext,
                 make_MemberPayload_Membership2({

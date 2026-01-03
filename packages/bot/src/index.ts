@@ -5,6 +5,15 @@ export * from './bot'
 export * from './eventDedup'
 export * from './identity-types'
 export * from './interaction-api'
+export * from './payments'
 export * from './re-exports'
 export * from './smart-account'
 export * from './snapshot-getter'
+// NOTE: `./bot`'s public API already exposes the facilitator config types via signatures.
+// Export only the non-conflicting helper/constant names here.
+export {
+    CDP_X402_BASE_URL,
+    X402_ORG_FACILITATOR_BASE_URL,
+    normalizeFacilitatorConfig,
+} from './x402'
+export type { FacilitatorConfigInput } from './x402'
