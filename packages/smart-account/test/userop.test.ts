@@ -193,19 +193,21 @@ describe('UserOp Integration Tests', () => {
             // Send userOp to link the smart account to the root key
             const userOpHash = await bundlerClient.sendUserOperation({
                 account: smartAccount,
-                calls: [{
-                    to: SPACE_FACTORY_ADDRESS,
-                    abi: walletLinkAbi,
-                    functionName: 'linkCallerToRootKey',
-                    args: [
-                        {
-                            addr: rootKey.address,
-                            signature,
-                            message: LINKED_WALLET_MESSAGE,
-                        },
-                        nonce,
-                    ],
-                }]
+                calls: [
+                    {
+                        to: SPACE_FACTORY_ADDRESS,
+                        abi: walletLinkAbi,
+                        functionName: 'linkCallerToRootKey',
+                        args: [
+                            {
+                                addr: rootKey.address,
+                                signature,
+                                message: LINKED_WALLET_MESSAGE,
+                            },
+                            nonce,
+                        ],
+                    },
+                ],
             })
 
             const receipt = await bundlerClient.waitForUserOperationReceipt({
