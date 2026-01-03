@@ -44,7 +44,7 @@ const (
 	StreamMinEventsPerSnapshotUserDeviceConfigKey   = "stream.minEventsPerSnapshot.ad"
 	StreamCacheExpirationMsConfigKey                = "stream.cacheExpirationMs"
 	StreamCacheExpirationPollIntervalMsConfigKey    = "stream.cacheExpirationPollIntervalMs"
-	StreamGetMiniblocksMaxPageSizeConfigKey         = "stream.getMiniblocksMaxPageSize"
+	StreamGetMiniblocksMaxPageSizeConfigKey         = "stream.getminiblocksmaxpagesize"
 	MediaStreamMembershipLimitsGDMConfigKey         = "media.streamMembershipLimits.77"
 	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
@@ -154,7 +154,7 @@ type OnChainSettings struct {
 
 	StreamEphemeralStreamTTL time.Duration `mapstructure:"stream.ephemeralStreamTTLMs"`
 
-	GetMiniblocksMaxPageSize uint64 `mapstructure:"stream.getMiniblocksMaxPageSize"`
+	GetMiniblocksMaxPageSize uint64 `mapstructure:"stream.getminiblocksmaxpagesize"`
 
 	MembershipLimits MembershipLimitsSettings `mapstructure:",squash"`
 
@@ -311,14 +311,13 @@ func DefaultOnChainSettings() *OnChainSettings {
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 		StreamTrimActivationFactor:         0, // 0 means snapshots trimming is disabled
 
+		GetMiniblocksMaxPageSize: 200,
+
 		StreamHistoryMiniblocks: StreamHistoryMiniblocks{
 			UserInbox:    5000,
 			UserSettings: 40,
 			Space:        400,
 		},
-
-		// TODO: Set it to the default value when the client side is updated.
-		GetMiniblocksMaxPageSize: 0,
 
 		StreamMiniblockRegistrationFrequency: 1,
 

@@ -25,4 +25,6 @@ library RiverConfigValues {
         keccak256("stream.historyminiblocks.10");
     bytes32 public constant STREAM_TRIM_ACTIVATION_FACTOR =
         keccak256("stream.trimactivationfactor");
+    bytes32 public constant STREAM_GET_MINIBLOCKS_MAX_PAGE_SIZE =
+        keccak256("stream.getminiblocksmaxpagesize");
 }

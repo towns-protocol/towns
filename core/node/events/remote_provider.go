@@ -32,7 +32,7 @@ type RemoteProvider interface {
 	// GetMbs returns a range of miniblocks from the given stream from the given node.
 	//
 	// Note: it is possible that the returned miniblocks range is limited when the requested miniblock
-	// range is too large. Range it limited to chain config setting `stream.getMiniblocksMaxPageSize`.
+	// range is too large. Range it limited to chain config setting `stream.getminiblocksmaxpagesize`.
 	GetMbs(
 		ctx context.Context,
 		node common.Address,
