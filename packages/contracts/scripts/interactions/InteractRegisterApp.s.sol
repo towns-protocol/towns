@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IAppFactory} from "src/apps/facets/factory/IAppFactory.sol";
 
-//contracts
+// contracts
 import {Interaction} from "../common/Interaction.s.sol";
 import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 

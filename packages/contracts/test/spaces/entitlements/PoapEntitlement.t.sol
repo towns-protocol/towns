@@ -4,12 +4,12 @@ pragma solidity ^0.8.23;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {IPOAP, PoapEntitlement} from "src/spaces/entitlements/poap/PoapEntitlement.sol";
 
 contract PoapEntitlementTest is TestUtils, IEntitlementBase {

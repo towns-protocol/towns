@@ -4,10 +4,10 @@ pragma solidity ^0.8.19;
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-//interfaces
+// interfaces
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 
-//libraries
+// libraries
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 contract MembershipCurrencyMigrationTest is MembershipBaseSetup {

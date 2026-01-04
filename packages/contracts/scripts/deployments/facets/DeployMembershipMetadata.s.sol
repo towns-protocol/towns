@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IMembershipMetadata} from "src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
+// contracts
 
 library DeployMembershipMetadata {
     function selectors() internal pure returns (bytes4[] memory res) {

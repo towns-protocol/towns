@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
 

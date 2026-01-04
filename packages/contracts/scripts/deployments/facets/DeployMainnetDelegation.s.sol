@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-//contracts
+// contracts
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 
 library DeployMainnetDelegation {

@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 import {IMembershipPricing} from "src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 
 import {TieredLogPricingOracleV3} from "src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
 import {MockAggregatorV3} from "test/mocks/MockAggregatorV3.sol";

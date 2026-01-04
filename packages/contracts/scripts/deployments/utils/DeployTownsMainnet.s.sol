@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-//interfaces
+// interfaces
 import {ITownsBase} from "src/tokens/towns/mainnet/ITowns.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {Deployer} from "scripts/common/Deployer.s.sol";
 import {Towns} from "src/tokens/towns/mainnet/Towns.sol";
 

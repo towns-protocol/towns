@@ -3,17 +3,17 @@ pragma solidity ^0.8.23;
 
 // utils
 
-//interfaces
+// interfaces
 
 import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 import {IChannel, IChannelBase} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
-//libraries
+// libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 
-//contracts
+// contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // solhint-disable-next-line max-line-length

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 import {Create2Utils} from "../../../src/utils/libraries/Create2Utils.sol";
 
-//contracts
+// contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
