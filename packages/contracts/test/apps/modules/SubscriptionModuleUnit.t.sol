@@ -3,6 +3,7 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IBanning} from "../../../src/spaces/facets/banning/IBanning.sol";
 
 // utils
@@ -32,7 +33,7 @@ contract SubscriptionModuleHarness is SubscriptionModuleBase {
     }
 }
 
-contract SubscriptionModuleUnitTest is ModulesBase {
+contract SubscriptionModuleUnitTest is ModulesBase, IOwnableBase {
     SubscriptionModuleHarness harness;
 
     function setUp() public override {
@@ -359,7 +360,7 @@ contract SubscriptionModuleUnitTest is ModulesBase {
         address newOperator = makeAddr("newOperator");
         address nonOwner = makeAddr("nonOwner");
 
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner));
         vm.prank(nonOwner);
         subscriptionModule.grantOperator(newOperator);
     }
@@ -387,7 +388,7 @@ contract SubscriptionModuleUnitTest is ModulesBase {
         address operatorToRevoke = makeAddr("operatorToRevoke");
         address nonOwner = makeAddr("nonOwner");
 
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner));
         vm.prank(nonOwner);
         subscriptionModule.revokeOperator(operatorToRevoke);
     }
