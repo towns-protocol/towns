@@ -6,19 +6,19 @@ import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol"
 import {IValidationHookModule} from "@erc6900/reference-implementation/interfaces/IValidationHookModule.sol";
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ISubscriptionModule} from "./ISubscriptionModule.sol";
 import {IMembership} from "../../../spaces/facets/membership/IMembership.sol";
 import {IBanning} from "../../../spaces/facets/banning/IBanning.sol";
+import {ISubscriptionModule} from "./ISubscriptionModule.sol";
 
 // libraries
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 import {IArchitect} from "../../../factory/facets/architect/IArchitect.sol";
 import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
-import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";
@@ -38,10 +38,10 @@ contract SubscriptionModuleFacet is
     SubscriptionModuleBase,
     Facet
 {
-    using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
-    using SafeCastLib for uint256;
+    using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using CustomRevert for bytes4;
+    using SafeCastLib for uint256;
 
     uint256 internal constant _SIG_VALIDATION_FAILED = 1;
 
@@ -54,13 +54,33 @@ contract SubscriptionModuleFacet is
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           External                         */
+    /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @inheritdoc IModule
-    function moduleId() external pure returns (string memory) {
-        return "towns.subscription-module.1.0.0";
+    /// @inheritdoc ISubscriptionModule
+    function setSpaceFactory(address spaceFactory) external onlyOwner {
+        Validator.checkAddress(spaceFactory);
+        SubscriptionModuleStorage.getLayout().spaceFactory = spaceFactory;
+        emit SpaceFactoryChanged(spaceFactory);
     }
+
+    /// @inheritdoc ISubscriptionModule
+    function grantOperator(address operator) external onlyOwner {
+        Validator.checkAddress(operator);
+        SubscriptionModuleStorage.getLayout().operators.add(operator);
+        emit OperatorGranted(operator);
+    }
+
+    /// @inheritdoc ISubscriptionModule
+    function revokeOperator(address operator) external onlyOwner {
+        Validator.checkAddress(operator);
+        SubscriptionModuleStorage.getLayout().operators.remove(operator);
+        emit OperatorRevoked(operator);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MODULE LIFECYCLE                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override nonReentrant {
@@ -135,69 +155,9 @@ contract SubscriptionModuleFacet is
         emit SubscriptionDeactivated(msg.sender, entityId);
     }
 
-    /// @inheritdoc IValidationModule
-    function validateUserOp(
-        uint32,
-        PackedUserOperation calldata,
-        bytes32
-    ) external pure override returns (uint256) {
-        return _SIG_VALIDATION_FAILED;
-    }
-
-    /// @inheritdoc IValidationModule
-    function validateSignature(
-        address,
-        uint32,
-        address,
-        bytes32,
-        bytes calldata
-    ) external pure override returns (bytes4) {
-        return 0xffffffff;
-    }
-
-    /// @inheritdoc IValidationModule
-    function validateRuntime(
-        address account,
-        uint32 entityId,
-        address sender,
-        uint256,
-        bytes calldata,
-        bytes calldata
-    ) external view override {
-        if (sender != address(this)) SubscriptionModule__InvalidSender.selector.revertWith();
-        bool active = SubscriptionModuleStorage.getLayout().subscriptions[account][entityId].active;
-        if (!active) SubscriptionModule__InactiveSubscription.selector.revertWith();
-    }
-
-    /// @inheritdoc IValidationHookModule
-    function preUserOpValidationHook(
-        uint32 /* entityId */,
-        PackedUserOperation calldata /* userOp */,
-        bytes32 /* userOpHash */
-    ) external pure override returns (uint256) {
-        return _SIG_VALIDATION_FAILED;
-    }
-
-    /// @inheritdoc IValidationHookModule
-    function preRuntimeValidationHook(
-        uint32 /* entityId */,
-        address /* sender */,
-        uint256 /* value */,
-        bytes calldata /* data */,
-        bytes calldata /* authorization */
-    ) external pure override {
-        SubscriptionModule__NotSupported.selector.revertWith();
-    }
-
-    /// @inheritdoc IValidationHookModule
-    function preSignatureValidationHook(
-        uint32 /* entityId */,
-        address /* sender */,
-        bytes32 /* hash */,
-        bytes calldata /* signature */
-    ) external pure override {
-        SubscriptionModule__NotSupported.selector.revertWith();
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  STATE-CHANGING FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISubscriptionModule
     function batchProcessRenewals(RenewalParams[] calldata params) external nonReentrant {
@@ -258,19 +218,6 @@ contract SubscriptionModuleFacet is
     }
 
     /// @inheritdoc ISubscriptionModule
-    function getSubscription(
-        address account,
-        uint32 entityId
-    ) external view returns (Subscription memory) {
-        return SubscriptionModuleStorage.getLayout().subscriptions[account][entityId];
-    }
-
-    /// @inheritdoc ISubscriptionModule
-    function getRenewalBuffer(uint256 duration) external pure returns (uint256) {
-        return _getRenewalBuffer(duration);
-    }
-
-    /// @inheritdoc ISubscriptionModule
     function activateSubscription(uint32 entityId) external nonReentrant {
         SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
 
@@ -304,16 +251,26 @@ contract SubscriptionModuleFacet is
         _pauseSubscription(sub, msg.sender, entityId);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @inheritdoc ISubscriptionModule
-    function getEntityIds(address account) external view returns (uint256[] memory) {
-        return SubscriptionModuleStorage.getLayout().entityIds[account].values();
+    function getSpaceFactory() external view returns (address) {
+        return SubscriptionModuleStorage.getLayout().spaceFactory;
     }
 
     /// @inheritdoc ISubscriptionModule
-    function grantOperator(address operator) external onlyOwner {
-        Validator.checkAddress(operator);
-        SubscriptionModuleStorage.getLayout().operators.add(operator);
-        emit OperatorGranted(operator);
+    function getSubscription(
+        address account,
+        uint32 entityId
+    ) external view returns (Subscription memory) {
+        return SubscriptionModuleStorage.getLayout().subscriptions[account][entityId];
+    }
+
+    /// @inheritdoc ISubscriptionModule
+    function getEntityIds(address account) external view returns (uint256[] memory) {
+        return SubscriptionModuleStorage.getLayout().entityIds[account].values();
     }
 
     /// @inheritdoc ISubscriptionModule
@@ -321,26 +278,77 @@ contract SubscriptionModuleFacet is
         return SubscriptionModuleStorage.getLayout().operators.contains(operator);
     }
 
-    /// @inheritdoc ISubscriptionModule
-    function revokeOperator(address operator) external onlyOwner {
-        Validator.checkAddress(operator);
-        SubscriptionModuleStorage.getLayout().operators.remove(operator);
-        emit OperatorRevoked(operator);
+    /// @inheritdoc IValidationModule
+    function validateRuntime(
+        address account,
+        uint32 entityId,
+        address sender,
+        uint256,
+        bytes calldata,
+        bytes calldata
+    ) external view override {
+        if (sender != address(this)) SubscriptionModule__InvalidSender.selector.revertWith();
+        bool active = SubscriptionModuleStorage.getLayout().subscriptions[account][entityId].active;
+        if (!active) SubscriptionModule__InactiveSubscription.selector.revertWith();
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      SPACE FACTORY                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @inheritdoc ISubscriptionModule
-    function setSpaceFactory(address spaceFactory) external onlyOwner {
-        Validator.checkAddress(spaceFactory);
-        SubscriptionModuleStorage.getLayout().spaceFactory = spaceFactory;
-        emit SpaceFactoryChanged(spaceFactory);
+    /// @inheritdoc IModule
+    function moduleId() external pure returns (string memory) {
+        return "towns.subscription-module.1.0.0";
     }
 
     /// @inheritdoc ISubscriptionModule
-    function getSpaceFactory() external view returns (address) {
-        return SubscriptionModuleStorage.getLayout().spaceFactory;
+    function getRenewalBuffer(uint256 duration) external pure returns (uint256) {
+        return _getRenewalBuffer(duration);
+    }
+
+    /// @inheritdoc IValidationModule
+    function validateUserOp(
+        uint32,
+        PackedUserOperation calldata,
+        bytes32
+    ) external pure override returns (uint256) {
+        return _SIG_VALIDATION_FAILED;
+    }
+
+    /// @inheritdoc IValidationModule
+    function validateSignature(
+        address,
+        uint32,
+        address,
+        bytes32,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return 0xffffffff;
+    }
+
+    /// @inheritdoc IValidationHookModule
+    function preUserOpValidationHook(
+        uint32 /* entityId */,
+        PackedUserOperation calldata /* userOp */,
+        bytes32 /* userOpHash */
+    ) external pure override returns (uint256) {
+        return _SIG_VALIDATION_FAILED;
+    }
+
+    /// @inheritdoc IValidationHookModule
+    function preRuntimeValidationHook(
+        uint32 /* entityId */,
+        address /* sender */,
+        uint256 /* value */,
+        bytes calldata /* data */,
+        bytes calldata /* authorization */
+    ) external pure override {
+        SubscriptionModule__NotSupported.selector.revertWith();
+    }
+
+    /// @inheritdoc IValidationHookModule
+    function preSignatureValidationHook(
+        uint32 /* entityId */,
+        address /* sender */,
+        bytes32 /* hash */,
+        bytes calldata /* signature */
+    ) external pure override {
+        SubscriptionModule__NotSupported.selector.revertWith();
     }
 }
