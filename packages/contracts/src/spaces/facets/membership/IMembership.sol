@@ -75,6 +75,11 @@ interface IMembershipBase {
     event MembershipFreeAllocationUpdated(uint256 indexed allocation);
     event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
     event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
+    /// @notice Emitted when a membership payment is processed (new membership or renewal)
+    /// @param currency The currency used for payment (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH)
+    /// @param price The base membership price paid
+    /// @param protocolFee The protocol fee paid
+    event MembershipPaid(address indexed currency, uint256 price, uint256 protocolFee);
     event MembershipTokenRejected(address indexed recipient);
 }
 
