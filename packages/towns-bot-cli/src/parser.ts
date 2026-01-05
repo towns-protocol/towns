@@ -12,6 +12,8 @@ export interface InitArgs extends BaseArgs {
 
 export type UpdateArgs = BaseArgs
 
+export type SkillArgs = BaseArgs
+
 export type CommandArgs = InitArgs | UpdateArgs
 
 // Command configurations for minimist
@@ -21,9 +23,8 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
         alias: { t: 'template' },
         default: { template: 'quickstart' },
     },
-    update: {
-        // No special config needed
-    },
+    update: {},
+    'install-skill': {},
 }
 
 /**
@@ -79,4 +80,8 @@ export function isInitArgs(args: CommandArgs): args is InitArgs {
 
 export function isUpdateArgs(args: CommandArgs): args is UpdateArgs {
     return args._[0] === 'update'
+}
+
+export function isSkillArgs(args: CommandArgs): args is SkillArgs {
+    return args._[0] === 'install-skill'
 }

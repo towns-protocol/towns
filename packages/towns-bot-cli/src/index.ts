@@ -1,7 +1,8 @@
 import { green, red, yellow, cyan } from 'picocolors'
 import { init, TEMPLATES, type Template } from './modules/init.js'
 import { update } from './modules/update.js'
-import { parseArgs, isInitArgs, isUpdateArgs } from './parser.js'
+import { skill } from './modules/install-skill.js'
+import { parseArgs, isInitArgs, isUpdateArgs, isSkillArgs } from './parser.js'
 
 async function main() {
     const args = parseArgs(process.argv.slice(2))
@@ -24,6 +25,11 @@ async function main() {
                     await update(args)
                 }
                 break
+            case 'install-skill':
+                if (isSkillArgs(args)) {
+                    await skill(args)
+                }
+                break
             default:
                 console.error(red(`Unknown command: ${command}`))
                 showHelp()
@@ -44,7 +50,8 @@ ${yellow('Usage:')}
 
 ${yellow('Commands:')}
   ${green('init')} [project-name]     Create a new bot project
-  ${green('update')}                  Update @towns-protocol dependencies to latest versions
+  ${green('update')}                  Update @towns-protocol dependencies and skills
+  ${green('install-skill')}           Install Towns Agent Skills to current project
 
 ${yellow('Init Options:')}
   -t, --template <name>    Template to use:

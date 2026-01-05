@@ -9,6 +9,8 @@ export type PackageJson = {
     devDependencies?: Record<string, string>
 }
 
+export type AIAssistant = 'claude-code' | 'none'
+
 export const getPackageManager = () => {
     if (process.env.npm_config_user_agent) {
         const agent = process.env.npm_config_user_agent
@@ -366,6 +368,72 @@ export async function initializeGitRepository(targetDir: string): Promise<boolea
             error instanceof Error ? error.message : 'Unknown error',
         )
         console.log(picocolors.yellow('  You can manually initialize git later with: git init'))
+        return false
+    }
+}
+
+const TOWNS_SKILL_REPO = 'https://github.com/towns-protocol/skills.git'
+const AGENTS_SKILL_FOLDERS = ['.claude/skills', '.codex/skills']
+
+export async function installTownsSkills(projectDir: string): Promise<boolean> {
+    try {
+        const tempDir = `${projectDir}-skills-temp`
+        const cloneResult = spawn.sync(
+            'git',
+            ['clone', '--depth', '1', '--filter=blob:none', '--sparse', TOWNS_SKILL_REPO, tempDir],
+            { stdio: 'pipe' },
+        )
+
+        if (cloneResult.status !== 0) {
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true })
+            }
+            return false
+        }
+        const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', 'skills'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (sparseResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const checkoutResult = spawn.sync('git', ['checkout'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (checkoutResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const sourceSkillsDir = path.join(tempDir, 'skills')
+        if (fs.existsSync(sourceSkillsDir)) {
+            const skillDirs = fs.readdirSync(sourceSkillsDir, { withFileTypes: true })
+            for (const skillFolder of AGENTS_SKILL_FOLDERS) {
+                const targetDir = path.join(projectDir, skillFolder)
+
+                if (!fs.existsSync(targetDir)) {
+                    fs.mkdirSync(targetDir, { recursive: true })
+                }
+
+                for (const skillDir of skillDirs) {
+                    if (skillDir.isDirectory()) {
+                        const sourcePath = path.join(sourceSkillsDir, skillDir.name)
+                        const destPath = path.join(targetDir, skillDir.name)
+
+                        fs.cpSync(sourcePath, destPath, { recursive: true })
+                    }
+                }
+            }
+        }
+
+        fs.rmSync(tempDir, { recursive: true, force: true })
+        return true
+    } catch (error) {
+        console.error(
+            picocolors.red('Error installing skills:'),
+            error instanceof Error ? error.message : error,
+        )
         return false
     }
 }

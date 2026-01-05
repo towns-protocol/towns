@@ -1,7 +1,13 @@
 import fs from 'fs'
 import path from 'path'
 import { green, red, yellow, cyan } from 'picocolors'
-import { getPackageManager, getInstallCommand, getDlxCommand, runCommand } from './utils.js'
+import {
+    getPackageManager,
+    getInstallCommand,
+    getDlxCommand,
+    runCommand,
+    installTownsSkills,
+} from './utils.js'
 import type { UpdateArgs } from '../parser.js'
 
 interface PackageJson {
@@ -70,22 +76,49 @@ export async function update(_argv: UpdateArgs) {
 
         if (updates.length === 0) {
             console.log(green('✓'), 'All @towns-protocol packages are up to date!')
-            return
+        } else {
+            console.log()
+            for (const update of updates) {
+                console.log(green('✓'), `${update.package} ${update.from} → ${update.to}`)
+            }
+
+            console.log()
+            console.log(cyan(`Installing dependencies with ${packageManager}...`))
+            const installCmd = getInstallCommand(packageManager)
+            const [installBin, ...installArgs] = installCmd.split(' ')
+            await runCommand(installBin, installArgs.length > 0 ? installArgs : [])
+
+            console.log()
+            console.log(green('✓'), 'Dependencies updated successfully!')
         }
 
-        console.log()
-        for (const update of updates) {
-            console.log(green('✓'), `${update.package} ${update.from} → ${update.to}`)
+        // Check if skills are installed and update them
+        const projectDir = process.cwd()
+        const claudeSkillsDir = path.join(projectDir, '.claude', 'skills')
+        const codexSkillsDir = path.join(projectDir, '.codex', 'skills')
+
+        if (fs.existsSync(claudeSkillsDir) || fs.existsSync(codexSkillsDir)) {
+            console.log()
+            console.log(cyan('Updating Towns Agent Skills...'))
+
+            try {
+                const skillSuccess = await installTownsSkills(projectDir)
+                if (skillSuccess) {
+                    console.log(green('✓'), 'Towns Agent Skills updated successfully!')
+                } else {
+                    console.log(
+                        yellow('⚠'),
+                        'Failed to update skills. You can reinstall them with: towns-bot install-skill',
+                    )
+                }
+            } catch (error) {
+                console.log(
+                    yellow('⚠'),
+                    'Error updating skills:',
+                    error instanceof Error ? error.message : error,
+                )
+            }
         }
-
-        console.log()
-        console.log(cyan(`Installing dependencies with ${packageManager}...`))
-        const installCmd = getInstallCommand(packageManager)
-        const [installBin, ...installArgs] = installCmd.split(' ')
-        await runCommand(installBin, installArgs.length > 0 ? installArgs : [])
-
-        console.log()
-        console.log(green('✓'), 'Dependencies updated successfully!')
     } catch {
         console.error(red('Error:'), 'Failed to update dependencies')
         process.exit(1)
