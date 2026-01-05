@@ -8,8 +8,6 @@ import {IWETH} from "../interfaces/IWETH.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {CustomRevert} from "./CustomRevert.sol";
 
-// contracts
-
 library CurrencyTransfer {
     using SafeTransferLib for address;
     using CustomRevert for bytes4;
@@ -123,5 +121,11 @@ library CurrencyTransfer {
             // ERC20: only transfer if actualFee > 0
             if (actualFee > 0) safeTransferERC20(currency, payer, recipient, actualFee);
         }
+    }
+
+    /// @dev Returns the balance of `account` in `currency`.
+    function balanceOf(address currency, address account) internal view returns (uint256) {
+        if (currency == NATIVE_TOKEN) return account.balance;
+        return currency.balanceOf(account);
     }
 }

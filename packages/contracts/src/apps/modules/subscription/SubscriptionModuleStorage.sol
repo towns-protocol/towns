@@ -14,6 +14,7 @@ struct Subscription {
     uint64 duration; // 8 bytes
     uint256 lastKnownRenewalPrice; // 32 bytes
     uint256 lastKnownExpiresAt; // 32 bytes
+    address lastKnownCurrency; // 20 bytes - currency at install/sync time
 }
 
 struct OperatorConfig {
