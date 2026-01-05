@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"math/rand/v2"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -23,6 +25,20 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
+
+// requireActualRows checks for "Actual Rows" in EXPLAIN output, handling both
+// PG 17 format (integer: "Actual Rows": 1,) and PG 18 format (decimal: "Actual Rows": 1.00,)
+func requireActualRows(require *require.Assertions, plan string, expectedRows int, msgAndArgs ...any) {
+	// Match "Actual Rows": N, or "Actual Rows": N.00, (PG 17 vs PG 18 format)
+	pattern := fmt.Sprintf(`"Actual Rows": %d(\.00)?,`, expectedRows)
+	matched, err := regexp.MatchString(pattern, plan)
+	require.NoError(err)
+	if len(msgAndArgs) > 0 {
+		require.True(matched, msgAndArgs...)
+	} else {
+		require.True(matched, "Expected 'Actual Rows': %d in plan: %s", expectedRows, plan)
+	}
+}
 
 type testStreamStoreParams struct {
 	ctx           context.Context
@@ -1412,7 +1428,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 1,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 1, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1420,7 +1436,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 1,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 1, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1431,7 +1447,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Only Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 1,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 1, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1443,7 +1459,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 6,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 6, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1456,7 +1472,7 @@ func TestQueryPlan(t *testing.T) {
 		hex.EncodeToString(candHash.Bytes()),
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 1,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 1, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1467,7 +1483,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 11,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 11, "PLAN: %s", plan)
 
 	require.NoError(store.pool.QueryRow(
 		ctx,
@@ -1478,7 +1494,7 @@ func TestQueryPlan(t *testing.T) {
 		streamId,
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
-	require.Contains(plan, `"Actual Rows": 11,`, "PLAN: %s", plan)
+	requireActualRows(require, plan, 11, "PLAN: %s", plan)
 }
 
 // TestEmptyMiniblockRecordCorruptionFix checks that code recovers from the corruption that occured
