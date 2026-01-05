@@ -19,8 +19,12 @@ MembershipFacet (external interface)
       ├─ PointsBase (rewards points)
       └─ ERC721ABase (NFT implementation)
 
-SpaceEntitlementGated (result handler)
+SpaceEntitlementGated (xchain/SpaceEntitlementGated.sol)
   └─ Overrides _onEntitlementCheckResultPosted()
+
+ProtocolFeeLib (ProtocolFeeLib.sol)
+  └─ Wraps FeeManager.chargeFee with ERC20 approval handling
+  └─ Used by: MembershipJoin, TippingBase
 ```
 
 ### Storage Architecture
@@ -67,6 +71,8 @@ Memberships can be priced in:
 
 Currency validation happens in `_setMembershipCurrency()` which requires the token to have an enabled fee configuration in FeeManager.
 
+**Note**: Rewards points (`_mintMembershipPoints`) are only minted for native ETH payments. ERC20 payments require an oracle for point calculation.
+
 ## Core Flow: Join → Entitlement Check → Token
 
 ### Happy Path (Local Entitlement)
@@ -84,10 +90,10 @@ User: joinSpace(receiver) + payment
   │   └─ ✓ User has local entitlement → PASS
   │
   ├─ Charge for Join
-  │   ├─ Protocol fee → Platform
+  │   ├─ Protocol fee → Platform (via FeeManager)
   │   ├─ Partner fee → Partner (if any)
   │   ├─ Referral fee → Referrer (if any)
-  │   └─ Base price → Space owner
+  │   └─ Base price remains in contract as revenue
   │
   ├─ Refund Excess (if overpaid)
   │
@@ -218,10 +224,21 @@ function _releaseCapturedValue(bytes32 transactionId, uint256 amount) internal
 ### Fee Distribution
 
 ```solidity
+// MembershipJoin.sol - pays protocol fee via FeeManager
+function _payProtocolFee(address currency, uint256 basePrice, uint256 expectedFee) internal
+
+// ProtocolFeeLib.sol - shared fee charging logic
+function charge(
+    address spaceFactory,    // FeeManager address
+    bytes32 feeType,         // fee type identifier
+    address user,            // payer (msg.sender)
+    address currency,        // NATIVE_TOKEN or ERC20
+    uint256 amount,          // base price for fee calculation
+    uint256 expectedFee      // pre-calculated fee amount
+) internal returns (uint256 protocolFee)
+
 // MembershipBase.sol
-function _collectProtocolFee(address payer, uint256 membershipPrice)
-    internal returns (uint256 protocolFee)
-function _transferIn(address from, uint256 amount) internal returns (uint256)
+function _transferIn(address currency, address from, uint256 amount) internal returns (uint256)
 ```
 
 ### Entitlement Checking
