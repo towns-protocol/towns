@@ -9,7 +9,7 @@ import {
     retryInterceptor,
     setHeaderInterceptor,
 } from './rpcInterceptors'
-import type { RpcOptions } from './rpcCommon'
+import { type RpcOptions, RIVER_CLIENT_VERSION_HEADER } from './rpcCommon'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import packageJson from '../package.json' assert { type: 'json' }
 
@@ -39,7 +39,10 @@ export function makeAppRegistryRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
-            setHeaderInterceptor({ Authorization: sessionToken , Version: packageJson.version }),
+            setHeaderInterceptor({
+                Authorization: sessionToken,
+                [RIVER_CLIENT_VERSION_HEADER]: packageJson.version,
+            }),
             loggingInterceptor(transportId, 'AppRegistryService'),
             retryInterceptor(retryParams),
         ],

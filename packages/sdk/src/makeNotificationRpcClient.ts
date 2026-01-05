@@ -2,7 +2,7 @@ import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/r
 import { NotificationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { RpcOptions } from './rpcCommon'
+import { RpcOptions, RIVER_CLIENT_VERSION_HEADER } from './rpcCommon'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import {
     DEFAULT_RETRY_PARAMS,
@@ -38,7 +38,10 @@ export function makeNotificationRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
-            setHeaderInterceptor({ Authorization: sessionToken , Version: packageJson.version }),
+            setHeaderInterceptor({
+                Authorization: sessionToken,
+                [RIVER_CLIENT_VERSION_HEADER]: packageJson.version,
+            }),
             loggingInterceptor(transportId, 'NotificationService'),
             retryInterceptor(retryParams),
         ],

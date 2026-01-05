@@ -14,6 +14,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 )
 
 const (
@@ -27,8 +28,14 @@ type RequestWithStreamId interface {
 
 // CtxAndLogForRequest returns a new context and logger for the given request.
 // If the request is made in the context of a stream it will try to add the stream id to the logger.
+// Also adds client version header to the log context if present.
 func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (context.Context, *logging.Log) {
 	log := logging.FromCtx(ctx)
+
+	// Add client version to log context if present in request headers
+	if version := req.Header().Get(headers.RiverClientVersionHeader); version != "" {
+		log = log.With("clientVersion", version)
+	}
 
 	// Add streamId to log context if present in request
 	if reqMsg, ok := any(req.Msg).(RequestWithStreamId); ok {
@@ -39,7 +46,7 @@ func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (c
 		}
 	}
 
-	return ctx, log
+	return logging.CtxWithLog(ctx, log), log
 }
 
 // UncancelContext returns a new context without original parent cancel.
