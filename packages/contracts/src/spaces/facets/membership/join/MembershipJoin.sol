@@ -140,7 +140,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpace(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, joinDetails.basePrice);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -186,7 +186,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, joinDetails.basePrice);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -400,7 +400,8 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    function _issueToken(address receiver) internal {
+    /// @param basePrice The base membership price (used for event emission)
+    function _issueToken(address receiver, uint256 basePrice) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
@@ -413,8 +414,9 @@ abstract contract MembershipJoin is
         // set expiration of membership
         _renewSubscription(tokenId, _getMembershipDuration());
 
-        // emit event
+        // emit events
         emit MembershipTokenIssued(receiver, tokenId);
+        emit MembershipPaid(_getMembershipCurrency(), basePrice, _getProtocolFee(basePrice));
     }
 
     /// @notice Validates if a user can join the space
@@ -568,6 +570,7 @@ abstract contract MembershipJoin is
             _payProtocolFee(currency, basePrice);
         }
 
+        emit MembershipPaid(currency, basePrice, _getProtocolFee(basePrice));
         _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }
