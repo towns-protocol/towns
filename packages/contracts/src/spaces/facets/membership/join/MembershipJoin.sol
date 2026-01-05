@@ -351,9 +351,9 @@ abstract contract MembershipJoin is
         }
 
         address currency = _getMembershipCurrency();
-        uint256 protocolFee = _payProtocolFee(currency, joinDetails.basePrice);
+        _payProtocolFee(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
-        emit MembershipPaid(currency, joinDetails.basePrice, protocolFee);
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -377,7 +377,7 @@ abstract contract MembershipJoin is
         ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
 
         address currency = _getMembershipCurrency();
-        uint256 protocolFee = _payProtocolFee(currency, joinDetails.basePrice);
+        _payProtocolFee(currency, joinDetails.basePrice, joinDetails.protocolFee);
         _payPartnerFee(currency, referral.partner, joinDetails.basePrice);
         _payReferralFee(
             currency,
@@ -387,7 +387,7 @@ abstract contract MembershipJoin is
             joinDetails.basePrice
         );
 
-        emit MembershipPaid(currency, joinDetails.basePrice, protocolFee);
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -552,14 +552,13 @@ abstract contract MembershipJoin is
             return;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
-        uint256 protocolFee;
+        (uint256 totalRequired, uint256 protocolFee) = _getTotalMembershipPayment(basePrice);
 
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
             // ETH payment: validate msg.value
             if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-            protocolFee = _payProtocolFee(currency, basePrice);
+            _payProtocolFee(currency, basePrice, protocolFee);
 
             // Handle excess payment
             uint256 excess = msg.value - totalRequired;
@@ -573,7 +572,7 @@ abstract contract MembershipJoin is
             // Transfer ERC20 from payer to contract
             _transferIn(currency, payer, totalRequired);
 
-            protocolFee = _payProtocolFee(currency, basePrice);
+            _payProtocolFee(currency, basePrice, protocolFee);
         }
 
         emit MembershipPaid(currency, basePrice, protocolFee);
