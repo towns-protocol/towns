@@ -1339,14 +1339,32 @@ ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
     }
 })
 
-// Handler for MembershipTokenIssuedCcy - tracks join volumes with currency
-// This handler receives currency and amount directly from the event, enabling
-// accurate tracking of both ETH and USDC membership payments.
-ponder.on('Space:MembershipTokenIssuedCcy', async ({ event, context }) => {
+// Handler for MembershipTokenIssued - tracks new member count
+// This event is only emitted for new memberships (not renewals)
+ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
+    const spaceId = event.log.address
+
+    try {
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
+            })
+            .where(eq(schema.space.id, spaceId))
+    } catch (error) {
+        console.error(`Error processing Space:MembershipTokenIssued for space ${spaceId}:`, error)
+    }
+})
+
+// Handler for MembershipPaid - tracks membership payment volumes
+// This event is emitted for both new memberships and renewals
+ponder.on('Space:MembershipPaid', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const currency = event.args.currency as string
-    const joinAmount = event.args.amount
+    const price = event.args.price
+    const protocolFee = event.args.protocolFee
+    const totalAmount = price + protocolFee
 
     try {
         // Determine currency type
@@ -1354,10 +1372,10 @@ ponder.on('Space:MembershipTokenIssuedCcy', async ({ event, context }) => {
         const currencyIsUSDC = isUSDC(currency, ENVIRONMENT)
 
         // Route amounts based on currency
-        const ethAmount = currencyIsETH ? joinAmount : 0n
-        const usdcAmount = currencyIsUSDC ? joinAmount : 0n
+        const ethAmount = currencyIsETH ? totalAmount : 0n
+        const usdcAmount = currencyIsUSDC ? totalAmount : 0n
 
-        // Record analytics event with currency info
+        // Record analytics event with payment info
         await context.db
             .insert(schema.analyticsEvent)
             .values({
@@ -1370,21 +1388,20 @@ ponder.on('Space:MembershipTokenIssuedCcy', async ({ event, context }) => {
                 usdcAmount: usdcAmount,
                 eventData: {
                     type: 'join',
-                    recipient: event.args.recipient,
-                    tokenId: event.args.tokenId.toString(),
                     currency: currency,
-                    amount: joinAmount.toString(),
+                    price: price.toString(),
+                    protocolFee: protocolFee.toString(),
+                    totalAmount: totalAmount.toString(),
                 },
             })
             .onConflictDoNothing()
 
-        // Update space metrics - route to correct volume column based on currency
+        // Update space membership volume metrics
         if (currencyIsETH) {
             await context.db.sql
                 .update(schema.space)
                 .set({
                     joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
-                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
                 })
                 .where(eq(schema.space.id, spaceId))
         } else if (currencyIsUSDC) {
@@ -1392,21 +1409,12 @@ ponder.on('Space:MembershipTokenIssuedCcy', async ({ event, context }) => {
                 .update(schema.space)
                 .set({
                     joinUSDCVolume: sql`COALESCE(${schema.space.joinUSDCVolume}, 0) + ${usdcAmount}`,
-                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
-                })
-                .where(eq(schema.space.id, spaceId))
-        } else {
-            // Unknown currency - still increment member count
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
                 })
                 .where(eq(schema.space.id, spaceId))
         }
     } catch (error) {
         console.error(
-            `Error processing Space:MembershipTokenIssuedCcy at timestamp ${blockTimestamp}:`,
+            `Error processing Space:MembershipPaid at timestamp ${blockTimestamp}:`,
             error,
         )
     }
