@@ -16,6 +16,7 @@ import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../MembershipStorage.sol";
 import {Permissions} from "../../Permissions.sol";
+import {ProtocolFeeLib} from "../../ProtocolFeeLib.sol";
 
 // contracts
 import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
@@ -67,6 +68,7 @@ abstract contract MembershipJoin is
 
     struct PricingDetails {
         uint256 basePrice;
+        uint256 protocolFee;
         uint256 amountDue;
         bool shouldCharge;
     }
@@ -100,8 +102,12 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
-        (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
+        (uint256 totalRequired, uint256 protocolFee) = _getTotalMembershipPayment(membershipPrice);
+        (joinDetails.protocolFee, joinDetails.amountDue, joinDetails.shouldCharge) = (
+            protocolFee,
+            totalRequired,
+            true
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -454,21 +460,18 @@ abstract contract MembershipJoin is
     /*                      FEE DISTRIBUTION                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Pays the protocol fee to the platform fee recipient
+    /// @notice Pays the protocol fee via FeeManager
     /// @param currency The currency to pay in
-    /// @param membershipPrice The price of the membership
-    /// @return protocolFee The amount of protocol fee paid
-    function _payProtocolFee(
-        address currency,
-        uint256 membershipPrice
-    ) internal returns (uint256 protocolFee) {
-        protocolFee = _getProtocolFee(membershipPrice);
-
-        CurrencyTransfer.transferCurrency(
+    /// @param basePrice The base price of the membership (for fee calculation)
+    /// @param expectedFee The pre-calculated protocol fee
+    function _payProtocolFee(address currency, uint256 basePrice, uint256 expectedFee) internal {
+        ProtocolFeeLib.charge(
+            _getSpaceFactory(),
+            _getMembershipFeeType(currency),
+            msg.sender,
             currency,
-            address(this),
-            _getPlatformRequirements().getFeeRecipient(),
-            protocolFee
+            basePrice,
+            expectedFee
         );
     }
 
