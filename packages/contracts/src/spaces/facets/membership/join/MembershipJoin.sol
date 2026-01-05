@@ -140,7 +140,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpace(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver, joinDetails.basePrice);
+                _issueToken(receiver);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -186,7 +186,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
                 }
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver, joinDetails.basePrice);
+                _issueToken(receiver);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -344,7 +344,10 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        _payProtocolFee(_getMembershipCurrency(), joinDetails.basePrice);
+        address currency = _getMembershipCurrency();
+        uint256 protocolFee = _payProtocolFee(currency, joinDetails.basePrice);
+
+        emit MembershipPaid(currency, joinDetails.basePrice, protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -368,7 +371,7 @@ abstract contract MembershipJoin is
         ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
 
         address currency = _getMembershipCurrency();
-        _payProtocolFee(currency, joinDetails.basePrice);
+        uint256 protocolFee = _payProtocolFee(currency, joinDetails.basePrice);
         _payPartnerFee(currency, referral.partner, joinDetails.basePrice);
         _payReferralFee(
             currency,
@@ -377,6 +380,8 @@ abstract contract MembershipJoin is
             referral.referralCode,
             joinDetails.basePrice
         );
+
+        emit MembershipPaid(currency, joinDetails.basePrice, protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -400,8 +405,7 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    /// @param basePrice The base membership price (used for event emission)
-    function _issueToken(address receiver, uint256 basePrice) internal {
+    function _issueToken(address receiver) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
@@ -414,9 +418,7 @@ abstract contract MembershipJoin is
         // set expiration of membership
         _renewSubscription(tokenId, _getMembershipDuration());
 
-        // emit events
         emit MembershipTokenIssued(receiver, tokenId);
-        emit MembershipPaid(_getMembershipCurrency(), basePrice, _getProtocolFee(basePrice));
     }
 
     /// @notice Validates if a user can join the space
@@ -548,12 +550,13 @@ abstract contract MembershipJoin is
         }
 
         (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
+        uint256 protocolFee;
 
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
             // ETH payment: validate msg.value
             if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-            _payProtocolFee(currency, basePrice);
+            protocolFee = _payProtocolFee(currency, basePrice);
 
             // Handle excess payment
             uint256 excess = msg.value - totalRequired;
@@ -567,10 +570,10 @@ abstract contract MembershipJoin is
             // Transfer ERC20 from payer to contract
             _transferIn(currency, payer, totalRequired);
 
-            _payProtocolFee(currency, basePrice);
+            protocolFee = _payProtocolFee(currency, basePrice);
         }
 
-        emit MembershipPaid(currency, basePrice, _getProtocolFee(basePrice));
+        emit MembershipPaid(currency, basePrice, protocolFee);
         _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }

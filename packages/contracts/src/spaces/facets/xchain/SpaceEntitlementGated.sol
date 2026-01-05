@@ -52,7 +52,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
             }
 
             _refundBalance(transactionId, receiver);
-            _issueToken(receiver, joinDetails.basePrice);
+            _issueToken(receiver);
             return;
         }
 
