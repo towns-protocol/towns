@@ -350,7 +350,11 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        _payProtocolFee(_getMembershipCurrency(), joinDetails.basePrice, joinDetails.protocolFee);
+        address currency = _getMembershipCurrency();
+        _payProtocolFee(currency, joinDetails.basePrice, joinDetails.protocolFee);
+
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
+
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
 
@@ -382,6 +386,8 @@ abstract contract MembershipJoin is
             referral.referralCode,
             joinDetails.basePrice
         );
+
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -418,7 +424,6 @@ abstract contract MembershipJoin is
         // set expiration of membership
         _renewSubscription(tokenId, _getMembershipDuration());
 
-        // emit event
         emit MembershipTokenIssued(receiver, tokenId);
     }
 
@@ -570,6 +575,7 @@ abstract contract MembershipJoin is
             _payProtocolFee(currency, basePrice, protocolFee);
         }
 
+        emit MembershipPaid(currency, basePrice, protocolFee);
         _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }
