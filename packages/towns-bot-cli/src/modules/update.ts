@@ -7,6 +7,7 @@ import {
     getDlxCommand,
     runCommand,
     installTownsSkills,
+    downloadAgentsMd,
 } from './utils.js'
 import type { UpdateArgs } from '../parser.js'
 
@@ -115,6 +116,30 @@ export async function update(_argv: UpdateArgs) {
                 console.log(
                     yellow('⚠'),
                     'Error updating skills:',
+                    error instanceof Error ? error.message : error,
+                )
+            }
+        }
+
+        // Download/update AGENTS.md
+        if (!_argv.skipAgentsMd) {
+            console.log()
+            console.log(cyan('Updating AGENTS.md...'))
+
+            try {
+                const agentsMdSuccess = await downloadAgentsMd(projectDir)
+                if (agentsMdSuccess) {
+                    console.log(green('✓'), 'AGENTS.md updated successfully!')
+                } else {
+                    console.log(
+                        yellow('⚠'),
+                        'Failed to update AGENTS.md. You can update it manually or run update again.',
+                    )
+                }
+            } catch (error) {
+                console.log(
+                    yellow('⚠'),
+                    'Error updating AGENTS.md:',
                     error instanceof Error ? error.message : error,
                 )
             }

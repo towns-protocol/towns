@@ -70,6 +70,7 @@ ${yellow('Update Commands Options:')}
   -f, --file <path>         Path to commands file
   -t, --bearerToken <token>  Bearer token for authentication
   -e, --envFile <path>       Path to .env file (default: .env)
+  --skip-agents-md           Skip updating AGENTS.md file
 
 ${yellow('Global Options:')}
   -h, --help               Show this help message

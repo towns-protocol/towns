@@ -437,3 +437,66 @@ export async function installTownsSkills(projectDir: string): Promise<boolean> {
         return false
     }
 }
+
+export async function downloadAgentsMd(projectDir: string): Promise<boolean> {
+    try {
+        const tempDir = `${projectDir}-agents-md-temp`
+        const agentsMdPath = 'packages/examples/bot-quickstart/AGENTS.md'
+        const latestSdkTag = getLatestSdkTag()
+        if (!latestSdkTag) {
+            return false
+        }
+        const cloneResult = spawn.sync(
+            'git',
+            [
+                'clone',
+                '--no-checkout',
+                '--depth',
+                '1',
+                '--sparse',
+                '--branch',
+                latestSdkTag,
+                'https://github.com/towns-protocol/towns.git',
+                tempDir,
+            ],
+            { stdio: 'pipe' },
+        )
+        if (cloneResult.status !== 0) {
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true })
+            }
+            return false
+        }
+        const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', agentsMdPath], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (sparseResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const checkoutResult = spawn.sync('git', ['checkout'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (checkoutResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const sourceFile = path.join(tempDir, agentsMdPath)
+        if (!fs.existsSync(sourceFile)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const destFile = path.join(projectDir, 'AGENTS.md')
+        fs.copyFileSync(sourceFile, destFile)
+        fs.rmSync(tempDir, { recursive: true, force: true })
+        return true
+    } catch (error) {
+        console.error(
+            picocolors.red('Error downloading AGENTS.md:'),
+            error instanceof Error ? error.message : error,
+        )
+        return false
+    }
+}

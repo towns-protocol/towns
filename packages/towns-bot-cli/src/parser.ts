@@ -10,7 +10,9 @@ export interface InitArgs extends BaseArgs {
     template?: string
 }
 
-export type UpdateArgs = BaseArgs
+export interface UpdateArgs extends BaseArgs {
+    skipAgentsMd?: boolean
+}
 
 export type SkillArgs = BaseArgs
 
@@ -23,7 +25,9 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
         alias: { t: 'template' },
         default: { template: 'quickstart' },
     },
-    update: {},
+    update: {
+        boolean: ['skipAgentsMd'],
+    },
     'install-skill': {},
 }
 
