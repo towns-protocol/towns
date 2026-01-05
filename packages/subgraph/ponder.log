@@ -1,0 +1,7 @@
+• Packages in scope: @towns-protocol/contracts
+• Running typings in 1 packages
+• Remote caching disabled
+@towns-protocol/contracts:compile: cache miss, executing a2b4e53bf8589a6b
+@towns-protocol/contracts:compile: Warning: Found unknown config section in foundry.toml: [lint]
+@towns-protocol/contracts:compile: This notation for profiles has been deprecated and may result in the profile not being registered in future versions.
+@towns-protocol/contracts:compile: Please use [profile.lint] instead or run `forge config --fix`.
