@@ -1339,21 +1339,43 @@ ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
     }
 })
 
+// Handler for MembershipTokenIssued - tracks new member count
+// This event is only emitted for new memberships (not renewals)
 ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
-    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
 
     try {
-        const spaceId = event.log.address // The space contract that emitted the event
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
+            })
+            .where(eq(schema.space.id, spaceId))
+    } catch (error) {
+        console.error(`Error processing Space:MembershipTokenIssued for space ${spaceId}:`, error)
+    }
+})
 
-        // Get the ETH amount from the transaction value (payment to join)
-        // TODO: Implement USDC join tracking - for USDC-based spaces, transaction.value
-        // will be 0 and the join amount needs to be extracted from a different source
-        // (e.g., decode transaction input or use a separate event with currency/amount)
-        const ethAmount = event.transaction.value || 0n
-        const usdcAmount = 0n
+// Handler for MembershipPaid - tracks membership payment volumes
+// This event is emitted for both new memberships and renewals
+ponder.on('Space:MembershipPaid', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+    const currency = event.args.currency as string
+    const price = event.args.price
+    const protocolFee = event.args.protocolFee
+    const totalAmount = price + protocolFee
 
-        // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
-        // This leverages the existing primary key constraint (txHash, logIndex)
+    try {
+        // Determine currency type
+        const currencyIsETH = isETH(currency)
+        const currencyIsUSDC = isUSDC(currency, ENVIRONMENT)
+
+        // Route amounts based on currency
+        const ethAmount = currencyIsETH ? totalAmount : 0n
+        const usdcAmount = currencyIsUSDC ? totalAmount : 0n
+
+        // Record analytics event with payment info
         await context.db
             .insert(schema.analyticsEvent)
             .values({
@@ -1366,24 +1388,33 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 usdcAmount: usdcAmount,
                 eventData: {
                     type: 'join',
-                    recipient: event.args.recipient,
-                    tokenId: event.args.tokenId.toString(),
+                    currency: currency,
+                    price: price.toString(),
+                    protocolFee: protocolFee.toString(),
+                    totalAmount: totalAmount.toString(),
                 },
             })
             .onConflictDoNothing()
 
-        // Directly update space metrics with inline calculations
-        // This eliminates the need to query current values first
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
-                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space membership volume metrics
+        if (currencyIsETH) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        } else if (currencyIsUSDC) {
+            await context.db.sql
+                .update(schema.space)
+                .set({
+                    joinUSDCVolume: sql`COALESCE(${schema.space.joinUSDCVolume}, 0) + ${usdcAmount}`,
+                })
+                .where(eq(schema.space.id, spaceId))
+        }
     } catch (error) {
         console.error(
-            `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
+            `Error processing Space:MembershipPaid at timestamp ${blockTimestamp}:`,
             error,
         )
     }
@@ -1454,30 +1485,26 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         }
 
         // Update tip leaderboard for sender - route to correct columns
-        // Using ternary with undefined (Drizzle ignores undefined values) instead of conditional spread
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 // Route amounts to correct currency columns
-                totalSent: currencyIsETH
-                    ? sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`
-                    : undefined,
-                totalSentUSDC: currencyIsUSDC
-                    ? sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`
-                    : undefined,
-                memberTipsSent:
-                    senderType === 'Member'
-                        ? sql`${schema.tipLeaderboard.memberTipsSent} + 1`
-                        : undefined,
-                memberTotalSent:
-                    senderType === 'Member' && currencyIsETH
-                        ? sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`
-                        : undefined,
-                memberTotalSentUSDC:
-                    senderType === 'Member' && currencyIsUSDC
-                        ? sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`
-                        : undefined,
+                ...(currencyIsETH && {
+                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                }),
+                ...(currencyIsUSDC && {
+                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
+                }),
+                ...(senderType === 'Member' &&
+                    currencyIsETH && {
+                        memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
+                        memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                    }),
+                ...(senderType === 'Member' &&
+                    currencyIsUSDC && {
+                        memberTotalSentUSDC: sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`,
+                    }),
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1612,24 +1639,19 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
         }
 
         // Update tip leaderboard for sender (bot tips) - route to correct columns
-        // Using ternary with undefined (Drizzle ignores undefined values) instead of conditional spread
         const result = await context.db.sql
             .update(schema.tipLeaderboard)
             .set({
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
-                totalSent: currencyIsETH
-                    ? sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`
-                    : undefined,
-                botTotalSent: currencyIsETH
-                    ? sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`
-                    : undefined,
-                totalSentUSDC: currencyIsUSDC
-                    ? sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`
-                    : undefined,
-                botTotalSentUSDC: currencyIsUSDC
-                    ? sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`
-                    : undefined,
+                ...(currencyIsETH && {
+                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                    botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                }),
+                ...(currencyIsUSDC && {
+                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
+                    botTotalSentUSDC: sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`,
+                }),
                 lastActivity: blockTimestamp,
             })
             .where(

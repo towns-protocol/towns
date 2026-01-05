@@ -37,8 +37,12 @@ export type TipEventData = {
 
 export type JoinEventData = {
     type: 'join'
-    recipient: string
-    tokenId: string
+    recipient?: string
+    tokenId?: string
+    currency?: string
+    price?: string
+    protocolFee?: string
+    totalAmount?: string
 }
 
 export type ReviewEventData = {
