@@ -1339,12 +1339,57 @@ ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
     }
 })
 
-// Handler for MembershipTokenIssued - tracks new member count
+// Handler for MembershipTokenIssued - tracks new member count and upgrades renewal → join
 // This event is only emitted for new memberships (not renewals)
+// For paid joins: upgrades existing 'renewal' record to 'join' with recipient/tokenId
+// Fallback INSERT for backwards compatibility with blocks indexed before MembershipPaid tracking
 ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
     const spaceId = event.log.address
+    const txHash = event.transaction.hash
+    const recipient = event.args.recipient
+    const tokenId = event.args.tokenId.toString()
+    const blockTimestamp = event.block.timestamp
+    const ethAmount = event.transaction.value || 0n
 
     try {
+        // Try to UPDATE existing 'renewal' record from MembershipPaid → upgrade to 'join'
+        const updateResult = await context.db.sql
+            .update(schema.analyticsEvent)
+            .set({
+                eventType: 'join',
+                eventData: sql`${schema.analyticsEvent.eventData} ||
+                    ${JSON.stringify({ type: 'join', recipient, tokenId })}::jsonb`,
+            })
+            .where(
+                and(
+                    eq(schema.analyticsEvent.txHash, txHash),
+                    eq(schema.analyticsEvent.spaceId, spaceId),
+                    eq(schema.analyticsEvent.eventType, 'renewal'),
+                ),
+            )
+
+        // Fallback: INSERT if no 'renewal' record found (backwards compatibility)
+        if (updateResult.changes === 0) {
+            await context.db
+                .insert(schema.analyticsEvent)
+                .values({
+                    txHash,
+                    logIndex: event.log.logIndex,
+                    spaceId,
+                    eventType: 'join',
+                    blockTimestamp,
+                    ethAmount,
+                    usdcAmount: 0n,
+                    eventData: {
+                        type: 'join',
+                        recipient,
+                        tokenId,
+                    },
+                })
+                .onConflictDoNothing()
+        }
+
+        // Update memberCount
         await context.db.sql
             .update(schema.space)
             .set({
@@ -1358,6 +1403,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
 
 // Handler for MembershipPaid - tracks membership payment volumes
 // This event is emitted for both new memberships and renewals
+// Creates as 'renewal' initially - MembershipTokenIssued will upgrade to 'join' if token is issued
 ponder.on('Space:MembershipPaid', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
@@ -1375,19 +1421,20 @@ ponder.on('Space:MembershipPaid', async ({ event, context }) => {
         const ethAmount = currencyIsETH ? totalAmount : 0n
         const usdcAmount = currencyIsUSDC ? totalAmount : 0n
 
-        // Record analytics event with payment info
+        // Record analytics event as 'renewal' initially
+        // If MembershipTokenIssued follows in same tx, it will upgrade to 'join'
         await context.db
             .insert(schema.analyticsEvent)
             .values({
                 txHash: event.transaction.hash,
                 logIndex: event.log.logIndex,
                 spaceId: spaceId,
-                eventType: 'join',
+                eventType: 'renewal',
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
                 usdcAmount: usdcAmount,
                 eventData: {
-                    type: 'join',
+                    type: 'renewal',
                     currency: currency,
                     price: price.toString(),
                     protocolFee: protocolFee.toString(),

@@ -5,6 +5,7 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'swap',
     'tip',
     'join',
+    'renewal',
     'review',
 ])
 
@@ -45,6 +46,14 @@ export type JoinEventData = {
     totalAmount?: string
 }
 
+export type RenewalEventData = {
+    type: 'renewal'
+    currency?: string
+    price?: string
+    protocolFee?: string
+    totalAmount?: string
+}
+
 export type ReviewEventData = {
     type: 'review'
     user: string
@@ -52,7 +61,12 @@ export type ReviewEventData = {
     comment: string
 }
 
-export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
+export type AnalyticsEventData =
+    | SwapEventData
+    | TipEventData
+    | JoinEventData
+    | RenewalEventData
+    | ReviewEventData
 
 export const space = onchainTable(
     'spaces',
