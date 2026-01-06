@@ -42,7 +42,7 @@
     },
     "packages/bot": {
       "name": "@towns-protocol/bot",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
@@ -86,7 +86,7 @@
     },
     "packages/contracts": {
       "name": "@towns-protocol/contracts",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
         "@ethereum-attestation-service/eas-contracts": "^1.8.0",
@@ -94,12 +94,12 @@
         "@openzeppelin/contracts": "^5.4.0",
         "@openzeppelin/contracts-upgradeable": "^5.4.0",
         "@prb/math": "^4.1.0",
-        "@towns-protocol/diamond": "^0.6.3",
+        "@towns-protocol/diamond": "^0.7.0",
         "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0",
         "account-abstraction": "github:eth-infinitism/account-abstraction#v0.7.0",
         "crypto-lib": "github:towns-protocol/crypto-lib#v1.0.1",
         "modular-account": "github:towns-protocol/modular-account#v1.0.0",
-        "solady": "^0.1.24",
+        "solady": "^0.1.26",
       },
       "devDependencies": {
         "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.112",
@@ -109,7 +109,7 @@
         "@prb/test": "^0.6.4",
         "@towns-protocol/prettier-config": "workspace:^",
         "@wagmi/cli": "^2.2.0",
-        "forge-std": "github:foundry-rs/forge-std#v1.10.0",
+        "forge-std": "github:foundry-rs/forge-std#v1.12.0",
         "prettier": "^3.5.3",
         "prettier-plugin-solidity": "^1.4.2",
         "solhint": "^5.0.5",
@@ -118,7 +118,7 @@
     },
     "packages/create-towns-protocol-app": {
       "name": "create-towns-protocol-app",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "bin": "index.js",
       "dependencies": {
         "jsonc-parser": "^3.3.1",
@@ -145,7 +145,7 @@
     },
     "packages/encryption": {
       "name": "@towns-protocol/encryption",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/olm": "3.2.28",
@@ -175,7 +175,7 @@
     },
     "packages/eslint-config": {
       "name": "@towns-protocol/eslint-config",
-      "version": "0.0.440",
+      "version": "0.0.452",
     },
     "packages/examples/bot-quickstart": {
       "name": "@towns-protocol/example-bot-quickstart",
@@ -202,7 +202,7 @@
     },
     "packages/generated": {
       "name": "@towns-protocol/generated",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@ethersproject/abi": "^5.8.0",
         "@ethersproject/providers": "^5.8.0",
@@ -309,7 +309,7 @@
     },
     "packages/prettier-config": {
       "name": "@towns-protocol/prettier-config",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "prettier-plugin-solidity": "^1.4.2",
       },
@@ -319,7 +319,7 @@
     },
     "packages/proto": {
       "name": "@towns-protocol/proto",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
       },
@@ -336,7 +336,7 @@
     },
     "packages/react-sdk": {
       "name": "@towns-protocol/react-sdk",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -371,7 +371,7 @@
     },
     "packages/rpc-connector": {
       "name": "@towns-protocol/rpc-connector",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@connectrpc/connect": "^2.1.0",
       },
@@ -401,7 +401,7 @@
     },
     "packages/sdk": {
       "name": "@towns-protocol/sdk",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect": "^2.1.0",
@@ -448,7 +448,7 @@
     },
     "packages/sdk-crypto": {
       "name": "@towns-protocol/sdk-crypto",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
@@ -585,7 +585,7 @@
     },
     "packages/towns-bot-cli": {
       "name": "towns-bot",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "bin": "index.js",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
@@ -619,7 +619,7 @@
     },
     "packages/utils": {
       "name": "@towns-protocol/utils",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@ethereumjs/util": "^10.0.0",
@@ -642,7 +642,7 @@
     },
     "packages/web3": {
       "name": "@towns-protocol/web3",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
         "@towns-protocol/generated": "workspace:^",
@@ -670,7 +670,7 @@
     },
     "packages/xchain-monitor": {
       "name": "@towns-protocol/xchain-monitor",
-      "version": "0.0.440",
+      "version": "0.0.452",
       "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
@@ -2121,7 +2121,7 @@
 
     "@towns-protocol/contracts": ["@towns-protocol/contracts@workspace:packages/contracts"],
 
-    "@towns-protocol/diamond": ["@towns-protocol/diamond@0.6.3", "", { "dependencies": { "@openzeppelin/contracts": "^5.4.0", "@prb/test": "^0.6.4", "forge-std": "github:foundry-rs/forge-std#v1.10.0", "solady": "^0.1.24" } }, "sha512-z2DPHF8x/wu5l6hNZP7vtY8yABedj18eN5btkChjnT6NKSd7iP2EsLdRqM3qo+rdwO1j973lw5RCcji42eGNhg=="],
+    "@towns-protocol/diamond": ["@towns-protocol/diamond@0.7.0", "", { "dependencies": { "@openzeppelin/contracts": "^5.4.0", "@prb/test": "^0.6.4", "forge-std": "github:foundry-rs/forge-std#v1.12.0", "solady": "^0.1.26" } }, "sha512-B+fPuRoDlDmp7mLf9n3BJsWAsY/e3Qph5/7V9+Cp7FjJIpFGw4H7jPCLapLZ6eGLVjbDSHjcuMQCAIlFSo7npQ=="],
 
     "@towns-protocol/docs": ["@towns-protocol/docs@workspace:packages/docs"],
 
@@ -3367,7 +3367,7 @@
 
     "foreground-child": ["foreground-child@3.3.1", "", { "dependencies": { "cross-spawn": "^7.0.6", "signal-exit": "^4.0.1" } }, "sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw=="],
 
-    "forge-std": ["forge-std@github:foundry-rs/forge-std#8bbcf6e", {}, "foundry-rs-forge-std-8bbcf6e"],
+    "forge-std": ["forge-std@github:foundry-rs/forge-std#7117c90", {}, "foundry-rs-forge-std-7117c90"],
 
     "form-data": ["form-data@4.0.4", "", { "dependencies": { "asynckit": "^0.4.0", "combined-stream": "^1.0.8", "es-set-tostringtag": "^2.1.0", "hasown": "^2.0.2", "mime-types": "^2.1.12" } }, "sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow=="],
 
