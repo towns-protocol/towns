@@ -1357,7 +1357,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
             .update(schema.analyticsEvent)
             .set({
                 eventType: 'join',
-                eventData: sql`${schema.analyticsEvent.eventData} ||
+                eventData: sql`(${schema.analyticsEvent.eventData})::jsonb ||
                     ${JSON.stringify({ type: 'join', recipient, tokenId })}::jsonb`,
             })
             .where(
