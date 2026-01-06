@@ -48,7 +48,6 @@ const (
 	MediaStreamMembershipLimitsGDMConfigKey         = "media.streamMembershipLimits.77"
 	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
-	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
@@ -143,11 +142,6 @@ type OnChainSettings struct {
 	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
-
-	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
-	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
-	// TODO: remove this setting
-	StreamMiniblockRegistrationFrequency uint64 `mapstructure:"stream.miniblockRegistrationFrequency"`
 
 	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
 	StreamCachePollIntterval time.Duration `mapstructure:"stream.cacheExpirationPollIntervalMs"`
@@ -319,8 +313,6 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
-
-		StreamMiniblockRegistrationFrequency: 1,
 
 		MembershipLimits: MembershipLimitsSettings{
 			GDM: 48,
