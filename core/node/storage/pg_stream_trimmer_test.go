@@ -710,7 +710,7 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 
 func TestStreamTrimmerGetTrimTargetForStream(t *testing.T) {
 	spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	channelStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelStream := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	mbNum := int64(434922)
 
 	cfg := &crypto.OnChainSettings{
