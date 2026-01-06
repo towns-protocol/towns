@@ -133,7 +133,7 @@ while true; do
 done
 
 # Wait for PR to be merged using the specific PR number
-TIMEOUT=2100  # 35 minutes in seconds
+TIMEOUT=7200  # 2 hours in seconds
 START_TIME=$(date +%s)
 
 while gh pr view "$PR_NUMBER" --json state -q ".state" | grep -q "OPEN"; do
@@ -141,7 +141,7 @@ while gh pr view "$PR_NUMBER" --json state -q ".state" | grep -q "OPEN"; do
     ELAPSED_TIME=$(($CURRENT_TIME - $START_TIME))
 
     if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
-        echo "Error: Timed out waiting for PR #${PR_NUMBER} to merge after 35 minutes"
+        echo "Error: Timed out waiting for PR #${PR_NUMBER} to merge after 2 hours"
         exit 1
     fi
 
