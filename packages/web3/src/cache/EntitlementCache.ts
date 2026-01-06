@@ -1,5 +1,6 @@
-import TTLCache from '@isaacs/ttlcache'
 import { Keyable } from './Keyable'
+import { CreateStorageFn } from './ICacheStorage'
+import { createDefaultStorage } from './TTLCacheStorage'
 
 export interface CacheResult<V> {
     value: V
@@ -7,35 +8,43 @@ export interface CacheResult<V> {
     isPositive: boolean
 }
 
-export class EntitlementCache<K extends Keyable, V> {
-    private readonly negativeCache: TTLCache<string, CacheResult<V>>
-    private readonly positiveCache: TTLCache<string, CacheResult<V>>
+export interface EntitlementCacheOptions<V> {
+    positiveCacheTTLSeconds?: number
+    negativeCacheTTLSeconds?: number
+    positiveCacheSize?: number
+    negativeCacheSize?: number
+    /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
+    createStorageFn?: CreateStorageFn<CacheResult<V>>
+}
 
-    constructor(options?: {
-        positiveCacheTTLSeconds: number
-        negativeCacheTTLSeconds: number
-        positiveCacheSize?: number
-        negativeCacheSize?: number
-    }) {
+export class EntitlementCache<K extends Keyable, V> {
+    private readonly negativeStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly positiveStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+
+    constructor(options?: EntitlementCacheOptions<V>) {
         const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
         const negativeCacheTTLSeconds = options?.negativeCacheTTLSeconds ?? 2
         const positiveCacheSize = options?.positiveCacheSize ?? 10000
         const negativeCacheSize = options?.negativeCacheSize ?? 10000
 
-        this.negativeCache = new TTLCache({
-            ttl: negativeCacheTTLSeconds * 1000,
-            max: negativeCacheSize,
+        const createFn = options?.createStorageFn ?? createDefaultStorage
+
+        this.negativeStorage = createFn({
+            ttlMs: negativeCacheTTLSeconds * 1000,
+            maxSize: negativeCacheSize,
+            keyPrefix: 'neg',
         })
-        this.positiveCache = new TTLCache({
-            ttl: positiveCacheTTLSeconds * 1000,
-            max: positiveCacheSize,
+
+        this.positiveStorage = createFn({
+            ttlMs: positiveCacheTTLSeconds * 1000,
+            maxSize: positiveCacheSize,
+            keyPrefix: 'pos',
         })
     }
 
-    invalidate(keyable: K) {
+    async invalidate(keyable: K): Promise<void> {
         const key = keyable.toKey()
-        this.negativeCache.delete(key)
-        this.positiveCache.delete(key)
+        await Promise.all([this.negativeStorage.delete(key), this.positiveStorage.delete(key)])
     }
 
     async executeUsingCache(
@@ -43,13 +52,14 @@ export class EntitlementCache<K extends Keyable, V> {
         onCacheMiss: (k: K) => Promise<CacheResult<V>>,
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
-        const negativeCacheResult = this.negativeCache.get(key)
+
+        const negativeCacheResult = await this.negativeStorage.get(key)
         if (negativeCacheResult !== undefined) {
             negativeCacheResult.cacheHit = true
             return negativeCacheResult
         }
 
-        const positiveCacheResult = this.positiveCache.get(key)
+        const positiveCacheResult = await this.positiveStorage.get(key)
         if (positiveCacheResult !== undefined) {
             positiveCacheResult.cacheHit = true
             return positiveCacheResult
@@ -57,9 +67,9 @@ export class EntitlementCache<K extends Keyable, V> {
 
         const result = await onCacheMiss(keyable)
         if (result.isPositive) {
-            this.positiveCache.set(key, result)
+            await this.positiveStorage.set(key, result)
         } else {
-            this.negativeCache.set(key, result)
+            await this.negativeStorage.set(key, result)
         }
 
         return result

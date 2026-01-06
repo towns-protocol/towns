@@ -1,37 +1,48 @@
-import TTLCache from '@isaacs/ttlcache'
 import { Keyable } from './Keyable'
+import { ICacheStorage, CreateStorageFn } from './ICacheStorage'
+import { createDefaultStorage } from './TTLCacheStorage'
+
+export interface SimpleCacheOptions<V> {
+    ttlSeconds?: number
+    maxSize?: number
+    /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
+    createStorageFn?: CreateStorageFn<V>
+}
 
 export class SimpleCache<K extends Keyable, V> {
-    private cache: TTLCache<string, V>
+    private readonly storage: ICacheStorage<V>
     private pendingFetches: Map<string, Promise<V>> = new Map()
 
     /**
-     * @param ttlSeconds Optional time-to-live for cache entries in seconds. If not provided, cache entries do not expire.
-     * @param maxSize Optional maximum number of entries in the cache.
+     * @param options.ttlSeconds Optional time-to-live for cache entries in seconds. If not provided, cache entries do not expire.
+     * @param options.maxSize Optional maximum number of entries in the cache.
+     * @param options.createStorageFn Optional factory to create storage backend. Defaults to in-memory TTLCache.
      */
-    constructor(args: { ttlSeconds?: number; maxSize?: number } = {}) {
-        const ttlMilliseconds = args.ttlSeconds !== undefined ? args.ttlSeconds * 1000 : Infinity
-        const maxSize = args.maxSize ?? 10_000
-        this.cache = new TTLCache({
-            ttl: ttlMilliseconds,
-            max: maxSize,
+    constructor(options: SimpleCacheOptions<V> = {}) {
+        const ttlMs = options.ttlSeconds !== undefined ? options.ttlSeconds * 1000 : undefined
+        const createFn = options.createStorageFn ?? createDefaultStorage
+        this.storage = createFn({
+            ttlMs,
+            maxSize: options.maxSize,
         })
     }
 
-    get(key: K): V | undefined {
-        return this.cache.get(key.toKey())
+    async get(key: K): Promise<V | undefined> {
+        return this.storage.get(key.toKey())
     }
 
-    add(key: K, value: V): void {
-        this.cache.set(key.toKey(), value)
+    async add(key: K, value: V): Promise<void> {
+        return this.storage.set(key.toKey(), value)
     }
 
-    remove(key: K): void {
-        this.cache.delete(key.toKey())
+    async remove(key: K): Promise<void> {
+        return this.storage.delete(key.toKey())
     }
 
-    clear(): void {
-        this.cache.clear()
+    async clear(): Promise<void> {
+        if (this.storage.clear) {
+            return this.storage.clear()
+        }
     }
 
     /**
@@ -47,7 +58,7 @@ export class SimpleCache<K extends Keyable, V> {
 
         // 1. Check main cache
         if (opts?.skipCache !== true) {
-            const cachedValue = this.cache.get(cacheKey)
+            const cachedValue = await this.storage.get(cacheKey)
             if (cachedValue !== undefined) {
                 return cachedValue
             }
@@ -70,7 +81,7 @@ export class SimpleCache<K extends Keyable, V> {
         try {
             const fetchedValue = await fetchPromise
             // Add to main cache only on successful fetch
-            this.cache.set(cacheKey, fetchedValue)
+            await this.storage.set(cacheKey, fetchedValue)
             return fetchedValue
         } finally {
             // Remove from pending fetches regardless of success or failure

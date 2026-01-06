@@ -70,6 +70,7 @@ import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableS
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
 import { TipSentEventObject, ITippingShim } from '../space/ITippingShim'
+import { CreateStorageFn } from '../cache/ICacheStorage'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -162,6 +163,14 @@ const EmptyXchainConfig: XchainConfig = {
 }
 
 type EntitledWallet = string | undefined
+
+/**
+ * Factory function type for creating cache storage
+ * The function receives config (ttlMs, maxSize, keyPrefix) and returns a storage instance
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SpaceDappCreateStorageFn = CreateStorageFn<any>
+
 export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.providers.Provider> {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
@@ -182,7 +191,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
     public readonly isBannedTokenCache: SimpleCache<IsTokenBanned, boolean>
 
-    constructor(config: BaseChainConfig, provider: TProvider) {
+    constructor(
+        config: BaseChainConfig,
+        provider: TProvider,
+        createStorageFn?: SpaceDappCreateStorageFn,
+    ) {
         this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
@@ -211,15 +224,18 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         const entitlementCacheOpts = {
             positiveCacheTTLSeconds: isLocalDev ? 5 : 15 * 60,
             negativeCacheTTLSeconds: 2,
+            createStorageFn,
         }
         const bannedCacheOpts = {
             ttlSeconds: isLocalDev ? 5 : 15 * 60,
+            createStorageFn,
         }
 
         // The caching of positive entitlements is shorter on both the node and client.
         this.entitlementCache = new EntitlementCache({
             positiveCacheTTLSeconds: isLocalDev ? 5 : 15,
             negativeCacheTTLSeconds: 2,
+            createStorageFn,
         })
         this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
@@ -280,7 +296,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         // Call ban
         const tx = await wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
-        this.updateCacheAfterBanOrUnBan(spaceId, token)
+        await this.updateCacheAfterBanOrUnBan(spaceId, token)
         return tx
     }
 
@@ -300,14 +316,16 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         // Call unban
         const tx = await wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
-        this.updateCacheAfterBanOrUnBan(spaceId, token)
+        await this.updateCacheAfterBanOrUnBan(spaceId, token)
         return tx
     }
 
-    public updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
-        this.bannedTokenIdsCache.remove(new BannedTokenIdsRequest(spaceId))
-        this.ownerOfTokenCache.remove(new OwnerOfTokenRequest(spaceId, tokenId))
-        this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId))
+    public async updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
+        await Promise.all([
+            this.bannedTokenIdsCache.remove(new BannedTokenIdsRequest(spaceId)),
+            this.ownerOfTokenCache.remove(new OwnerOfTokenRequest(spaceId, tokenId)),
+            this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId)),
+        ])
     }
 
     public async walletAddressIsBanned(
@@ -359,7 +377,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         // Check cache first
         for (const tokenId of bannedTokenIds) {
             const cacheKey = new OwnerOfTokenRequest(spaceId, tokenId)
-            const cachedOwner = this.ownerOfTokenCache.get(cacheKey)
+            const cachedOwner = await this.ownerOfTokenCache.get(cacheKey)
             if (cachedOwner) {
                 ownerMap.set(tokenId.toString(), cachedOwner)
             } else {
@@ -375,7 +393,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
             try {
                 const results = await space.Multicall.read.callStatic.multicall(calls)
-                results.forEach((resultData, index) => {
+                for (const [index, resultData] of results.entries()) {
                     const tokenId = tokenIdsToFetch[index]
                     // Attempt to decode each result
                     try {
@@ -387,7 +405,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
                             if (ethers.utils.isAddress(ownerAddress)) {
                                 ownerMap.set(tokenId.toString(), ownerAddress)
-                                this.ownerOfTokenCache.add(
+                                await this.ownerOfTokenCache.add(
                                     new OwnerOfTokenRequest(spaceId, tokenId),
                                     ownerAddress,
                                 )
@@ -409,7 +427,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                                 : String(decodeError),
                         )
                     }
-                })
+                }
             } catch (multiCallError) {
                 logger.error(
                     `Multicall execution failed for space ${spaceId}. This likely means one of the ownerOf calls reverted.`,
@@ -919,7 +937,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     ): Promise<EntitledWallet> {
         const key = newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace)
         if (invalidateCache) {
-            this.entitlementEvaluationCache.invalidate(key)
+            await this.entitlementEvaluationCache.invalidate(key)
         }
         const { value } = await this.entitledWalletCache.executeUsingCache(key, async (request) => {
             const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
@@ -983,7 +1001,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     ): Promise<boolean> {
         const key = newSpaceEntitlementEvaluationRequest(spaceId, user, permission)
         if (invalidateCache) {
-            this.entitlementEvaluationCache.invalidate(key)
+            await this.entitlementEvaluationCache.invalidate(key)
         }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
             key,
@@ -1052,7 +1070,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             permission,
         )
         if (invalidateCache) {
-            this.entitlementEvaluationCache.invalidate(key)
+            await this.entitlementEvaluationCache.invalidate(key)
         }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
             key,
