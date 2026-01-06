@@ -13,7 +13,7 @@
 "stream.cacheExpirationMs",0,300000
 "stream.cacheExpirationPollIntervalMs",0,30000
 "xchain.blockchains",0,"31337,31338"
-"stream.getMiniblocksMaxPageSize",0,200
+"stream.getminiblocksmaxpagesize",0,200
 "stream.ephemeralStreamTTLMs",0,600000
 "stream.snapshotIntervalInMiniblocks",0,0
 "stream.trimactivationfactor",0,1
