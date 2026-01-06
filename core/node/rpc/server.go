@@ -570,6 +570,7 @@ func (s *Service) runHttpServer() error {
 		"x-river-request-id",
 		"Authorization",
 		headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+		headers.RiverClientVersionHeader,
 	}
 	if s.config.TestEntitlementsBypassSecret != "" {
 		allowedHeaders = append(allowedHeaders, headers.RiverTestBypassHeaderName)
