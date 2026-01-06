@@ -20,8 +20,6 @@ contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet {
         _addInterface(type(IAppAccount).interfaceId);
     }
 
-    function __AppManagerFacet_init_unchained() internal {}
-
     function onInstallApp(bytes32 appId, bytes calldata data) external nonReentrant {
         AppManagerMod.getStorage().installApp(
             AccountHubMod.getStorage().appRegistry,
