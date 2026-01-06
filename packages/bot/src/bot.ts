@@ -130,6 +130,7 @@ import {
     zeroAddress,
     parseEventLogs,
     formatUnits,
+    erc20Abi,
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -2610,66 +2611,132 @@ const buildBotActions = (
         const currency = params.currency ?? ETH_ADDRESS
         const isEth = currency === ETH_ADDRESS
         const { receiver, amount, messageId, channelId } = params
-        const spaceId = spaceIdFromChannelId(channelId)
-        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
-        if (!tokenId) {
-            throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
+        const isDm = isDMChannelStreamId(channelId)
+
+        const accountModulesAddress = client.config.base.chainConfig.addresses.accountModules
+        if (isDm && !accountModulesAddress) {
+            throw new Error('AccountModules address is not configured for DM tips')
         }
 
-        const recipientType = TipRecipientType.Member
+        let recipientType: TipRecipientType
+        let encodedData: `0x${string}`
+        let targetContract: Address
+        let tokenId: string | undefined
 
-        const metadataData = encodeAbiParameters(
-            [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
-            [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
-        )
+        if (isDm) {
+            // DM tips use AnyTipParams sent to AccountModules contract
+            recipientType = TipRecipientType.Any
+            const sender = appAddress // msg.sender when contract executes
 
-        // TODO: Get the modular account address for the receiver (towns app case)
-        const encodedData = encodeAbiParameters(
-            [
-                {
-                    type: 'tuple',
-                    components: [
-                        { name: 'receiver', type: 'address' },
-                        { name: 'tokenId', type: 'uint256' },
-                        { name: 'currency', type: 'address' },
-                        { name: 'amount', type: 'uint256' },
-                        {
-                            name: 'metadata',
-                            type: 'tuple',
-                            components: [
-                                { name: 'messageId', type: 'bytes32' },
-                                { name: 'channelId', type: 'bytes32' },
-                                { name: 'data', type: 'bytes' },
-                            ],
-                        },
-                    ],
-                },
-            ],
-            [
-                {
-                    receiver,
-                    amount,
-                    currency,
-                    tokenId: BigInt(tokenId),
-                    metadata: {
-                        messageId: `0x${messageId}`,
-                        channelId: `0x${channelId}`,
-                        data: metadataData,
+            const data = encodeAbiParameters(
+                [{ type: 'bytes32' }, { type: 'bytes32' }],
+                [`0x${messageId}`, `0x${channelId}`],
+            )
+
+            encodedData = encodeAbiParameters(
+                [
+                    {
+                        type: 'tuple',
+                        components: [
+                            { name: 'currency', type: 'address' },
+                            { name: 'sender', type: 'address' },
+                            { name: 'receiver', type: 'address' },
+                            { name: 'amount', type: 'uint256' },
+                            { name: 'data', type: 'bytes' },
+                        ],
                     },
-                },
-            ],
-        )
+                ],
+                [
+                    {
+                        currency,
+                        sender,
+                        receiver,
+                        amount,
+                        data,
+                    },
+                ],
+            )
+            targetContract = accountModulesAddress!
+            tokenId = undefined
+        } else {
+            // Member tips use MembershipTipParams sent to Space contract
+            recipientType = TipRecipientType.Member
+            const spaceId = spaceIdFromChannelId(channelId)
+            tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
+            if (!tokenId) {
+                throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
+            }
+
+            const metadataData = encodeAbiParameters(
+                [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
+                [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
+            )
+
+            encodedData = encodeAbiParameters(
+                [
+                    {
+                        type: 'tuple',
+                        components: [
+                            { name: 'receiver', type: 'address' },
+                            { name: 'tokenId', type: 'uint256' },
+                            { name: 'currency', type: 'address' },
+                            { name: 'amount', type: 'uint256' },
+                            {
+                                name: 'metadata',
+                                type: 'tuple',
+                                components: [
+                                    { name: 'messageId', type: 'bytes32' },
+                                    { name: 'channelId', type: 'bytes32' },
+                                    { name: 'data', type: 'bytes' },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                [
+                    {
+                        receiver,
+                        tokenId: BigInt(tokenId),
+                        currency,
+                        amount,
+                        metadata: {
+                            messageId: `0x${messageId}`,
+                            channelId: `0x${channelId}`,
+                            data: metadataData,
+                        },
+                    },
+                ],
+            )
+
+            targetContract = SpaceAddressFromSpaceId(spaceId)
+        }
+
         const hash = await execute(viem, {
             address: appAddress,
-            calls: [
-                {
-                    abi: tippingFacetAbi,
-                    to: SpaceAddressFromSpaceId(spaceId),
-                    functionName: 'sendTip',
-                    args: [recipientType, encodedData],
-                    value: isEth ? amount : undefined,
-                },
-            ],
+            calls: isEth
+                ? [
+                      {
+                          abi: tippingFacetAbi,
+                          to: targetContract,
+                          functionName: 'sendTip',
+                          args: [recipientType, encodedData],
+                          value: amount,
+                      },
+                  ]
+                : [
+                      {
+                          abi: erc20Abi,
+                          to: currency,
+                          functionName: 'approve',
+                          args: [targetContract, amount],
+                      },
+                      {
+                          abi: tippingFacetAbi,
+                          to: targetContract,
+                          functionName: 'sendTip',
+                          args: [recipientType, encodedData],
+                      },
+                  ],
         })
 
         const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
@@ -2689,7 +2756,7 @@ const buildBotActions = (
                 case: 'tip',
                 value: {
                     event: {
-                        tokenId: BigInt(tokenId),
+                        tokenId: tokenId ? BigInt(tokenId) : undefined,
                         currency: bin_fromHexString(tipEvent.args.currency),
                         sender: bin_fromHexString(tipEvent.args.sender),
                         receiver: bin_fromHexString(tipEvent.args.receiver),
