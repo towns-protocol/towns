@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
 import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";

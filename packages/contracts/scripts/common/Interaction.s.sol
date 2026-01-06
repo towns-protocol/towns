@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 
 import {DeployBase} from "./DeployBase.s.sol";
 import {Script} from "forge-std/Script.sol";

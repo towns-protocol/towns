@@ -40,7 +40,7 @@ library SubscriptionModuleStorage {
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant STORAGE_SLOT =
+    bytes32 internal constant STORAGE_SLOT =
         0xd241b3ceee256b40f80fe7a66fe789234ac389ed1408c472c4ee1cbb1deb8600;
 
     function getLayout() internal pure returns (Layout storage $) {

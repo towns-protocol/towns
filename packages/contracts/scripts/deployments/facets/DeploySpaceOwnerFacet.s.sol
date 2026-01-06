@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 import {DeployERC721A} from "./DeployERC721A.s.sol";
 
-//contracts
+// contracts
 import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 
 library DeploySpaceOwnerFacet {

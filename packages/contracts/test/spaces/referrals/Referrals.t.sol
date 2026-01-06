@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 // utils
 import {MembershipBaseSetup} from "test/spaces/membership/MembershipBaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IReferralsBase} from "src/spaces/facets/referrals/IReferrals.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {ReferralsFacet} from "src/spaces/facets/referrals/ReferralsFacet.sol";
 
 abstract contract ReferralsFacetTest is MembershipBaseSetup, IReferralsBase {

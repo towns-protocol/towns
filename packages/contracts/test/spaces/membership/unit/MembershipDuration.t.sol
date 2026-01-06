@@ -4,14 +4,14 @@ pragma solidity ^0.8.19;
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
-//libraries
+// libraries
 import {Factory} from "src/utils/libraries/Factory.sol";
-//contracts
+// contracts
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 

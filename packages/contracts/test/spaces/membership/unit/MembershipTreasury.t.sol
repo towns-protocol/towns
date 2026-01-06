@@ -4,11 +4,11 @@ pragma solidity ^0.8.19;
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 
-//libraries
+// libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
