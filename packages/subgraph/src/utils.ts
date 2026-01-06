@@ -4,6 +4,51 @@ import { Context } from 'ponder:registry'
 import schema from 'ponder:schema'
 import { createPublicClient, http } from 'viem'
 
+// Currency address constants
+export const USDC_ADDRESSES = {
+    base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    baseSepolia: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+} as const
+
+export const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const
+
+// Mainnet environments use Base mainnet USDC, others use Base Sepolia USDC
+// Note: Only omega is fully configured. Add other environments here when their
+// config files, block number mappings, and app registry support are added.
+const MAINNET_ENVIRONMENTS = ['omega']
+
+/**
+ * Determines if a currency address is USDC based on environment.
+ * @param currency - The currency address to check
+ * @param environment - The deployment environment (alpha, beta, omega, local_dev)
+ * @returns true if the currency is USDC
+ */
+export function isUSDC(currency: string | undefined | null, environment: string): boolean {
+    if (!currency) return false
+    const normalizedCurrency = currency.toLowerCase()
+    const isMainnet = MAINNET_ENVIRONMENTS.includes(environment)
+    const usdcAddress = isMainnet
+        ? USDC_ADDRESSES.base.toLowerCase()
+        : USDC_ADDRESSES.baseSepolia.toLowerCase()
+    return normalizedCurrency === usdcAddress
+}
+
+/**
+ * Determines if a currency address is ETH.
+ * Defaults to ETH if currency is empty, null, undefined, or zero address.
+ * @param currency - The currency address to check
+ * @returns true if the currency is ETH (or should default to ETH)
+ */
+export function isETH(currency: string | undefined | null): boolean {
+    if (!currency) return true // Default to ETH if empty/null/undefined
+    const normalizedCurrency = currency.toLowerCase()
+    return (
+        normalizedCurrency === ETH_ADDRESS.toLowerCase() ||
+        normalizedCurrency === ZERO_ADDRESS.toLowerCase()
+    )
+}
+
 const publicClient = createPublicClient({
     transport: http(process.env.PONDER_RPC_URL_1),
 })
@@ -25,6 +70,61 @@ function getCreatedDate(blockTimestamp: bigint): Date | null {
         return null
     }
     return new Date(timestamp)
+}
+
+/**
+ * Fetches the membership currency for a space with caching.
+ * Returns cached currency from Space entity if available, otherwise fetches via RPC.
+ * On RPC failure, returns null (caller should skip the record).
+ * @param context - Ponder context with db, client, and contracts
+ * @param spaceId - The space address
+ * @param blockNumber - Block number for the RPC call
+ * @returns The currency address, or null if fetch failed
+ */
+export async function getSpaceCurrency(
+    context: Context,
+    spaceId: `0x${string}`,
+    blockNumber: bigint,
+): Promise<`0x${string}` | null> {
+    try {
+        // Check DB cache first
+        const space = await context.db.sql.query.space.findFirst({
+            where: eq(schema.space.id, spaceId),
+        })
+
+        // If space has currency cached, use it
+        if (space?.currency) {
+            return space.currency as `0x${string}`
+        }
+
+        // Cache miss - fetch via RPC (Ponder handles retries)
+        const { Space } = context.contracts
+        const currency = await context.client.readContract({
+            address: spaceId,
+            abi: Space.abi,
+            functionName: 'getMembershipCurrency',
+            blockNumber,
+        })
+
+        // Normalize zero address to ETH
+        const normalizedCurrency = currency === ZERO_ADDRESS ? ETH_ADDRESS : currency
+
+        // Update cache (fire and forget)
+        context.db.sql
+            .update(schema.space)
+            .set({ currency: normalizedCurrency })
+            .where(eq(schema.space.id, spaceId))
+            .catch((err) => console.warn(`Failed to cache currency for ${spaceId}:`, err))
+
+        return normalizedCurrency as `0x${string}`
+    } catch (error) {
+        console.error(
+            `RPC currency fetch failed for space ${spaceId} at block ${blockNumber}:`,
+            error,
+        )
+        // TODO: Emit metric rpc_currency_fetch_failures_total via ponder metrics
+        return null
+    }
 }
 
 export async function updateSpaceTotalStaked(
