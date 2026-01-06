@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -730,4 +731,162 @@ func TestStreamTrimmerGetTrimTargetForStream(t *testing.T) {
 	target, hasTarget = tr.getTrimTargetForStream(channelStream)
 	assert.False(t, hasTarget)
 	assert.Equal(t, int64(-1), target)
+}
+
+func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
+	// Helper to create a stopped worker pool for testing.
+	// We use a stopped pool because we only want to test the tracking logic,
+	// not the actual task execution.
+	makeStoppedWorkerPool := func() *workerpool.WorkerPool {
+		wp := workerpool.New(1)
+		wp.Stop()
+		return wp
+	}
+
+	t.Run("tracks new streamIds from config", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		stream2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// First call should track stream1
+		tr.scheduleNewPerStreamTargets()
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream1)
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+		assert.NotContains(t, tr.scheduledPerStreamTargets, stream2)
+
+		// Add stream2 to config
+		cfg.StreamTrimByStreamId = append(cfg.StreamTrimByStreamId,
+			crypto.StreamIdMiniblock{StreamId: stream2, MiniblockNum: 200})
+
+		// Second call should track stream2 as well
+		tr.scheduleNewPerStreamTargets()
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream1)
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream2)
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream2])
+	})
+
+	t.Run("does nothing with empty config", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+		}
+
+		tr.scheduleNewPerStreamTargets()
+		assert.Empty(t, tr.scheduledPerStreamTargets)
+	})
+
+	t.Run("does not re-schedule when miniblock unchanged", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Track scheduling via the scheduledPerStreamTargets map
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, 1, len(tr.scheduledPerStreamTargets))
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+
+		// Call again with same miniblock - should not change
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, 1, len(tr.scheduledPerStreamTargets))
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+	})
+
+	t.Run("re-schedules when miniblock number increases", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Initial scheduling
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+
+		// Increase the miniblock target
+		cfg.StreamTrimByStreamId[0].MiniblockNum = 200
+
+		// Should update the tracked miniblock
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
+	})
+
+	t.Run("does not re-schedule when miniblock number decreases", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 200},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Initial scheduling
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
+
+		// Decrease the miniblock target (shouldn't happen in practice, but test the logic)
+		cfg.StreamTrimByStreamId[0].MiniblockNum = 100
+
+		// Should NOT update - we only schedule when target increases
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
+	})
 }

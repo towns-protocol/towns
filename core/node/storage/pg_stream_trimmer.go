@@ -48,6 +48,11 @@ type streamTrimmer struct {
 	snapshotsPerStreamLock sync.Mutex
 	snapshotsPerStream     map[StreamId]uint64
 
+	// Track per-streamId trim targets that have been scheduled, with their miniblock numbers.
+	// A new trim task is scheduled when a streamId is added or its target miniblock increases.
+	scheduledPerStreamTargetsLock sync.Mutex
+	scheduledPerStreamTargets     map[StreamId]int64
+
 	stopOnce sync.Once
 	stop     chan struct{}
 
@@ -64,15 +69,16 @@ func newStreamTrimmer(
 	metrics infra.MetricsFactory,
 ) *streamTrimmer {
 	st := &streamTrimmer{
-		ctx:                ctx,
-		log:                logging.FromCtx(ctx).Named("stream-trimmer"),
-		store:              store,
-		config:             config,
-		trimmingBatchSize:  trimmingBatchSize,
-		workerPool:         workerPool,
-		pendingTasks:       make(map[StreamId]struct{}),
-		snapshotsPerStream: make(map[StreamId]uint64),
-		stop:               make(chan struct{}),
+		ctx:                       ctx,
+		log:                       logging.FromCtx(ctx).Named("stream-trimmer"),
+		store:                     store,
+		config:                    config,
+		trimmingBatchSize:         trimmingBatchSize,
+		workerPool:                workerPool,
+		pendingTasks:              make(map[StreamId]struct{}),
+		snapshotsPerStream:        make(map[StreamId]uint64),
+		scheduledPerStreamTargets: make(map[StreamId]int64),
+		stop:                      make(chan struct{}),
 		taskDuration: metrics.NewHistogramEx(
 			"stream_trimmer_task_duration_seconds",
 			"Stream trimmer task duration in seconds",
@@ -80,19 +86,20 @@ func newStreamTrimmer(
 		),
 	}
 
-	// Start the worker pool
+	// Start the worker pool monitor which also checks if streams must be trimmed through config
 	go st.monitorWorkerPool(ctx)
-
-	// schedule a trim task for each stream that needs to be trimmed according to on-chain config.
-	for _, streamToTrim := range config.Get().StreamTrimByStreamId {
-		st.tryScheduleTrimming(streamToTrim.StreamId)
-	}
 
 	return st
 }
 
-// monitorWorkerPool monitors the worker pool and handles shutdown
+// configCheckInterval is how often the trimmer checks for new per-streamId trim targets in the config.
+const configCheckInterval = time.Minute
+
+// monitorWorkerPool monitors the worker pool, handles shutdown, and checks for config changes.
 func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
+	ticker := time.NewTicker(configCheckInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -101,6 +108,9 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 		case <-t.stop:
 			t.log.Info("Worker pool stopped due to stop signal")
 			return
+		case <-ticker.C:
+			// Periodically check for new per-streamId trim targets in the config
+			go t.scheduleNewPerStreamTargets()
 		}
 	}
 }
@@ -110,6 +120,30 @@ func (t *streamTrimmer) close() {
 	t.stopOnce.Do(func() {
 		close(t.stop)
 	})
+}
+
+// scheduleNewPerStreamTargets checks the on-chain config for per-streamId trim targets
+// and schedules trim tasks for any streamIds that are new or have a higher target miniblock.
+func (t *streamTrimmer) scheduleNewPerStreamTargets() {
+	cfg := t.config.Get()
+	if len(cfg.StreamTrimByStreamId) == 0 {
+		return
+	}
+
+	// Use TryLock to avoid blocking - if lock is held, skip this iteration
+	if !t.scheduledPerStreamTargetsLock.TryLock() {
+		return
+	}
+	defer t.scheduledPerStreamTargetsLock.Unlock()
+
+	for _, entry := range cfg.StreamTrimByStreamId {
+		scheduledMb, exists := t.scheduledPerStreamTargets[entry.StreamId]
+		// Schedule if streamId is new or target miniblock has increased
+		if !exists || entry.MiniblockNum > scheduledMb {
+			t.scheduledPerStreamTargets[entry.StreamId] = entry.MiniblockNum
+			t.tryScheduleTrimming(entry.StreamId)
+		}
+	}
 }
 
 // getTrimTargetForStream returns the configured per-streamId trim target.
