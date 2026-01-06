@@ -62,6 +62,7 @@ library AppManagerMod {
             $.slot := STORAGE_SLOT
         }
     }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -146,7 +147,7 @@ library AppManagerMod {
         address appRegistry,
         address account,
         bytes32 appId,
-        bytes calldata
+        bytes calldata /* data */
     ) internal {
         if (appId == EMPTY_UID) AppManager__InvalidAppId.selector.revertWith();
 
