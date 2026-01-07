@@ -927,24 +927,25 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         spaceId: string,
         rootKey: string,
         xchainConfig: XchainConfig,
-        invalidateCache: boolean = false,
+        skipCache: boolean = false,
     ): Promise<EntitledWallet> {
         const key = Keyable.spaceEntitlementEvaluationRequest(
             spaceId,
             rootKey,
             Permission.JoinSpace,
         )
-        if (invalidateCache) {
-            await this.entitlementEvaluationCache.invalidate(key)
-        }
-        const { value } = await this.entitledWalletCache.executeUsingCache(key, async () => {
-            const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
-                spaceId,
-                rootKey,
-                xchainConfig,
-            )
-            return new EntitledWalletCacheResult(entitledWallet)
-        })
+        const { value } = await this.entitledWalletCache.executeUsingCache(
+            key,
+            async () => {
+                const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
+                    spaceId,
+                    rootKey,
+                    xchainConfig,
+                )
+                return new EntitledWalletCacheResult(entitledWallet)
+            },
+            { skipCache },
+        )
         return value
     }
 
@@ -995,16 +996,17 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         spaceId: string,
         userId: string,
         permission: Permission,
-        invalidateCache: boolean = false,
+        skipCache: boolean = false,
     ): Promise<boolean> {
         const key = Keyable.spaceEntitlementEvaluationRequest(spaceId, userId, permission)
-        if (invalidateCache) {
-            await this.entitlementEvaluationCache.invalidate(key)
-        }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(key, async () => {
-            const isEntitled = await this.isEntitledToSpaceUncached(spaceId, userId, permission)
-            return new BooleanCacheResult(isEntitled)
-        })
+        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
+            key,
+            async () => {
+                const isEntitled = await this.isEntitledToSpaceUncached(spaceId, userId, permission)
+                return new BooleanCacheResult(isEntitled)
+            },
+            { skipCache },
+        )
         return value
     }
 
@@ -1052,7 +1054,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         userId: string,
         permission: Permission,
         xchainConfig: XchainConfig = EmptyXchainConfig,
-        invalidateCache: boolean = false,
+        skipCache: boolean = false,
     ): Promise<boolean> {
         const key = Keyable.channelEntitlementEvaluationRequest(
             spaceId,
@@ -1060,19 +1062,20 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             userId,
             permission,
         )
-        if (invalidateCache) {
-            await this.entitlementEvaluationCache.invalidate(key)
-        }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(key, async () => {
-            const isEntitled = await this.isEntitledToChannelUncached(
-                spaceId,
-                channelNetworkId,
-                userId,
-                permission,
-                xchainConfig,
-            )
-            return new BooleanCacheResult(isEntitled)
-        })
+        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
+            key,
+            async () => {
+                const isEntitled = await this.isEntitledToChannelUncached(
+                    spaceId,
+                    channelNetworkId,
+                    userId,
+                    permission,
+                    xchainConfig,
+                )
+                return new BooleanCacheResult(isEntitled)
+            },
+            { skipCache },
+        )
         return value
     }
 
