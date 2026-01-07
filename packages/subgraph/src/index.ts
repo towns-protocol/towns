@@ -97,9 +97,7 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceFactory, SpaceOwner } = context.contracts
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, event.args.space),
-    })
+    const space = await context.db.find(schema.space, { id: event.args.space })
     if (!space) {
         console.warn(`Space not found for SpaceOwner:SpaceOwner__UpdateSpace`, event.args.space)
         return
@@ -207,9 +205,7 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
     const blockNumber = event.block.number
     const spaceId = event.log.address
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, spaceId),
-    })
+    const space = await context.db.find(schema.space, { id: spaceId })
     if (!space) {
         console.warn(`Space not found for Space:SwapFeeConfigUpdated`, spaceId)
         return
