@@ -12,7 +12,7 @@ import {ExecutionInstallDelegate} from "modular-account/src/helpers/ExecutionIns
 // libraries
 import {Validator} from "../../src/utils/libraries/Validator.sol";
 import {ModuleInstallCommonsLib} from "modular-account/src/libraries/ModuleInstallCommonsLib.sol";
-import "../../src/account/facets/hub/AccountHubMod.sol" as AccountHub;
+import {AccountHubMod} from "../../src/account/facets/hub/AccountHubMod.sol";
 
 // deployments
 import {DeployAccountModules} from "../../scripts/deployments/diamonds/DeployAccountModules.s.sol";
@@ -137,7 +137,10 @@ contract AccountHubTest is AppRegistryBaseTest, ERC6900Setup {
             abi.encodeWithSelector(
                 ModuleInstallCommonsLib.ModuleInstallCallbackFailed.selector,
                 address(accountHub),
-                abi.encodeWithSelector(AccountHub.AccountHub__InvalidAccount.selector, wrongAccount)
+                abi.encodeWithSelector(
+                    AccountHubMod.AccountHub__InvalidAccount.selector,
+                    wrongAccount
+                )
             )
         );
         _installExecution(userAccount, address(accountHub), m, abi.encode(wrongAccount));
