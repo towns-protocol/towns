@@ -9,7 +9,7 @@ export interface SimpleCacheOptions<V> {
     createStorageFn?: CreateStorageFn<V>
 }
 
-export class SimpleCache<K extends Keyable, V> {
+export class SimpleCache<V> {
     private readonly storage: ICacheStorage<V>
     private pendingFetches: Map<string, Promise<V>> = new Map()
 
@@ -27,15 +27,15 @@ export class SimpleCache<K extends Keyable, V> {
         })
     }
 
-    async get(key: K): Promise<V | undefined> {
+    async get(key: Keyable): Promise<V | undefined> {
         return this.storage.get(key.toKey())
     }
 
-    async add(key: K, value: V): Promise<void> {
+    async add(key: Keyable, value: V): Promise<void> {
         return this.storage.set(key.toKey(), value)
     }
 
-    async remove(key: K): Promise<void> {
+    async remove(key: Keyable): Promise<void> {
         return this.storage.delete(key.toKey())
     }
 
@@ -50,8 +50,8 @@ export class SimpleCache<K extends Keyable, V> {
      * stores the result, and returns it.
      */
     async executeUsingCache(
-        key: K,
-        fetchFn: (key: K) => Promise<V>,
+        key: Keyable,
+        fetchFn: (key: Keyable) => Promise<V>,
         opts?: { skipCache?: boolean },
     ): Promise<V> {
         const cacheKey = key.toKey()

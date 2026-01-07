@@ -36,8 +36,8 @@ export interface CacheStorageConfig {
     ttlMs?: number
     /** Maximum number of entries (for size-limited caches) */
     maxSize?: number
-    /** Key prefix (for shared storage backends like KV) */
-    keyPrefix?: string
+    /** Key postfix (for differentiating things like positive/negative entitlements) */
+    keyPostfix?: string
 }
 
 /**

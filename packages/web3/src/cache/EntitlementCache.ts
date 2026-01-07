@@ -17,12 +17,12 @@ export interface EntitlementCacheOptions<V> {
     createStorageFn?: CreateStorageFn<CacheResult<V>>
 }
 
-export class EntitlementCache<K extends Keyable, V> {
+export class EntitlementCache<V> {
     private readonly negativeStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
     private readonly positiveStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
     private readonly pendingFetches: Map<string, Promise<CacheResult<V>>> = new Map()
 
-    constructor(options?: EntitlementCacheOptions<V>) {
+    constructor(options: EntitlementCacheOptions<V>) {
         const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
         const negativeCacheTTLSeconds = options?.negativeCacheTTLSeconds ?? 2
         const positiveCacheSize = options?.positiveCacheSize ?? 10000
@@ -33,24 +33,24 @@ export class EntitlementCache<K extends Keyable, V> {
         this.negativeStorage = createFn({
             ttlMs: negativeCacheTTLSeconds * 1000,
             maxSize: negativeCacheSize,
-            keyPrefix: 'neg',
+            keyPostfix: 'neg',
         })
 
         this.positiveStorage = createFn({
             ttlMs: positiveCacheTTLSeconds * 1000,
             maxSize: positiveCacheSize,
-            keyPrefix: 'pos',
+            keyPostfix: 'pos',
         })
     }
 
-    async invalidate(keyable: K): Promise<void> {
+    async invalidate(keyable: Keyable): Promise<void> {
         const key = keyable.toKey()
         await Promise.all([this.negativeStorage.delete(key), this.positiveStorage.delete(key)])
     }
 
     async executeUsingCache(
-        keyable: K,
-        onCacheMiss: (k: K) => Promise<CacheResult<V>>,
+        keyable: Keyable,
+        onCacheMiss: (k: Keyable) => Promise<CacheResult<V>>,
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
 

@@ -5,22 +5,12 @@ import { Towns__factory } from '@towns-protocol/generated/dev/typings/factories/
 import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
 
-class GetBalanceKey implements Keyable {
-    address: string
-    constructor(address: string) {
-        this.address = address
-    }
-    toKey(): string {
-        return `balanceOf:${this.address}`
-    }
-}
-
 export type { ITownsBase }
 
 const { abi, connect } = Towns__factory
 
 export class TownsToken extends BaseContractShim<typeof connect> {
-    private readonly balanceCache: SimpleCache<GetBalanceKey, ethers.BigNumber>
+    private readonly balanceCache: SimpleCache<ethers.BigNumber>
 
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
@@ -31,8 +21,9 @@ export class TownsToken extends BaseContractShim<typeof connect> {
     }
 
     public async getBalance(accountAddress: string): Promise<ethers.BigNumber> {
-        return this.balanceCache.executeUsingCache(new GetBalanceKey(accountAddress), async () =>
-            this.read.balanceOf(accountAddress),
+        return this.balanceCache.executeUsingCache(
+            Keyable.balanceOfRequest(accountAddress),
+            async () => this.read.balanceOf(accountAddress),
         )
     }
 

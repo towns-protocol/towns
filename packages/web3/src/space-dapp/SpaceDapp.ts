@@ -71,16 +71,11 @@ import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
 import { TipSentEventObject, ITippingShim } from '../space/ITippingShim'
 import { CreateStorageFn } from '../cache/ICacheStorage'
-import {
-    EntitlementRequest,
-    BannedTokenIdsRequest,
-    OwnerOfTokenRequest,
-    IsTokenBanned,
-} from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
 import { TownsToken } from '../towns-token/TownsToken'
 import { wrapTransaction } from '../space-dapp/wrapTransaction'
 import { BaseRegistry } from '../base-registry/BaseRegistry'
+import { Keyable } from '../cache/Keyable'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -123,35 +118,6 @@ class BooleanCacheResult implements CacheResult<boolean> {
     }
 }
 
-function newSpaceEntitlementEvaluationRequest(
-    spaceId: string,
-    userId: string,
-    permission: Permission,
-): EntitlementRequest {
-    return new EntitlementRequest(spaceId, '', userId, permission)
-}
-
-function newChannelEntitlementEvaluationRequest(
-    spaceId: string,
-    channelId: string,
-    userId: string,
-    permission: Permission,
-): EntitlementRequest {
-    return new EntitlementRequest(spaceId, channelId, userId, permission)
-}
-
-function newSpaceEntitlementRequest(spaceId: string, permission: Permission): EntitlementRequest {
-    return new EntitlementRequest(spaceId, '', '', permission)
-}
-
-function newChannelEntitlementRequest(
-    spaceId: string,
-    channelId: string,
-    permission: Permission,
-): EntitlementRequest {
-    return new EntitlementRequest(spaceId, channelId, '', permission)
-}
-
 function ensureHexPrefix(value: string): string {
     return value.startsWith('0x') ? value : `0x${value}`
 }
@@ -184,12 +150,12 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     public readonly spaceOwner: SpaceOwner
     public readonly townsToken?: TownsToken
 
-    public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
-    public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
-    public readonly entitlementEvaluationCache: EntitlementCache<EntitlementRequest, boolean>
-    public readonly bannedTokenIdsCache: SimpleCache<BannedTokenIdsRequest, ethers.BigNumber[]>
-    public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
-    public readonly isBannedTokenCache: SimpleCache<IsTokenBanned, boolean>
+    public readonly entitlementCache: EntitlementCache<EntitlementData[]>
+    public readonly entitledWalletCache: EntitlementCache<EntitledWallet>
+    public readonly entitlementEvaluationCache: EntitlementCache<boolean>
+    public readonly bannedTokenIdsCache: SimpleCache<ethers.BigNumber[]>
+    public readonly ownerOfTokenCache: SimpleCache<string>
+    public readonly isBannedTokenCache: SimpleCache<boolean>
 
     constructor(
         config: BaseChainConfig,
@@ -237,11 +203,21 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             negativeCacheTTLSeconds: 2,
             createStorageFn,
         })
-        this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
-        this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
-        this.bannedTokenIdsCache = new SimpleCache(bannedCacheOpts)
-        this.ownerOfTokenCache = new SimpleCache(bannedCacheOpts)
-        this.isBannedTokenCache = new SimpleCache(bannedCacheOpts)
+        this.entitledWalletCache = new EntitlementCache({
+            ...entitlementCacheOpts,
+        })
+        this.entitlementEvaluationCache = new EntitlementCache({
+            ...entitlementCacheOpts,
+        })
+        this.bannedTokenIdsCache = new SimpleCache({
+            ...bannedCacheOpts,
+        })
+        this.ownerOfTokenCache = new SimpleCache({
+            ...bannedCacheOpts,
+        })
+        this.isBannedTokenCache = new SimpleCache({
+            ...bannedCacheOpts,
+        })
     }
 
     public async isLegacySpace(spaceId: string): Promise<boolean> {
@@ -322,9 +298,9 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
     public async updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
         await Promise.all([
-            this.bannedTokenIdsCache.remove(new BannedTokenIdsRequest(spaceId)),
-            this.ownerOfTokenCache.remove(new OwnerOfTokenRequest(spaceId, tokenId)),
-            this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId)),
+            this.bannedTokenIdsCache.remove(Keyable.bannedTokenIdsRequest(spaceId)),
+            this.ownerOfTokenCache.remove(Keyable.ownerOfTokenRequest(spaceId, tokenId)),
+            this.isBannedTokenCache.remove(Keyable.isTokenBanned(spaceId, tokenId)),
         ])
     }
 
@@ -343,8 +319,8 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             .then((tokens) => tokens[0])
 
         const isBanned = await this.isBannedTokenCache.executeUsingCache(
-            new IsTokenBanned(spaceId, tokenId),
-            async (request) => space.Banning.read.isBanned(request.tokenId),
+            Keyable.isTokenBanned(spaceId, tokenId),
+            async () => space.Banning.read.isBanned(tokenId),
             opts,
         )
         return isBanned
@@ -358,12 +334,12 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         // 1. Get banned token IDs
         const bannedTokenIds = await this.bannedTokenIdsCache.executeUsingCache(
-            new BannedTokenIdsRequest(spaceId),
-            async (request) => {
-                const currentSpace = this.getSpace(request.spaceId)
+            Keyable.bannedTokenIdsRequest(spaceId),
+            async () => {
+                const currentSpace = this.getSpace(spaceId)
                 if (!currentSpace) {
                     throw new Error(
-                        `Space with spaceId "${request.spaceId}" is not found inside cache fetch.`,
+                        `Space with spaceId "${spaceId}" is not found inside cache fetch.`,
                     )
                 }
                 return currentSpace.Banning.read.banned()
@@ -376,7 +352,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         // Check cache first
         for (const tokenId of bannedTokenIds) {
-            const cacheKey = new OwnerOfTokenRequest(spaceId, tokenId)
+            const cacheKey = Keyable.ownerOfTokenRequest(spaceId, tokenId)
             const cachedOwner = await this.ownerOfTokenCache.get(cacheKey)
             if (cachedOwner) {
                 ownerMap.set(tokenId.toString(), cachedOwner)
@@ -406,7 +382,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                             if (ethers.utils.isAddress(ownerAddress)) {
                                 ownerMap.set(tokenId.toString(), ownerAddress)
                                 await this.ownerOfTokenCache.add(
-                                    new OwnerOfTokenRequest(spaceId, tokenId),
+                                    Keyable.ownerOfTokenRequest(spaceId, tokenId),
                                     ownerAddress,
                                 )
                             } else {
@@ -746,11 +722,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         permission: Permission,
     ): Promise<EntitlementData[]> {
         const { value } = await this.entitlementCache.executeUsingCache(
-            newSpaceEntitlementRequest(spaceId, permission),
-            async (request) => {
+            Keyable.spaceEntitlementRequest(spaceId, permission),
+            async () => {
                 const entitlementData = await this.getEntitlementsForPermissionUncached(
-                    request.spaceId,
-                    request.permission,
+                    spaceId,
+                    permission,
                 )
                 return new EntitlementDataCacheResult(entitlementData)
             },
@@ -779,12 +755,12 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         permission: Permission,
     ): Promise<EntitlementData[]> {
         const { value } = await this.entitlementCache.executeUsingCache(
-            newChannelEntitlementRequest(spaceId, channelId, permission),
-            async (request) => {
+            Keyable.channelEntitlementRequest(spaceId, channelId, permission),
+            async () => {
                 const entitlementData = await this.getChannelEntitlementsForPermissionUncached(
-                    request.spaceId,
-                    request.channelId,
-                    request.permission,
+                    spaceId,
+                    channelId,
+                    permission,
                 )
                 return new EntitlementDataCacheResult(entitlementData)
             },
@@ -935,14 +911,18 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         xchainConfig: XchainConfig,
         invalidateCache: boolean = false,
     ): Promise<EntitledWallet> {
-        const key = newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace)
+        const key = Keyable.spaceEntitlementEvaluationRequest(
+            spaceId,
+            rootKey,
+            Permission.JoinSpace,
+        )
         if (invalidateCache) {
             await this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitledWalletCache.executeUsingCache(key, async (request) => {
+        const { value } = await this.entitledWalletCache.executeUsingCache(key, async () => {
             const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
-                request.spaceId,
-                request.userId,
+                spaceId,
+                rootKey,
                 xchainConfig,
             )
             return new EntitledWalletCacheResult(entitledWallet)
@@ -995,25 +975,18 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
     public async isEntitledToSpace(
         spaceId: string,
-        user: string,
+        userId: string,
         permission: Permission,
         invalidateCache: boolean = false,
     ): Promise<boolean> {
-        const key = newSpaceEntitlementEvaluationRequest(spaceId, user, permission)
+        const key = Keyable.spaceEntitlementEvaluationRequest(spaceId, userId, permission)
         if (invalidateCache) {
             await this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            key,
-            async (request) => {
-                const isEntitled = await this.isEntitledToSpaceUncached(
-                    request.spaceId,
-                    request.userId,
-                    request.permission,
-                )
-                return new BooleanCacheResult(isEntitled)
-            },
-        )
+        const { value } = await this.entitlementEvaluationCache.executeUsingCache(key, async () => {
+            const isEntitled = await this.isEntitledToSpaceUncached(spaceId, userId, permission)
+            return new BooleanCacheResult(isEntitled)
+        })
         return value
     }
 
@@ -1058,33 +1031,30 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     public async isEntitledToChannel(
         spaceId: string,
         channelNetworkId: string,
-        user: string,
+        userId: string,
         permission: Permission,
         xchainConfig: XchainConfig = EmptyXchainConfig,
         invalidateCache: boolean = false,
     ): Promise<boolean> {
-        const key = newChannelEntitlementEvaluationRequest(
+        const key = Keyable.channelEntitlementEvaluationRequest(
             spaceId,
             channelNetworkId,
-            user,
+            userId,
             permission,
         )
         if (invalidateCache) {
             await this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            key,
-            async (request) => {
-                const isEntitled = await this.isEntitledToChannelUncached(
-                    request.spaceId,
-                    request.channelId,
-                    request.userId,
-                    request.permission,
-                    xchainConfig,
-                )
-                return new BooleanCacheResult(isEntitled)
-            },
-        )
+        const { value } = await this.entitlementEvaluationCache.executeUsingCache(key, async () => {
+            const isEntitled = await this.isEntitledToChannelUncached(
+                spaceId,
+                channelNetworkId,
+                userId,
+                permission,
+                xchainConfig,
+            )
+            return new BooleanCacheResult(isEntitled)
+        })
         return value
     }
 
