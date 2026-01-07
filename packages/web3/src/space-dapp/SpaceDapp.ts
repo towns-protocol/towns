@@ -354,10 +354,16 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         const ownerMap = new Map<string, string>() // tokenId.toString() -> ownerAddress
         const tokenIdsToFetch: ethers.BigNumber[] = []
 
-        // Check cache first
-        for (const tokenId of bannedTokenIds) {
-            const cacheKey = Keyable.ownerOfTokenRequest(spaceId, tokenId)
-            const cachedOwner = await this.ownerOfTokenCache.get(cacheKey)
+        // Check cache first - parallel lookups for remote storage efficiency
+        const cacheResults = await Promise.all(
+            bannedTokenIds.map(async (tokenId) => {
+                const cacheKey = Keyable.ownerOfTokenRequest(spaceId, tokenId)
+                const cachedOwner = await this.ownerOfTokenCache.get(cacheKey)
+                return { tokenId, cachedOwner }
+            }),
+        )
+
+        for (const { tokenId, cachedOwner } of cacheResults) {
             if (cachedOwner) {
                 ownerMap.set(tokenId.toString(), cachedOwner)
             } else {
@@ -373,6 +379,8 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
             try {
                 const results = await space.Multicall.read.callStatic.multicall(calls)
+                const cacheWritePromises: Promise<void>[] = []
+
                 for (const [index, resultData] of results.entries()) {
                     const tokenId = tokenIdsToFetch[index]
                     // Attempt to decode each result
@@ -385,9 +393,12 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
                             if (ethers.utils.isAddress(ownerAddress)) {
                                 ownerMap.set(tokenId.toString(), ownerAddress)
-                                await this.ownerOfTokenCache.add(
-                                    Keyable.ownerOfTokenRequest(spaceId, tokenId),
-                                    ownerAddress,
+                                // Collect cache write promises for parallel execution
+                                cacheWritePromises.push(
+                                    this.ownerOfTokenCache.add(
+                                        Keyable.ownerOfTokenRequest(spaceId, tokenId),
+                                        ownerAddress,
+                                    ),
                                 )
                             } else {
                                 logger.log(
@@ -408,6 +419,9 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                         )
                     }
                 }
+
+                // Write all cache entries in parallel
+                await Promise.all(cacheWritePromises)
             } catch (multiCallError) {
                 logger.error(
                     `Multicall execution failed for space ${spaceId}. This likely means one of the ownerOf calls reverted.`,
