@@ -11,7 +11,6 @@
         "build": "bun run typecheck && bun run compile",
         "compile": "bun ./esbuild.config.mjs",
         "dev": "bun run build && bun run start",
-        "lint": "oxlint src --type-aware",
         "start": "node ./dist/index.cjs",
         "test": "echo \"Error: no test specified\" && exit 1",
         "typecheck": "tsc --noEmit"

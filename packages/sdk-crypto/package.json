@@ -8,8 +8,6 @@
         "build": "tsdown",
         "cb": "bun run clean && bun run build",
         "clean": "rm -rf dist",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "bun run lint --fix",
         "test": "vitest",
         "test:unit": "vitest run",
         "watch": "tsdown --watch"

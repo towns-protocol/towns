@@ -12,7 +12,6 @@
         "gen": "bun run gen:extractor && bun run gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
         "gen:extractor": "api-extractor run --local",
-        "lint": "oxlint src --type-aware",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
         "watch": "bun run build -w"

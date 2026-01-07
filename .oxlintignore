@@ -1,0 +1,28 @@
+# Packages that were not linted in the original setup
+packages/proto/
+packages/xchain-monitor/
+
+# Dependencies and build outputs
+**/node_modules/
+**/dist/
+**/build/
+
+# Config files
+**/*.config.js
+**/*.config.mjs
+**/*.config.cjs
+**/esbuild.config.mjs
+**/vitest.config.ts
+**/vitest.setup.ts
+**/vite.config.ts
+**/package.json
+
+# Test scripts in subgraph
+packages/subgraph/interactions/
+
+# Ignore everything outside packages
+contracts/
+protocol/
+core/
+services/
+scripts/

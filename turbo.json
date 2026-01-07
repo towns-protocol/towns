@@ -53,8 +53,7 @@
             "cache": true,
             "dependsOn": ["^build"]
         },
-        "lint": {
-            "cache": true
-        }
+        "//#lint": {},
+        "//#lint:fix": {}
     }
 }

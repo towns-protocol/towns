@@ -2249,7 +2249,7 @@ export class Client
         const tags = {
             groupMentionTypes: [],
             mentionedUserAddresses: [],
-            ...(opts?.tags ?? {}),
+            ...opts?.tags,
             messageInteractionType:
                 opts?.tags?.messageInteractionType ?? MessageInteractionType.REPLY,
             participatingUserAddresses: [

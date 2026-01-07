@@ -36,13 +36,13 @@
       }
     ],
     "@typescript-eslint/ban-ts-comment": "off"
- 
   },
   "overrides": [
     {
       "files": ["**/*.test.*", "**/*.test_util.*"],
       "rules": {
         "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unsafe-argument": "off"
       }

@@ -6,8 +6,6 @@
     "scripts": {
         "build": "tsup",
         "dev": "tsx src/index.ts",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "oxlint src --type-aware --fix",
         "watch": "tsup --watch"
     },
     "bin": "index.js",

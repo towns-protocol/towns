@@ -11,8 +11,6 @@
         "dev:no-ui": "bun run typings && ponder dev --disable-ui",
         "find-paths": "tsx utils/findContractsPath.ts",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "oxlint src --type-aware --fix",
         "serve": "bun run typings && ponder serve",
         "start": "bun run typings && ponder start",
         "test:unit": "bun run typings && sh -c 'tsc --noEmit'",

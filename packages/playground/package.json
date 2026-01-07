@@ -7,7 +7,6 @@
         "build": "tsc && vite build",
         "dev": "vite",
         "dev:local": "bun run load-env vite",
-        "lint": "oxlint src --type-aware",
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite --",
         "preview": "vite preview"
     },

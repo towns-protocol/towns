@@ -7,8 +7,6 @@
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf dist",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "bun run lint --fix",
         "test": "vitest",
         "test:ci:multi:ent": "vitest run --silent=passed-only",
         "test:watch": "vitest --watch",

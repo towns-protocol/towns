@@ -8,7 +8,6 @@
         "build-esbuild": "bun esbuild.config.mjs",
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "generate-wallets": "node --enable-source-maps ./dist/generateWallets.cjs",
-        "lint": "oxlint src --type-aware",
         "nft": "node --enable-source-maps ./dist/nft.cjs",
         "notifications": "node --enable-source-maps ./dist/notifications.cjs",
         "start": "node --enable-source-maps ./dist/start.cjs",

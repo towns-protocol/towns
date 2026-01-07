@@ -8,8 +8,6 @@
         "build": "tsc",
         "cb": "bun run clean && bun run build",
         "clean": "rm -rf dist",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "bun run lint --fix",
         "test:ci": "bun run test:ci:multi:ne",
         "test:ci:multi:ent": "vitest run --silent=passed-only --config vitest.config.ts",
         "test:ci:multi:ent:legacy": "vitest run --silent=passed-only --config vitest.config.multi_legacy.ts",

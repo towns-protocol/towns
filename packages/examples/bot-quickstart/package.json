@@ -8,8 +8,6 @@
         "build": "tsc --noEmit",
         "clean": "rm -rf dist",
         "dev": "bun run --watch src/index.ts",
-        "lint": "oxlint src --type-aware",
-        "lint:fix": "oxlint src --type-aware --fix",
         "start": "bun run src/index.ts",
         "typecheck": "tsc --noEmit"
     },
