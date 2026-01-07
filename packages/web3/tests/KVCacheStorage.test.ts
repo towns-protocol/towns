@@ -73,7 +73,12 @@ describe('KVCacheStorage', () => {
             // Create a mock ethers struct output like getEntitlements() returns
             // This is an array with both indices AND named properties
             const entitlement = createEthersStructOutput(
-                ['User Entitlement', '0x5264b2A880f54c61727400bF08b99d1f146052BE', 'UserEntitlement', true],
+                [
+                    'User Entitlement',
+                    '0x5264b2A880f54c61727400bF08b99d1f146052BE',
+                    'UserEntitlement',
+                    true,
+                ],
                 ['name', 'moduleAddress', 'moduleType', 'isImmutable'],
             )
 
@@ -116,11 +121,21 @@ describe('KVCacheStorage', () => {
             // Create multiple entitlements like getEntitlements() returns
             const entitlements = [
                 createEthersStructOutput(
-                    ['User Entitlement', '0x5264b2A880f54c61727400bF08b99d1f146052BE', 'UserEntitlement', true],
+                    [
+                        'User Entitlement',
+                        '0x5264b2A880f54c61727400bF08b99d1f146052BE',
+                        'UserEntitlement',
+                        true,
+                    ],
                     ['name', 'moduleAddress', 'moduleType', 'isImmutable'],
                 ),
                 createEthersStructOutput(
-                    ['Rule Entitlement V2', '0x04C2EDe8fC5edC5802588a840FbF7136c3686Fba', 'RuleEntitlementV2', true],
+                    [
+                        'Rule Entitlement V2',
+                        '0x04C2EDe8fC5edC5802588a840FbF7136c3686Fba',
+                        'RuleEntitlementV2',
+                        true,
+                    ],
                     ['name', 'moduleAddress', 'moduleType', 'isImmutable'],
                 ),
             ]
@@ -365,4 +380,3 @@ describe('KVCacheStorage', () => {
         })
     })
 })
-
