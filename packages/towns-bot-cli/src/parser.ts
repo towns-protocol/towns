@@ -16,7 +16,7 @@ export interface UpdateArgs extends BaseArgs {
 
 export type SkillArgs = BaseArgs
 
-export type CommandArgs = InitArgs | UpdateArgs
+export type CommandArgs = InitArgs | UpdateArgs | SkillArgs
 
 // Command configurations for minimist
 const COMMAND_CONFIGS: Record<string, minimist.Opts> = {

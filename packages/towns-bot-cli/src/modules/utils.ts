@@ -9,8 +9,6 @@ export type PackageJson = {
     devDependencies?: Record<string, string>
 }
 
-export type AIAssistant = 'claude-code' | 'none'
-
 export const getPackageManager = () => {
     if (process.env.npm_config_user_agent) {
         const agent = process.env.npm_config_user_agent
@@ -376,8 +374,8 @@ const TOWNS_SKILL_REPO = 'https://github.com/towns-protocol/skills.git'
 const AGENTS_SKILL_FOLDERS = ['.claude/skills', '.codex/skills']
 
 export async function installTownsSkills(projectDir: string): Promise<boolean> {
+    const tempDir = `${projectDir}-skills-temp`
     try {
-        const tempDir = `${projectDir}-skills-temp`
         const cloneResult = spawn.sync(
             'git',
             ['clone', '--depth', '1', '--filter=blob:none', '--sparse', TOWNS_SKILL_REPO, tempDir],
@@ -437,13 +435,16 @@ export async function installTownsSkills(projectDir: string): Promise<boolean> {
             picocolors.red('Error installing skills:'),
             error instanceof Error ? error.message : error,
         )
+        if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+        }
         return false
     }
 }
 
 export async function downloadAgentsMd(projectDir: string): Promise<boolean> {
+    const tempDir = `${projectDir}-agents-md-temp`
     try {
-        const tempDir = `${projectDir}-agents-md-temp`
         const agentsMdPath = 'packages/examples/bot-quickstart/AGENTS.md'
         const latestSdkTag = getLatestSdkTag()
         if (!latestSdkTag) {
@@ -500,6 +501,9 @@ export async function downloadAgentsMd(projectDir: string): Promise<boolean> {
             picocolors.red('Error downloading AGENTS.md:'),
             error instanceof Error ? error.message : error,
         )
+        if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+        }
         return false
     }
 }
