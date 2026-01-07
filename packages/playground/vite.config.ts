@@ -22,7 +22,7 @@ export default ({ mode }: { mode: string }) => {
             wasm(),
             tsconfigPaths(),
             oxlint({
-                path: 'src'
+                path: 'src',
             }),
             react(),
         ],

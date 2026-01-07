@@ -1,20 +1,20 @@
 {
-  "$schema": "https://oxc.rs/schemas/oxlintrc.json",
-  "plugins": ["typescript"],
-  "env": {
-    "node": true
-  },
-  "rules": {
-    "no-console": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        "argsIgnorePattern": "^_",
-        "destructuredArrayIgnorePattern": "^_",
-        "caughtErrors": "none"
-      }
-    ],
-    "@typescript-eslint/ban-ts-comment": "off"
-  }
+    "$schema": "https://oxc.rs/schemas/oxlintrc.json",
+    "plugins": ["typescript"],
+    "env": {
+        "node": true
+    },
+    "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_",
+                "caughtErrors": "none"
+            }
+        ],
+        "@typescript-eslint/ban-ts-comment": "off"
+    }
 }
