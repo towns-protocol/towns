@@ -81,6 +81,10 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 	store := params.store
 	ctx := params.ctx
 
+	lastBlock, err := store.GetRecordLastBlockNum(ctx)
+	require.NoError(err)
+	require.EqualValues(-1, lastBlock)
+
 	stream1 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 	stream2 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 	stream3 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
@@ -123,9 +127,13 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		require.NoError(err)
 	}
 
+	lastBlock, err = store.GetRecordLastBlockNum(ctx)
+	require.NoError(err)
+	require.EqualValues(blockNum, lastBlock)
+
 	var listed []shared.StreamId
 	pageCalls := 0
-	lastBlock, err := store.ListStreamRecords(ctx, 2, func(records []*MetadataStreamRecord) error {
+	lastBlock, err = store.ListStreamRecords(ctx, 2, func(records []*MetadataStreamRecord) error {
 		pageCalls++
 		for _, record := range records {
 			listed = append(listed, record.StreamId)
@@ -235,6 +243,10 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		require.NoError(err)
 	}
 
+	lastBlock, err := store.GetRecordLastBlockNum(ctx)
+	require.NoError(err)
+	require.EqualValues(blockNum, lastBlock)
+
 	updates := []*MetadataStreamRecordUpdate{
 		{
 			Placement: &UpdateMetadataStreamPlacement{
@@ -271,6 +283,10 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 	require.Error(errs[2])
 	require.Equal(protocol.Err_BAD_PREV_MINIBLOCK_HASH, base.AsRiverError(errs[2]).Code)
 
+	lastBlock, err = store.GetRecordLastBlockNum(ctx)
+	require.NoError(err)
+	require.EqualValues(blockNum, lastBlock)
+
 	record, err := store.GetStreamRecord(ctx, stream1)
 	require.NoError(err)
 	require.Equal([]int32{2, 3}, record.NodeIndexes)
@@ -292,7 +308,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 	require.EqualValues(0, count)
 
 	nodeCalls := 0
-	lastBlock, err := store.ListStreamRecordsForNode(ctx, 1, 10, func(records []*MetadataStreamRecord) error {
+	lastBlock, err = store.ListStreamRecordsForNode(ctx, 1, 10, func(records []*MetadataStreamRecord) error {
 		nodeCalls++
 		return nil
 	})

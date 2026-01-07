@@ -101,6 +101,7 @@ type MetadataServiceStore interface {
 	) (*MetadataStreamRecord, error)
 	GetStreamRecordCount(ctx context.Context) (int64, error)
 	GetStreamRecordCountOnNode(ctx context.Context, nodeIndex int32) (int64, error)
+	GetRecordLastBlockNum(ctx context.Context) (int64, error)
 	GetRecordBlocks(
 		ctx context.Context,
 		fromInclusive int64,
@@ -741,6 +742,23 @@ func (s *PostgresMetadataServiceStore) GetStreamRecordCountOnNode(
 		"nodeIndex", nodeIndex,
 	)
 	return count, err
+}
+
+func (s *PostgresMetadataServiceStore) GetRecordLastBlockNum(ctx context.Context) (int64, error) {
+	var blockNum int64
+	err := s.txRunner(
+		ctx,
+		"MetadataService.GetRecordLastBlockNum",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return tx.QueryRow(
+				ctx,
+				`SELECT block_num FROM md_last_block WHERE singleton_key = TRUE`,
+			).Scan(&blockNum)
+		},
+		nil,
+	)
+	return blockNum, err
 }
 
 func (s *PostgresMetadataServiceStore) GetRecordBlocks(
