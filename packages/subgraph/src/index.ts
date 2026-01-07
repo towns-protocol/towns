@@ -122,17 +122,14 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
             }),
         ])
 
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                paused: paused,
-                name: spaceInfo.name,
-                nameLowercased: spaceInfo.name.toLowerCase(),
-                uri: spaceInfo.uri,
-                shortDescription: spaceInfo.shortDescription,
-                longDescription: spaceInfo.longDescription,
-            })
-            .where(eq(schema.space.id, event.args.space))
+        await context.db.update(schema.space, { id: event.args.space }).set({
+            paused: paused,
+            name: spaceInfo.name,
+            nameLowercased: spaceInfo.name.toLowerCase(),
+            uri: spaceInfo.uri,
+            shortDescription: spaceInfo.shortDescription,
+            longDescription: spaceInfo.longDescription,
+        })
     } catch (error) {
         console.error(
             `Error processing SpaceOwner:SpaceOwner__UpdateSpace at blockNumber ${blockNumber}:`,
@@ -176,14 +173,11 @@ ponder.on('Space:MembershipCurrencyUpdated', async ({ event, context }) => {
         // Normalize currency: zero address means ETH
         const normalizedCurrency = newCurrency === ZERO_ADDRESS ? ETH_ADDRESS : newCurrency
 
-        const result = await context.db.sql
-            .update(schema.space)
-            .set({
-                currency: normalizedCurrency,
-            })
-            .where(eq(schema.space.id, spaceId))
+        const row = await context.db.update(schema.space, { id: spaceId }).set({
+            currency: normalizedCurrency,
+        })
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Space not found for MembershipCurrencyUpdated at block ${blockNumber}: ${spaceId}`,
             )
