@@ -687,6 +687,8 @@ var (
 
 	// streamIdMiniblockArrayType is the ABI type for encoding/decoding StreamIdMiniblock arrays.
 	// Encoded as tuple[](bytes32 streamId, uint64 miniblockNum).
+	// This type must match the StreamIdMiniblock struct in
+	// packages/contracts/scripts/interactions/InteractRiverRegistrySetTrimByStreamId.s.sol.
 	streamIdMiniblockArrayType, _ = abi.NewType("tuple[]", "StreamIdMiniblock[]", []abi.ArgumentMarshaling{
 		{Name: "streamId", Type: "bytes32"},
 		{Name: "miniblockNum", Type: "uint64"},
