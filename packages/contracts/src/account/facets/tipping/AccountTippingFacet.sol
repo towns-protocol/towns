@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
-import "./AccountTippingMod.sol" as AccountTipping;
+import {AccountTippingMod} from "./AccountTippingMod.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
@@ -15,6 +15,7 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 
 contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
+    using AccountTippingMod for AccountTippingMod.Layout;
     using CustomRevert for bytes4;
 
     function __AccountTippingFacet_init() external onlyInitializing {
@@ -26,12 +27,12 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
         TipRecipientType recipientType,
         bytes calldata data
     ) external payable nonReentrant {
-        AccountTipping.tipAny(address(this), uint8(recipientType), data);
+        AccountTippingMod.getStorage().tipAny(address(this), uint8(recipientType), data);
     }
 
     /// @inheritdoc ITipping
     function tip(TipRequest calldata) external payable {
-        CustomRevert.revertWith(Deprecated.selector);
+        Deprecated.selector.revertWith();
     }
 
     /// @inheritdoc ITipping
@@ -39,7 +40,7 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
         address wallet,
         address currency
     ) external view returns (uint256) {
-        return AccountTipping.getStorage().accountStatsByCurrency[wallet][currency].amount;
+        return AccountTippingMod.getStorage().accountStatsByCurrency[wallet][currency].amount;
     }
 
     /// @inheritdoc ITipping
@@ -47,26 +48,26 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
         address wallet,
         address currency
     ) external view returns (uint256) {
-        return AccountTipping.getStorage().accountStatsByCurrency[wallet][currency].total;
+        return AccountTippingMod.getStorage().accountStatsByCurrency[wallet][currency].total;
     }
 
     /// @inheritdoc ITipping
     function tipsByCurrencyAndTokenId(uint256, address) external pure returns (uint256) {
-        CustomRevert.revertWith(Deprecated.selector);
+        Deprecated.selector.revertWith();
     }
 
     /// @inheritdoc ITipping
     function tippingCurrencies() external view returns (address[] memory) {
-        return AccountTipping.getStorage().currencies.values();
+        return AccountTippingMod.getStorage().currencies.values();
     }
 
     /// @inheritdoc ITipping
     function totalTipsByCurrency(address currency) external view returns (uint256) {
-        return AccountTipping.getStorage().currencyStats[currency].total;
+        return AccountTippingMod.getStorage().currencyStats[currency].total;
     }
 
     /// @inheritdoc ITipping
     function tipAmountByCurrency(address currency) external view returns (uint256) {
-        return AccountTipping.getStorage().currencyStats[currency].amount;
+        return AccountTippingMod.getStorage().currencyStats[currency].amount;
     }
 }
