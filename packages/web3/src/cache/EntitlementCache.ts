@@ -20,6 +20,7 @@ export interface EntitlementCacheOptions<V> {
 export class EntitlementCache<K extends Keyable, V> {
     private readonly negativeStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
     private readonly positiveStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly pendingFetches: Map<string, Promise<CacheResult<V>>> = new Map()
 
     constructor(options?: EntitlementCacheOptions<V>) {
         const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
@@ -53,25 +54,44 @@ export class EntitlementCache<K extends Keyable, V> {
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
 
-        const negativeCacheResult = await this.negativeStorage.get(key)
-        if (negativeCacheResult !== undefined) {
-            negativeCacheResult.cacheHit = true
-            return negativeCacheResult
+        // 1. Check for pending fetch FIRST (synchronous check before any await)
+        // This prevents race conditions where concurrent calls interleave
+        const pendingPromise = this.pendingFetches.get(key)
+        if (pendingPromise) {
+            return pendingPromise
         }
 
-        const positiveCacheResult = await this.positiveStorage.get(key)
-        if (positiveCacheResult !== undefined) {
-            positiveCacheResult.cacheHit = true
-            return positiveCacheResult
-        }
+        // 2. Create promise that checks caches then fetches if needed
+        // Store it synchronously BEFORE any await to prevent races
+        const operationPromise = (async (): Promise<CacheResult<V>> => {
+            const negativeCacheResult = await this.negativeStorage.get(key)
+            if (negativeCacheResult !== undefined) {
+                negativeCacheResult.cacheHit = true
+                return negativeCacheResult
+            }
 
-        const result = await onCacheMiss(keyable)
-        if (result.isPositive) {
-            await this.positiveStorage.set(key, result)
-        } else {
-            await this.negativeStorage.set(key, result)
-        }
+            const positiveCacheResult = await this.positiveStorage.get(key)
+            if (positiveCacheResult !== undefined) {
+                positiveCacheResult.cacheHit = true
+                return positiveCacheResult
+            }
 
-        return result
+            const result = await onCacheMiss(keyable)
+            if (result.isPositive) {
+                await this.positiveStorage.set(key, result)
+            } else {
+                await this.negativeStorage.set(key, result)
+            }
+
+            return result
+        })()
+
+        this.pendingFetches.set(key, operationPromise)
+
+        try {
+            return await operationPromise
+        } finally {
+            this.pendingFetches.delete(key)
+        }
     }
 }

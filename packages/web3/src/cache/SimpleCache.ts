@@ -56,33 +56,35 @@ export class SimpleCache<K extends Keyable, V> {
     ): Promise<V> {
         const cacheKey = key.toKey()
 
-        // 1. Check main cache
-        if (opts?.skipCache !== true) {
-            const cachedValue = await this.storage.get(cacheKey)
-            if (cachedValue !== undefined) {
-                return cachedValue
-            }
-        }
-
-        // 2. Check for pending fetch
+        // 1. Check for pending fetch FIRST (synchronous check before any await)
+        // This prevents race conditions where concurrent calls interleave
         const pendingPromise = this.pendingFetches.get(cacheKey)
         if (pendingPromise) {
-            return pendingPromise // Return existing promise
+            return pendingPromise
         }
 
-        // 3. No cached value, no pending fetch: Initiate fetch
-        const fetchPromise = fetchFn(key).catch((err) => {
-            this.pendingFetches.delete(cacheKey)
-            throw err
-        })
+        // 2. Create promise that checks cache then fetches if needed
+        // Store it synchronously BEFORE any await to prevent races
+        const operationPromise = (async (): Promise<V> => {
+            // Check main cache
+            if (opts?.skipCache !== true) {
+                const cachedValue = await this.storage.get(cacheKey)
+                if (cachedValue !== undefined) {
+                    return cachedValue
+                }
+            }
 
-        this.pendingFetches.set(cacheKey, fetchPromise)
-
-        try {
-            const fetchedValue = await fetchPromise
+            // No cached value: Initiate fetch
+            const fetchedValue = await fetchFn(key)
             // Add to main cache only on successful fetch
             await this.storage.set(cacheKey, fetchedValue)
             return fetchedValue
+        })()
+
+        this.pendingFetches.set(cacheKey, operationPromise)
+
+        try {
+            return await operationPromise
         } finally {
             // Remove from pending fetches regardless of success or failure
             this.pendingFetches.delete(cacheKey)

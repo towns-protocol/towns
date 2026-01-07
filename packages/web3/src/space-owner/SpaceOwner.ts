@@ -144,7 +144,7 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
             overrideExecution,
             transactionOpts,
         })
-        this.spaceInfoCache.remove(new SpaceOwnerGetSpaceInfo(spaceAddress))
+        await this.spaceInfoCache.remove(new SpaceOwnerGetSpaceInfo(spaceAddress))
         return result
     }
 }
