@@ -1,5 +1,6 @@
-import TTLCache from '@isaacs/ttlcache'
 import { Keyable } from './Keyable'
+import { CreateStorageFn } from './ICacheStorage'
+import { createDefaultStorage } from './TTLCacheStorage'
 
 export interface CacheResult<V> {
     value: V
@@ -7,61 +8,92 @@ export interface CacheResult<V> {
     isPositive: boolean
 }
 
-export class EntitlementCache<K extends Keyable, V> {
-    private readonly negativeCache: TTLCache<string, CacheResult<V>>
-    private readonly positiveCache: TTLCache<string, CacheResult<V>>
+export interface EntitlementCacheOptions<V> {
+    positiveCacheTTLSeconds?: number
+    negativeCacheTTLSeconds?: number
+    positiveCacheSize?: number
+    negativeCacheSize?: number
+    /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
+    createStorageFn: CreateStorageFn<CacheResult<V>> | undefined
+}
 
-    constructor(options?: {
-        positiveCacheTTLSeconds: number
-        negativeCacheTTLSeconds: number
-        positiveCacheSize?: number
-        negativeCacheSize?: number
-    }) {
+export class EntitlementCache<V> {
+    private readonly negativeStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly positiveStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly pendingFetches: Map<string, Promise<CacheResult<V>>> = new Map()
+
+    constructor(options: EntitlementCacheOptions<V>) {
         const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
         const negativeCacheTTLSeconds = options?.negativeCacheTTLSeconds ?? 2
         const positiveCacheSize = options?.positiveCacheSize ?? 10000
         const negativeCacheSize = options?.negativeCacheSize ?? 10000
 
-        this.negativeCache = new TTLCache({
-            ttl: negativeCacheTTLSeconds * 1000,
-            max: negativeCacheSize,
+        const createFn = options?.createStorageFn ?? createDefaultStorage
+
+        this.negativeStorage = createFn({
+            ttlMs: negativeCacheTTLSeconds * 1000,
+            maxSize: negativeCacheSize,
+            keyPostfix: 'neg',
         })
-        this.positiveCache = new TTLCache({
-            ttl: positiveCacheTTLSeconds * 1000,
-            max: positiveCacheSize,
+
+        this.positiveStorage = createFn({
+            ttlMs: positiveCacheTTLSeconds * 1000,
+            maxSize: positiveCacheSize,
+            keyPostfix: 'pos',
         })
     }
 
-    invalidate(keyable: K) {
+    async invalidate(keyable: Keyable): Promise<void> {
         const key = keyable.toKey()
-        this.negativeCache.delete(key)
-        this.positiveCache.delete(key)
+        // Clear pending fetch first to prevent returning stale in-flight data
+        this.pendingFetches.delete(key)
+        await Promise.all([this.negativeStorage.delete(key), this.positiveStorage.delete(key)])
     }
 
     async executeUsingCache(
-        keyable: K,
-        onCacheMiss: (k: K) => Promise<CacheResult<V>>,
+        keyable: Keyable,
+        onCacheMiss: (k: Keyable) => Promise<CacheResult<V>>,
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
-        const negativeCacheResult = this.negativeCache.get(key)
-        if (negativeCacheResult !== undefined) {
-            negativeCacheResult.cacheHit = true
-            return negativeCacheResult
+
+        // 1. Check for pending fetch FIRST (synchronous check before any await)
+        // This prevents race conditions where concurrent calls interleave
+        const pendingPromise = this.pendingFetches.get(key)
+        if (pendingPromise) {
+            return pendingPromise
         }
 
-        const positiveCacheResult = this.positiveCache.get(key)
-        if (positiveCacheResult !== undefined) {
-            positiveCacheResult.cacheHit = true
-            return positiveCacheResult
-        }
+        // 2. Create promise that checks caches then fetches if needed
+        // Store it synchronously BEFORE any await to prevent races
+        const operationPromise = (async (): Promise<CacheResult<V>> => {
+            const negativeCacheResult = await this.negativeStorage.get(key)
+            if (negativeCacheResult !== undefined) {
+                negativeCacheResult.cacheHit = true
+                return negativeCacheResult
+            }
 
-        const result = await onCacheMiss(keyable)
-        if (result.isPositive) {
-            this.positiveCache.set(key, result)
-        } else {
-            this.negativeCache.set(key, result)
-        }
+            const positiveCacheResult = await this.positiveStorage.get(key)
+            if (positiveCacheResult !== undefined) {
+                positiveCacheResult.cacheHit = true
+                return positiveCacheResult
+            }
 
-        return result
+            const result = await onCacheMiss(keyable)
+            if (result.isPositive) {
+                await this.positiveStorage.set(key, result)
+            } else {
+                await this.negativeStorage.set(key, result)
+            }
+
+            return result
+        })()
+
+        this.pendingFetches.set(key, operationPromise)
+
+        try {
+            return await operationPromise
+        } finally {
+            this.pendingFetches.delete(key)
+        }
     }
 }

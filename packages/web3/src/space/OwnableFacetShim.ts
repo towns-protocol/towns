@@ -3,32 +3,28 @@ import { BaseContractShim } from '../BaseContractShim'
 import { OwnableFacet__factory } from '@towns-protocol/generated/dev/typings/factories/OwnableFacet__factory'
 import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 
 const { abi, connect } = OwnableFacet__factory
 
-export class OwnerRequest implements Keyable {
-    spaceId: string
-    constructor(spaceId: string) {
-        this.spaceId = spaceId
-    }
-    toKey(): string {
-        return `owner:${this.spaceId}`
-    }
-}
-
 export class OwnableFacetShim extends BaseContractShim<typeof connect> {
-    private readonly ownerCache: SimpleCache<OwnerRequest, string>
+    private readonly ownerCache: SimpleCache<string>
 
-    constructor(address: string, provider: ethers.providers.Provider) {
+    constructor(
+        address: string,
+        provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
+    ) {
         super(address, provider, connect, abi)
 
         this.ownerCache = new SimpleCache({
             ttlSeconds: 120 * 60,
+            createStorageFn,
         })
     }
 
     public async getOwner(): Promise<string> {
-        return this.ownerCache.executeUsingCache(new OwnerRequest(this.address), async () =>
+        return this.ownerCache.executeUsingCache(Keyable.ownerRequest(this.address), async () =>
             this.read.owner(),
         )
     }
