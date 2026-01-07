@@ -82,7 +82,7 @@ Similarly, if you edit or delete these scripts, be aware that you may be removin
 When making changes to published packages, you must create a changeset:
 
 ```bash
-yarn changeset
+bun changeset
 ```
 
 This guides you through:
@@ -93,7 +93,7 @@ This guides you through:
 
 ### When is a changeset required?
 
-- Any change to packages published to npm (see list below)
+- Any change to packages published to npm
 - Bug fixes, features, documentation updates affecting published code
 
 ### When can you skip a changeset?

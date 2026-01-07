@@ -7,7 +7,7 @@ This repository uses [Changesets](https://github.com/changesets/changesets) for 
 When you make changes that should be released, run:
 
 ```bash
-yarn changeset
+bun changeset
 ```
 
 This will prompt you to:
@@ -28,5 +28,5 @@ The summary will appear in the CHANGELOG.md files.
 
 Releases are automated via GitHub Actions:
 
-1. When PRs with changesets merge to main, a "Version Packages" PR is created/updated
+1. When changes are pushed to main, a "Version Packages" PR is created/updated
 2. Merging the Version Packages PR triggers npm publishing
