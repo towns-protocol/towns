@@ -81,7 +81,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 	store := params.store
 	ctx := params.ctx
 
-	lastBlock, err := store.GetRecordLastBlockNum(ctx)
+	lastBlock, err := store.GetLastRecordBlockNum(ctx)
 	require.NoError(err)
 	require.EqualValues(-1, lastBlock)
 
@@ -127,7 +127,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		require.NoError(err)
 	}
 
-	lastBlock, err = store.GetRecordLastBlockNum(ctx)
+	lastBlock, err = store.GetLastRecordBlockNum(ctx)
 	require.NoError(err)
 	require.EqualValues(blockNum, lastBlock)
 
@@ -243,7 +243,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		require.NoError(err)
 	}
 
-	lastBlock, err := store.GetRecordLastBlockNum(ctx)
+	lastBlock, err := store.GetLastRecordBlockNum(ctx)
 	require.NoError(err)
 	require.EqualValues(blockNum, lastBlock)
 
@@ -283,7 +283,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 	require.Error(errs[2])
 	require.Equal(protocol.Err_BAD_PREV_MINIBLOCK_HASH, base.AsRiverError(errs[2]).Code)
 
-	lastBlock, err = store.GetRecordLastBlockNum(ctx)
+	lastBlock, err = store.GetLastRecordBlockNum(ctx)
 	require.NoError(err)
 	require.EqualValues(blockNum, lastBlock)
 
