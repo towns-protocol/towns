@@ -48,6 +48,7 @@
         "dotenv-cli": "^10.0.0",
         "@types/node": "^20.14.8",
         "lint-staged": "^13.1.2",
+        "oxlint": "^1.38.0",
         "prettier": "^3.5.3",
         "prettier-plugin-solidity": "^1.4.2",
         "prettier-plugin-tailwindcss": "^0.4.1",
