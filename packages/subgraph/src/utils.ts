@@ -1,5 +1,4 @@
 import { Permission } from '@towns-protocol/web3'
-import { eq } from 'ponder'
 import { Context } from 'ponder:registry'
 import schema from 'ponder:schema'
 import { createPublicClient, http } from 'viem'
@@ -88,9 +87,7 @@ export async function getSpaceCurrency(
 ): Promise<`0x${string}` | null> {
     try {
         // Check DB cache first
-        const space = await context.db.sql.query.space.findFirst({
-            where: eq(schema.space.id, spaceId),
-        })
+        const space = await context.db.find(schema.space, { id: spaceId })
 
         // If space has currency cached, use it
         if (space?.currency) {
@@ -110,10 +107,9 @@ export async function getSpaceCurrency(
         const normalizedCurrency = currency === ZERO_ADDRESS ? ETH_ADDRESS : currency
 
         // Update cache (fire and forget)
-        context.db.sql
-            .update(schema.space)
+        context.db
+            .update(schema.space, { id: spaceId })
             .set({ currency: normalizedCurrency })
-            .where(eq(schema.space.id, spaceId))
             .catch((err) => console.warn(`Failed to cache currency for ${spaceId}:`, err))
 
         return normalizedCurrency as `0x${string}`
@@ -132,17 +128,12 @@ export async function updateSpaceTotalStaked(
     spaceId: `0x${string}`,
     amountDelta: bigint,
 ): Promise<void> {
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, spaceId),
-    })
+    const space = await context.db.find(schema.space, { id: spaceId })
     if (space) {
         const newTotal = (space.totalAmountStaked ?? 0n) + amountDelta
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                totalAmountStaked: newTotal >= 0n ? newTotal : 0n,
-            })
-            .where(eq(schema.space.id, spaceId))
+        await context.db.update(schema.space, { id: spaceId }).set({
+            totalAmountStaked: newTotal >= 0n ? newTotal : 0n,
+        })
 
         console.log(
             `Updated space ${spaceId} totalAmountStaked: ${space.totalAmountStaked} -> ${newTotal}`,
@@ -157,9 +148,7 @@ export async function handleStakeToSpace(
 ): Promise<void> {
     if (!delegatee) return
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, delegatee),
-    })
+    const space = await context.db.find(schema.space, { id: delegatee })
     if (space) {
         await updateSpaceTotalStaked(context, delegatee, amount)
     }
