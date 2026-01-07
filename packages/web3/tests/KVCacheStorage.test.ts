@@ -16,6 +16,7 @@ function createEthersStructOutput<T extends unknown[]>(
 ): T & Record<string, unknown> {
     const result = [...values] as T & Record<string, unknown>
     for (let i = 0; i < names.length && i < values.length; i++) {
+        // @ts-expect-error - Intentionally writing to generic type to mimic ethers struct behavior
         result[names[i]] = values[i]
     }
     return result
@@ -336,7 +337,9 @@ describe('KVCacheStorage', () => {
             expect(retrieved).toBeDefined()
             expect(BigNumber.isBigNumber(retrieved.tokenId)).toBe(true)
             expect(BigNumber.isBigNumber(retrieved.balance)).toBe(true)
+            // @ts-expect-error - Testing dynamic struct properties
             expect(retrieved.tokenId.toString()).toBe('1')
+            // @ts-expect-error - Testing dynamic struct properties
             expect(retrieved.balance.toString()).toBe('1000')
             expect(retrieved.owner).toBe('0xAddress')
         })
