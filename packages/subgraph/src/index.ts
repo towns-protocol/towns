@@ -286,14 +286,10 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Directly update space metrics with inline calculations
-        // This eliminates the need to query current values first
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                swapVolume: sql`COALESCE(${schema.space.swapVolume}, 0) + ${ethAmount}`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space metrics using Store API function-based update
+        await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+            swapVolume: (row.swapVolume ?? 0n) + ethAmount,
+        }))
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -1376,13 +1372,10 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 .onConflictDoNothing()
         }
 
-        // Update memberCount
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update memberCount using Store API function-based update
+        await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+            memberCount: (row.memberCount ?? 0n) + 1n,
+        }))
     } catch (error) {
         console.error(`Error processing Space:MembershipTokenIssued for space ${spaceId}:`, error)
     }
@@ -1430,21 +1423,15 @@ ponder.on('Space:MembershipPaid', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space membership volume metrics
+        // Update space membership volume metrics using Store API function-based update
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                joinVolume: (row.joinVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    joinUSDCVolume: sql`COALESCE(${schema.space.joinUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                joinUSDCVolume: (row.joinUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
     } catch (error) {
         console.error(
@@ -1501,21 +1488,15 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space metrics - route to correct currency column
+        // Update space metrics - route to correct currency column using Store API
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                tipVolume: (row.tipVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    tipUSDCVolume: sql`COALESCE(${schema.space.tipUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                tipUSDCVolume: (row.tipUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
 
         // Update tip leaderboard for sender - route to correct columns
@@ -1636,21 +1617,15 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space bot tip volume - route to correct column
+        // Update space bot tip volume - route to correct column using Store API
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                botTipVolume: (row.botTipVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    botTipUSDCVolume: sql`COALESCE(${schema.space.botTipUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                botTipUSDCVolume: (row.botTipUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
 
         // Update app tip metrics - route to correct column
