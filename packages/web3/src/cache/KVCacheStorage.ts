@@ -1,9 +1,24 @@
 import { BigNumber } from 'ethers'
 import SuperJson from 'superjson'
+import TTLCache from '@isaacs/ttlcache'
 import { CacheStorageConfig, CreateStorageFn, ICacheStorage } from './ICacheStorage'
 import { dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('web3:kvcache')
+
+/**
+ * Configuration options specific to KVCacheStorage
+ */
+export interface KVCacheStorageConfig extends CacheStorageConfig {
+    /**
+     * Disable the local in-memory cache layer.
+     * When enabled (default), a local TTLCache is used as a synchronous first-level cache
+     * before falling back to KV. This is intended for use in workers where the local
+     * cache only exists for the duration of a single request, providing fast access
+     * for repeated reads within the same request without hitting KV multiple times.
+     */
+    disableLocalCache?: boolean
+}
 
 // Register ethers BigNumber with SuperJSON
 SuperJson.registerCustom<BigNumber, string>(
@@ -153,17 +168,39 @@ interface KVCacheEntry<V> {
 /**
  * Cloudflare KV-backed cache storage implementation
  * Implements ICacheStorage from @towns-protocol/web3 for use as a SpaceDapp cache backend
+ *
+ * This implementation includes an optional local in-memory cache layer (enabled by default)
+ * that sits in front of KV. This is intended for use in Cloudflare Workers or similar
+ * serverless environments where the local cache only exists for the duration of a single
+ * request. This provides fast access for repeated reads within the same request without
+ * hitting KV multiple times, while still benefiting from KV's persistence across requests.
  */
 export class KVCacheStorage<V> implements ICacheStorage<V> {
     private readonly kv: KVNamespace
     private readonly keyPostfix: string
     private readonly defaultTtlMs: number
     private readonly minKVTtlSeconds = 60 // KV minimum TTL
+    /**
+     * Local in-memory cache that serves as a synchronous first-level cache before KV.
+     * In a worker context, this cache only exists for the duration of the request,
+     * providing fast repeated access without additional KV reads.
+     * TTLCache handles expiration automatically via its built-in TTL support.
+     */
+    private readonly localCache: TTLCache<string, V> | null
 
-    constructor(kv: KVNamespace, config: CacheStorageConfig) {
+    constructor(kv: KVNamespace, config: KVCacheStorageConfig) {
         this.kv = kv
         this.keyPostfix = config?.keyPostfix ?? ''
         this.defaultTtlMs = config?.ttlMs ?? 15 * 60 * 1000 // 15 minutes default
+
+        // Initialize local cache unless explicitly disabled
+        // Uses the same TTL and maxSize config as the KV cache
+        this.localCache = config?.disableLocalCache
+            ? null
+            : new TTLCache<string, V>({
+                  ttl: this.defaultTtlMs,
+                  max: config?.maxSize ?? 10_000,
+              })
     }
 
     private getKey(key: string): string {
@@ -172,6 +209,14 @@ export class KVCacheStorage<V> implements ICacheStorage<V> {
 
     async get(key: string): Promise<V | undefined> {
         try {
+            // Check local cache first if enabled (synchronous)
+            if (this.localCache) {
+                const localValue = this.localCache.get(key)
+                if (localValue !== undefined) {
+                    return localValue
+                }
+            }
+
             const cached = await this.kv.get(this.getKey(key))
             if (cached === null) {
                 return undefined
@@ -187,7 +232,17 @@ export class KVCacheStorage<V> implements ICacheStorage<V> {
             }
 
             // Denormalize ethers.js struct outputs back to array-like objects with named properties
-            return denormalizeEthersOutput(entry.value) as V
+            const value = denormalizeEthersOutput(entry.value) as V
+
+            // Populate local cache on successful KV fetch with remaining TTL
+            if (this.localCache) {
+                const remainingTtlMs = entry.expiresAt - Date.now()
+                if (remainingTtlMs > 0) {
+                    this.localCache.set(key, value, { ttl: remainingTtlMs })
+                }
+            }
+
+            return value
         } catch (error) {
             logger.error('KVCacheStorage.get error:', error)
             return undefined
@@ -198,6 +253,11 @@ export class KVCacheStorage<V> implements ICacheStorage<V> {
         try {
             const effectiveTtlMs = ttlMs ?? this.defaultTtlMs
             const expiresAt = Date.now() + effectiveTtlMs
+
+            // Set in local cache if enabled (synchronous)
+            if (this.localCache) {
+                this.localCache.set(key, value, { ttl: effectiveTtlMs })
+            }
 
             // Normalize ethers.js struct outputs to plain objects for proper serialization
             const normalizedValue = normalizeEthersOutput(value) as V
@@ -222,6 +282,11 @@ export class KVCacheStorage<V> implements ICacheStorage<V> {
 
     async delete(key: string): Promise<void> {
         try {
+            // Delete from local cache if enabled (synchronous)
+            if (this.localCache) {
+                this.localCache.delete(key)
+            }
+
             await this.kv.delete(this.getKey(key))
         } catch (error) {
             logger.error('KVCacheStorage.delete error:', error)
@@ -237,11 +302,15 @@ export class KVCacheStorage<V> implements ICacheStorage<V> {
  * This is what you pass to SpaceDapp as the createStorageFn parameter
  *
  * @param kv The Cloudflare or Hosting provider KV namespace
+ * @param options Optional configuration for the KV storage (e.g., disableLocalCache)
  * @returns A factory function compatible with SpaceDapp's createStorageFn parameter
  */
-export function createKVStorageFactory<V = unknown>(kv: KVNamespace): CreateStorageFn<V> {
+export function createKVStorageFactory<V = unknown>(
+    kv: KVNamespace,
+    options?: Pick<KVCacheStorageConfig, 'disableLocalCache'>,
+): CreateStorageFn<V> {
     return (config: CacheStorageConfig): ICacheStorage<V> => {
-        // Combine base prefix with config prefix
-        return new KVCacheStorage<V>(kv, config)
+        // Combine base prefix with config prefix and options
+        return new KVCacheStorage<V>(kv, { ...config, ...options })
     }
 }

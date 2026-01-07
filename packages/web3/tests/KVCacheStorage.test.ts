@@ -69,6 +69,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             // Create a mock ethers struct output like getEntitlements() returns
@@ -117,6 +118,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             // Create multiple entitlements like getEntitlements() returns
@@ -171,6 +173,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             // Create nested structures
@@ -208,6 +211,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             const regularArray = [1, 2, 3, 'four', { nested: true }]
@@ -223,6 +227,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             const plainObject = {
@@ -241,6 +246,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             await cache.set('string', 'hello')
@@ -258,6 +264,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<BigNumber>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             const bigNumber = BigNumber.from('0x123456789abcdef')

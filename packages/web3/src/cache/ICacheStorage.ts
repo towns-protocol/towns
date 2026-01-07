@@ -43,5 +43,6 @@ export interface CacheStorageConfig {
 /**
  * Factory function type for creating cache storage instances
  * This allows injection of different storage backends (memory, KV, etc.)
+ * keys are unique per instantiation, and unique globally once `keyPostfix` is applied
  */
 export type CreateStorageFn<V> = (config: CacheStorageConfig) => ICacheStorage<V>
