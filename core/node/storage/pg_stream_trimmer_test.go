@@ -387,7 +387,7 @@ func TestStreamTrimmer(t *testing.T) {
 		require.Equal(beforeSeqs, afterSeqs)
 	})
 
-	t.Run("per-streamId target trims stream to configured miniblock", func(t *testing.T) {
+	t.Run("per-streamId_target_trims_stream_to_configured_miniblock", func(t *testing.T) {
 		params := setupStreamStorageTest(t)
 		ctx := params.ctx
 		pgStreamStore := params.pgStreamStore
@@ -661,7 +661,7 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 		assert.Equal(t, int64(math.MaxInt64), task.streamHistoryMbs)
 	})
 
-	t.Run("per-streamId target is included in task", func(t *testing.T) {
+	t.Run("per-streamId_target_is_included_in_task", func(t *testing.T) {
 		spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
 		otherStream := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -688,7 +688,7 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 		assert.Equal(t, int64(10), task.streamHistoryMbs)
 	})
 
-	t.Run("per-streamId target allows scheduling even without history config", func(t *testing.T) {
+	t.Run("per-streamId_target_allows_scheduling_even_without_history_config", func(t *testing.T) {
 		spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		cfg := &crypto.OnChainSettings{
@@ -743,7 +743,7 @@ func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
 		return wp
 	}
 
-	t.Run("tracks new streamIds from config", func(t *testing.T) {
+	t.Run("tracks_new_streamIds_from_config", func(t *testing.T) {
 		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
 		stream2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -781,7 +781,7 @@ func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
 		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream2])
 	})
 
-	t.Run("does nothing with empty config", func(t *testing.T) {
+	t.Run("does_nothing_with_empty_config", func(t *testing.T) {
 		cfg := &crypto.OnChainSettings{
 			StreamTrimByStreamId: []crypto.StreamIdMiniblock{},
 		}
@@ -795,7 +795,7 @@ func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
 		assert.Empty(t, tr.scheduledPerStreamTargets)
 	})
 
-	t.Run("does not re-schedule when miniblock unchanged", func(t *testing.T) {
+	t.Run("does_not_re-schedule_when_miniblock_unchanged", func(t *testing.T) {
 		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		cfg := &crypto.OnChainSettings{
@@ -826,7 +826,7 @@ func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
 		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
 	})
 
-	t.Run("re-schedules when miniblock number increases", func(t *testing.T) {
+	t.Run("re-schedules_when_miniblock_number_increases", func(t *testing.T) {
 		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		cfg := &crypto.OnChainSettings{
@@ -858,7 +858,7 @@ func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
 		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
 	})
 
-	t.Run("does not re-schedule when miniblock number decreases", func(t *testing.T) {
+	t.Run("does_not_re-schedule_when_miniblock_number_decreases", func(t *testing.T) {
 		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		cfg := &crypto.OnChainSettings{
