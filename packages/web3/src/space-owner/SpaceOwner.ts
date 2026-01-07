@@ -7,6 +7,7 @@ import { SimpleCache } from '../cache/SimpleCache'
 import { TransactionOpts } from '../types/ContractTypes'
 import { SpaceAddressFromSpaceId } from '../utils/ut'
 import { GuardianFacetShim } from './GuardianFacetShim'
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 
 export type { ISpaceOwnerBase }
 
@@ -16,13 +17,18 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
     private readonly spaceInfoCache: SimpleCache<ISpaceOwnerBase.SpaceStructOutput>
     private readonly guardianFacet: GuardianFacetShim
 
-    constructor(address: string, provider: ethers.providers.Provider) {
+    constructor(
+        address: string,
+        provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
+    ) {
         super(address, provider, connect, abi)
 
         this.guardianFacet = new GuardianFacetShim(address, provider)
 
         this.spaceInfoCache = new SimpleCache({
             ttlSeconds: 15 * 60,
+            createStorageFn,
         })
     }
 

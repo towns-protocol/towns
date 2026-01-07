@@ -4,6 +4,7 @@ import { IEntitlementsManagerBase } from '@towns-protocol/generated/dev/typings/
 import { BaseContractShim } from '../BaseContractShim'
 import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 
 const { abi, connect } = EntitlementsManager__factory
 
@@ -14,11 +15,16 @@ export class IEntitlementsShim extends BaseContractShim<typeof connect> {
         IEntitlementsManagerBase.EntitlementStructOutput[]
     >
 
-    constructor(address: string, provider: ethers.providers.Provider) {
+    constructor(
+        address: string,
+        provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
+    ) {
         super(address, provider, connect, abi)
 
         this.getEntitlementsCache = new SimpleCache({
             ttlSeconds: 15 * 60,
+            createStorageFn,
         })
     }
 

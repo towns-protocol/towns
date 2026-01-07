@@ -166,16 +166,20 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         this.config = config
         this.provider = provider
         this.baseRegistry = new BaseRegistry(config, provider)
-        this.spaceRegistrar = new SpaceRegistrar(config, provider)
+        this.spaceRegistrar = new SpaceRegistrar(config, provider, createStorageFn)
         this.walletLink = new WalletLink(config, provider)
         this.pricingModules = new PricingModules(config, provider)
         this.platformRequirements = new PlatformRequirements(
             config.addresses.spaceFactory,
             provider,
         )
-        this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
+        this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider, createStorageFn)
         if (config.addresses.utils.towns) {
-            this.townsToken = new TownsToken(config.addresses.utils.towns, provider)
+            this.townsToken = new TownsToken(
+                config.addresses.utils.towns,
+                provider,
+                createStorageFn,
+            )
         }
         this.airdrop = new RiverAirdropDapp(config, provider)
 

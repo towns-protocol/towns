@@ -14,7 +14,7 @@ export interface EntitlementCacheOptions<V> {
     positiveCacheSize?: number
     negativeCacheSize?: number
     /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
-    createStorageFn?: CreateStorageFn<CacheResult<V>>
+    createStorageFn: CreateStorageFn<CacheResult<V>> | undefined
 }
 
 export class EntitlementCache<V> {

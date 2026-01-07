@@ -6,7 +6,7 @@ export interface SimpleCacheOptions<V> {
     ttlSeconds?: number
     maxSize?: number
     /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
-    createStorageFn?: CreateStorageFn<V>
+    createStorageFn: CreateStorageFn<V> | undefined
 }
 
 export class SimpleCache<V> {
@@ -18,7 +18,7 @@ export class SimpleCache<V> {
      * @param options.maxSize Optional maximum number of entries in the cache.
      * @param options.createStorageFn Optional factory to create storage backend. Defaults to in-memory TTLCache.
      */
-    constructor(options: SimpleCacheOptions<V> = {}) {
+    constructor(options: SimpleCacheOptions<V>) {
         const ttlMs = options.ttlSeconds !== undefined ? options.ttlSeconds * 1000 : undefined
         const createFn = options.createStorageFn ?? createDefaultStorage
         this.storage = createFn({
