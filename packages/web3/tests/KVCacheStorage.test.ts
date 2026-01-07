@@ -2,6 +2,7 @@
  * @group main
  */
 
+import { BigNumber } from 'ethers'
 import { KVCacheStorage, KVNamespace } from '../src/cache/KVCacheStorage'
 import { describe, it, expect, beforeEach } from 'vitest'
 
@@ -235,6 +236,94 @@ describe('KVCacheStorage', () => {
             expect(await cache.get('number')).toBe(42)
             expect(await cache.get('boolean')).toBe(true)
             expect(await cache.get('null')).toBe(null)
+        })
+
+        it('should preserve BigNumber objects after round-trip', async () => {
+            const cache = new KVCacheStorage<BigNumber>(mockKV, {
+                keyPostfix: '',
+                ttlMs: 60000,
+            })
+
+            const bigNumber = BigNumber.from('0x123456789abcdef')
+
+            await cache.set('bigNumber', bigNumber)
+            const retrieved = await cache.get('bigNumber')
+
+            expect(retrieved).toBeDefined()
+            expect(BigNumber.isBigNumber(retrieved)).toBe(true)
+            expect(retrieved!.toString()).toBe(bigNumber.toString())
+            expect(retrieved!.toHexString()).toBe(bigNumber.toHexString())
+        })
+
+        it('should preserve arrays of BigNumber objects after round-trip', async () => {
+            const cache = new KVCacheStorage<BigNumber[]>(mockKV, {
+                keyPostfix: '',
+                ttlMs: 60000,
+            })
+
+            // This mimics bannedTokenIdsCache: SimpleCache<ethers.BigNumber[]>
+            const bannedTokenIds = [
+                BigNumber.from('0x1'),
+                BigNumber.from('0x2'),
+                BigNumber.from('0xffffffffffffffff'),
+            ]
+
+            await cache.set('bannedTokenIds', bannedTokenIds)
+            const retrieved = await cache.get('bannedTokenIds')
+
+            expect(retrieved).toBeDefined()
+            expect(retrieved).toHaveLength(3)
+
+            // Each element should be a proper BigNumber with working methods
+            for (let i = 0; i < bannedTokenIds.length; i++) {
+                expect(BigNumber.isBigNumber(retrieved![i])).toBe(true)
+                expect(retrieved![i].toString()).toBe(bannedTokenIds[i].toString())
+                expect(retrieved![i].toHexString()).toBe(bannedTokenIds[i].toHexString())
+            }
+        })
+
+        it('should preserve BigNumbers nested in objects after round-trip', async () => {
+            const cache = new KVCacheStorage<{ tokenId: BigNumber; balance: BigNumber }>(mockKV, {
+                keyPostfix: '',
+                ttlMs: 60000,
+            })
+
+            const data = {
+                tokenId: BigNumber.from('0xabc'),
+                balance: BigNumber.from('1000000000000000000'),
+            }
+
+            await cache.set('tokenData', data)
+            const retrieved = await cache.get('tokenData')
+
+            expect(retrieved).toBeDefined()
+            expect(BigNumber.isBigNumber(retrieved!.tokenId)).toBe(true)
+            expect(BigNumber.isBigNumber(retrieved!.balance)).toBe(true)
+            expect(retrieved!.tokenId.toString()).toBe(data.tokenId.toString())
+            expect(retrieved!.balance.toString()).toBe(data.balance.toString())
+        })
+
+        it('should preserve BigNumbers in ethers struct outputs after round-trip', async () => {
+            const cache = new KVCacheStorage<unknown>(mockKV, {
+                keyPostfix: '',
+                ttlMs: 60000,
+            })
+
+            // Create a struct output that contains BigNumbers, like token balances
+            const structOutput = createEthersStructOutput(
+                [BigNumber.from('0x1'), '0xAddress', BigNumber.from('1000')],
+                ['tokenId', 'owner', 'balance'],
+            )
+
+            await cache.set('structWithBigNumbers', structOutput)
+            const retrieved = (await cache.get('structWithBigNumbers')) as typeof structOutput
+
+            expect(retrieved).toBeDefined()
+            expect(BigNumber.isBigNumber(retrieved.tokenId)).toBe(true)
+            expect(BigNumber.isBigNumber(retrieved.balance)).toBe(true)
+            expect(retrieved.tokenId.toString()).toBe('1')
+            expect(retrieved.balance.toString()).toBe('1000')
+            expect(retrieved.owner).toBe('0xAddress')
         })
     })
 

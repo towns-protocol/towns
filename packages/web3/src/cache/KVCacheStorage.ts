@@ -34,6 +34,13 @@ function normalizeEthersOutput(value: unknown): unknown {
         return value
     }
 
+    // Let SuperJson's registered BigNumber serializer handle BigNumbers
+    // BigNumber properties (_hex, _isBigNumber) are non-enumerable, so Object.entries
+    // would return an empty array and corrupt the BigNumber into {}
+    if (BigNumber.isBigNumber(value)) {
+        return value
+    }
+
     // Handle ethers struct outputs (arrays with named properties)
     if (isEthersStructOutput(value)) {
         const namedKeys = Object.keys(value).filter((key) => isNaN(Number(key)))
@@ -68,6 +75,12 @@ function normalizeEthersOutput(value: unknown): unknown {
  */
 function denormalizeEthersOutput(value: unknown): unknown {
     if (value === null || value === undefined) {
+        return value
+    }
+
+    // Preserve BigNumber objects - they've already been deserialized by SuperJson
+    // BigNumber properties are non-enumerable, so Object.entries would corrupt them
+    if (BigNumber.isBigNumber(value)) {
         return value
     }
 
