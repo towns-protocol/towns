@@ -55,19 +55,23 @@ export class SimpleCache<V> {
         opts?: { skipCache?: boolean },
     ): Promise<V> {
         const cacheKey = key.toKey()
+        const skipCache = opts?.skipCache === true
 
         // 1. Check for pending fetch FIRST (synchronous check before any await)
         // This prevents race conditions where concurrent calls interleave
-        const pendingPromise = this.pendingFetches.get(cacheKey)
-        if (pendingPromise) {
-            return pendingPromise
+        // Skip deduplication when skipCache is true - caller explicitly wants fresh data
+        if (!skipCache) {
+            const pendingPromise = this.pendingFetches.get(cacheKey)
+            if (pendingPromise) {
+                return pendingPromise
+            }
         }
 
         // 2. Create promise that checks cache then fetches if needed
         // Store it synchronously BEFORE any await to prevent races
         const operationPromise = (async (): Promise<V> => {
             // Check main cache
-            if (opts?.skipCache !== true) {
+            if (!skipCache) {
                 const cachedValue = await this.storage.get(cacheKey)
                 if (cachedValue !== undefined) {
                     return cachedValue
@@ -81,13 +85,18 @@ export class SimpleCache<V> {
             return fetchedValue
         })()
 
-        this.pendingFetches.set(cacheKey, operationPromise)
+        // Only track in pendingFetches if not skipping cache
+        // skipCache calls run independently and don't deduplicate
+        if (!skipCache) {
+            this.pendingFetches.set(cacheKey, operationPromise)
+        }
 
         try {
             return await operationPromise
         } finally {
-            // Remove from pending fetches regardless of success or failure
-            this.pendingFetches.delete(cacheKey)
+            if (!skipCache) {
+                this.pendingFetches.delete(cacheKey)
+            }
         }
     }
 }

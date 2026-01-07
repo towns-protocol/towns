@@ -45,6 +45,8 @@ export class EntitlementCache<V> {
 
     async invalidate(keyable: Keyable): Promise<void> {
         const key = keyable.toKey()
+        // Clear pending fetch first to prevent returning stale in-flight data
+        this.pendingFetches.delete(key)
         await Promise.all([this.negativeStorage.delete(key), this.positiveStorage.delete(key)])
     }
 
