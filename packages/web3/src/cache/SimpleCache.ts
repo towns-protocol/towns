@@ -36,10 +36,15 @@ export class SimpleCache<V> {
     }
 
     async remove(key: Keyable): Promise<void> {
-        return this.storage.delete(key.toKey())
+        const cacheKey = key.toKey()
+        // Clear pending fetch first to prevent returning stale in-flight data
+        this.pendingFetches.delete(cacheKey)
+        return this.storage.delete(cacheKey)
     }
 
     async clear(): Promise<void> {
+        // Clear all pending fetches first to prevent returning stale in-flight data
+        this.pendingFetches.clear()
         if (this.storage.clear) {
             return this.storage.clear()
         }
