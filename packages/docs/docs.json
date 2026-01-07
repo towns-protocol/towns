@@ -204,6 +204,13 @@
           "white-paper/technical-whitepaper",
           "white-paper/mica-whitepaper"
         ]
+      },
+      {
+        "group": "Releases",
+        "icon": "rocket-launch",
+        "pages": [
+          "releases/changelog"
+        ]
       }
     ]
   },

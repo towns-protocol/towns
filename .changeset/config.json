@@ -7,7 +7,16 @@
     "access": "public",
     "baseBranch": "main",
     "updateInternalDependencies": "patch",
-    "ignore": [],
+    "ignore": [
+        "@towns-protocol/playground",
+        "@towns-protocol/stream-metadata",
+        "@towns-protocol/subgraph",
+        "@towns-protocol/anvil-docker",
+        "@towns-protocol/stress",
+        "@towns-protocol/docs",
+        "@towns-protocol/metrics-discovery",
+        "@towns-protocol/example-bot-quickstart"
+    ],
     "privatePackages": {
         "version": false,
         "tag": false
