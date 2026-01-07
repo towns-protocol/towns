@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS md_stream_records (
     updated_at_block BIGINT NOT NULL,
     CHECK (octet_length(stream_id) = 32),
     CHECK (octet_length(last_miniblock_hash) = 32),
-    CHECK (last_miniblock_num >= 0),
+    CHECK (last_miniblock_num >= 0)
 );
 
 -- md_stream_placement is "cold" table since placement changes rarely.
@@ -18,11 +18,11 @@ CREATE TABLE IF NOT EXISTS md_stream_records (
 CREATE TABLE IF NOT EXISTS md_stream_placement (
     stream_id BYTEA PRIMARY KEY,
     nodes INT[] NOT NULL,  -- same as md_stream_records.nodes
-    CHECK (octet_length(stream_id) = 32),
+    CHECK (octet_length(stream_id) = 32)
 );
 
-CREATE INDEX IF NOT EXISTS md_streams_placement_nodes_gin_idx
-    ON md_streams_placement USING GIN (nodes);
+CREATE INDEX IF NOT EXISTS md_stream_placement_nodes_gin_idx
+    ON md_stream_placement USING GIN (nodes);
 
 -- md_blocks contains list of changes to streams.
 -- each batch of writes generates a new block number (+1 from previous)
@@ -31,8 +31,8 @@ CREATE INDEX IF NOT EXISTS md_streams_placement_nodes_gin_idx
 -- md_blocks contains full updated record of the stream, i.e. all
 -- fields (event not updated) are set.
 CREATE TABLE IF NOT EXISTS md_blocks (
-    block_num BIGINT PRIMARY KEY,
-    block_slot BIGINT PRIMARY KEY,
+    block_num BIGINT NOT NULL,
+    block_slot BIGINT NOT NULL,
     stream_id BYTEA NOT NULL,
     event_mask SMALLINT NOT NULL,  -- bitmask indicating which fields were updated
     last_miniblock_hash BYTEA,
@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS md_blocks (
     sealed BOOLEAN,
     CHECK (octet_length(stream_id) = 32),
     CHECK (block_num >= 0),
-    CHECK (block_slot >= 0)
+    CHECK (block_slot >= 0),
+    PRIMARY KEY (block_num, block_slot)
 );
 
 -- md_last_block contains the last block number.
@@ -58,5 +59,3 @@ CREATE TABLE IF NOT EXISTS md_last_block (
     CHECK (singleton_key = TRUE)
 );
 INSERT INTO md_last_block (singleton_key, block_num) VALUES (TRUE, -1);
-
-
