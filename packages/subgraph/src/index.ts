@@ -206,17 +206,14 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
     }
     try {
         // update swap fee table
-        const result = await context.db.sql
-            .update(schema.swapFee)
-            .set({
+        const existing = await context.db.find(schema.swapFee, { spaceId })
+        if (existing) {
+            await context.db.update(schema.swapFee, { spaceId }).set({
                 posterFeeBps: event.args.posterFeeBps,
                 collectPosterFeeToSpace: event.args.forwardPosterFee,
                 createdAt: blockNumber,
             })
-            .where(eq(schema.swapFee.spaceId, spaceId))
-
-        if (result.changes === 0) {
-            // Insert a new record if it doesn't exist
+        } else {
             await context.db.insert(schema.swapFee).values({
                 spaceId: spaceId,
                 posterFeeBps: event.args.posterFeeBps,
