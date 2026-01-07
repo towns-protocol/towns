@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { default as prompts } from 'prompts'
-import { red, yellow, cyan } from 'picocolors'
+import { red, yellow, cyan, green } from 'picocolors'
 import * as jsonc from 'jsonc-parser'
 import {
     getPackageManager,
@@ -10,6 +10,7 @@ import {
     applyReplacements,
     printSuccess,
     initializeGitRepository,
+    installTownsSkills,
     type PackageJson,
 } from './utils.js'
 import type { InitArgs } from '../parser.js'
@@ -98,6 +99,29 @@ export async function init(argv: InitArgs) {
             modifiedContent = JSON.stringify(parsed, null, 2)
             fs.writeFileSync(packageJsonPath, modifiedContent)
         }
+
+        // Install skills
+        console.log(cyan('Installing Towns Agent Skills...'))
+        try {
+            const skillSuccess = await installTownsSkills(targetDir)
+            if (skillSuccess) {
+                console.log(green('✓'), 'Towns Agent Skills installed successfully!')
+            } else {
+                console.log(
+                    yellow('⚠'),
+                    'Failed to install Towns Agent Skills. You can install them later with:',
+                )
+                console.log(yellow(`  cd ${projectName} && towns-bot install-skill`))
+            }
+        } catch (error) {
+            console.log(
+                yellow('⚠'),
+                'Error installing skills:',
+                error instanceof Error ? error.message : error,
+            )
+            console.log(yellow(`  You can install them later with: towns-bot install-skill`))
+        }
+
         await initializeGitRepository(targetDir)
         printSuccess(projectName, packageManager)
     } catch (error) {

@@ -369,3 +369,141 @@ export async function initializeGitRepository(targetDir: string): Promise<boolea
         return false
     }
 }
+
+const TOWNS_SKILL_REPO = 'https://github.com/towns-protocol/skills.git'
+const AGENTS_SKILL_FOLDERS = ['.claude/skills', '.codex/skills']
+
+export async function installTownsSkills(projectDir: string): Promise<boolean> {
+    const tempDir = `${projectDir}-skills-temp`
+    try {
+        const cloneResult = spawn.sync(
+            'git',
+            ['clone', '--depth', '1', '--filter=blob:none', '--sparse', TOWNS_SKILL_REPO, tempDir],
+            { stdio: 'pipe' },
+        )
+
+        if (cloneResult.status !== 0) {
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true })
+            }
+            return false
+        }
+        const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', 'skills'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (sparseResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const checkoutResult = spawn.sync('git', ['checkout'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (checkoutResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const sourceSkillsDir = path.join(tempDir, 'skills')
+        if (!fs.existsSync(sourceSkillsDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+
+        const skillDirs = fs.readdirSync(sourceSkillsDir, { withFileTypes: true })
+        for (const skillFolder of AGENTS_SKILL_FOLDERS) {
+            const targetDir = path.join(projectDir, skillFolder)
+
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true })
+            }
+
+            for (const skillDir of skillDirs) {
+                if (skillDir.isDirectory()) {
+                    const sourcePath = path.join(sourceSkillsDir, skillDir.name)
+                    const destPath = path.join(targetDir, skillDir.name)
+
+                    fs.cpSync(sourcePath, destPath, { recursive: true })
+                }
+            }
+        }
+
+        fs.rmSync(tempDir, { recursive: true, force: true })
+        return true
+    } catch (error) {
+        console.error(
+            picocolors.red('Error installing skills:'),
+            error instanceof Error ? error.message : error,
+        )
+        if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+        }
+        return false
+    }
+}
+
+export async function downloadAgentsMd(projectDir: string): Promise<boolean> {
+    const tempDir = `${projectDir}-agents-md-temp`
+    try {
+        const agentsMdPath = 'packages/examples/bot-quickstart/AGENTS.md'
+        const latestSdkTag = getLatestSdkTag()
+        if (!latestSdkTag) {
+            return false
+        }
+        const cloneResult = spawn.sync(
+            'git',
+            [
+                'clone',
+                '--no-checkout',
+                '--depth',
+                '1',
+                '--sparse',
+                '--branch',
+                latestSdkTag,
+                'https://github.com/towns-protocol/towns.git',
+                tempDir,
+            ],
+            { stdio: 'pipe' },
+        )
+        if (cloneResult.status !== 0) {
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true })
+            }
+            return false
+        }
+        const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', agentsMdPath], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (sparseResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const checkoutResult = spawn.sync('git', ['checkout'], {
+            stdio: 'pipe',
+            cwd: tempDir,
+        })
+        if (checkoutResult.status !== 0) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const sourceFile = path.join(tempDir, agentsMdPath)
+        if (!fs.existsSync(sourceFile)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
+        const destFile = path.join(projectDir, 'AGENTS.md')
+        fs.copyFileSync(sourceFile, destFile)
+        fs.rmSync(tempDir, { recursive: true, force: true })
+        return true
+    } catch (error) {
+        console.error(
+            picocolors.red('Error downloading AGENTS.md:'),
+            error instanceof Error ? error.message : error,
+        )
+        if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+        }
+        return false
+    }
+}
