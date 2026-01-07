@@ -16,4 +16,10 @@
 - [ ] Tests added where required
 - [ ] Documentation updated where applicable
 - [ ] Changes adhere to the repository's contribution guidelines
-- [ ] Changeset added (run `yarn changeset` if affecting published packages)
+
+### Changeset
+
+**Did you modify any published npm packages?**
+
+- [ ] Yes → I ran `bun changeset` and described my changes (use `patch` for most changes)
+- [ ] No → This only affects `/core`, docs, CI, or private packages
