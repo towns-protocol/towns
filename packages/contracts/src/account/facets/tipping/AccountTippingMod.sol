@@ -11,7 +11,7 @@ import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 
 library AccountTippingMod {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         TYPES                            */
+    /*                         TYPES                              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
