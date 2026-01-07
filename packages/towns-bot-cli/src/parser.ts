@@ -27,6 +27,7 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
     },
     update: {
         boolean: ['skipAgentsMd'],
+        alias: { 'skip-agents-md': 'skipAgentsMd' },
     },
     'install-skill': {},
 }

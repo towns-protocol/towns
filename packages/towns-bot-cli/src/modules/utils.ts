@@ -407,22 +407,25 @@ export async function installTownsSkills(projectDir: string): Promise<boolean> {
             return false
         }
         const sourceSkillsDir = path.join(tempDir, 'skills')
-        if (fs.existsSync(sourceSkillsDir)) {
-            const skillDirs = fs.readdirSync(sourceSkillsDir, { withFileTypes: true })
-            for (const skillFolder of AGENTS_SKILL_FOLDERS) {
-                const targetDir = path.join(projectDir, skillFolder)
+        if (!fs.existsSync(sourceSkillsDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true })
+            return false
+        }
 
-                if (!fs.existsSync(targetDir)) {
-                    fs.mkdirSync(targetDir, { recursive: true })
-                }
+        const skillDirs = fs.readdirSync(sourceSkillsDir, { withFileTypes: true })
+        for (const skillFolder of AGENTS_SKILL_FOLDERS) {
+            const targetDir = path.join(projectDir, skillFolder)
 
-                for (const skillDir of skillDirs) {
-                    if (skillDir.isDirectory()) {
-                        const sourcePath = path.join(sourceSkillsDir, skillDir.name)
-                        const destPath = path.join(targetDir, skillDir.name)
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true })
+            }
 
-                        fs.cpSync(sourcePath, destPath, { recursive: true })
-                    }
+            for (const skillDir of skillDirs) {
+                if (skillDir.isDirectory()) {
+                    const sourcePath = path.join(sourceSkillsDir, skillDir.name)
+                    const destPath = path.join(targetDir, skillDir.name)
+
+                    fs.cpSync(sourcePath, destPath, { recursive: true })
                 }
             }
         }
