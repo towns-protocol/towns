@@ -2,26 +2,7 @@
     "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
     "changelog": ["@changesets/changelog-github", { "repo": "towns-protocol/towns" }],
     "commit": false,
-    "fixed": [
-        [
-            "@towns-protocol/sdk",
-            "@towns-protocol/react-sdk",
-            "@towns-protocol/web3",
-            "@towns-protocol/encryption",
-            "@towns-protocol/proto",
-            "@towns-protocol/generated",
-            "@towns-protocol/utils",
-            "@towns-protocol/rpc-connector",
-            "@towns-protocol/sdk-crypto",
-            "@towns-protocol/contracts",
-            "@towns-protocol/bot",
-            "towns-bot",
-            "create-towns-protocol-app",
-            "@towns-protocol/eslint-config",
-            "@towns-protocol/prettier-config",
-            "@towns-protocol/xchain-monitor"
-        ]
-    ],
+    "fixed": [["@towns-protocol/*", "towns-bot", "create-towns-protocol-app"]],
     "linked": [],
     "access": "public",
     "baseBranch": "main",

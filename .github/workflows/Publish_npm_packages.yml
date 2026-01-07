@@ -1,9 +1,12 @@
-name: Nightly npm package publish
+name: Publish npm packages
 env:
     FOUNDRY_VERSION: stable
 on:
-    schedule:
-        - cron: '0 0 * * *' # Runs every night at midnight
+    push:
+        branches:
+            - main
+        paths:
+            - '.changeset/**'
     workflow_dispatch: # Allows manual triggering
 
 jobs:

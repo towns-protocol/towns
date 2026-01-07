@@ -102,15 +102,6 @@ This guides you through:
 - Changes to CI/build tooling only
 - Changes to the `core/` directory
 
-### Published packages
-
-- `@towns-protocol/sdk`, `@towns-protocol/react-sdk`, `@towns-protocol/web3`
-- `@towns-protocol/encryption`, `@towns-protocol/proto`, `@towns-protocol/generated`
-- `@towns-protocol/utils`, `@towns-protocol/rpc-connector`, `@towns-protocol/sdk-crypto`
-- `@towns-protocol/contracts`, `@towns-protocol/bot`, `towns-bot`
-- `create-towns-protocol-app`, `@towns-protocol/eslint-config`
-- `@towns-protocol/prettier-config`, `@towns-protocol/xchain-monitor`
-
 ### Release process
 
 1. Your PR merges to main (with changeset)
