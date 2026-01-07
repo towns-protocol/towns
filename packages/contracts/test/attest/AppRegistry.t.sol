@@ -651,6 +651,9 @@ contract AppRegistryTest is AppRegistryBaseTest {
         address notAllowed
     ) external givenSimpleAppIsRegistered {
         vm.assume(notAllowed != founder);
+        vm.assume(notAllowed != address(0));
+        vm.assume(notAllowed != address(appAccount));
+
         vm.prank(notAllowed);
         vm.expectRevert(NotAllowed.selector);
         installer.updateApp(SimpleAppFacet(SIMPLE_APP), appAccount);
