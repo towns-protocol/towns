@@ -380,8 +380,8 @@ ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existing = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
         if (!existing) {
             await context.db.insert(schema.stakers).values({
@@ -413,18 +413,15 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
             return
         }
 
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake) {
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    amount: existingStake.amount + event.args.amount,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                amount: existingStake.amount + event.args.amount,
+                createdAt: blockNumber,
+            })
 
             if (existingStake.delegatee) {
                 await handleStakeToSpace(context, existingStake.delegatee, event.args.amount)
@@ -442,8 +439,8 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake) {
@@ -459,13 +456,10 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
                 existingStake.amount,
             )
 
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    delegatee: event.args.delegatee,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                delegatee: event.args.delegatee,
+                createdAt: blockNumber,
+            })
         }
     } catch (error) {
         console.error(
@@ -479,8 +473,8 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake && existingStake.amount !== null) {
@@ -492,13 +486,10 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
                 await handleStakeToSpace(context, existingStake.delegatee, 0n - withdrawAmount)
             }
 
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    amount: newAmount,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                amount: newAmount,
+                createdAt: blockNumber,
+            })
         }
     } catch (error) {
         console.error(
@@ -513,8 +504,8 @@ ponder.on('BaseRegistry:OperatorRegistered', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.operator.findFirst({
-            where: eq(schema.operator.address, event.args.operator),
+        const existing = await context.db.find(schema.operator, {
+            address: event.args.operator,
         })
         if (!existing) {
             await context.db.insert(schema.operator).values({
@@ -536,17 +527,14 @@ ponder.on('BaseRegistry:OperatorStatusChanged', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.operator.findFirst({
-            where: eq(schema.operator.address, event.args.operator),
+        const existing = await context.db.find(schema.operator, {
+            address: event.args.operator,
         })
         if (existing) {
-            await context.db.sql
-                .update(schema.operator)
-                .set({
-                    status: event.args.newStatus, // Status is one of: Standby, Approved, Active, Exiting
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.operator.address, event.args.operator))
+            await context.db.update(schema.operator, { address: event.args.operator }).set({
+                status: event.args.newStatus, // Status is one of: Standby, Approved, Active, Exiting
+                createdAt: blockNumber,
+            })
         } else {
             console.warn(
                 `No existing operator found for address ${event.args.operator} in OperatorStatusChanged event`,
@@ -564,8 +552,8 @@ ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existing = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
         if (!existing) {
             await context.db.insert(schema.stakers).values({
@@ -593,8 +581,8 @@ ponder.on('AppRegistry:AppCreated', async ({ event, context }) => {
     const { AppRegistry } = context.contracts
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
             console.warn(`App already exists for AppRegistry:AppCreated`, event.args.uid)
@@ -634,19 +622,16 @@ ponder.on('AppRegistry:AppRegistered', async ({ event, context }) => {
     const { AppRegistry } = context.contracts
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
 
         if (existingApp) {
             // App exists, just update registration status
-            await context.db.sql
-                .update(schema.app)
-                .set({
-                    isRegistered: true,
-                    appId: event.args.uid, // Update appId in case it wasn't set
-                })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isRegistered: true,
+                appId: event.args.uid, // Update appId in case it wasn't set
+            })
         } else {
             // App doesn't exist yet (AppRegistered fired before AppCreated)
             const appDetails = await context.client.readContract({
@@ -682,14 +667,13 @@ ponder.on('AppRegistry:AppUnregistered', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({ isRegistered: false })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isRegistered: false,
+            })
         }
     } catch (error) {
         console.error(
@@ -703,14 +687,13 @@ ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({ isBanned: true })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isBanned: true,
+            })
         }
     } catch (error) {
         console.error(
@@ -726,8 +709,8 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, app),
+        const existingApp = await context.db.find(schema.app, {
+            address: app,
         })
         if (!existingApp) {
             console.warn(
@@ -791,20 +774,14 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
 
     try {
         // Soft delete installation record
-        const installResult = await context.db.sql
-            .update(schema.appInstallation)
+        const installResult = await context.db
+            .update(schema.appInstallation, { app, account })
             .set({
                 uninstalledAt: block.timestamp,
                 isActive: false,
             })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
 
-        if (installResult.changes === 0) {
+        if (!installResult) {
             console.warn(`No installation found for app ${app} in account ${account}`)
         }
 
@@ -833,20 +810,12 @@ ponder.on('AppRegistry:AppRenewed', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const result = await context.db.sql
-            .update(schema.appInstallation)
-            .set({
-                lastRenewedAt: block.timestamp,
-                appId, // Update to current version if changed
-            })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
+        const result = await context.db.update(schema.appInstallation, { app, account }).set({
+            lastRenewedAt: block.timestamp,
+            appId, // Update to current version if changed
+        })
 
-        if (result.changes === 0) {
+        if (!result) {
             console.warn(`No installation found for renewal: app ${app} in account ${account}`)
         }
     } catch (error) {
@@ -864,20 +833,12 @@ ponder.on('AppRegistry:AppUpdated', async ({ event, context }) => {
 
     try {
         // Update the installation record
-        const result = await context.db.sql
-            .update(schema.appInstallation)
-            .set({
-                lastUpdatedAt: block.timestamp,
-                appId, // Update to new version/config
-            })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
+        const result = await context.db.update(schema.appInstallation, { app, account }).set({
+            lastUpdatedAt: block.timestamp,
+            appId, // Update to new version/config
+        })
 
-        if (result.changes === 0) {
+        if (!result) {
             console.warn(`No installation found for update: app ${app} in account ${account}`)
         }
     } catch (error) {
@@ -895,10 +856,10 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
 
     try {
         // Mark old version as no longer latest or current
-        await context.db.sql
-            .update(schema.appVersion)
-            .set({ isLatest: false, isCurrent: false })
-            .where(and(eq(schema.appVersion.app, app), eq(schema.appVersion.appId, oldVersionId)))
+        await context.db.update(schema.appVersion, { app, appId: oldVersionId }).set({
+            isLatest: false,
+            isCurrent: false,
+        })
 
         await context.db
             .insert(schema.appVersion)
@@ -924,13 +885,10 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
             })
 
         // Update app's current version (keep appId immutable as stable identifier)
-        await context.db.sql
-            .update(schema.app)
-            .set({
-                currentVersionId: newVersionId,
-                lastUpdatedAt: block.timestamp,
-            })
-            .where(eq(schema.app.address, app))
+        await context.db.update(schema.app, { address: app }).set({
+            currentVersionId: newVersionId,
+            lastUpdatedAt: block.timestamp,
+        })
     } catch (error) {
         console.error(
             `Error processing AppRegistry:AppUpgraded at blockNumber ${blockNumber}:`,
@@ -969,15 +927,9 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
             )
             const agentData = await fetchAgentData(agentUri, 3, 1000, owner, ENVIRONMENT)
             if (agentData) {
-                await context.db.sql
-                    .update(schema.agentIdentity)
-                    .set({ agentData: agentData })
-                    .where(
-                        and(
-                            eq(schema.agentIdentity.app, owner),
-                            eq(schema.agentIdentity.agentId, agentId),
-                        ),
-                    )
+                await context.db.update(schema.agentIdentity, { app: owner, agentId }).set({
+                    agentData: agentData,
+                })
                 console.info(
                     `[AgentRegistered] Successfully stored agent data: agentId=${agentId}, app=${owner}`,
                 )
