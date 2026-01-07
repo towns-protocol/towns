@@ -81,9 +81,23 @@ export class EntitlementCache<V> {
 
             const result = await onCacheMiss(keyable)
             if (result.isPositive) {
-                await this.positiveStorage.set(key, result)
+                if (skipCache) {
+                    await Promise.all([
+                        this.negativeStorage.delete(key),
+                        this.positiveStorage.set(key, result),
+                    ])
+                } else {
+                    await this.positiveStorage.set(key, result)
+                }
             } else {
-                await this.negativeStorage.set(key, result)
+                if (skipCache) {
+                    await Promise.all([
+                        this.positiveStorage.delete(key),
+                        this.negativeStorage.set(key, result),
+                    ])
+                } else {
+                    await this.negativeStorage.set(key, result)
+                }
             }
 
             return result
