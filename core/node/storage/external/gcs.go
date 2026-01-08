@@ -103,10 +103,6 @@ func newGcsUploadSession(
 
 // WriteMiniblockData either writes the given blockdata to the external storage, or schedules it for writing
 // when it's not big enough to be written at the moment.
-//
-// TODO: once appendable objects are out of preview consider using appendable writers to append each miniblock
-// to the object instead of doing a plain PUT operation.
-// https://pkg.go.dev/cloud.google.com/go/storage#ObjectHandle.NewWriterFromAppendableObject
 func (g *gcsUploadSession) WriteMiniblockData(ctx context.Context, miniblockNum int64, blockdata []byte) error {
 	// try to write blockdata to gcs, the background task writes this data to gcs.
 	if _, err := g.gcStorage.Write(blockdata); err != nil {
