@@ -12,7 +12,7 @@
     },
     "devDependencies": {
         "cspell": "^8.8.1",
-        "mint": "4.2.173"
+        "mint": "4.2.260"
     },
     "keywords": []
 }
