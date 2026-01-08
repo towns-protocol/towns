@@ -272,7 +272,13 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         }
         const token = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
-            .then((tokens) => tokens[0])
+            .then((tokens) => tokens.at(0))
+
+        if (!token) {
+            throw new Error(
+                `Wallet address "${walletAddress}" is not a member of space "${spaceId}".`,
+            )
+        }
 
         // Call ban
         const tx = await wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
@@ -292,7 +298,13 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         }
         const token = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
-            .then((tokens) => tokens[0])
+            .then((tokens) => tokens.at(0))
+
+        if (!token) {
+            throw new Error(
+                `Wallet address "${walletAddress}" is not a member of space "${spaceId}".`,
+            )
+        }
 
         // Call unban
         const tx = await wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
@@ -320,7 +332,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         const tokenId = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
-            .then((tokens) => tokens[0])
+            .then((tokens) => tokens.at(0))
+
+        if (!tokenId) {
+            return false
+        }
 
         const isBanned = await this.isBannedTokenCache.executeUsingCache(
             Keyable.isTokenBanned(spaceId, tokenId),
