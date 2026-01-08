@@ -59,7 +59,7 @@ type (
 	// OnChainEventCallback is called for each event that matches the filter.
 	// Note that the monitor doesn't care about errors in the callback and doesn't
 	// expect callbacks to change the received event.
-	OnChainEventCallback = func(context.Context, types.Log) // TODO: *types.Log
+	OnChainEventCallback = func(context.Context, *types.Log)
 
 	// OnChainNewHeader is called when a new header is detected to be added to the chain.
 	// Note, it is NOT guaranteed to be called for every new header.
@@ -178,10 +178,10 @@ func (cm *entitlementCheckChainMonitor) OnEntitlementCheckRequest(
 		from,
 		cm.checkerContractAddr,
 		[][]common.Hash{{entitlementCheckRequestedTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			var e base.IEntitlementCheckerEntitlementCheckRequested
 			if err := cm.checkerABI.UnpackIntoInterface(&e, "EntitlementCheckRequested", log.Data); err == nil {
-				e.Raw = log
+				e.Raw = *log
 				cb(ctx, &e)
 			} else {
 				logging.FromCtx(ctx).Errorw("unable to unpack EntitlementCheckRequested event",
@@ -200,10 +200,10 @@ func (cm *entitlementCheckChainMonitor) OnEntitlementCheckRequestV2(
 		from,
 		cm.checkerContractAddr,
 		[][]common.Hash{{entitlementCheckRequestedTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			var e base.IEntitlementCheckerEntitlementCheckRequestedV2
 			if err := cm.checkerABI.UnpackIntoInterface(&e, "EntitlementCheckRequestedV2", log.Data); err == nil {
-				e.Raw = log
+				e.Raw = *log
 				cb(ctx, &e)
 			} else {
 				logging.FromCtx(ctx).Errorw("unable to unpack EntitlementCheckRequestedV2 event",
@@ -518,7 +518,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 				callbacksExecuted.Add(1)
 				go func() {
 					for _, log := range collectedLogs {
-						cm.builder.eventCallbacks.onLogReceived(ctx, log)
+						cm.builder.eventCallbacks.onLogReceived(ctx, &log)
 					}
 					callbacksExecuted.Done()
 				}()

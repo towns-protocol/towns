@@ -202,7 +202,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 		0,
 		cs.entitlementGatedAddress,
 		[][]common.Hash{{cs.entitlementGatedABI.Events["EntitlementCheckResultPosted"].ID}},
-		func(ctx context.Context, event types.Log) {
+		func(ctx context.Context, event *types.Log) {
 			cs.onEntitlementCheckResultPosted(ctx, event, cs.resultPosted)
 		},
 	)
@@ -215,7 +215,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 		0,
 		cs.cfg.GetEntitlementContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
-		func(ctx context.Context, event types.Log) {
+		func(ctx context.Context, event *types.Log) {
 			cs.onEntitlementCheckRequested(ctx, event, cs.checkRequests)
 		},
 	)
@@ -224,7 +224,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 		0,
 		cs.cfg.GetEntitlementContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequestedV2"].ID}},
-		func(ctx context.Context, event types.Log) {
+		func(ctx context.Context, event *types.Log) {
 			cs.onEntitlementCheckRequestedV2(ctx, event, cs.checkRequests)
 		},
 	)
@@ -414,7 +414,7 @@ func (cs *clientSimulator) waitForPostResult(ctx context.Context, txnId [32]byte
 
 func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	ctx context.Context,
-	event types.Log,
+	event *types.Log,
 	postedResults chan postResult,
 ) {
 	entitlementCheckResultPosted := base.IEntitlementGatedEntitlementCheckResultPosted{}
@@ -428,7 +428,7 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 		event,
 	)
 
-	if err := cs.entitlementGatedContract.UnpackLog(&entitlementCheckResultPosted, "EntitlementCheckResultPosted", event); err != nil {
+	if err := cs.entitlementGatedContract.UnpackLog(&entitlementCheckResultPosted, "EntitlementCheckResultPosted", *event); err != nil {
 		log.Errorw("Failed to unpack EntitlementCheckResultPosted event", "error", err)
 		return
 	}
@@ -445,7 +445,7 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 
 func (cs *clientSimulator) onEntitlementCheckRequested(
 	ctx context.Context,
-	event types.Log,
+	event *types.Log,
 	checkRequests chan [32]byte,
 ) {
 	entitlementCheckRequest := base.IEntitlementCheckerEntitlementCheckRequested{}
@@ -459,7 +459,7 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 		entitlementCheckRequest,
 	)
 
-	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", event); err != nil {
+	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", *event); err != nil {
 		log.Errorw("Failed to unpack EntitlementCheckRequested event", "error", err)
 		return
 	}
@@ -474,7 +474,7 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 
 func (cs *clientSimulator) onEntitlementCheckRequestedV2(
 	ctx context.Context,
-	event types.Log,
+	event *types.Log,
 	checkRequests chan [32]byte,
 ) {
 	entitlementCheckRequest := base.IEntitlementCheckerEntitlementCheckRequestedV2{}
@@ -488,7 +488,7 @@ func (cs *clientSimulator) onEntitlementCheckRequestedV2(
 		entitlementCheckRequest,
 	)
 
-	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequestedV2", event); err != nil {
+	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequestedV2", *event); err != nil {
 		log.Errorw("Failed to unpack EntitlementCheckRequestedV2 event", "error", err)
 		return
 	}
