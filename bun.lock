@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "towns-protocol",
@@ -5780,8 +5781,6 @@
     "@stoplight/spectral-runtime/node-fetch": ["node-fetch@2.7.0", "", { "dependencies": { "whatwg-url": "^5.0.0" }, "peerDependencies": { "encoding": "^0.1.0" }, "optionalPeers": ["encoding"] }, "sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A=="],
 
     "@stoplight/yaml/@stoplight/types": ["@stoplight/types@14.1.1", "", { "dependencies": { "@types/json-schema": "^7.0.4", "utility-types": "^3.10.0" } }, "sha512-/kjtr+0t0tjKr+heVfviO9FrU/uGLc+QNX3fHJc19xsCNYqU7lVhaXxDmEID9BZTjG+/r9pK9xP/xU02XGg65g=="],
-
-    "@towns-protocol/diamond/forge-std": ["forge-std@github:foundry-rs/forge-std#7117c90", {}, "foundry-rs-forge-std-7117c90"],
 
     "@ts-morph/common/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
 
