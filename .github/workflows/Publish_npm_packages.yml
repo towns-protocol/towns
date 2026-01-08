@@ -97,7 +97,7 @@ jobs:
                   publish: bun run changeset:publish
                   title: 'Version Packages'
                   commit: 'Version Packages'
-                  commitMode: github-api
+                  setupGitUser: false
               env:
                   GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
