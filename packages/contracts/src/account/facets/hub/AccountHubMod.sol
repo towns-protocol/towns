@@ -10,16 +10,35 @@ library AccountHubMod {
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         STORAGE                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Storage layout for the AccountHubMod
+    /// @custom:storage-location erc7201:towns.account.hub.storage
+    struct Layout {
+        /// @notice Space factory
+        address spaceFactory;
+        /// @notice App registry
+        address appRegistry;
+        /// @notice Installed accounts
+        mapping(address account => bool installed) installed;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("towns.account.hub.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0x71d4dc86d61a3ac91d71fb32ada3a4c5ccb69a82d3979318701e6840c1db0a00;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Emitted when the space factory is set
     /// @param spaceFactory The address of the space factory
-    event SpaceFactorySet(address spaceFactory);
+    event SpaceFactorySet(address indexed spaceFactory);
 
     /// @notice Emitted when the app registry is set
     /// @param appRegistry The address of the app registry
-    event AppRegistrySet(address appRegistry);
+    event AppRegistrySet(address indexed appRegistry);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
@@ -44,32 +63,6 @@ library AccountHubMod {
     /// @notice Reverted when the sender is not the registry
     /// @param sender The address of the sender
     error AccountHub__InvalidCaller(address sender);
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         STORAGE                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // keccak256(abi.encode(uint256(keccak256("towns.account.hub.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0x71d4dc86d61a3ac91d71fb32ada3a4c5ccb69a82d3979318701e6840c1db0a00;
-
-    /// @notice Storage layout for the AccountHubMod
-    /// @custom:storage-location erc7201:towns.account.hub.storage
-    struct Layout {
-        /// @notice Space factory
-        address spaceFactory;
-        /// @notice App registry
-        address appRegistry;
-        /// @notice Installed accounts
-        mapping(address account => bool installed) installed;
-    }
-
-    /// @notice Returns the storage layout for the AccountHubMod
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -133,5 +126,12 @@ library AccountHubMod {
     /// @dev Guard function: reverts if the caller is not the registry
     function onlyRegistry(Layout storage $, address caller) internal view {
         if (caller != $.appRegistry) AccountHub__InvalidCaller.selector.revertWith(caller);
+    }
+
+    /// @notice Returns the storage layout for the AccountHubMod
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 }

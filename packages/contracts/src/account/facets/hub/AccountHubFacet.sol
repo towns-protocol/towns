@@ -45,13 +45,6 @@ contract AccountHubFacet is
         __AccountHubFacet_init_unchained(spaceFactory, appRegistry);
     }
 
-    function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
-        Validator.checkAddress(spaceFactory);
-        Validator.checkAddress(appRegistry);
-        AccountHubMod.Layout storage $ = AccountHubMod.getStorage();
-        ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
-    }
-
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
@@ -64,31 +57,52 @@ contract AccountHubFacet is
         AccountHubMod.getStorage().uninstallAccount(account);
     }
 
+    /// @inheritdoc IAccountHub
     function setSpaceFactory(address spaceFactory) external onlyOwner {
         AccountHubMod.getStorage().setSpaceFactory(spaceFactory);
     }
 
+    /// @inheritdoc IAccountHub
     function setAppRegistry(address appRegistry) external onlyOwner {
         AccountHubMod.getStorage().setAppRegistry(appRegistry);
     }
 
+    /// @inheritdoc IExecutionHookModule
+    // solhint-disable-next-line no-empty-blocks
+    function postExecutionHook(uint32, bytes calldata) external override {}
+
+    /// @inheritdoc IAccountHub
     function getSpaceFactory() external view returns (address) {
         return AccountHubMod.getStorage().spaceFactory;
     }
 
+    /// @inheritdoc IAccountHub
     function getAppRegistry() external view returns (address) {
         return AccountHubMod.getStorage().appRegistry;
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     ERC-6900 MODULE                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @inheritdoc IAccountHub
+    function isInstalled(address account) external view returns (bool) {
+        return AccountHubMod.getStorage().isInstalled(account);
+    }
+
+    /// @inheritdoc IExecutionHookModule
+    function preExecutionHook(
+        uint32,
+        address sender,
+        uint256,
+        bytes calldata
+    ) external view returns (bytes memory) {
+        AccountHubMod.getStorage().onlyRegistry(sender);
+        return "";
+    }
 
     /// @inheritdoc IModule
     function moduleId() external pure returns (string memory) {
         return "towns.account-module.1.0.0";
     }
 
+    // solhint-disable-next-line function-max-lines
     function executionManifest() external pure returns (ExecutionManifest memory) {
         bool allowGlobalValidation = false;
         bool skipRuntimeValidation = true;
@@ -201,27 +215,10 @@ contract AccountHubFacet is
             });
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        ACCOUNT MODULE                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function isInstalled(address account) external view returns (bool) {
-        return AccountHubMod.getStorage().isInstalled(account);
+    function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
+        Validator.checkAddress(spaceFactory);
+        Validator.checkAddress(appRegistry);
+        AccountHubMod.Layout storage $ = AccountHubMod.getStorage();
+        ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      MODULE HOOKS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function preExecutionHook(
-        uint32,
-        address sender,
-        uint256,
-        bytes calldata
-    ) external view returns (bytes memory) {
-        AccountHubMod.getStorage().onlyRegistry(sender);
-        return "";
-    }
-
-    function postExecutionHook(uint32, bytes calldata) external {}
 }

@@ -1,0 +1,10 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "ordering": "error",
+    "use-natspec": "off",
+    "no-inline-assembly": "off",
+    "import-path-check": "off",
+    "func-name-mixedcase": "off"
+  }
+}

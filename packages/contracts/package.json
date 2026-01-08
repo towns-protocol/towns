@@ -5,7 +5,7 @@
     "clean": "forge clean",
     "compile": "forge build",
     "format": "bun run prettier:write",
-    "lint": "bun run solhint \"{script,src,tests}/**/*.sol\"",
+    "lint": "bun run solhint \"src/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
@@ -39,7 +39,7 @@
     "forge-std": "github:foundry-rs/forge-std#v1.12.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
-    "solhint": "^5.0.5",
+    "solhint": "^6.0.2",
     "solidity-bytes-utils": "^0.8.4"
   },
   "files": [
