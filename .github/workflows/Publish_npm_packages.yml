@@ -95,8 +95,9 @@ jobs:
               with:
                   version: bun run changeset:version:full
                   publish: bun run changeset:publish
-                  title: 'chore: Version Packages'
-                  commit: 'chore: Version Packages'
+                  title: 'Version Packages'
+                  commit: 'Version Packages'
+                  commitMode: github-api
               env:
                   GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
