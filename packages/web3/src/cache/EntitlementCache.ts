@@ -43,57 +43,78 @@ export class EntitlementCache<V> {
         })
     }
 
-    async invalidate(keyable: Keyable): Promise<void> {
-        const key = keyable.toKey()
-        // Clear pending fetch first to prevent returning stale in-flight data
-        this.pendingFetches.delete(key)
-        await Promise.all([this.negativeStorage.delete(key), this.positiveStorage.delete(key)])
-    }
-
     async executeUsingCache(
         keyable: Keyable,
         onCacheMiss: (k: Keyable) => Promise<CacheResult<V>>,
+        opts?: { skipCache?: boolean },
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
+        const skipCache = opts?.skipCache === true
 
         // 1. Check for pending fetch FIRST (synchronous check before any await)
         // This prevents race conditions where concurrent calls interleave
-        const pendingPromise = this.pendingFetches.get(key)
-        if (pendingPromise) {
-            return pendingPromise
+        // Skip deduplication when skipCache is true - caller explicitly wants fresh data
+        if (!skipCache) {
+            const pendingPromise = this.pendingFetches.get(key)
+            if (pendingPromise) {
+                return pendingPromise
+            }
         }
 
         // 2. Create promise that checks caches then fetches if needed
         // Store it synchronously BEFORE any await to prevent races
         const operationPromise = (async (): Promise<CacheResult<V>> => {
-            const negativeCacheResult = await this.negativeStorage.get(key)
-            if (negativeCacheResult !== undefined) {
-                negativeCacheResult.cacheHit = true
-                return negativeCacheResult
-            }
+            // Check caches only if not skipping
+            if (!skipCache) {
+                const negativeCacheResult = await this.negativeStorage.get(key)
+                if (negativeCacheResult !== undefined) {
+                    negativeCacheResult.cacheHit = true
+                    return negativeCacheResult
+                }
 
-            const positiveCacheResult = await this.positiveStorage.get(key)
-            if (positiveCacheResult !== undefined) {
-                positiveCacheResult.cacheHit = true
-                return positiveCacheResult
+                const positiveCacheResult = await this.positiveStorage.get(key)
+                if (positiveCacheResult !== undefined) {
+                    positiveCacheResult.cacheHit = true
+                    return positiveCacheResult
+                }
             }
 
             const result = await onCacheMiss(keyable)
             if (result.isPositive) {
-                await this.positiveStorage.set(key, result)
+                if (skipCache) {
+                    await Promise.all([
+                        this.negativeStorage.delete(key),
+                        this.positiveStorage.set(key, result),
+                    ])
+                } else {
+                    await this.positiveStorage.set(key, result)
+                }
             } else {
-                await this.negativeStorage.set(key, result)
+                if (skipCache) {
+                    await Promise.all([
+                        this.positiveStorage.delete(key),
+                        this.negativeStorage.set(key, result),
+                    ])
+                } else {
+                    await this.negativeStorage.set(key, result)
+                }
             }
 
             return result
         })()
 
-        this.pendingFetches.set(key, operationPromise)
+        // Only track in pendingFetches if not skipping cache
+        // skipCache calls run independently and don't deduplicate
+        if (!skipCache) {
+            this.pendingFetches.set(key, operationPromise)
+        }
 
         try {
             return await operationPromise
         } finally {
-            this.pendingFetches.delete(key)
+            if (!skipCache) {
+                this.pendingFetches.delete(key)
+            }
         }
     }
 }

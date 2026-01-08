@@ -282,6 +282,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<BigNumber[]>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             // This mimics bannedTokenIdsCache: SimpleCache<ethers.BigNumber[]>
@@ -330,6 +331,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<unknown>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             // Create a struct output that contains BigNumbers, like token balances
@@ -357,6 +359,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<string>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             const result = await cache.get('nonexistent')
@@ -367,6 +370,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<string>(mockKV, {
                 keyPostfix: '',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             await cache.set('deleteMe', 'value')
@@ -380,6 +384,7 @@ describe('KVCacheStorage', () => {
             const cache = new KVCacheStorage<string>(mockKV, {
                 keyPostfix: 'postfix',
                 ttlMs: 60000,
+                disableLocalCache: true,
             })
 
             await cache.set('key', 'value')
