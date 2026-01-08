@@ -101,6 +101,7 @@
             "group": "React SDK",
             "pages": [
               "build/react-sdk/getting-started",
+              "build/react-sdk/changelog",
               {
                 "group": "API",
                 "pages": [
@@ -150,6 +151,7 @@
             "pages": [
               "build/bots/introduction",
               "build/bots/getting-started",
+              "build/bots/changelog",
               "build/bots/local-development",
               "build/bots/events",
               "build/bots/slash-commands",
@@ -204,13 +206,6 @@
           "white-paper/technical-whitepaper",
           "white-paper/mica-whitepaper"
         ]
-      },
-      {
-        "group": "Releases",
-        "icon": "rocket-launch",
-        "pages": [
-          "releases/changelog"
-        ]
       }
     ]
   },
@@ -233,7 +228,7 @@
   "footer": {
     "socials": {
       "x": "https://x.com/TownsProtocol",
-      "github": "https://github.com/river-build",
+      "github": "https://github.com/towns-protocol",
       "website": "https://towns.com"
     }
   }
