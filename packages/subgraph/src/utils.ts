@@ -123,6 +123,37 @@ export async function getSpaceCurrency(
     }
 }
 
+/**
+ * Fetches the currency for a subscription by looking up its space.
+ * First fetches the subscription to get the space address, then delegates to getSpaceCurrency.
+ * Returns null if subscription not found or currency fetch failed.
+ * @param context - Ponder context with db, client, and contracts
+ * @param account - The subscriber account address
+ * @param entityId - The subscription entity ID
+ * @param blockNumber - Block number for potential RPC call
+ * @returns The currency address, or null if lookup failed
+ */
+export async function getSubscriptionSpaceCurrency(
+    context: Context,
+    account: `0x${string}`,
+    entityId: number,
+    blockNumber: bigint,
+): Promise<`0x${string}` | null> {
+    // Fetch subscription to get space address using Store API
+    const subscription = await context.db.find(schema.subscription, {
+        account,
+        entityId,
+    })
+
+    if (!subscription?.space) {
+        console.warn(`Subscription not found for currency lookup: ${account}_${entityId}`)
+        return null
+    }
+
+    // Delegate to existing getSpaceCurrency (with RPC fallback)
+    return getSpaceCurrency(context, subscription.space as `0x${string}`, blockNumber)
+}
+
 export async function updateSpaceTotalStaked(
     context: Context,
     spaceId: `0x${string}`,

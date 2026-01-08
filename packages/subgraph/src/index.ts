@@ -11,6 +11,7 @@ import {
     isUSDC,
     isETH,
     getSpaceCurrency,
+    getSubscriptionSpaceCurrency,
 } from './utils'
 import { fetchAgentData } from './agentData'
 
@@ -1769,6 +1770,13 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1777,6 +1785,7 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
             .set({
                 active: false,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1796,6 +1805,13 @@ ponder.on('SubscriptionModule:SubscriptionActivated', async ({ event, context })
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1804,6 +1820,7 @@ ponder.on('SubscriptionModule:SubscriptionActivated', async ({ event, context })
             .set({
                 active: true,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1823,6 +1840,13 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1833,6 +1857,7 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
                 expiresAt: event.args.expiresAt,
                 lastRenewalTime: blockTimestamp,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1852,6 +1877,13 @@ ponder.on('SubscriptionModule:SubscriptionSynced', async ({ event, context }) =>
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1860,6 +1892,7 @@ ponder.on('SubscriptionModule:SubscriptionSynced', async ({ event, context }) =>
             .set({
                 nextRenewalTime: event.args.newNextRenewalTime,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1879,6 +1912,13 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1888,6 +1928,7 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
                 active: false,
                 nextRenewalTime: 0n,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1907,6 +1948,13 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         const row = await context.db
             .update(schema.subscription, {
                 account: event.args.account,
@@ -1916,6 +1964,7 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
                 renewalAmount: event.args.amount,
                 totalSpent: event.args.totalSpent,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
 
         if (!row) {
@@ -1935,6 +1984,13 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         // Record the failure
         await context.db.insert(schema.subscriptionFailure).values({
             account: event.args.account,
@@ -1951,6 +2007,7 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
             .set({
                 active: false,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
     } catch (error) {
         console.error(
