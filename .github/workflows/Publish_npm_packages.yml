@@ -87,13 +87,13 @@ jobs:
               run: bun run build
 
             - name: Generate contract types
-              run: bun --filter @towns-protocol/generated run build-types
+              run: bun run --filter @towns-protocol/generated build-types
 
             - name: Create Release PR or Publish
               id: changesets
               uses: changesets/action@v1
               with:
-                  version: sh -c "bun run changeset:version && bun --filter @towns-protocol/react-sdk run gen && ./packages/generated/scripts/copy-addresses.sh"
+                  version: sh -c "bun run changeset:version && bun run --filter @towns-protocol/react-sdk gen && ./packages/generated/scripts/copy-addresses.sh"
                   publish: bun run changeset:publish
                   title: 'chore: Version Packages'
                   commit: 'chore: Version Packages'
