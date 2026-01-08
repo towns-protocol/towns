@@ -77,11 +77,11 @@ func (cm *nodeRegistryChainMonitor) OnNodeAdded(from blockchain.BlockNumber, cb 
 		from,
 		cm.nodeRegistry,
 		[][]common.Hash{{nodeAddedEventTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			e := river.NodeRegistryV1NodeAdded{
 				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
 				Operator:    common.BytesToAddress(log.Topics[2].Bytes()),
-				Raw:         log,
+				Raw:         *log,
 			}
 
 			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeAdded", log.Data); err == nil {
@@ -100,10 +100,10 @@ func (cm *nodeRegistryChainMonitor) OnNodeRemoved(from blockchain.BlockNumber, c
 		from,
 		cm.nodeRegistry,
 		[][]common.Hash{{nodeRemovedEventTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			e := river.NodeRegistryV1NodeRemoved{
 				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
-				Raw:         log,
+				Raw:         *log,
 			}
 
 			cb(ctx, &e)
@@ -117,10 +117,10 @@ func (cm *nodeRegistryChainMonitor) OnNodeUrlUpdated(from blockchain.BlockNumber
 		from,
 		cm.nodeRegistry,
 		[][]common.Hash{{nodeUrlUpdatedEventTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			e := river.NodeRegistryV1NodeUrlUpdated{
 				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
-				Raw:         log,
+				Raw:         *log,
 			}
 
 			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeUrlUpdated", log.Data); err == nil {
@@ -139,10 +139,10 @@ func (cm *nodeRegistryChainMonitor) OnNodeStatusUpdated(from blockchain.BlockNum
 		from,
 		cm.nodeRegistry,
 		[][]common.Hash{{nodeStatusUpdatedEventTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			e := river.NodeRegistryV1NodeStatusUpdated{
 				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
-				Raw:         log,
+				Raw:         *log,
 			}
 
 			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeStatusUpdated", log.Data); err == nil {

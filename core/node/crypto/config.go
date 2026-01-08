@@ -641,9 +641,9 @@ func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber blockcha
 	occ.activeBlock.Store(blockNumber.AsUint64())
 }
 
-func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
+func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event *types.Log) {
 	var e river.RiverConfigV1ConfigurationChanged
-	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {
+	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", *event); err != nil {
 		logging.FromCtx(ctx).Errorw("OnChainConfiguration: unable to decode ConfigurationChanged event")
 		return
 	}

@@ -161,16 +161,16 @@ func TestChainMonitorEvents(t *testing.T) {
 			collectedBlocksCount.Store(int64(len(collectedBlocks)))
 		}
 
-		allEventCallbackCapturedEvents = make(chan types.Log, 1024)
-		allEventCallback               = func(ctx context.Context, event types.Log) {
+		allEventCallbackCapturedEvents = make(chan *types.Log, 1024)
+		allEventCallback               = func(ctx context.Context, event *types.Log) {
 			allEventCallbackCapturedEvents <- event
 		}
-		contractEventCallbackCapturedEvents = make(chan types.Log, 1024)
-		contractEventCallback               = func(ctx context.Context, event types.Log) {
+		contractEventCallbackCapturedEvents = make(chan *types.Log, 1024)
+		contractEventCallback               = func(ctx context.Context, event *types.Log) {
 			contractEventCallbackCapturedEvents <- event
 		}
-		contractWithTopicsEventCallbackCapturedEvents = make(chan types.Log, 1024)
-		contractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
+		contractWithTopicsEventCallbackCapturedEvents = make(chan *types.Log, 1024)
+		contractWithTopicsEventCallback               = func(ctx context.Context, event *types.Log) {
 			contractWithTopicsEventCallbackCapturedEvents <- event
 		}
 
@@ -257,17 +257,17 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 		owner                                         = tc.DeployerBlockchain
 		chainMonitor                                  = tc.DeployerBlockchain.ChainMonitor
 		nodeCount                                     = 5
-		contractWithTopicsEventCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		contractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
+		contractWithTopicsEventCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		contractWithTopicsEventCallback               = func(ctx context.Context, event *types.Log) {
 			contractWithTopicsEventCallbackCapturedEvents <- event
 		}
-		futureContractEventsCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		futureContractEventsCallback               = func(ctx context.Context, event types.Log) {
+		futureContractEventsCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		futureContractEventsCallback               = func(ctx context.Context, event *types.Log) {
 			futureContractEventsCallbackCapturedEvents <- event
 		}
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
-		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
-			var logs []types.Log
+		readCapturedEvents = func(captured <-chan *types.Log) []*types.Log {
+			var logs []*types.Log
 			for i := 0; i < nodeCount; i++ {
 				logs = append(logs, <-captured)
 			}
@@ -398,21 +398,21 @@ func TestContractAllEventsFromPast(t *testing.T) {
 		owner                                         = tc.DeployerBlockchain
 		chainMonitor                                  = tc.DeployerBlockchain.ChainMonitor
 		nodeCount                                     = 5
-		contractWithTopicsEventCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		contractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
+		contractWithTopicsEventCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		contractWithTopicsEventCallback               = func(ctx context.Context, event *types.Log) {
 			contractWithTopicsEventCallbackCapturedEvents <- event
 		}
-		historicalContractAllEventsCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		historicalContractAllEventsCallback               = func(ctx context.Context, event types.Log) {
+		historicalContractAllEventsCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		historicalContractAllEventsCallback               = func(ctx context.Context, event *types.Log) {
 			historicalContractAllEventsCallbackCapturedEvents <- event
 		}
-		historicalContractEventsCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		historicalContractEventsCallback               = func(ctx context.Context, event types.Log) {
+		historicalContractEventsCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		historicalContractEventsCallback               = func(ctx context.Context, event *types.Log) {
 			historicalContractEventsCallbackCapturedEvents <- event
 		}
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
-		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
-			var logs []types.Log
+		readCapturedEvents = func(captured <-chan *types.Log) []*types.Log {
+			var logs []*types.Log
 			for i := 0; i < nodeCount; i++ {
 				logs = append(logs, <-captured)
 			}
@@ -561,17 +561,17 @@ func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
-	events1C := make(chan types.Log, nodeCount)
+	events1C := make(chan *types.Log, nodeCount)
 	tc.DeployerBlockchain.ChainMonitor.OnContractWithTopicsEvent(
 		0,
 		tc.RiverRegistryAddress,
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
-		func(ctx context.Context, event types.Log) {
+		func(ctx context.Context, event *types.Log) {
 			events1C <- event
 		},
 	)
 
-	events1 := []types.Log{}
+	events1 := []*types.Log{}
 	require.Eventually(func() bool {
 		for {
 			select {
@@ -593,19 +593,19 @@ func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 	chainMonitor := crypto.NewChainMonitor()
 	chainMonitor.Start(ctx, tc.Client(), tc.BlockNum(ctx), 100*time.Millisecond, infra.NewMetricsFactory(nil, "", ""))
 
-	events2C := make(chan types.Log, nodeCount)
+	events2C := make(chan *types.Log, nodeCount)
 
 	// register a callback from block 0, which is before starting block for the new monitor
 	chainMonitor.OnContractWithTopicsEvent(
 		blockchain.BlockNumber(0),
 		tc.RiverRegistryAddress,
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
-		func(ctx context.Context, event types.Log) {
+		func(ctx context.Context, event *types.Log) {
 			events2C <- event
 		},
 	)
 
-	events2 := []types.Log{}
+	events2 := []*types.Log{}
 	require.Eventually(func() bool {
 		for {
 			select {
@@ -1094,17 +1094,17 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 		owner                                         = tc.DeployerBlockchain
 		chainMonitor                                  = tc.DeployerBlockchain.ChainMonitor
 		nodeCount                                     = 5
-		contractWithTopicsEventCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		contractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
+		contractWithTopicsEventCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		contractWithTopicsEventCallback               = func(ctx context.Context, event *types.Log) {
 			contractWithTopicsEventCallbackCapturedEvents <- event
 		}
-		historicalContractWithTopicsEventCallbackCapturedEvents = make(chan types.Log, nodeCount)
-		historicalContractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
+		historicalContractWithTopicsEventCallbackCapturedEvents = make(chan *types.Log, nodeCount)
+		historicalContractWithTopicsEventCallback               = func(ctx context.Context, event *types.Log) {
 			historicalContractWithTopicsEventCallbackCapturedEvents <- event
 		}
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
-		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
-			var logs []types.Log
+		readCapturedEvents = func(captured <-chan *types.Log) []*types.Log {
+			var logs []*types.Log
 			for i := 0; i < nodeCount; i++ {
 				logs = append(logs, <-captured)
 			}
@@ -1206,14 +1206,14 @@ func TestEventsOrder(t *testing.T) {
 		owner                           = tc.DeployerBlockchain
 		chainMonitor                    = tc.DeployerBlockchain.ChainMonitor
 		nodeCount                       = 100
-		capturedEvents                  = make(chan types.Log, nodeCount)
-		contractWithTopicsEventCallback = func(ctx context.Context, event types.Log) {
+		capturedEvents                  = make(chan *types.Log, nodeCount)
+		contractWithTopicsEventCallback = func(ctx context.Context, event *types.Log) {
 			capturedEvents <- event
 		}
 
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
-		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
-			var logs []types.Log
+		readCapturedEvents = func(captured <-chan *types.Log) []*types.Log {
+			var logs []*types.Log
 			for i := 0; i < nodeCount; i++ {
 				logs = append(logs, <-captured)
 			}
@@ -1279,7 +1279,7 @@ func TestEventsOrder(t *testing.T) {
 			continue
 		}
 		var e river.NodeRegistryV1NodeAdded
-		if err := tc.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
+		if err := tc.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", *event); err != nil {
 			require.NoError(err, "OnNodeAdded: unable to decode NodeAdded event")
 		}
 		require.Equal(nodeAddresses[i], e.NodeAddress, "unexpected node added order")
