@@ -33,9 +33,8 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
     }
 
     public async getSpaceInfo(spaceAddress: string): Promise<ISpaceOwnerBase.SpaceStructOutput> {
-        return this.spaceInfoCache.executeUsingCache(
-            Keyable.spaceInfoRequest(spaceAddress),
-            async () => this.read.getSpaceInfo(spaceAddress),
+        return this.spaceInfoCache.executeUsingCache(Keyable.spaceInfo(spaceAddress), async () =>
+            this.read.getSpaceInfo(spaceAddress),
         )
     }
 
@@ -137,7 +136,7 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
             overrideExecution,
             transactionOpts,
         })
-        await this.spaceInfoCache.remove(Keyable.spaceInfoRequest(spaceAddress))
+        await this.spaceInfoCache.remove(Keyable.spaceInfo(spaceAddress))
         return result
     }
 }

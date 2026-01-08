@@ -302,8 +302,8 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
     public async updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
         await Promise.all([
-            this.bannedTokenIdsCache.remove(Keyable.bannedTokenIdsRequest(spaceId)),
-            this.ownerOfTokenCache.remove(Keyable.ownerOfTokenRequest(spaceId, tokenId)),
+            this.bannedTokenIdsCache.remove(Keyable.bannedTokenIds(spaceId)),
+            this.ownerOfTokenCache.remove(Keyable.ownerOfToken(spaceId, tokenId)),
             this.isBannedTokenCache.remove(Keyable.isTokenBanned(spaceId, tokenId)),
         ])
     }
@@ -338,7 +338,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
 
         // 1. Get banned token IDs
         const bannedTokenIds = await this.bannedTokenIdsCache.executeUsingCache(
-            Keyable.bannedTokenIdsRequest(spaceId),
+            Keyable.bannedTokenIds(spaceId),
             async () => {
                 const currentSpace = this.getSpace(spaceId)
                 if (!currentSpace) {
@@ -357,7 +357,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         // Check cache first - parallel lookups for remote storage efficiency
         const cacheResults = await Promise.all(
             bannedTokenIds.map(async (tokenId) => {
-                const cacheKey = Keyable.ownerOfTokenRequest(spaceId, tokenId)
+                const cacheKey = Keyable.ownerOfToken(spaceId, tokenId)
                 const cachedOwner = await this.ownerOfTokenCache.get(cacheKey)
                 return { tokenId, cachedOwner }
             }),
@@ -396,7 +396,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                                 // Collect cache write promises for parallel execution
                                 cacheWritePromises.push(
                                     this.ownerOfTokenCache.add(
-                                        Keyable.ownerOfTokenRequest(spaceId, tokenId),
+                                        Keyable.ownerOfToken(spaceId, tokenId),
                                         ownerAddress,
                                     ),
                                 )
@@ -740,7 +740,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         permission: Permission,
     ): Promise<EntitlementData[]> {
         const { value } = await this.entitlementCache.executeUsingCache(
-            Keyable.spaceEntitlementRequest(spaceId, permission),
+            Keyable.spaceEntitlement(spaceId, permission),
             async () => {
                 const entitlementData = await this.getEntitlementsForPermissionUncached(
                     spaceId,
@@ -773,7 +773,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         permission: Permission,
     ): Promise<EntitlementData[]> {
         const { value } = await this.entitlementCache.executeUsingCache(
-            Keyable.channelEntitlementRequest(spaceId, channelId, permission),
+            Keyable.channelEntitlement(spaceId, channelId, permission),
             async () => {
                 const entitlementData = await this.getChannelEntitlementsForPermissionUncached(
                     spaceId,
@@ -929,11 +929,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         xchainConfig: XchainConfig,
         skipCache: boolean = false,
     ): Promise<EntitledWallet> {
-        const key = Keyable.spaceEntitlementEvaluationRequest(
-            spaceId,
-            rootKey,
-            Permission.JoinSpace,
-        )
+        const key = Keyable.spaceEntitlementEvaluation(spaceId, rootKey, Permission.JoinSpace)
         const { value } = await this.entitledWalletCache.executeUsingCache(
             key,
             async () => {
@@ -998,7 +994,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         permission: Permission,
         skipCache: boolean = false,
     ): Promise<boolean> {
-        const key = Keyable.spaceEntitlementEvaluationRequest(spaceId, userId, permission)
+        const key = Keyable.spaceEntitlementEvaluation(spaceId, userId, permission)
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
             key,
             async () => {
@@ -1056,7 +1052,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         xchainConfig: XchainConfig = EmptyXchainConfig,
         skipCache: boolean = false,
     ): Promise<boolean> {
-        const key = Keyable.channelEntitlementEvaluationRequest(
+        const key = Keyable.channelEntitlementEvaluation(
             spaceId,
             channelNetworkId,
             userId,
