@@ -27,9 +27,8 @@ export class TownsToken extends BaseContractShim<typeof connect> {
     }
 
     public async getBalance(accountAddress: string): Promise<ethers.BigNumber> {
-        return this.balanceCache.executeUsingCache(
-            Keyable.balanceOfRequest(accountAddress),
-            async () => this.read.balanceOf(accountAddress),
+        return this.balanceCache.executeUsingCache(Keyable.balanceOf(accountAddress), async () =>
+            this.read.balanceOf(accountAddress),
         )
     }
 

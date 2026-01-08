@@ -25,27 +25,27 @@ export class Keyable {
             .join(':')
     }
 
-    static spaceInfoRequest(spaceId: string): Keyable {
+    static spaceInfo(spaceId: string): Keyable {
         return new Keyable('spaceInfo', spaceId)
     }
 
-    static getEntitlementsRequest(spaceAddress: string): Keyable {
+    static getEntitlements(spaceAddress: string): Keyable {
         return new Keyable('getEntitlements', spaceAddress)
     }
 
-    static ownerRequest(spaceAddress: string): Keyable {
+    static owner(spaceAddress: string): Keyable {
         return new Keyable('owner', spaceAddress)
     }
 
-    static balanceOfRequest(accountAddress: string): Keyable {
+    static balanceOf(accountAddress: string): Keyable {
         return new Keyable('balanceOf', accountAddress)
     }
 
-    static bannedTokenIdsRequest(spaceId: string): Keyable {
+    static bannedTokenIds(spaceId: string): Keyable {
         return new Keyable('bannedTokenIds', spaceId)
     }
 
-    static ownerOfTokenRequest(spaceId: string, tokenId: ethers.BigNumber): Keyable {
+    static ownerOfToken(spaceId: string, tokenId: ethers.BigNumber): Keyable {
         return new Keyable('ownerOfToken', spaceId, tokenId)
     }
 
@@ -53,7 +53,7 @@ export class Keyable {
         return new Keyable('isTokenBanned', spaceId, tokenId)
     }
 
-    static entitlementRequest(
+    static entitlement(
         spaceId: string,
         channelId: string,
         userId: string,
@@ -62,11 +62,11 @@ export class Keyable {
         return new Keyable('entitlement', spaceId, channelId, userId, permission)
     }
 
-    static spaceEntitlementRequest(spaceId: string, permission: Permission): Keyable {
+    static spaceEntitlement(spaceId: string, permission: Permission): Keyable {
         return new Keyable('spaceEntitlement', spaceId, permission)
     }
 
-    static spaceEntitlementEvaluationRequest(
+    static spaceEntitlementEvaluation(
         spaceId: string,
         rootKey: string,
         permission: Permission,
@@ -74,15 +74,11 @@ export class Keyable {
         return new Keyable('spaceEntitlementEval', spaceId, rootKey, permission)
     }
 
-    static channelEntitlementRequest(
-        spaceId: string,
-        channelId: string,
-        permission: Permission,
-    ): Keyable {
+    static channelEntitlement(spaceId: string, channelId: string, permission: Permission): Keyable {
         return new Keyable('channelEntitlement', spaceId, channelId, permission)
     }
 
-    static channelEntitlementEvaluationRequest(
+    static channelEntitlementEvaluation(
         spaceId: string,
         channelNetworkId: string,
         userId: string,

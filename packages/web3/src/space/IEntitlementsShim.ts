@@ -30,7 +30,7 @@ export class IEntitlementsShim extends BaseContractShim<typeof connect> {
 
     public async getEntitlements(): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]> {
         return this.getEntitlementsCache.executeUsingCache(
-            Keyable.getEntitlementsRequest(this.address),
+            Keyable.getEntitlements(this.address),
             async () => this.read.getEntitlements(),
         )
     }
