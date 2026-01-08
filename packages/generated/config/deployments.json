@@ -29,6 +29,7 @@
     "base": {
       "chainId": 84532,
       "addresses": {
+        "accountModules": "0x305BE7d7254991fd7d0aBB6B5f4607FeAE159869",
         "appRegistry": "0x9c72b18Ed4134e9a4A7162C7A4db03372d222EB5",
         "baseRegistry": "0x0d7eC5826626070b6a250C9878940D070128A265",
         "riverAirdrop": "0x5390D20Feb3dd84a08FE3E6C60D382233FeD0da6",
@@ -121,6 +122,7 @@
     "base": {
       "chainId": 8453,
       "addresses": {
+        "accountModules": "0xaCa88D31A28ef622ad70027ab65a864b08049ebE",
         "appRegistry": "0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE",
         "baseRegistry": "0x7c0422b31401C936172C897802CF0373B35B7698",
         "entryPoint": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",
