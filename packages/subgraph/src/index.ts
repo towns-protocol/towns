@@ -1990,6 +1990,9 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
     try {
         // Only update the timestamp, not the renewal times
         // The SubscriptionModule events handle nextRenewalTime and lastRenewalTime properly
+        // uses raw sql (slower) since spaceId, tokenId are not primary keys.
+        // note: the preferred method that is 100x more efficient is to use the drizzle orm
+        // see: https://ponder.sh/docs/indexing/write
         await context.db.sql
             .update(schema.subscription)
             .set({
