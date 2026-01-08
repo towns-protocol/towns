@@ -1,0 +1,24 @@
+{
+    "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
+    "changelog": ["@changesets/changelog-github", { "repo": "towns-protocol/towns" }],
+    "commit": false,
+    "fixed": [["@towns-protocol/*", "towns-bot", "create-towns-protocol-app"]],
+    "linked": [],
+    "access": "public",
+    "baseBranch": "main",
+    "updateInternalDependencies": "patch",
+    "ignore": [
+        "@towns-protocol/playground",
+        "@towns-protocol/stream-metadata",
+        "@towns-protocol/subgraph",
+        "@towns-protocol/anvil-docker",
+        "@towns-protocol/stress",
+        "@towns-protocol/docs",
+        "@towns-protocol/metrics-discovery",
+        "@towns-protocol/example-bot-quickstart"
+    ],
+    "privatePackages": {
+        "version": false,
+        "tag": false
+    }
+}

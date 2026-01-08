@@ -1,14 +1,19 @@
-name: Nightly npm package publish
+name: Publish npm packages
 env:
     FOUNDRY_VERSION: stable
 on:
-    schedule:
-        - cron: '0 0 * * *' # Runs every night at midnight
+    push:
+        branches:
+            - main
     workflow_dispatch: # Allows manual triggering
 
 jobs:
     publish-npm:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+            id-token: write
 
         steps:
             - name: Cancel previous runs
@@ -21,6 +26,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                   ref: main
+                  fetch-depth: 0
 
             - name: Install GPG
               run: |
@@ -74,9 +80,33 @@ jobs:
               run: |
                   npm whoami || (echo "Not logged in to npm registry" && exit 1)
 
-            - name: Run Nightly Script
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Build packages
+              run: bun run build
+
+            - name: Generate contract types
+              run: bun --filter @towns-protocol/generated run build-types
+
+            - name: Create Release PR or Publish
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                  version: sh -c "bun run changeset:version && bun --filter @towns-protocol/react-sdk run gen && ./packages/generated/scripts/copy-addresses.sh"
+                  publish: bun run changeset:publish
+                  title: 'chore: Version Packages'
+                  commit: 'chore: Version Packages'
               env:
-                  GH_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
+                  GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-              run: ./scripts/publish-to-npm.sh
-              timeout-minutes: 60
+
+            - name: Push tags
+              if: steps.changesets.outputs.published == 'true'
+              run: git push origin --tags
+
+            - name: Published packages info
+              if: steps.changesets.outputs.published == 'true'
+              run: |
+                  echo "Published packages:"
+                  echo '${{ steps.changesets.outputs.publishedPackages }}'

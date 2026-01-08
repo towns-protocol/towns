@@ -181,7 +181,12 @@ export function copyDirectory(src: string, dest: string, replacements?: Map<stri
 export function getLatestSdkTag(): string | null {
     const tagsResult = spawn.sync(
         'git',
-        ['ls-remote', '--tags', 'https://github.com/towns-protocol/towns.git', 'sdk-*'],
+        [
+            'ls-remote',
+            '--tags',
+            'https://github.com/towns-protocol/towns.git',
+            '@towns-protocol/sdk@*',
+        ],
         { encoding: 'utf8' },
     )
 
@@ -194,8 +199,8 @@ export function getLatestSdkTag(): string | null {
             const [_hash, ref] = line.split('\t')
             const tag = ref.replace('refs/tags/', '').replace(/\^{}$/, '')
 
-            // Extract version numbers from tags like sdk-hash-1.2.3
-            const match = tag.match(/^sdk-[0-9a-f]+-(\d+)\.(\d+)\.(\d+)$/)
+            // Extract version numbers from tags like @towns-protocol/sdk@1.2.3
+            const match = tag.match(/^@towns-protocol\/sdk@(\d+)\.(\d+)\.(\d+)$/)
             if (!match) return null
 
             return {

@@ -35,6 +35,31 @@ Read instructions in `core/AGENTS.md` for more details.
     - `./scripts/run-local-ci.sh -j Common_CI` - Test Common_CI job
     - `./scripts/run-local-ci.sh -j Multinode` - Test Multinode job
 
+## Changesets for NPM Packages
+
+When modifying published npm packages (in `/packages`), create a changeset:
+
+```bash
+bun changeset
+```
+
+- **Select affected packages** from the list
+- **Use `patch` for most changes** (bugfixes, small features, docs)
+- **Keep descriptions short and clear** - they become changelog entries
+- **Skip changesets for**:
+  - Changes to `/core` (Go backend)
+  - Private packages (examples, docs)
+  - CI/build tooling only
+
+Example changeset:
+```markdown
+---
+'@towns-protocol/sdk': patch
+---
+
+Fixed connection timeout in WebSocket client
+```
+
 ## Architecture Overview
 
 ### Core Components
