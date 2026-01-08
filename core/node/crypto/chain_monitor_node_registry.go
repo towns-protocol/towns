@@ -34,16 +34,16 @@ type (
 		OnNodeRemoved(from blockchain.BlockNumber, cb OnNodeRemovedCallback)
 	}
 
-	// OnNodeAddedCallback calles each time a node url is removed.
+	// OnNodeAddedCallback called each time a node is added.
 	OnNodeAddedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeAdded)
 
-	// OnNodeStatusUpdatedCallback calles each time a node status is updated.
+	// OnNodeStatusUpdatedCallback called each time a node status is updated.
 	OnNodeStatusUpdatedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeStatusUpdated)
 
-	// OnNodeUrlUpdatedCallback calles each time a node url is updated.
+	// OnNodeUrlUpdatedCallback called each time a node url is updated.
 	OnNodeUrlUpdatedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeUrlUpdated)
 
-	// OnNodeRemovedCallback calles each time a node is removed.
+	// OnNodeRemovedCallback called each time a node is removed.
 	OnNodeRemovedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeRemoved)
 
 	nodeRegistryChainMonitor struct {
