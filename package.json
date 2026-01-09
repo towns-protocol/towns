@@ -62,11 +62,6 @@
         "vitest": "^3.2.3",
         "wait-on": "^7.0.1"
     },
-    "husky": {
-        "hooks": {
-            "pre-commit": "lint-staged"
-        }
-    },
     "lint-staged": {
         "*.{json,yml}": [
             "prettier --write"
