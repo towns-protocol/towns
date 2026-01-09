@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -38,8 +38,7 @@ const (
 
 type MetadataStreamRecord struct {
 	StreamId          shared.StreamId
-	LastMiniblockHash []byte
-	LastMiniblockNum  int64
+	LastMiniblock     shared.MiniblockRef
 	NodeIndexes       []int32
 	ReplicationFactor int32
 	Sealed            bool
@@ -56,8 +55,7 @@ type MetadataStreamRecordBlock struct {
 
 type InsertMetadataStreamRecord struct {
 	StreamId          shared.StreamId
-	LastMiniblockHash []byte
-	LastMiniblockNum  int64
+	LastMiniblock     shared.MiniblockRef
 	NodeIndexes       []int32
 	ReplicationFactor int32
 	Sealed            bool
@@ -70,11 +68,10 @@ type UpdateMetadataStreamPlacement struct {
 }
 
 type UpdateMetadataStreamMiniblock struct {
-	StreamId          shared.StreamId
-	PrevMiniblockHash []byte
-	LastMiniblockNum  int64
-	LastMiniblockHash []byte
-	Sealed            bool
+	StreamId      shared.StreamId
+	PrevMiniblock shared.MiniblockRef
+	LastMiniblock shared.MiniblockRef
+	Sealed        bool
 }
 
 type MetadataStreamRecordUpdate struct {
@@ -490,11 +487,8 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 	if update == nil {
 		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "insert update is nil")
 	}
-	if update.LastMiniblockNum < 0 {
+	if update.LastMiniblock.Num < 0 {
 		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative")
-	}
-	if len(update.LastMiniblockHash) != 32 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes")
 	}
 	if update.ReplicationFactor <= 0 {
 		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor must be positive")
@@ -536,8 +530,8 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 			updated_at_block
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 		update.StreamId[:],
-		update.LastMiniblockHash,
-		update.LastMiniblockNum,
+		update.LastMiniblock.Hash.Bytes(),
+		update.LastMiniblock.Num,
 		update.ReplicationFactor,
 		update.Sealed,
 		update.NodeIndexes,
@@ -562,8 +556,7 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 
 	record := &MetadataStreamRecord{
 		StreamId:          update.StreamId,
-		LastMiniblockHash: update.LastMiniblockHash,
-		LastMiniblockNum:  update.LastMiniblockNum,
+		LastMiniblock:     update.LastMiniblock,
 		NodeIndexes:       update.NodeIndexes,
 		ReplicationFactor: update.ReplicationFactor,
 		Sealed:            update.Sealed,
@@ -677,14 +670,8 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 	if update == nil {
 		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "miniblock update is nil")
 	}
-	if update.LastMiniblockNum < 0 {
+	if update.LastMiniblock.Num < 0 {
 		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative")
-	}
-	if len(update.LastMiniblockHash) != 32 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes")
-	}
-	if len(update.PrevMiniblockHash) != 32 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "prev_miniblock_hash must be 32 bytes")
 	}
 
 	record, err := s.getStreamRecordForUpdateTx(ctx, tx, update.StreamId)
@@ -695,10 +682,10 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 	if record.Sealed {
 		return nil, 0, RiverError(protocol.Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId)
 	}
-	if !bytes.Equal(record.LastMiniblockHash, update.PrevMiniblockHash) {
+	if record.LastMiniblock.Hash != update.PrevMiniblock.Hash {
 		return nil, 0, RiverError(protocol.Err_BAD_PREV_MINIBLOCK_HASH, "prev_miniblock_hash mismatch", "streamId", update.StreamId)
 	}
-	if record.LastMiniblockNum+1 != update.LastMiniblockNum {
+	if record.LastMiniblock.Num+1 != update.LastMiniblock.Num {
 		return nil, 0, RiverError(protocol.Err_BAD_BLOCK_NUMBER, "last_miniblock_num must increase by 1", "streamId", update.StreamId)
 	}
 
@@ -716,16 +703,15 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 			 updated_at_block = $5
 		 WHERE stream_id = $1`,
 		update.StreamId[:],
-		update.LastMiniblockHash,
-		update.LastMiniblockNum,
+		update.LastMiniblock.Hash.Bytes(),
+		update.LastMiniblock.Num,
 		sealed,
 		blockNum,
 	); err != nil {
 		return nil, 0, err
 	}
 
-	record.LastMiniblockHash = update.LastMiniblockHash
-	record.LastMiniblockNum = update.LastMiniblockNum
+	record.LastMiniblock = update.LastMiniblock
 	record.Sealed = sealed
 	record.UpdatedAtBlock = blockNum
 
@@ -1016,9 +1002,11 @@ func (s *PostgresMetadataServiceStore) GetRecordBlocks(
 					return err
 				}
 				record := &MetadataStreamRecord{
-					StreamId:          streamId,
-					LastMiniblockHash: lastHash,
-					LastMiniblockNum:  lastNum,
+					StreamId: streamId,
+					LastMiniblock: shared.MiniblockRef{
+						Hash: common.BytesToHash(lastHash),
+						Num:  lastNum,
+					},
 					NodeIndexes:       nodeIndexes,
 					ReplicationFactor: replication,
 					Sealed:            sealed,
@@ -1124,9 +1112,11 @@ func scanStreamRecord(row pgx.Row) (*MetadataStreamRecord, error) {
 		return nil, err
 	}
 	return &MetadataStreamRecord{
-		StreamId:          streamId,
-		LastMiniblockHash: lastHash,
-		LastMiniblockNum:  lastNum,
+		StreamId: streamId,
+		LastMiniblock: shared.MiniblockRef{
+			Hash: common.BytesToHash(lastHash),
+			Num:  lastNum,
+		},
 		NodeIndexes:       nodeIndexes,
 		ReplicationFactor: replication,
 		Sealed:            sealed,
@@ -1160,8 +1150,8 @@ func (s *PostgresMetadataServiceStore) insertRecordBlockTx(
 		blockSlot,
 		record.StreamId[:],
 		int16(mask),
-		record.LastMiniblockHash,
-		record.LastMiniblockNum,
+		record.LastMiniblock.Hash.Bytes(),
+		record.LastMiniblock.Num,
 		record.NodeIndexes,
 		record.ReplicationFactor,
 		record.Sealed,

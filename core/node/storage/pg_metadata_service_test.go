@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -71,8 +72,15 @@ func setupMetadataServiceStoreTest(t *testing.T) *testMetadataServiceStoreParams
 	return params
 }
 
-func makeHash(seed byte) []byte {
-	return bytes.Repeat([]byte{seed}, 32)
+func makeHash(seed byte) common.Hash {
+	return common.BytesToHash(bytes.Repeat([]byte{seed}, 32))
+}
+
+func makeRef(seed byte, num int64) shared.MiniblockRef {
+	return shared.MiniblockRef{
+		Hash: makeHash(seed),
+		Num:  num,
+	}
 }
 
 func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
@@ -93,8 +101,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream1,
-				LastMiniblockHash: makeHash(0x01),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x01, 0),
 				NodeIndexes:       []int32{1, 2},
 				ReplicationFactor: 2,
 			},
@@ -102,8 +109,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream2,
-				LastMiniblockHash: makeHash(0x02),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x02, 0),
 				NodeIndexes:       []int32{2, 3},
 				ReplicationFactor: 2,
 			},
@@ -111,8 +117,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream3,
-				LastMiniblockHash: makeHash(0x03),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x03, 0),
 				NodeIndexes:       []int32{3, 4},
 				ReplicationFactor: 2,
 			},
@@ -167,8 +172,8 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 	require.Equal(stream1, record.StreamId)
 	require.Equal([]int32{1, 2}, record.NodeIndexes)
 	require.EqualValues(2, record.ReplicationFactor)
-	require.EqualValues(0, record.LastMiniblockNum)
-	require.Equal(makeHash(0x01), record.LastMiniblockHash)
+	require.EqualValues(0, record.LastMiniblock.Num)
+	require.Equal(makeHash(0x01), record.LastMiniblock.Hash)
 	require.False(record.Sealed)
 	require.EqualValues(blockNum, record.CreatedAtBlock)
 	require.EqualValues(blockNum, record.UpdatedAtBlock)
@@ -190,7 +195,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		StreamRecordEventMaskReplicationFactor |
 		StreamRecordEventMaskSealed
 
-	expectedByStream := map[shared.StreamId][]byte{
+	expectedByStream := map[shared.StreamId]common.Hash{
 		stream1: makeHash(0x01),
 		stream2: makeHash(0x02),
 		stream3: makeHash(0x03),
@@ -201,7 +206,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		require.EqualValues(i, block.BlockSlot)
 		require.Equal(expectedMask, block.EventMask)
 		require.NotNil(block.Record)
-		require.Equal(expectedByStream[block.Record.StreamId], block.Record.LastMiniblockHash)
+		require.Equal(expectedByStream[block.Record.StreamId], block.Record.LastMiniblock.Hash)
 	}
 }
 
@@ -218,8 +223,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream1,
-				LastMiniblockHash: makeHash(0x10),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x10, 0),
 				NodeIndexes:       []int32{1, 2},
 				ReplicationFactor: 2,
 			},
@@ -227,8 +231,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream2,
-				LastMiniblockHash: makeHash(0x20),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x20, 0),
 				NodeIndexes:       []int32{2, 3},
 				ReplicationFactor: 2,
 			},
@@ -256,19 +259,17 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		},
 		{
 			Miniblock: &UpdateMetadataStreamMiniblock{
-				StreamId:          stream1,
-				PrevMiniblockHash: makeHash(0x10),
-				LastMiniblockHash: makeHash(0x11),
-				LastMiniblockNum:  1,
-				Sealed:            true,
+				StreamId:      stream1,
+				PrevMiniblock: makeRef(0x10, 0),
+				LastMiniblock: makeRef(0x11, 1),
+				Sealed:        true,
 			},
 		},
 		{
 			Miniblock: &UpdateMetadataStreamMiniblock{
-				StreamId:          stream2,
-				PrevMiniblockHash: makeHash(0xff),
-				LastMiniblockHash: makeHash(0x21),
-				LastMiniblockNum:  1,
+				StreamId:      stream2,
+				PrevMiniblock: makeRef(0xff, 0),
+				LastMiniblock: makeRef(0x21, 1),
 			},
 		},
 	}
@@ -290,16 +291,16 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 	require.NoError(err)
 	require.Equal([]int32{2, 3}, record.NodeIndexes)
 	require.EqualValues(2, record.ReplicationFactor)
-	require.Equal(makeHash(0x11), record.LastMiniblockHash)
-	require.EqualValues(1, record.LastMiniblockNum)
+	require.Equal(makeHash(0x11), record.LastMiniblock.Hash)
+	require.EqualValues(1, record.LastMiniblock.Num)
 	require.True(record.Sealed)
 	require.EqualValues(blockNum, record.UpdatedAtBlock)
 
 	record, err = store.GetStreamRecord(ctx, stream2)
 	require.NoError(err)
 	require.Equal([]int32{2, 3}, record.NodeIndexes)
-	require.Equal(makeHash(0x20), record.LastMiniblockHash)
-	require.EqualValues(0, record.LastMiniblockNum)
+	require.Equal(makeHash(0x20), record.LastMiniblock.Hash)
+	require.EqualValues(0, record.LastMiniblock.Num)
 	require.False(record.Sealed)
 
 	count, err := store.GetStreamRecordCountOnNode(ctx, 1)
@@ -343,8 +344,7 @@ func TestMetadataServiceStore_BatchUpdateTrimsBlocks(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream1,
-				LastMiniblockHash: makeHash(0x01),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x01, 0),
 				NodeIndexes:       []int32{1, 2},
 				ReplicationFactor: 2,
 			},
@@ -358,10 +358,9 @@ func TestMetadataServiceStore_BatchUpdateTrimsBlocks(t *testing.T) {
 	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
 		{
 			Miniblock: &UpdateMetadataStreamMiniblock{
-				StreamId:          stream1,
-				PrevMiniblockHash: makeHash(0x01),
-				LastMiniblockHash: makeHash(0x02),
-				LastMiniblockNum:  1,
+				StreamId:      stream1,
+				PrevMiniblock: makeRef(0x01, 0),
+				LastMiniblock: makeRef(0x02, 1),
 			},
 		},
 	}, 2)
@@ -412,8 +411,7 @@ func TestMetadataServiceStore_BatchUpdateNoTrimWhenZero(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          stream1,
-				LastMiniblockHash: makeHash(0x01),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x01, 0),
 				NodeIndexes:       []int32{1, 2},
 				ReplicationFactor: 2,
 			},
@@ -427,10 +425,9 @@ func TestMetadataServiceStore_BatchUpdateNoTrimWhenZero(t *testing.T) {
 	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
 		{
 			Miniblock: &UpdateMetadataStreamMiniblock{
-				StreamId:          stream1,
-				PrevMiniblockHash: makeHash(0x01),
-				LastMiniblockHash: makeHash(0x02),
-				LastMiniblockNum:  1,
+				StreamId:      stream1,
+				PrevMiniblock: makeRef(0x01, 0),
+				LastMiniblock: makeRef(0x02, 1),
 			},
 		},
 	}, 0)
@@ -499,8 +496,7 @@ func TestMetadataServiceStore_OnNewRecordBlock(t *testing.T) {
 		{
 			Insert: &InsertMetadataStreamRecord{
 				StreamId:          streamId,
-				LastMiniblockHash: makeHash(0x55),
-				LastMiniblockNum:  0,
+				LastMiniblock:     makeRef(0x55, 0),
 				NodeIndexes:       []int32{1, 2},
 				ReplicationFactor: 2,
 			},

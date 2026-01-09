@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS md_stream_placement_nodes_gin_idx
 -- block_slot values are sequential within a block starting from 0
 -- block_num for last updated block is stored in md_last_block.block_num.
 -- md_blocks contains full updated record of the stream, i.e. all
--- fields (event not updated) are set.
+-- fields (even if not updated) are set.
 CREATE TABLE IF NOT EXISTS md_blocks (
     block_num BIGINT NOT NULL,
     block_slot BIGINT NOT NULL,
