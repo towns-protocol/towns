@@ -81,6 +81,13 @@ type MetadataStreamRecordUpdate struct {
 	Miniblock *UpdateMetadataStreamMiniblock
 }
 
+type streamRecordUpdateResult struct {
+	record        *MetadataStreamRecord
+	mask          StreamRecordEventMask
+	validationErr error
+	insertionErr  error
+}
+
 type MetadataServiceStore interface {
 	// ListStreamRecords streams all records in stream_id order using a repeatable-read snapshot.
 	// The callback is invoked for each page and may return an error to stop iteration; that
@@ -379,21 +386,23 @@ func (s *PostgresMetadataServiceStore) BatchUpdateStreamRecords(
 
 			blockSlot := int64(0)
 			for i, update := range updates {
-				if update == nil {
-					errs[i] = RiverError(protocol.Err_INVALID_ARGUMENT, "update is nil")
-					continue
-				}
-
-				record, mask, err := s.applyStreamRecordUpdateTx(ctx, tx, blockNum, update)
+				result, err := s.applyStreamRecordUpdateTx(ctx, tx, blockNum, update)
 				if err != nil {
-					if isStreamRecordUpdateValidationError(err) {
-						errs[i] = err
-						continue
-					}
 					return err
 				}
+				if result.validationErr != nil {
+					errs[i] = result.validationErr
+					continue
+				}
+				if result.insertionErr != nil {
+					errs[i] = result.insertionErr
+					continue
+				}
+				if result.record == nil {
+					return RiverError(protocol.Err_INTERNAL, "stream record update produced no record")
+				}
 
-				if err := s.insertRecordBlockTx(ctx, tx, blockNum, blockSlot, mask, record); err != nil {
+				if err := s.insertRecordBlockTx(ctx, tx, blockNum, blockSlot, result.mask, result.record); err != nil {
 					return err
 				}
 				blockSlot++
@@ -427,7 +436,13 @@ func (s *PostgresMetadataServiceStore) applyStreamRecordUpdateTx(
 	tx pgx.Tx,
 	blockNum int64,
 	update *MetadataStreamRecordUpdate,
-) (*MetadataStreamRecord, StreamRecordEventMask, error) {
+) (streamRecordUpdateResult, error) {
+	if update == nil {
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "update is nil"),
+		}, nil
+	}
+
 	updateCount := 0
 	if update.Insert != nil {
 		updateCount++
@@ -439,10 +454,14 @@ func (s *PostgresMetadataServiceStore) applyStreamRecordUpdateTx(
 		updateCount++
 	}
 	if updateCount == 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "update has no operation")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "update has no operation"),
+		}, nil
 	}
 	if updateCount > 1 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "update must include a single operation")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "update must include a single operation"),
+		}, nil
 	}
 
 	switch {
@@ -453,7 +472,9 @@ func (s *PostgresMetadataServiceStore) applyStreamRecordUpdateTx(
 	case update.Miniblock != nil:
 		return s.applyUpdateStreamMiniblockTx(ctx, tx, blockNum, update.Miniblock)
 	default:
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "unknown update type")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "unknown update type"),
+		}, nil
 	}
 }
 
@@ -462,26 +483,36 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 	tx pgx.Tx,
 	blockNum int64,
 	update *InsertMetadataStreamRecord,
-) (*MetadataStreamRecord, StreamRecordEventMask, error) {
+) (streamRecordUpdateResult, error) {
 	if update == nil {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "insert update is nil")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "insert update is nil"),
+		}, nil
 	}
 	if update.LastMiniblock.Num < 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative"),
+		}, nil
 	}
 	if update.ReplicationFactor <= 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor must be positive")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor must be positive"),
+		}, nil
 	}
 	if err := validateNodeIndexes(update.NodeIndexes, false); err != nil {
-		return nil, 0, err
+		return streamRecordUpdateResult{
+			validationErr: err,
+		}, nil
 	}
 	if int(update.ReplicationFactor) > len(update.NodeIndexes) {
-		return nil, 0, RiverError(
-			protocol.Err_INVALID_ARGUMENT,
-			"replication_factor must not exceed node count",
-			"replicationFactor", update.ReplicationFactor,
-			"nodeCount", len(update.NodeIndexes),
-		)
+		return streamRecordUpdateResult{
+			validationErr: RiverError(
+				protocol.Err_INVALID_ARGUMENT,
+				"replication_factor must not exceed node count",
+				"replicationFactor", update.ReplicationFactor,
+				"nodeCount", len(update.NodeIndexes),
+			),
+		}, nil
 	}
 
 	var exists bool
@@ -490,10 +521,12 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 		`SELECT EXISTS (SELECT 1 FROM md_stream_records WHERE stream_id = $1)`,
 		update.StreamId[:],
 	).Scan(&exists); err != nil {
-		return nil, 0, err
+		return streamRecordUpdateResult{}, err
 	}
 	if exists {
-		return nil, 0, RiverError(protocol.Err_ALREADY_EXISTS, "stream already exists", "streamId", update.StreamId)
+		return streamRecordUpdateResult{
+			insertionErr: RiverError(protocol.Err_ALREADY_EXISTS, "stream already exists", "streamId", update.StreamId),
+		}, nil
 	}
 
 	if _, err := tx.Exec(
@@ -519,9 +552,16 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 	); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, 0, RiverError(protocol.Err_ALREADY_EXISTS, "stream already exists", "streamId", update.StreamId)
+			return streamRecordUpdateResult{
+				insertionErr: RiverError(
+					protocol.Err_ALREADY_EXISTS,
+					"stream already exists",
+					"streamId",
+					update.StreamId,
+				),
+			}, nil
 		}
-		return nil, 0, err
+		return streamRecordUpdateResult{}, err
 	}
 
 	if _, err := tx.Exec(
@@ -530,7 +570,7 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 		update.StreamId[:],
 		update.NodeIndexes,
 	); err != nil {
-		return nil, 0, err
+		return streamRecordUpdateResult{}, err
 	}
 
 	record := &MetadataStreamRecord{
@@ -549,7 +589,10 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 		StreamRecordEventMaskSealed |
 		StreamRecordEventMaskInserted
 
-	return record, mask, nil
+	return streamRecordUpdateResult{
+		record: record,
+		mask:   mask,
+	}, nil
 }
 
 func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
@@ -557,25 +600,48 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
 	tx pgx.Tx,
 	blockNum int64,
 	update *UpdateMetadataStreamPlacement,
-) (*MetadataStreamRecord, StreamRecordEventMask, error) {
+) (streamRecordUpdateResult, error) {
 	if update == nil {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "placement update is nil")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "placement update is nil"),
+		}, nil
 	}
 	if update.ReplicationFactor < 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor must not be negative")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor must not be negative"),
+		}, nil
 	}
 	if len(update.NodeIndexes) == 0 && update.ReplicationFactor == 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "placement update must include nodes and/or replication_factor")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(
+				protocol.Err_INVALID_ARGUMENT,
+				"placement update must include nodes and/or replication_factor",
+			),
+		}, nil
 	}
 	if len(update.NodeIndexes) > 0 {
 		if err := validateNodeIndexes(update.NodeIndexes, false); err != nil {
-			return nil, 0, err
+			return streamRecordUpdateResult{
+				validationErr: err,
+			}, nil
+		}
+	}
+	if update.ReplicationFactor > 0 && len(update.NodeIndexes) > 0 {
+		if int(update.ReplicationFactor) > len(update.NodeIndexes) {
+			return streamRecordUpdateResult{
+				validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor exceeds node count"),
+			}, nil
 		}
 	}
 
 	record, err := s.getStreamRecordForUpdateTx(ctx, tx, update.StreamId)
 	if err != nil {
-		return nil, 0, err
+		if AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+			return streamRecordUpdateResult{
+				insertionErr: err,
+			}, nil
+		}
+		return streamRecordUpdateResult{}, err
 	}
 
 	newNodes := record.NodeIndexes
@@ -583,19 +649,20 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
 
 	switch {
 	case update.ReplicationFactor > 0 && len(update.NodeIndexes) > 0:
-		if int(update.ReplicationFactor) > len(update.NodeIndexes) {
-			return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor exceeds node count")
-		}
 		newRepl = update.ReplicationFactor
 		newNodes = update.NodeIndexes
 	case update.ReplicationFactor > 0:
 		if int(update.ReplicationFactor) > len(record.NodeIndexes) {
-			return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor exceeds node count")
+			return streamRecordUpdateResult{
+				insertionErr: RiverError(protocol.Err_INVALID_ARGUMENT, "replication_factor exceeds node count"),
+			}, nil
 		}
 		newRepl = update.ReplicationFactor
 	case len(update.NodeIndexes) > 0:
 		if len(update.NodeIndexes) < int(record.ReplicationFactor) {
-			return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "node count below replication_factor")
+			return streamRecordUpdateResult{
+				insertionErr: RiverError(protocol.Err_INVALID_ARGUMENT, "node count below replication_factor"),
+			}, nil
 		}
 		newNodes = update.NodeIndexes
 	}
@@ -612,7 +679,7 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
 		newNodes,
 		blockNum,
 	); err != nil {
-		return nil, 0, err
+		return streamRecordUpdateResult{}, err
 	}
 
 	if len(update.NodeIndexes) > 0 {
@@ -622,7 +689,7 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
 			update.StreamId[:],
 			newNodes,
 		); err != nil {
-			return nil, 0, err
+			return streamRecordUpdateResult{}, err
 		}
 	}
 
@@ -638,7 +705,10 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamPlacementTx(
 		mask |= StreamRecordEventMaskReplicationFactor
 	}
 
-	return record, mask, nil
+	return streamRecordUpdateResult{
+		record: record,
+		mask:   mask,
+	}, nil
 }
 
 func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
@@ -646,27 +716,50 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 	tx pgx.Tx,
 	blockNum int64,
 	update *UpdateMetadataStreamMiniblock,
-) (*MetadataStreamRecord, StreamRecordEventMask, error) {
+) (streamRecordUpdateResult, error) {
 	if update == nil {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "miniblock update is nil")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "miniblock update is nil"),
+		}, nil
 	}
 	if update.LastMiniblock.Num < 0 {
-		return nil, 0, RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative")
+		return streamRecordUpdateResult{
+			validationErr: RiverError(protocol.Err_INVALID_ARGUMENT, "last_miniblock_num must be non-negative"),
+		}, nil
 	}
 
 	record, err := s.getStreamRecordForUpdateTx(ctx, tx, update.StreamId)
 	if err != nil {
-		return nil, 0, err
+		if AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+			return streamRecordUpdateResult{
+				insertionErr: err,
+			}, nil
+		}
+		return streamRecordUpdateResult{}, err
 	}
 
 	if record.Sealed {
-		return nil, 0, RiverError(protocol.Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId)
+		return streamRecordUpdateResult{
+			insertionErr: RiverError(protocol.Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId),
+		}, nil
 	}
 	if record.LastMiniblock.Hash != update.PrevMiniblock.Hash {
-		return nil, 0, RiverError(protocol.Err_BAD_PREV_MINIBLOCK_HASH, "prev_miniblock_hash mismatch", "streamId", update.StreamId)
+		return streamRecordUpdateResult{
+			insertionErr: RiverError(
+				protocol.Err_BAD_PREV_MINIBLOCK_HASH,
+				"prev_miniblock_hash mismatch",
+				"streamId", update.StreamId,
+			),
+		}, nil
 	}
 	if record.LastMiniblock.Num+1 != update.LastMiniblock.Num {
-		return nil, 0, RiverError(protocol.Err_BAD_BLOCK_NUMBER, "last_miniblock_num must increase by 1", "streamId", update.StreamId)
+		return streamRecordUpdateResult{
+			insertionErr: RiverError(
+				protocol.Err_BAD_BLOCK_NUMBER,
+				"last_miniblock_num must increase by 1",
+				"streamId", update.StreamId,
+			),
+		}, nil
 	}
 
 	sealed := record.Sealed
@@ -688,7 +781,7 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 		sealed,
 		blockNum,
 	); err != nil {
-		return nil, 0, err
+		return streamRecordUpdateResult{}, err
 	}
 
 	record.LastMiniblock = update.LastMiniblock
@@ -700,7 +793,10 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 		mask |= StreamRecordEventMaskSealed
 	}
 
-	return record, mask, nil
+	return streamRecordUpdateResult{
+		record: record,
+		mask:   mask,
+	}, nil
 }
 
 func (s *PostgresMetadataServiceStore) GetStreamRecord(
@@ -1137,23 +1233,6 @@ func (s *PostgresMetadataServiceStore) insertRecordBlockTx(
 		record.Sealed,
 	)
 	return err
-}
-
-func isStreamRecordUpdateValidationError(err error) bool {
-	if err == nil {
-		return false
-	}
-	switch AsRiverError(err).Code {
-	case protocol.Err_INVALID_ARGUMENT,
-		protocol.Err_ALREADY_EXISTS,
-		protocol.Err_NOT_FOUND,
-		protocol.Err_BAD_PREV_MINIBLOCK_HASH,
-		protocol.Err_BAD_BLOCK_NUMBER,
-		protocol.Err_FAILED_PRECONDITION:
-		return true
-	default:
-		return false
-	}
 }
 
 func validateNodeIndexes(nodes []int32, allowEmpty bool) error {
