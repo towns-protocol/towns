@@ -274,24 +274,66 @@ func (s *PostgresMetadataServiceStore) listStreamRecords(
 				return err
 			}
 
-			records, err := pgx.CollectRows[*MetadataStreamRecord](rows, scanStreamRecordCollectable)
+			var (
+				streamIDBytes  []byte
+				lastHash       []byte
+				lastNum        int64
+				replication    int32
+				sealed         bool
+				nodeIndexes    []int32
+				createdAtBlock int64
+				updatedAtBlock int64
+			)
+
+			page := make([]*MetadataStreamRecord, 0, pageSize)
+			_, err = pgx.ForEachRow(
+				rows,
+				[]any{
+					&streamIDBytes,
+					&lastHash,
+					&lastNum,
+					&replication,
+					&sealed,
+					&nodeIndexes,
+					&createdAtBlock,
+					&updatedAtBlock,
+				},
+				func() error {
+					streamId, err := shared.StreamIdFromBytes(streamIDBytes)
+					if err != nil {
+						return err
+					}
+					record := &MetadataStreamRecord{
+						StreamId: streamId,
+						LastMiniblock: shared.MiniblockRef{
+							Hash: common.BytesToHash(lastHash),
+							Num:  lastNum,
+						},
+						NodeIndexes:       append([]int32(nil), nodeIndexes...),
+						ReplicationFactor: replication,
+						Sealed:            sealed,
+						CreatedAtBlock:    createdAtBlock,
+						UpdatedAtBlock:    updatedAtBlock,
+					}
+					page = append(page, record)
+					if len(page) < pageSize {
+						return nil
+					}
+					if err := cb(page); err != nil {
+						return err
+					}
+					page = make([]*MetadataStreamRecord, 0, pageSize)
+					return nil
+				},
+			)
 			if err != nil {
 				return err
 			}
-			if len(records) == 0 {
+
+			if len(page) == 0 {
 				return nil
 			}
-
-			for i := 0; i < len(records); i += pageSize {
-				end := i + pageSize
-				if end > len(records) {
-					end = len(records)
-				}
-				if err := cb(records[i:end]); err != nil {
-					return err
-				}
-			}
-			return nil
+			return cb(page)
 		},
 		&txRunnerOpts{overrideIsolationLevel: &isoLevelRepeatableRead},
 	)
@@ -1059,10 +1101,6 @@ func scanStreamRecord(row pgx.Row) (*MetadataStreamRecord, error) {
 		CreatedAtBlock:    createdAtBlock,
 		UpdatedAtBlock:    updatedAtBlock,
 	}, nil
-}
-
-func scanStreamRecordCollectable(row pgx.CollectableRow) (*MetadataStreamRecord, error) {
-	return scanStreamRecord(row)
 }
 
 func (s *PostgresMetadataServiceStore) insertRecordBlockTx(
