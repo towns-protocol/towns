@@ -85,30 +85,60 @@ type MetadataStreamRecordUpdate struct {
 }
 
 type MetadataServiceStore interface {
+	// ListStreamRecords streams all records in stream_id order using a repeatable-read snapshot.
+	// The callback is invoked for each page and may return an error to stop iteration; that
+	// error is returned as the method error. The final return value is the last block number
+	// visible in the snapshot.
 	ListStreamRecords(
 		ctx context.Context,
 		pageSize int,
 		cb func([]*MetadataStreamRecord) error,
 	) (int64, error)
+
+	// ListStreamRecordsForNode streams records assigned to nodeIndex in stream_id order using a
+	// repeatable-read snapshot. The callback is invoked for each page and may return an error to
+	// stop iteration; that error is returned as the method error. The final return value is the
+	// last block number visible in the snapshot.
 	ListStreamRecordsForNode(
 		ctx context.Context,
 		nodeIndex int32,
 		pageSize int,
 		cb func([]*MetadataStreamRecord) error,
 	) (int64, error)
+
+	// BatchUpdateStreamRecords applies a batch of updates, returning the new block number and a
+	// per-update error slice (nil for successful updates). The returned error is for fatal failures
+	// that abort the batch. numBlocksToKeep trims md_blocks to keep the latest N blocks; use 0 to
+	// disable trimming.
 	BatchUpdateStreamRecords(
 		ctx context.Context,
 		updates []*MetadataStreamRecordUpdate,
 		numBlocksToKeep int64,
 	) (int64, []error, error)
+
+	// GetStreamRecord returns the current record or Err_NOT_FOUND if it doesn't exist.
 	GetStreamRecord(
 		ctx context.Context,
 		streamId shared.StreamId,
 	) (*MetadataStreamRecord, error)
+
+	// GetStreamRecordCount returns the total number of records.
 	GetStreamRecordCount(ctx context.Context) (int64, error)
+
+	// GetStreamRecordCountOnNode returns the number of records whose placement includes nodeIndex.
 	GetStreamRecordCountOnNode(ctx context.Context, nodeIndex int32) (int64, error)
+
+	// GetLastRecordBlockNum returns the current block number from md_last_block.
 	GetLastRecordBlockNum(ctx context.Context) (int64, error)
+
+	// OnNewRecordBlock returns channels that receive new block numbers and fatal errors.
+	// If setup or retrying exceeds timeout, an error is sent and both channels are closed.
+	// Channels are also closed when ctx is canceled.
 	OnNewRecordBlock(ctx context.Context, timeout time.Duration) (<-chan int64, <-chan error)
+
+	// GetRecordBlocks returns blocks in the [fromInclusive, toExclusive) range ordered by block_num
+	// and block_slot. Missing blocks in the range are ignored, and if no blocks exist in the range
+	// the returned slice is nil.
 	GetRecordBlocks(
 		ctx context.Context,
 		fromInclusive int64,
