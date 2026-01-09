@@ -236,130 +236,66 @@ func (s *PostgresMetadataServiceStore) listStreamRecords(
 			if err := tx.QueryRow(ctx, `SELECT block_num FROM md_last_block WHERE singleton_key = TRUE`).Scan(&lastBlock); err != nil {
 				return err
 			}
-
-			var cursor []byte
-			for {
-				records, nextCursor, err := s.listStreamRecordsPageTx(ctx, tx, nodeIndex, pageSize, cursor)
-				if err != nil {
-					return err
-				}
-				if len(records) == 0 {
-					return nil
-				}
-				if err := cb(records); err != nil {
-					return err
-				}
-				cursor = nextCursor
+			var (
+				query string
+				args  []any
+			)
+			if nodeIndex == nil {
+				query = `
+					SELECT stream_id,
+						last_miniblock_hash,
+						last_miniblock_num,
+						replication_factor,
+						sealed,
+						nodes,
+						created_at_block,
+						updated_at_block
+					FROM md_stream_records
+					ORDER BY stream_id`
+			} else {
+				query = `
+					SELECT r.stream_id,
+						r.last_miniblock_hash,
+						r.last_miniblock_num,
+						r.replication_factor,
+						r.sealed,
+						r.nodes,
+						r.created_at_block,
+						r.updated_at_block
+					FROM md_stream_placement p
+					JOIN md_stream_records r ON r.stream_id = p.stream_id
+					WHERE p.nodes @> ARRAY[$1]::int[]
+					ORDER BY p.stream_id`
+				args = []any{*nodeIndex}
 			}
+
+			rows, err := tx.Query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+
+			records, err := pgx.CollectRows[*MetadataStreamRecord](rows, scanStreamRecordCollectable)
+			if err != nil {
+				return err
+			}
+			if len(records) == 0 {
+				return nil
+			}
+
+			for i := 0; i < len(records); i += pageSize {
+				end := i + pageSize
+				if end > len(records) {
+					end = len(records)
+				}
+				if err := cb(records[i:end]); err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 		&txRunnerOpts{overrideIsolationLevel: &isoLevelRepeatableRead},
 	)
 	return lastBlock, err
-}
-
-func (s *PostgresMetadataServiceStore) listStreamRecordsPageTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	nodeIndex *int32,
-	pageSize int,
-	cursor []byte,
-) ([]*MetadataStreamRecord, []byte, error) {
-	var (
-		query string
-		args  []any
-	)
-
-	if nodeIndex == nil {
-		if len(cursor) == 0 {
-			query = `
-				SELECT stream_id,
-					last_miniblock_hash,
-					last_miniblock_num,
-					replication_factor,
-					sealed,
-					nodes,
-					created_at_block,
-					updated_at_block
-				FROM md_stream_records
-				ORDER BY stream_id
-				LIMIT $1`
-			args = []any{pageSize}
-		} else {
-			query = `
-				SELECT stream_id,
-					last_miniblock_hash,
-					last_miniblock_num,
-					replication_factor,
-					sealed,
-					nodes,
-					created_at_block,
-					updated_at_block
-				FROM md_stream_records
-				WHERE stream_id > $1
-				ORDER BY stream_id
-				LIMIT $2`
-			args = []any{cursor, pageSize}
-		}
-	} else {
-		if len(cursor) == 0 {
-			query = `
-				SELECT r.stream_id,
-					r.last_miniblock_hash,
-					r.last_miniblock_num,
-					r.replication_factor,
-					r.sealed,
-					r.nodes,
-					r.created_at_block,
-					r.updated_at_block
-				FROM md_stream_placement p
-				JOIN md_stream_records r ON r.stream_id = p.stream_id
-				WHERE p.nodes @> ARRAY[$1]::int[]
-				ORDER BY p.stream_id
-				LIMIT $2`
-			args = []any{*nodeIndex, pageSize}
-		} else {
-			query = `
-				SELECT r.stream_id,
-					r.last_miniblock_hash,
-					r.last_miniblock_num,
-					r.replication_factor,
-					r.sealed,
-					r.nodes,
-					r.created_at_block,
-					r.updated_at_block
-				FROM md_stream_placement p
-				JOIN md_stream_records r ON r.stream_id = p.stream_id
-				WHERE p.nodes @> ARRAY[$1]::int[]
-				  AND p.stream_id > $2
-				ORDER BY p.stream_id
-				LIMIT $3`
-			args = []any{*nodeIndex, cursor, pageSize}
-		}
-	}
-
-	rows, err := tx.Query(ctx, query, args...)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer rows.Close()
-
-	var records []*MetadataStreamRecord
-	for rows.Next() {
-		record, err := scanStreamRecord(rows)
-		if err != nil {
-			return nil, nil, err
-		}
-		records = append(records, record)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
-	}
-	if len(records) == 0 {
-		return nil, nil, nil
-	}
-
-	nextCursor := append([]byte(nil), records[len(records)-1].StreamId[:]...)
-	return records, nextCursor, nil
 }
 
 func (s *PostgresMetadataServiceStore) BatchUpdateStreamRecords(
@@ -1123,6 +1059,10 @@ func scanStreamRecord(row pgx.Row) (*MetadataStreamRecord, error) {
 		CreatedAtBlock:    createdAtBlock,
 		UpdatedAtBlock:    updatedAtBlock,
 	}, nil
+}
+
+func scanStreamRecordCollectable(row pgx.CollectableRow) (*MetadataStreamRecord, error) {
+	return scanStreamRecord(row)
 }
 
 func (s *PostgresMetadataServiceStore) insertRecordBlockTx(
