@@ -18,7 +18,6 @@ import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlements
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
-import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
@@ -361,24 +360,5 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
                 Permissions.AddRemoveChannels
             )
         );
-    }
-
-    function test_fuzz_setProxyInitializer(address proxyInitializer) external {
-        vm.prank(deployer);
-        vm.expectEmit(address(spaceArchitect));
-        emit Architect__ProxyInitializerSet(proxyInitializer);
-        spaceArchitect.setProxyInitializer(ISpaceProxyInitializer(proxyInitializer));
-
-        assertEq(address(spaceArchitect.getProxyInitializer()), proxyInitializer);
-    }
-
-    function test_fuzz_setProxyInitializer_revertIfNotOwner(
-        address user,
-        address proxyInitializer
-    ) external assumeEOA(user) {
-        vm.assume(user != deployer);
-        vm.prank(user);
-        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
-        spaceArchitect.setProxyInitializer(ISpaceProxyInitializer(proxyInitializer));
     }
 }

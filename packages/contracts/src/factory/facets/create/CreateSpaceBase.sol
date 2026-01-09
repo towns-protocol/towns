@@ -24,6 +24,7 @@ import {Validator} from "../../../utils/libraries/Validator.sol";
 import {PricingModulesBase} from "../architect/pricing/PricingModulesBase.sol";
 import {ArchitectStorage} from "../architect/ArchitectStorage.sol";
 import {ImplementationStorage} from "../architect/ImplementationStorage.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -33,16 +34,21 @@ import {SpaceProxyInitializer} from "../../../spaces/facets/proxy/SpaceProxyInit
 abstract contract CreateSpaceBase is IArchitectBase {
     using StringSet for StringSet.Set;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using CustomRevert for bytes4;
 
     address internal constant EVERYONE_ADDRESS = address(1);
     string internal constant MINTER_ROLE = "Minter";
     bytes1 internal constant CHANNEL_PREFIX = 0x20;
 
+    bytes32 private constant PROXY_INITIALIZER_INIT_CODE_HASH =
+        keccak256(type(SpaceProxyInitializer).creationCode);
+    bytes32 private constant PROXY_INITIALIZER_SALT = 0;
+
     function _createSpaceWithPrepay(
         CreateSpace calldata space,
         SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
-        if (msg.value > 0) revert Architect__UnexpectedETH();
+        if (msg.value > 0) Architect__UnexpectedETH.selector.revertWith();
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
@@ -61,7 +67,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
         CreateSpaceOld calldata space,
         SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
-        if (msg.value > 0) revert Architect__UnexpectedETH();
+        if (msg.value > 0) Architect__UnexpectedETH.selector.revertWith();
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
@@ -334,15 +340,33 @@ abstract contract CreateSpaceBase is IArchitectBase {
 
     function _verifyPricingModule(address pricingModule) internal view {
         if (pricingModule == address(0) || !PricingModulesBase.isPricingModule(pricingModule)) {
-            revert Architect__InvalidPricingModule();
+            Architect__InvalidPricingModule.selector.revertWith();
         }
+    }
+
+    /// @dev Returns the deterministic CREATE2 address of SpaceProxyInitializer
+    function _getProxyInitializer() internal view returns (address) {
+        return
+            Factory.calculateDeploymentAddress(
+                PROXY_INITIALIZER_INIT_CODE_HASH,
+                PROXY_INITIALIZER_SALT
+            );
+    }
+
+    /// @dev Deploys SpaceProxyInitializer via CREATE2 if not already deployed, returns its address
+    function _getOrDeployProxyInitializer() internal returns (address) {
+        address computed = _getProxyInitializer();
+
+        if (computed.code.length != 0) return computed;
+
+        return Factory.deploy(type(SpaceProxyInitializer).creationCode, PROXY_INITIALIZER_SALT);
     }
 
     function _getSpaceDeploymentInfo(
         uint256 spaceTokenId,
         IMembershipBase.Membership calldata membershipSettings,
         SpaceOptions memory spaceOptions
-    ) internal view returns (bytes memory initCode, bytes32 salt) {
+    ) internal returns (bytes memory initCode, bytes32 salt) {
         _verifyPricingModule(membershipSettings.pricingModule);
 
         address spaceOwnerNFT = address(ImplementationStorage.layout().spaceOwnerToken);
@@ -350,7 +374,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
         // calculate salt
         salt = keccak256(abi.encode(spaceTokenId, block.timestamp, block.number, spaceOwnerNFT));
 
-        address proxyInitializer = address(ImplementationStorage.layout().proxyInitializer);
+        address proxyInitializer = _getOrDeployProxyInitializer();
 
         // calculate init code
         initCode = bytes.concat(

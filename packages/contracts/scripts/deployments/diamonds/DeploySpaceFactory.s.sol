@@ -15,7 +15,6 @@ import {DeployProxyManager} from "@towns-protocol/diamond/scripts/deployments/ut
 import {DeployFeatureManager} from "../facets/DeployFeatureManager.s.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployPricingModules} from "../facets/DeployPricingModules.s.sol";
-import {DeploySpaceFactoryInit} from "../facets/DeploySpaceFactoryInit.s.sol";
 import {DeployArchitect} from "../facets/DeployArchitect.s.sol";
 import {DeployCreateSpace} from "../facets/DeployCreateSpace.s.sol";
 import {DeployImplementationRegistry} from "../facets/DeployImplementationRegistry.s.sol";
@@ -63,10 +62,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     address public tieredLogPricingV3;
     address public fixedPricing;
     address public mockDelegationRegistry;
-
-    // init
-    address public spaceFactoryInit;
-    bytes public spaceFactoryInitData;
 
     function versionName() public pure override returns (string memory) {
         return "spaceFactory";
@@ -150,8 +145,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("PartnerRegistry");
         facetHelper.add("FeatureManagerFacet");
         facetHelper.add("FeeManagerFacet");
-        facetHelper.add("SpaceProxyInitializer");
-        facetHelper.add("SpaceFactoryInit");
 
         if (isAnvil()) {
             facetHelper.add("MockDelegationRegistry");
@@ -276,11 +269,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployFeeManager.makeInitData(deployer)
         );
-
-        address spaceProxyInitializer = facetHelper.getDeployedAddress("SpaceProxyInitializer");
-        spaceFactoryInit = facetHelper.getDeployedAddress("SpaceFactoryInit");
-        spaceFactoryInitData = DeploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
-        addInit(spaceFactoryInit, spaceFactoryInitData);
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
 

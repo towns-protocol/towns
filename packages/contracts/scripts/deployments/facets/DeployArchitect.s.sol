@@ -13,13 +13,11 @@ import {Architect} from "src/factory/facets/architect/Architect.sol";
 
 library DeployArchitect {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](6);
+        _selectors = new bytes4[](4);
         _selectors[0] = IArchitect.getSpaceByTokenId.selector;
         _selectors[1] = IArchitect.getTokenIdBySpace.selector;
         _selectors[2] = IArchitect.setSpaceArchitectImplementations.selector;
         _selectors[3] = IArchitect.getSpaceArchitectImplementations.selector;
-        _selectors[4] = IArchitect.setProxyInitializer.selector;
-        _selectors[5] = IArchitect.getProxyInitializer.selector;
     }
 
     function makeCut(

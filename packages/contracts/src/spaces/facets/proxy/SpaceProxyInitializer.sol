@@ -2,22 +2,20 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IERC5643} from "src/diamond/facets/token/ERC5643/IERC5643.sol";
-import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
-import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
+import {IERC5643} from "../../../diamond/facets/token/ERC5643/IERC5643.sol";
+import {IMembership} from "../membership/IMembership.sol";
+import {ISpaceProxyInitializer} from "./ISpaceProxyInitializer.sol";
 
 // libraries
 
 // contracts
-
 import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
-import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {EntitlementGatedBase} from "src/spaces/facets/gated/EntitlementGatedBase.sol";
-import {MembershipBase} from "src/spaces/facets/membership/MembershipBase.sol";
+import {ERC721ABase} from "../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {EntitlementGatedBase} from "../gated/EntitlementGatedBase.sol";
+import {MembershipBase} from "../membership/MembershipBase.sol";
 
 contract SpaceProxyInitializer is
     ISpaceProxyInitializer,

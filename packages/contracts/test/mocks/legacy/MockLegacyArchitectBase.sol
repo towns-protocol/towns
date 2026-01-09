@@ -40,6 +40,24 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     string internal constant MINTER_ROLE = "Minter";
     bytes1 internal constant CHANNEL_PREFIX = 0x20;
 
+    bytes32 private constant PROXY_INITIALIZER_INIT_CODE_HASH =
+        keccak256(type(SpaceProxyInitializer).creationCode);
+    bytes32 private constant PROXY_INITIALIZER_SALT = 0;
+
+    /// @dev Deploys SpaceProxyInitializer via CREATE2 if not already deployed
+    function _getOrDeployProxyInitializer() internal returns (address) {
+        address computed = Factory.calculateDeploymentAddress(
+            PROXY_INITIALIZER_INIT_CODE_HASH,
+            PROXY_INITIALIZER_SALT
+        );
+
+        if (computed.code.length > 0) {
+            return computed;
+        }
+
+        return Factory.deploy(type(SpaceProxyInitializer).creationCode, PROXY_INITIALIZER_SALT);
+    }
+
     // =============================================================
     //                           Spaces
     // =============================================================
@@ -254,7 +272,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _getSpaceDeploymentInfo(
         uint256 spaceTokenId,
         Membership memory membership
-    ) internal view returns (bytes memory initCode, bytes32 salt) {
+    ) internal returns (bytes memory initCode, bytes32 salt) {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
         // calculate salt
@@ -265,7 +283,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
             membershipSettings.feeRecipient = msg.sender;
         }
 
-        address proxyInitializer = address(ds.proxyInitializer);
+        address proxyInitializer = _getOrDeployProxyInitializer();
 
         // calculate init code
         initCode = abi.encodePacked(
