@@ -7,7 +7,7 @@ import {IL2Registrar} from "./IL2Registrar.sol";
 // libraries
 import {L2RegistrarMod} from "./L2RegistrarMod.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -20,11 +20,11 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 contract L2RegistrarFacet is IL2Registrar, OwnableBase, ReentrancyGuardTransient, Facet {
     using CustomRevert for bytes4;
     using L2RegistrarMod for L2RegistrarMod.Layout;
-    using SafeTransferLib for address;
 
     /// @notice Initializes the registrar with a registry contract and space factory
     /// @param registry Address of the L2Registry diamond contract
     /// @param spaceFactory Address of the SpaceFactory diamond (contains FeeManager facet)
+    /// @param currency Address of the ERC20 token used for fee payments
     function __L2Registrar_init(
         address registry,
         address spaceFactory,
@@ -44,6 +44,9 @@ contract L2RegistrarFacet is IL2Registrar, OwnableBase, ReentrancyGuardTransient
         address spaceFactory,
         address currency
     ) internal {
+        Validator.checkAddress(registry);
+        Validator.checkAddress(spaceFactory);
+        Validator.checkAddress(currency);
         L2RegistrarMod.Layout storage $ = L2RegistrarMod.getStorage();
         $.registry = registry;
         $.spaceFactory = spaceFactory;

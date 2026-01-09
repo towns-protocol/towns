@@ -224,7 +224,7 @@ contract L2RegistrarTest is L2ResolverBaseSetup {
     function test_register_chargeFee() external {
         // 1. Deploy DomainFeeHook with $5 USDC default price (6 decimals)
         uint256 defaultPrice = 5_000_000; // $5 USDC
-        DomainFeeHook feeHook = new DomainFeeHook(deployer, defaultPrice);
+        DomainFeeHook feeHook = new DomainFeeHook(deployer, address(spaceFactory), defaultPrice);
 
         // 2. Configure FeeManager on spaceFactory
         vm.startPrank(deployer);

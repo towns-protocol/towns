@@ -24,6 +24,7 @@ contract DomainFeeHook is IFeeHook, Ownable {
         uint256 defaultPrice;
         mapping(uint256 length => uint256 price) priceTiers;
         mapping(address account => uint256 count) registrationCount;
+        address feeManager;
     }
 
     /// keccak256(abi.encode(uint256(keccak256("towns.domains.registrar.domain.feehook.storage")) - 1)) & ~bytes32(uint256(0xff))
@@ -40,6 +41,9 @@ contract DomainFeeHook is IFeeHook, Ownable {
     /// @notice Emitted when a price tier is set
     event PriceTierSet(uint256 indexed length, uint256 price);
 
+    /// @notice Emitted when the fee manager is updated
+    event FeeManagerSet(address indexed feeManager);
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERRORS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -50,17 +54,22 @@ contract DomainFeeHook is IFeeHook, Ownable {
     /// @notice Thrown when array lengths don't match in batch operations
     error DomainFeeHook__LengthMismatch();
 
+    /// @notice Thrown when caller is not the authorized FeeManager
+    error DomainFeeHook__Unauthorized();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Initializes the fee hook with an owner and default price
-    /// @param owner_ The owner address
-    /// @param defaultPrice_ The default price for registrations
-    constructor(address owner_, uint256 defaultPrice_) {
-        _initializeOwner(owner_);
-        getStorage().defaultPrice = defaultPrice_;
-        emit DefaultPriceSet(defaultPrice_);
+    /// @param owner The owner address
+    /// @param defaultPrice The default price for registrations
+    constructor(address owner, address feeManager, uint256 defaultPrice) {
+        _initializeOwner(owner);
+        Layout storage $ = getStorage();
+        ($.feeManager, $.defaultPrice) = (feeManager, defaultPrice);
+        emit FeeManagerSet(feeManager);
+        emit DefaultPriceSet(defaultPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -74,9 +83,20 @@ contract DomainFeeHook is IFeeHook, Ownable {
         uint256,
         bytes calldata context
     ) external returns (FeeHookResult memory result) {
+        Layout storage $ = getStorage();
+        // Restrict to authorized FeeManager only
+        if (msg.sender != $.feeManager) DomainFeeHook__Unauthorized.selector.revertWith();
+
         result = _calculateFee(user, context);
         // Increment registration count (state change)
-        getStorage().registrationCount[user]++;
+        $.registrationCount[user]++;
+    }
+
+    /// @notice Sets the fee manager address
+    /// @param feeManager_ The fee manager address authorized to call onChargeFee
+    function setFeeManager(address feeManager_) external onlyOwner {
+        getStorage().feeManager = feeManager_;
+        emit FeeManagerSet(feeManager_);
     }
 
     /// @notice Sets the default price for registrations
@@ -140,6 +160,12 @@ contract DomainFeeHook is IFeeHook, Ownable {
     /// @return The registration count
     function getRegistrationCount(address user) external view returns (uint256) {
         return getStorage().registrationCount[user];
+    }
+
+    /// @notice Returns the authorized fee manager address
+    /// @return The fee manager address
+    function getFeeManager() external view returns (address) {
+        return getStorage().feeManager;
     }
 
     /// @notice Internal fee calculation logic
