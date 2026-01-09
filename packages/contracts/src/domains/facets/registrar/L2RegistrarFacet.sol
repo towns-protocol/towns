@@ -73,18 +73,21 @@ contract L2RegistrarFacet is IL2Registrar, OwnableBase, ReentrancyGuardTransient
 
     /// @inheritdoc IL2Registrar
     function setSpaceFactory(address spaceFactory) external onlyOwner {
+        Validator.checkAddress(spaceFactory);
         L2RegistrarMod.getStorage().spaceFactory = spaceFactory;
         emit L2RegistrarMod.SpaceFactorySet(spaceFactory);
     }
 
     /// @inheritdoc IL2Registrar
     function setRegistry(address registry) external onlyOwner {
+        Validator.checkAddress(registry);
         L2RegistrarMod.getStorage().registry = registry;
         emit L2RegistrarMod.RegistrySet(registry);
     }
 
     /// @inheritdoc IL2Registrar
     function setCurrency(address currency) external onlyOwner {
+        Validator.checkAddress(currency);
         L2RegistrarMod.getStorage().currency = currency;
         emit L2RegistrarMod.CurrencySet(currency);
     }

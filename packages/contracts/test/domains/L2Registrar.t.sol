@@ -328,20 +328,6 @@ contract L2RegistrarTest is L2ResolverBaseSetup {
         assertEq(labelLength, 5, "Label length should be 5 for 'alice'");
     }
 
-    function test_register_noFeeManagerSet() external {
-        // Set spaceFactory to zero address
-        vm.prank(deployer);
-        l2Registrar.setSpaceFactory(address(0));
-
-        // Registration should still work (free)
-        vm.prank(address(smartAccount));
-        l2Registrar.register("alice", alice);
-
-        // Verify subdomain was created
-        bytes32 aliceNode = _subdomainHash("alice");
-        assertEq(l2Registry.subdomainOwner(aliceNode), alice, "Alice should own subdomain");
-    }
-
     /*//////////////////////////////////////////////////////////////
                             REGISTRATION
     //////////////////////////////////////////////////////////////*/
