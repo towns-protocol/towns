@@ -16,7 +16,7 @@ import {L1ResolverFacet} from "src/domains/facets/l1/L1ResolverFacet.sol";
 import {L1ResolverMod} from "src/domains/facets/l1/L1ResolverMod.sol";
 
 // test setup
-import {L1ResolverBaseSetup} from "./L1ResolverBaseSetup.sol";
+import {L1ResolverBaseSetup} from "./setup/L1ResolverBaseSetup.sol";
 
 /// @title L1ResolverUnitTest
 /// @notice Unit tests using mocked ENS contracts
