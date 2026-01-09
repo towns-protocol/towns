@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.29;
+pragma solidity ^0.8.33;
 
 // interfaces
 
@@ -8,6 +8,7 @@ pragma solidity ^0.8.29;
 // contracts
 
 interface IAppFactoryBase {
+    // solhint-disable-next-line gas-struct-packing
     struct AppParams {
         string name;
         bytes32[] permissions;
@@ -22,6 +23,14 @@ interface IAppFactoryBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event AppCreated(address indexed app, bytes32 indexed uid, address indexed owner);
+    event BeaconAdded(bytes32 indexed beaconId, address indexed beacon);
+    event BeaconRemoved(bytes32 indexed beaconId, address indexed beacon);
+    event EntryPointSet(address indexed oldEntryPoint, address indexed newEntryPoint);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     error AppFactory__InvalidAppName();
@@ -30,16 +39,6 @@ interface IAppFactoryBase {
     error AppFactory__BeaconNotFound();
     error AppFactory__InvalidBeaconId();
     error AppFactory__BeaconAlreadyExists();
-
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event AppCreated(address indexed app, bytes32 indexed uid, address indexed owner);
-    event BeaconAdded(bytes32 indexed beaconId, address indexed beacon);
-    event BeaconRemoved(bytes32 indexed beaconId, address indexed beacon);
-    event EntryPointSet(address indexed oldEntryPoint, address indexed newEntryPoint);
 }
 
 interface IAppFactory is IAppFactoryBase {
@@ -69,6 +68,10 @@ interface IAppFactory is IAppFactoryBase {
     /// @param beaconIds Array of beacon IDs to remove
     function removeBeacons(bytes32[] calldata beaconIds) external;
 
+    /// @notice Set the entry point contract address for account abstraction
+    /// @param entryPoint The address of the entry point contract
+    function setEntryPoint(address entryPoint) external;
+
     /// @notice Get the beacon contract address for a given beacon ID
     /// @param beaconId The ID of the beacon to look up
     /// @return beacon The address of the beacon contract
@@ -77,10 +80,6 @@ interface IAppFactory is IAppFactoryBase {
     /// @notice Get all registered beacon IDs
     /// @return beaconIds Array of all registered beacon IDs
     function getBeacons() external view returns (bytes32[] memory beaconIds);
-
-    /// @notice Set the entry point contract address for account abstraction
-    /// @param entryPoint The address of the entry point contract
-    function setEntryPoint(address entryPoint) external;
 
     /// @notice Get the current entry point contract address
     /// @return entryPoint The address of the entry point contract

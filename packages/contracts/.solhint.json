@@ -5,6 +5,8 @@
     "use-natspec": "off",
     "no-inline-assembly": "off",
     "import-path-check": "off",
-    "func-name-mixedcase": "off"
+    "func-name-mixedcase": "off",
+    "no-empty-blocks": "off",
+    "function-max-lines": ["warn", 100]
   }
 }

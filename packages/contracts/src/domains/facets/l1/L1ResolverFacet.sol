@@ -25,16 +25,6 @@ contract L1ResolverFacet is IExtendedResolver, OwnableBase, Facet {
         __L1Resolver_init_unchained(gatewayUrl, gatewaySigner);
     }
 
-    function __L1Resolver_init_unchained(
-        string calldata gatewayUrl,
-        address gatewaySigner
-    ) internal {
-        L1ResolverMod.Layout storage $ = L1ResolverMod.getStorage();
-        $.setGatewayURL(gatewayUrl);
-        $.setGatewaySigner(gatewaySigner);
-        $.setNameWrapper();
-    }
-
     /// @notice Sets the L2 registry for a given node
     /// @param node The node to set the L2 registry for
     /// @param chainId The chain ID of the L2 registry
@@ -96,5 +86,15 @@ contract L1ResolverFacet is IExtendedResolver, OwnableBase, Facet {
     /// @return The URL of the CCIP gateway
     function getGatewayURL() external view returns (string memory) {
         return L1ResolverMod.getStorage().gatewayUrl;
+    }
+
+    function __L1Resolver_init_unchained(
+        string calldata gatewayUrl,
+        address gatewaySigner
+    ) internal {
+        L1ResolverMod.Layout storage $ = L1ResolverMod.getStorage();
+        $.setGatewayURL(gatewayUrl);
+        $.setGatewaySigner(gatewaySigner);
+        $.setNameWrapper();
     }
 }

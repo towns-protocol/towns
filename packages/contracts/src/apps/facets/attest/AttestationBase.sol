@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.33;
 
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
@@ -242,7 +242,9 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         for (uint256 i; i < len; ++i) {
             AttestationRequestData memory request = requests[i];
             // Ensure that either no expiration time was set or that it was set in the future.
-            if (request.expirationTime != NO_EXPIRATION_TIME && request.expirationTime <= timeNow) {
+            if (
+                request.expirationTime != NO_EXPIRATION_TIME && request.expirationTime < timeNow + 1
+            ) {
                 InvalidExpirationTime.selector.revertWith();
             }
 

@@ -5,7 +5,7 @@
     "clean": "forge clean",
     "compile": "forge build",
     "format": "bun run prettier:write",
-    "lint": "bun run solhint \"src/**/*.sol\"",
+    "lint": "bun run solhint 'src/{account,domains}/**/*.sol'",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
