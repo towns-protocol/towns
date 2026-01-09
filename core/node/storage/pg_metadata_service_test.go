@@ -344,3 +344,59 @@ func TestMetadataServiceStore_GetRecordBlocksValidation(t *testing.T) {
 	_, err = store.GetRecordBlocks(ctx, 2, 1)
 	require.Error(err)
 }
+
+func TestMetadataServiceStore_OnNewRecordBlock(t *testing.T) {
+	params := setupMetadataServiceStoreTest(t)
+	require := require.New(t)
+	store := params.store
+
+	ctx, cancel := context.WithCancel(params.ctx)
+	defer cancel()
+
+	updates, errs := store.OnNewRecordBlock(ctx, 2*time.Second)
+
+	time.Sleep(50 * time.Millisecond)
+
+	streamId := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+	blockNum, errsSlice, err := store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Insert: &InsertMetadataStreamRecord{
+				StreamId:          streamId,
+				LastMiniblockHash: makeHash(0x55),
+				LastMiniblockNum:  0,
+				NodeIndexes:       []int32{1, 2},
+				ReplicationFactor: 2,
+			},
+		},
+	})
+	require.NoError(err)
+	require.Len(errsSlice, 1)
+	require.NoError(errsSlice[0])
+
+	select {
+	case recvErr, ok := <-errs:
+		require.True(ok, "errs channel closed unexpectedly")
+		require.NoError(recvErr)
+	case got, ok := <-updates:
+		require.True(ok, "updates channel closed unexpectedly")
+		require.Equal(blockNum, got)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for record block notification")
+	}
+
+	cancel()
+
+	select {
+	case _, ok := <-updates:
+		require.False(ok)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for updates channel to close")
+	}
+
+	select {
+	case _, ok := <-errs:
+		require.False(ok)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for errs channel to close")
+	}
+}

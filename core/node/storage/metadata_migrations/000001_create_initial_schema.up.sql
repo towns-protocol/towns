@@ -58,4 +58,22 @@ CREATE TABLE IF NOT EXISTS md_last_block (
     block_num BIGINT NOT NULL,
     CHECK (singleton_key = TRUE)
 );
+
+CREATE OR REPLACE FUNCTION notify_md_last_block()
+    RETURNS TRIGGER
+AS
+$$
+    BEGIN
+    PERFORM pg_notify('md_record_block', NEW.block_num::text);
+    RETURN NEW;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+DROP TRIGGER IF EXISTS notify_on_md_last_block on md_last_block;
+CREATE TRIGGER notify_on_md_last_block
+    AFTER INSERT OR UPDATE
+    ON md_last_block
+    FOR EACH ROW
+    EXECUTE PROCEDURE notify_md_last_block();
+
 INSERT INTO md_last_block (singleton_key, block_num) VALUES (TRUE, -1);

@@ -6,10 +6,13 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -21,6 +24,8 @@ import (
 var metadataMigrationsDir embed.FS
 
 var isoLevelRepeatableRead = pgx.RepeatableRead
+
+const metadataRecordBlockNotifyChannel = "md_record_block"
 
 type StreamRecordEventMask int16
 
@@ -102,6 +107,7 @@ type MetadataServiceStore interface {
 	GetStreamRecordCount(ctx context.Context) (int64, error)
 	GetStreamRecordCountOnNode(ctx context.Context, nodeIndex int32) (int64, error)
 	GetLastRecordBlockNum(ctx context.Context) (int64, error)
+	OnNewRecordBlock(ctx context.Context, timeout time.Duration) (<-chan int64, <-chan error)
 	GetRecordBlocks(
 		ctx context.Context,
 		fromInclusive int64,
@@ -759,6 +765,139 @@ func (s *PostgresMetadataServiceStore) GetLastRecordBlockNum(ctx context.Context
 		nil,
 	)
 	return blockNum, err
+}
+
+func (s *PostgresMetadataServiceStore) OnNewRecordBlock(
+	ctx context.Context,
+	timeout time.Duration,
+) (<-chan int64, <-chan error) {
+	updates := make(chan int64, 1)
+	errs := make(chan error, 1)
+
+	go s.listenForRecordBlocks(ctx, timeout, updates, errs)
+
+	return updates, errs
+}
+
+func (s *PostgresMetadataServiceStore) listenForRecordBlocks(
+	ctx context.Context,
+	timeout time.Duration,
+	updates chan<- int64,
+	errs chan<- error,
+) {
+	defer close(updates)
+	defer close(errs)
+
+	conn, err := s.acquireRecordBlockListener(ctx, timeout)
+	if err != nil {
+		s.sendListenerError(errs, err)
+		return
+	}
+	defer func() {
+		if conn != nil {
+			conn.Release()
+		}
+	}()
+
+	for {
+		notification, err := conn.Conn().WaitForNotification(ctx)
+		if err == nil {
+			blockNum, err := s.parseRecordBlockNotification(ctx, notification.Payload)
+			if err != nil {
+				s.sendListenerError(errs, err)
+				return
+			}
+			select {
+			case updates <- blockNum:
+			case <-ctx.Done():
+				return
+			}
+			continue
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
+		conn.Release()
+		conn = nil
+
+		conn, err = s.acquireRecordBlockListener(ctx, timeout)
+		if err != nil {
+			s.sendListenerError(errs, err)
+			return
+		}
+	}
+}
+
+func (s *PostgresMetadataServiceStore) acquireRecordBlockListener(
+	ctx context.Context,
+	timeout time.Duration,
+) (*pgxpool.Conn, error) {
+	attemptCtx := ctx
+	var cancel context.CancelFunc
+	if timeout > 0 {
+		attemptCtx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	var backoff BackoffTracker
+	for {
+		conn, err := s.pool.Acquire(attemptCtx)
+		if err == nil {
+			if _, err = conn.Exec(attemptCtx, "listen "+metadataRecordBlockNotifyChannel); err == nil {
+				return conn, nil
+			}
+			conn.Release()
+		}
+
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
+
+		if waitErr := backoff.Wait(attemptCtx, err); waitErr != nil {
+			return nil, waitErr
+		}
+	}
+}
+
+func (s *PostgresMetadataServiceStore) parseRecordBlockNotification(
+	ctx context.Context,
+	payload string,
+) (int64, error) {
+	if payload == "" {
+		blockNum, err := s.GetLastRecordBlockNum(ctx)
+		if err != nil {
+			return 0, err
+		}
+		return blockNum, nil
+	}
+
+	blockNum, err := strconv.ParseInt(payload, 10, 64)
+	if err != nil {
+		blockNum, lastErr := s.GetLastRecordBlockNum(ctx)
+		if lastErr != nil {
+			return 0, RiverErrorWithBase(
+				protocol.Err_INVALID_ARGUMENT,
+				"invalid block notification payload",
+				err,
+				"payload",
+				payload,
+			).Func("parseRecordBlockNotification")
+		}
+		return blockNum, nil
+	}
+	return blockNum, nil
+}
+
+func (*PostgresMetadataServiceStore) sendListenerError(errs chan<- error, err error) {
+	if err == nil {
+		return
+	}
+	select {
+	case errs <- err:
+	default:
+	}
 }
 
 func (s *PostgresMetadataServiceStore) GetRecordBlocks(
