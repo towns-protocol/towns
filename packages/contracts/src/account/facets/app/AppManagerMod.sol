@@ -264,20 +264,20 @@ library AppManagerMod {
         bytes32[] memory appIds = $.apps[account].values();
         uint256 length = appIds.length;
 
-        // Count active apps first
+        // Allocate max size array, single loop to populate
+        apps = new address[](length);
         uint256 activeCount;
-        for (uint256 i; i < length; ++i) {
-            if ($.appById[account][appIds[i]].active) ++activeCount;
-        }
-
-        // Build array of active apps only
-        apps = new address[](activeCount);
-        uint256 j;
         for (uint256 i; i < length; ++i) {
             App storage app = $.appById[account][appIds[i]];
             if (app.active) {
-                apps[++j] = app.app;
+                apps[activeCount] = app.app;
+                ++activeCount;
             }
+        }
+
+        // Resize array to actual count
+        assembly {
+            mstore(apps, activeCount)
         }
     }
 
