@@ -23,6 +23,35 @@ library DMGatingMod {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         STRUCTS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Storage layout for the DMGating module
+    /// @custom:storage-location erc7201:towns.account.dm.gating.storage
+    struct Layout {
+        mapping(address account => EnumerableSetLib.AddressSet) criteria;
+        mapping(address account => CombinationMode) combinationMode;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // keccak256(abi.encode(uint256(keccak256("towns.account.dm.gating.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0x738f876e2a2e6d490330051e7611db72315baee9e3fef40f60abda772c241a00;
+
+    uint8 constant MAX_CRITERIA = 8;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    event CriteriaInstalled(address indexed account, address indexed criteria);
+    event CriteriaUninstalled(address indexed account, address indexed criteria);
+    event CombinationModeChanged(address indexed account, CombinationMode mode);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -38,44 +67,8 @@ library DMGatingMod {
     /// @notice Thrown when criteria address is invalid
     error DMGating__InvalidCriteria();
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    event CriteriaInstalled(address indexed account, address indexed criteria);
-    event CriteriaUninstalled(
-        address indexed account,
-        address indexed criteria
-    );
-    event CombinationModeChanged(
-        address indexed account,
-        CombinationMode mode
-    );
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         STORAGE                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // keccak256(abi.encode(uint256(keccak256("towns.account.dm.gating.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0x738f876e2a2e6d490330051e7611db72315baee9e3fef40f60abda772c241a00;
-
-    uint8 constant MAX_CRITERIA = 8;
-
-    /// @notice Storage layout for the DMGating module
-    /// @custom:storage-location erc7201:towns.account.dm.gating.storage
-    struct Layout {
-        mapping(address account => EnumerableSetLib.AddressSet) criteria;
-        mapping(address account => CombinationMode) combinationMode;
-    }
-
-    /// @notice Returns the storage layout for the DMGating module
-    /// @return $ The storage layout
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    /// @notice Thrown when criteria address is not a contract
+    error DMGating__NotAContract();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -92,8 +85,14 @@ library DMGatingMod {
         address criteria,
         bytes calldata data
     ) internal {
-        if (criteria == address(0))
-            DMGating__InvalidCriteria.selector.revertWith();
+        if (criteria == address(0)) DMGating__InvalidCriteria.selector.revertWith();
+
+        // Ensure criteria is a contract, not an EOA
+        uint256 size;
+        assembly {
+            size := extcodesize(criteria)
+        }
+        if (size == 0) DMGating__NotAContract.selector.revertWith();
 
         EnumerableSetLib.AddressSet storage criteriaSet = $.criteria[account];
 
@@ -115,24 +114,20 @@ library DMGatingMod {
     /// @param $ The storage layout
     /// @param account The account uninstalling the criteria
     /// @param criteria The criteria contract address
-    function uninstallCriteria(
-        Layout storage $,
-        address account,
-        address criteria
-    ) internal {
-        if (criteria == address(0))
-            DMGating__InvalidCriteria.selector.revertWith();
+    function uninstallCriteria(Layout storage $, address account, address criteria) internal {
+        if (criteria == address(0)) DMGating__InvalidCriteria.selector.revertWith();
 
         EnumerableSetLib.AddressSet storage criteriaSet = $.criteria[account];
 
-        if (!criteriaSet.contains(criteria))
-            DMGating__CriteriaNotInstalled.selector.revertWith();
+        if (!criteriaSet.contains(criteria)) DMGating__CriteriaNotInstalled.selector.revertWith();
 
         criteriaSet.remove(criteria);
 
-        // Call onUninstall on the criteria contract (non-reverting)
-        // solhint-disable-next-line no-empty-blocks
-        try ICriteria(criteria).onUninstall(account) {} catch {}
+        // Call onUninstall with a gas cap to prevent full-tx OOG griefing
+        // from malicious criteria contracts. Result is intentionally ignored.
+        uint256 UNINSTALL_GAS_LIMIT = 100_000;
+        // solhint-disable-next-line avoid-low-level-calls
+        criteria.call{gas: UNINSTALL_GAS_LIMIT}(abi.encodeCall(ICriteria.onUninstall, (account)));
 
         emit CriteriaUninstalled(account, criteria);
     }
@@ -141,11 +136,7 @@ library DMGatingMod {
     /// @param $ The storage layout
     /// @param account The account setting the mode
     /// @param mode The combination mode (AND or OR)
-    function setCombinationMode(
-        Layout storage $,
-        address account,
-        CombinationMode mode
-    ) internal {
+    function setCombinationMode(Layout storage $, address account, CombinationMode mode) internal {
         $.combinationMode[account] = mode;
         emit CombinationModeChanged(account, mode);
     }
@@ -171,11 +162,17 @@ library DMGatingMod {
         CombinationMode mode = $.combinationMode[account];
 
         for (uint256 i; i < length; ++i) {
-            bool result = ICriteria(criteriaList[i]).canDM(
-                sender,
-                account,
-                extraData
-            );
+            bool result;
+            // Wrap in try/catch to treat reverts as "not allowed"
+            // This prevents malicious criteria from DoS-ing the entire check
+            try ICriteria(criteriaList[i]).canDM(sender, account, extraData) returns (
+                bool allowed
+            ) {
+                result = allowed;
+            } catch {
+                // On revert, treat as "not allowed"
+                result = false;
+            }
 
             // Early exit on success for OR mode
             if (mode == CombinationMode.OR && result) return true;
@@ -220,5 +217,13 @@ library DMGatingMod {
         address account
     ) internal view returns (CombinationMode) {
         return $.combinationMode[account];
+    }
+
+    /// @notice Returns the storage layout for the DMGating module
+    /// @return $ The storage layout
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 }

@@ -28,7 +28,7 @@ contract DMGatingTest is ERC6900Setup {
         address mod = deployAccountModules.deploy(deployer);
 
         dmGating = IDMGating(mod);
-        allowlistCriteria = new AllowlistCriteria();
+        allowlistCriteria = new AllowlistCriteria(mod);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -124,13 +124,13 @@ contract DMGatingTest is ERC6900Setup {
 
         // Install 8 criteria (max)
         for (uint8 i = 0; i < 8; i++) {
-            AllowlistCriteria newCriteria = new AllowlistCriteria();
+            AllowlistCriteria newCriteria = new AllowlistCriteria(address(dmGating));
             vm.prank(address(account));
             dmGating.installCriteria(address(newCriteria), "");
         }
 
         // 9th should fail
-        AllowlistCriteria extraCriteria = new AllowlistCriteria();
+        AllowlistCriteria extraCriteria = new AllowlistCriteria(address(dmGating));
         vm.prank(address(account));
         vm.expectRevert(DMGatingMod.DMGating__MaxCriteriaReached.selector);
         dmGating.installCriteria(address(extraCriteria), "");
@@ -221,7 +221,7 @@ contract DMGatingTest is ERC6900Setup {
         );
 
         // Install another criteria that will fail
-        AllowlistCriteria emptyAllowlist = new AllowlistCriteria();
+        AllowlistCriteria emptyAllowlist = new AllowlistCriteria(address(dmGating));
         vm.prank(address(account));
         dmGating.installCriteria(address(emptyAllowlist), "");
 
@@ -279,7 +279,7 @@ contract DMGatingTest is ERC6900Setup {
         );
 
         // Install another criteria with sender also in allowlist
-        AllowlistCriteria secondAllowlist = new AllowlistCriteria();
+        AllowlistCriteria secondAllowlist = new AllowlistCriteria(address(dmGating));
         vm.prank(address(account));
         dmGating.installCriteria(address(secondAllowlist), abi.encode(allowed));
 
@@ -309,7 +309,7 @@ contract DMGatingTest is ERC6900Setup {
         );
 
         // Install another criteria with empty allowlist (will fail)
-        AllowlistCriteria emptyAllowlist = new AllowlistCriteria();
+        AllowlistCriteria emptyAllowlist = new AllowlistCriteria(address(dmGating));
         vm.prank(address(account));
         dmGating.installCriteria(address(emptyAllowlist), "");
 

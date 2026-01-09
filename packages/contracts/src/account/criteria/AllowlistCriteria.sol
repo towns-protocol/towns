@@ -10,7 +10,8 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 /// @title AllowlistCriteria
 /// @notice A criteria module that allows DMs from addresses on an allowlist
-/// @dev Per-account allowlist stored in this contract
+/// @dev Per-account allowlist stored in this contract. Only the DMGating module
+///      can call onInstall/onUninstall to prevent unauthorized modifications.
 contract AllowlistCriteria is ICriteria {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
@@ -33,8 +34,32 @@ contract AllowlistCriteria is ICriteria {
     /*                         STORAGE                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice The authorized DMGating module that can call onInstall/onUninstall
+    address public immutable dmGating;
+
     /// @notice Mapping from account to their allowlist
     mapping(address account => EnumerableSetLib.AddressSet) private _allowlists;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Initialize with the authorized DMGating module address
+    /// @param _dmGating The address of the DMGating facet/module
+    constructor(address _dmGating) {
+        dmGating = _dmGating;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         MODIFIERS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Restricts access to only the authorized DMGating module
+    modifier onlyDMGating() {
+        if (msg.sender != dmGating)
+            AllowlistCriteria__Unauthorized.selector.revertWith();
+        _;
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ICriteria IMPLEMENTATION               */
@@ -55,10 +80,11 @@ contract AllowlistCriteria is ICriteria {
     }
 
     /// @inheritdoc ICriteria
+    /// @dev Only callable by the authorized DMGating module
     function onInstall(
         address account,
         bytes calldata data
-    ) external override {
+    ) external override onlyDMGating {
         // Optionally initialize with addresses from data
         if (data.length > 0) {
             address[] memory addresses = abi.decode(data, (address[]));
@@ -67,7 +93,8 @@ contract AllowlistCriteria is ICriteria {
     }
 
     /// @inheritdoc ICriteria
-    function onUninstall(address account) external override {
+    /// @dev Only callable by the authorized DMGating module
+    function onUninstall(address account) external override onlyDMGating {
         // Clear the allowlist for this account
         EnumerableSetLib.AddressSet storage allowlist = _allowlists[account];
         address[] memory addresses = allowlist.values();
