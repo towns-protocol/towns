@@ -292,6 +292,10 @@ type StreamIdMiniblock struct {
 	MiniblockNum int64
 }
 
+func (s StreamIdMiniblock) MarshalText() (text []byte, err error) {
+	return []byte(fmt.Sprintf("%x@%d", s.StreamId, s.MiniblockNum)), nil
+}
+
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 21,
