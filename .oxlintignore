@@ -6,6 +6,7 @@ packages/xchain-monitor/
 **/node_modules/
 **/dist/
 **/build/
+.turbo
 
 # Config files
 **/*.config.js
