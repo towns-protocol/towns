@@ -1395,9 +1395,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         const usdcAmount = currencyIsUSDC ? event.args.amount : 0n
 
         // Check if sender is a bot (exists in apps table)
-        const senderApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, sender),
-        })
+        const senderApp = await context.db.find(schema.app, { address: sender })
         const senderType = senderApp ? 'Bot' : 'Member'
 
         // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
