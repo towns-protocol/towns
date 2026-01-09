@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.453",
+    "version": "0.0.455",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -25,6 +25,7 @@
         "ethers": "^5.8.0",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
+        "superjson": "^2.2.2",
         "viem": "^2.29.3",
         "zod": "^3.25.76"
     },

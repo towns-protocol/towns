@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"math"
 	"testing"
 	"time"
@@ -12,6 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 
 	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -438,60 +442,84 @@ func TestDecoder(t *testing.T) {
 func TestAddressEncoding(t *testing.T) {
 	require := require.New(t)
 
-	addressBytes := []byte{
-		0x12,
-		0x34,
-		0x56,
-		0x78,
-		0x90,
-		0x12,
-		0x34,
-		0x56,
-		0x78,
-		0x90,
-		0x12,
-		0x34,
-		0x56,
-		0x78,
-		0x90,
-		0x12,
-		0x34,
-		0x56,
-		0x78,
-		0x90,
-	}
-	address := common.BytesToAddress(addressBytes)
+	var (
+		address  common.Address
+		address2 common.Address
+	)
+	_, _ = rand.Read(address[:])
+	_, _ = rand.Read(address2[:])
+
 	encoded := ABIEncodeAddress(address)
 	decoded, err := ABIDecodeAddress(encoded)
 	require.NoError(err)
 	require.Equal(address, decoded)
 
-	addressBytes2 := []byte{
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x43,
-		0x43,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x00,
-		0x04,
-		0x34,
-		0x30,
-		0x00,
-	}
-	address2 := common.BytesToAddress(addressBytes2)
 	encodedArray := ABIEncodeAddressArray([]common.Address{address, address2})
 	decodedArray, err := ABIDecodeAddressArray(encodedArray)
 	require.NoError(err)
 	require.Equal(address, decodedArray[0])
 	require.Equal(address2, decodedArray[1])
+}
+
+func TestStreamIdMiniblockEncoding(t *testing.T) {
+	require := require.New(t)
+
+	// Create test data
+	streamId1 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+	streamId2 := testutils.FakeStreamId(shared.STREAM_DM_CHANNEL_BIN)
+
+	items := []StreamIdMiniblock{
+		{StreamId: streamId1, MiniblockNum: 100},
+		{StreamId: streamId2, MiniblockNum: 999999},
+	}
+
+	// Test encoding and decoding
+	encoded := ABIEncodeStreamIdMiniblockArray(items)
+	require.NotEmpty(encoded)
+
+	decoded, err := ABIDecodeStreamIdMiniblockArray(encoded)
+	require.NoError(err)
+	require.Len(decoded, 2)
+	require.EqualValues(streamId1, decoded[0].StreamId)
+	require.EqualValues(100, decoded[0].MiniblockNum)
+	require.EqualValues(streamId2, decoded[1].StreamId)
+	require.EqualValues(999999, decoded[1].MiniblockNum)
+
+	// Test empty array
+	emptyEncoded := ABIEncodeStreamIdMiniblockArray([]StreamIdMiniblock{})
+	emptyDecoded, err := ABIDecodeStreamIdMiniblockArray(emptyEncoded)
+	require.NoError(err)
+	require.Len(emptyDecoded, 0)
+}
+
+func TestStreamTrimByStreamIdConfig(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	ctx := test.NewTestContext(t)
+
+	btc, err := NewBlockchainTestContext(ctx, TestParams{MineOnTx: true, AutoMine: true})
+	require.NoError(err)
+	defer btc.Close()
+
+	// Default should be empty
+	s := btc.OnChainConfig.Get()
+	assert.Len(s.StreamTrimByStreamId, 0)
+
+	// Set config with stream trim targets
+	streamId1 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+	streamId2 := testutils.FakeStreamId(shared.STREAM_DM_CHANNEL_BIN)
+
+	items := []StreamIdMiniblock{
+		{StreamId: streamId1, MiniblockNum: 500},
+		{StreamId: streamId2, MiniblockNum: 1000},
+	}
+
+	btc.SetConfigValue(t, ctx, StreamTrimByStreamIdConfigKey, ABIEncodeStreamIdMiniblockArray(items))
+
+	s = btc.OnChainConfig.Get()
+	require.Len(s.StreamTrimByStreamId, 2)
+	assert.EqualValues(streamId1, s.StreamTrimByStreamId[0].StreamId)
+	assert.EqualValues(500, s.StreamTrimByStreamId[0].MiniblockNum)
+	assert.EqualValues(streamId2, s.StreamTrimByStreamId[1].StreamId)
+	assert.EqualValues(1000, s.StreamTrimByStreamId[1].MiniblockNum)
 }

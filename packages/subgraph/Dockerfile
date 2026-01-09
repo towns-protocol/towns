@@ -44,6 +44,18 @@ RUN curl -L https://foundry.paradigm.xyz | bash && \
 # Add Foundry binaries to PATH
 ENV PATH="/root/.foundry/bin:${PATH}"
 
+# Install solc 0.8.33 from argotorg (svm doesn't support linux/arm64)
+ARG SOLC_VERSION=0.8.33
+RUN mkdir -p /root/.svm/${SOLC_VERSION} && \
+    if [ "$(uname -m)" = "aarch64" ]; then \
+        curl -L -o /root/.svm/${SOLC_VERSION}/solc-${SOLC_VERSION} \
+            https://github.com/argotorg/solidity/releases/download/v${SOLC_VERSION}/solc-static-linux-arm; \
+    else \
+        curl -L -o /root/.svm/${SOLC_VERSION}/solc-${SOLC_VERSION} \
+            https://github.com/argotorg/solidity/releases/download/v${SOLC_VERSION}/solc-static-linux; \
+    fi && \
+    chmod +x /root/.svm/${SOLC_VERSION}/solc-${SOLC_VERSION}
+
 # ==========================================
 # Dependency Installation (Cached Layers)
 # ==========================================

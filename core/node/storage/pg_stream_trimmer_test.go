@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -386,6 +387,66 @@ func TestStreamTrimmer(t *testing.T) {
 		require.Equal(beforeSeqs, afterSeqs)
 	})
 
+	t.Run("per-streamId_target_trims_stream_to_configured_miniblock", func(t *testing.T) {
+		params := setupStreamStorageTest(t)
+		ctx := params.ctx
+		pgStreamStore := params.pgStreamStore
+		require := require.New(t)
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		// Configure per-streamId trim target BEFORE writing miniblocks.
+		// This ensures the config is in place when automatic trimming is triggered.
+		// Target: trim to miniblock 120 (keep miniblocks from 120 onwards).
+		// Per-type config (Space=5, lastSnapshot=120) would compute lastMbToKeep=115,
+		// which rounds to snapshot 110, keeping 110-125.
+		// Per-streamId target of 120 is higher, so it wins, keeping only 120-125.
+		cfg := pgStreamStore.streamTrimmer.config.Get()
+		cfg.StreamTrimByStreamId = []crypto.StreamIdMiniblock{
+			{StreamId: streamId, MiniblockNum: 120},
+		}
+
+		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
+		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb))
+
+		var envelopes [][]byte
+		envelopes = append(envelopes, []byte("event"))
+
+		// Generate 125 miniblocks with snapshot every 10th miniblock
+		mbs := make([]*MiniblockDescriptor, 125)
+		for i := 1; i <= 125; i++ {
+			mb := &MiniblockDescriptor{
+				Number: int64(i),
+				Hash:   common.BytesToHash([]byte("block_hash" + strconv.Itoa(i))),
+				Data:   []byte("block" + strconv.Itoa(i)),
+			}
+			if i%10 == 0 {
+				mb.Snapshot = []byte("snapshot" + strconv.Itoa(i))
+			}
+			mbs[i-1] = mb
+		}
+
+		// Writing miniblocks triggers automatic trimming with the per-streamId config.
+		require.NoError(pgStreamStore.WriteMiniblocks(
+			ctx,
+			streamId,
+			mbs,
+			mbs[len(mbs)-1].Number+1,
+			envelopes,
+			mbs[0].Number,
+			-1,
+		))
+
+		// Expect miniblocks 120-125 to remain (trimmed to snapshot at 120).
+		// Per-type would keep 110-125, but per-streamId target of 120 wins.
+		expectedSeqs := []int64{120, 121, 122, 123, 124, 125}
+		expectedSnapshots := []int64{120}
+		require.Eventually(func() bool {
+			seqs, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
+			return slices.Equal(expectedSeqs, seqs) && slices.Equal(expectedSnapshots, snapshots)
+		}, time.Second*5, 100*time.Millisecond)
+	})
+
 	t.Run("pending deduplication keeps only one task per stream", func(t *testing.T) {
 		params := setupStreamStorageTest(t)
 		ctx := params.ctx
@@ -562,6 +623,7 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 			streamId:             spaceStream,
 			streamHistoryMbs:     5,
 			retentionIntervalMbs: 0,
+			targetMiniblock:      -1,
 		}, task)
 		_, exists := tr.snapshotsPerStream[spaceStream]
 		assert.False(t, exists, "counter reset after scheduling")
@@ -583,6 +645,7 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 			streamId:             spaceStream,
 			streamHistoryMbs:     0,
 			retentionIntervalMbs: MinRetentionIntervalMiniblocks,
+			targetMiniblock:      -1,
 		}, task)
 	})
 
@@ -596,5 +659,234 @@ func TestStreamTrimmerComputeTrimTask(t *testing.T) {
 		task, ok := tr.computeTrimTask(spaceStream)
 		assert.True(t, ok)
 		assert.Equal(t, int64(math.MaxInt64), task.streamHistoryMbs)
+	})
+
+	t.Run("per-streamId_target_is_included_in_task", func(t *testing.T) {
+		spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		otherStream := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: spaceStream, MiniblockNum: 500},
+			},
+		}
+		tr := makeTrimmer(cfg)
+
+		// Stream with per-streamId target
+		task, ok := tr.computeTrimTask(spaceStream)
+		assert.True(t, ok)
+		assert.Equal(t, int64(500), task.targetMiniblock)
+		assert.Equal(t, int64(10), task.streamHistoryMbs)
+
+		// Stream without per-streamId target
+		task, ok = tr.computeTrimTask(otherStream)
+		assert.True(t, ok)
+		assert.Equal(t, int64(-1), task.targetMiniblock)
+		assert.Equal(t, int64(10), task.streamHistoryMbs)
+	})
+
+	t.Run("per-streamId_target_allows_scheduling_even_without_history_config", func(t *testing.T) {
+		spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{}, // no per-type history
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: spaceStream, MiniblockNum: 100},
+			},
+		}
+		tr := makeTrimmer(cfg)
+
+		task, ok := tr.computeTrimTask(spaceStream)
+		assert.True(t, ok)
+		assert.Equal(t, int64(100), task.targetMiniblock)
+		assert.Equal(t, int64(0), task.streamHistoryMbs) // 0 since no per-type config
+	})
+}
+
+func TestStreamTrimmerGetTrimTargetForStream(t *testing.T) {
+	spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelStream := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	mbNum := int64(434922)
+
+	cfg := &crypto.OnChainSettings{
+		StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+			{StreamId: spaceStream, MiniblockNum: mbNum},
+		},
+	}
+	tr := &streamTrimmer{
+		config: &mocks.MockOnChainCfg{Settings: cfg},
+	}
+
+	// Stream with target
+	target, hasTarget := tr.getTrimTargetForStream(spaceStream)
+	assert.True(t, hasTarget)
+	assert.Equal(t, mbNum, target)
+
+	// Stream without target
+	target, hasTarget = tr.getTrimTargetForStream(channelStream)
+	assert.False(t, hasTarget)
+	assert.Equal(t, int64(-1), target)
+}
+
+func TestStreamTrimmerScheduleNewPerStreamTargets(t *testing.T) {
+	// Helper to create a stopped worker pool for testing.
+	// We use a stopped pool because we only want to test the tracking logic,
+	// not the actual task execution.
+	makeStoppedWorkerPool := func() *workerpool.WorkerPool {
+		wp := workerpool.New(1)
+		wp.Stop()
+		return wp
+	}
+
+	t.Run("tracks_new_streamIds_from_config", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		stream2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// First call should track stream1
+		tr.scheduleNewPerStreamTargets()
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream1)
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+		assert.NotContains(t, tr.scheduledPerStreamTargets, stream2)
+
+		// Add stream2 to config
+		cfg.StreamTrimByStreamId = append(cfg.StreamTrimByStreamId,
+			crypto.StreamIdMiniblock{StreamId: stream2, MiniblockNum: 200})
+
+		// Second call should track stream2 as well
+		tr.scheduleNewPerStreamTargets()
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream1)
+		assert.Contains(t, tr.scheduledPerStreamTargets, stream2)
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream2])
+	})
+
+	t.Run("does_nothing_with_empty_config", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+		}
+
+		tr.scheduleNewPerStreamTargets()
+		assert.Empty(t, tr.scheduledPerStreamTargets)
+	})
+
+	t.Run("does_not_re-schedule_when_miniblock_unchanged", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Track scheduling via the scheduledPerStreamTargets map
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, 1, len(tr.scheduledPerStreamTargets))
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+
+		// Call again with same miniblock - should not change
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, 1, len(tr.scheduledPerStreamTargets))
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+	})
+
+	t.Run("re-schedules_when_miniblock_number_increases", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 100},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Initial scheduling
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(100), tr.scheduledPerStreamTargets[stream1])
+
+		// Increase the miniblock target
+		cfg.StreamTrimByStreamId[0].MiniblockNum = 200
+
+		// Should update the tracked miniblock
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
+	})
+
+	t.Run("does_not_re-schedule_when_miniblock_number_decreases", func(t *testing.T) {
+		stream1 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 10},
+			StreamTrimByStreamId: []crypto.StreamIdMiniblock{
+				{StreamId: stream1, MiniblockNum: 200},
+			},
+		}
+
+		tr := &streamTrimmer{
+			config:                    &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream:        make(map[StreamId]uint64),
+			scheduledPerStreamTargets: make(map[StreamId]int64),
+			pendingTasks:              make(map[StreamId]struct{}),
+			workerPool:                makeStoppedWorkerPool(),
+		}
+
+		// Initial scheduling
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
+
+		// Decrease the miniblock target (shouldn't happen in practice, but test the logic)
+		cfg.StreamTrimByStreamId[0].MiniblockNum = 100
+
+		// Should NOT update - we only schedule when target increases
+		tr.scheduleNewPerStreamTargets()
+		assert.Equal(t, int64(200), tr.scheduledPerStreamTargets[stream1])
 	})
 }

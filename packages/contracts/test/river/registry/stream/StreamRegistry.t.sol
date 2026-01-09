@@ -396,7 +396,7 @@ contract StreamRegistryTest is
         SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
         miniblocks[0] = SetMiniblock({
             streamId: SAMPLE_STREAM.streamId,
-            prevMiniBlockHash: bytes32(0),
+            prevMiniBlockHash: SAMPLE_STREAM.genesisMiniblockHash,
             lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
             lastMiniblockNum: 1,
             isSealed: false
@@ -450,6 +450,7 @@ contract StreamRegistryTest is
         for (uint256 i; i < miniblocks.length; ++i) {
             _miniblocks[i] = miniblocks[i];
             _miniblocks[i].lastMiniblockNum = 1;
+            _miniblocks[i].prevMiniBlockHash = genesisMiniblockHash;
         }
 
         vm.prank(node.node);
@@ -529,6 +530,7 @@ contract StreamRegistryTest is
         miniblock.streamId = testStream.streamId;
         miniblock.lastMiniblockNum = 1;
         miniblock.lastMiniblockHash = bytes32(uint256(1_234_567_890));
+        miniblock.prevMiniBlockHash = testStream.genesisMiniblockHash;
         miniblocks[0] = miniblock;
 
         vm.prank(node.node);
@@ -543,6 +545,101 @@ contract StreamRegistryTest is
             RiverRegistryErrors.STREAM_SEALED
         );
         streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+    }
+
+    /// @notice Validates that `setStreamLastMiniblockBatch` fails when the miniblock number
+    /// is not sequential.
+    /// @dev Miniblock numbers must be strictly sequential (lastMiniblockNum + 1). This test
+    /// verifies that attempting to skip miniblock numbers (e.g., going from 0 to 2 instead of
+    /// 0 to 1) results in a `StreamLastMiniblockUpdateFailed` event with `BAD_ARG` error,
+    /// and the stream state remains unchanged. This check prevents gaps in the miniblock
+    /// chain which could indicate missing or out-of-order data.
+    function test_setStreamLastMiniblockBatch_failsWhen_incorrectBlockNumber()
+        external
+        givenNodeOperatorIsApproved(OPERATOR)
+        givenNodeIsRegistered(OPERATOR, NODE, "url")
+    {
+        address[] memory nodes = new address[](1);
+        nodes[0] = NODE;
+
+        vm.prank(NODE);
+        streamRegistry.allocateStream(
+            SAMPLE_STREAM.streamId,
+            nodes,
+            SAMPLE_STREAM.genesisMiniblockHash,
+            SAMPLE_STREAM.genesisMiniblock
+        );
+
+        // Attempt to register miniblock 2 when stream is at 0 (should be 1)
+        SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
+        miniblocks[0] = SetMiniblock({
+            streamId: SAMPLE_STREAM.streamId,
+            prevMiniBlockHash: SAMPLE_STREAM.genesisMiniblockHash,
+            lastMiniblockHash: bytes32(uint256(123)),
+            lastMiniblockNum: 2, // incorrect: should be 1
+            isSealed: false
+        });
+
+        vm.prank(NODE);
+        vm.expectEmit(address(streamRegistry));
+        emit StreamLastMiniblockUpdateFailed(
+            SAMPLE_STREAM.streamId,
+            bytes32(uint256(123)),
+            2,
+            RiverRegistryErrors.BAD_ARG
+        );
+        streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+
+        // Verify stream was not updated
+        assertEq(streamRegistry.getStream(SAMPLE_STREAM.streamId).lastMiniblockNum, 0);
+    }
+
+    /// @notice Validates that `setStreamLastMiniblockBatch` fails when the previous miniblock
+    /// hash does not match the stream's current last miniblock hash.
+    /// @dev The `prevMiniBlockHash` in the submitted miniblock must match the stream's current
+    /// `lastMiniblockHash` to maintain hash chain integrity. This test verifies that submitting
+    /// a miniblock with an incorrect `prevMiniBlockHash` results in a `StreamLastMiniblockUpdateFailed`
+    /// event with `BAD_ARG` error, and the stream state remains unchanged. This check ensures
+    /// the integrity of the miniblock chain by validating that each new miniblock correctly
+    /// references its predecessor.
+    function test_setStreamLastMiniblockBatch_failsWhen_incorrectPrevHash()
+        external
+        givenNodeOperatorIsApproved(OPERATOR)
+        givenNodeIsRegistered(OPERATOR, NODE, "url")
+    {
+        address[] memory nodes = new address[](1);
+        nodes[0] = NODE;
+
+        vm.prank(NODE);
+        streamRegistry.allocateStream(
+            SAMPLE_STREAM.streamId,
+            nodes,
+            SAMPLE_STREAM.genesisMiniblockHash,
+            SAMPLE_STREAM.genesisMiniblock
+        );
+
+        // Attempt to register miniblock with incorrect prevMiniBlockHash
+        SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
+        miniblocks[0] = SetMiniblock({
+            streamId: SAMPLE_STREAM.streamId,
+            prevMiniBlockHash: bytes32(uint256(999)), // incorrect: should be genesisMiniblockHash
+            lastMiniblockHash: bytes32(uint256(123)),
+            lastMiniblockNum: 1,
+            isSealed: false
+        });
+
+        vm.prank(NODE);
+        vm.expectEmit(address(streamRegistry));
+        emit StreamLastMiniblockUpdateFailed(
+            SAMPLE_STREAM.streamId,
+            bytes32(uint256(123)),
+            1,
+            RiverRegistryErrors.BAD_ARG
+        );
+        streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+
+        // Verify stream was not updated
+        assertEq(streamRegistry.getStream(SAMPLE_STREAM.streamId).lastMiniblockNum, 0);
     }
 
     /// @notice Validates that `placeStreamOnNode` reverts if the node is not registered.

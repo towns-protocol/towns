@@ -2,15 +2,9 @@ import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/r
 import { AuthenticationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
-import {
-    DEFAULT_RETRY_PARAMS,
-    loggingInterceptor,
-    retryInterceptor,
-    setHeaderInterceptor,
-} from './rpcInterceptors'
-import { RpcOptions, RIVER_CLIENT_VERSION_HEADER } from './rpcCommon'
+import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
+import { RpcOptions } from './rpcCommon'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
-import packageJson from '../package.json' assert { type: 'json' }
 
 const logInfo = dlog('csb:auto-rpc:info')
 
@@ -37,7 +31,6 @@ export function makeAuthenticationRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
-            setHeaderInterceptor({ [RIVER_CLIENT_VERSION_HEADER]: packageJson.version }),
             loggingInterceptor(transportId, 'AuthenticationService'),
             retryInterceptor(retryParams),
         ],

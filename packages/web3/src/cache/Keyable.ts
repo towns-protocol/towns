@@ -1,55 +1,89 @@
 import { ethers } from 'ethers'
 import { Permission } from '../types/ContractTypes'
-export interface Keyable {
-    toKey(): string
-}
 
-export class BannedTokenIdsRequest implements Keyable {
-    spaceId: string
-    constructor(spaceId: string) {
-        this.spaceId = spaceId
-    }
-    toKey(): string {
-        return `bannedTokenIds:${this.spaceId}`
-    }
-}
+export class Keyable {
+    private readonly parts: unknown[]
 
-export class OwnerOfTokenRequest implements Keyable {
-    spaceId: string
-    tokenId: ethers.BigNumber
-    constructor(spaceId: string, tokenId: ethers.BigNumber) {
-        this.spaceId = spaceId
-        this.tokenId = tokenId
+    constructor(...args: unknown[]) {
+        this.parts = args
     }
-    toKey(): string {
-        return `ownerOfToken:${this.spaceId}:${this.tokenId.toString()}`
-    }
-}
 
-export class IsTokenBanned implements Keyable {
-    spaceId: string
-    tokenId: ethers.BigNumber
-    constructor(spaceId: string, tokenId: ethers.BigNumber) {
-        this.spaceId = spaceId
-        this.tokenId = tokenId
-    }
     toKey(): string {
-        return `isBanned:${this.spaceId}:${this.tokenId.toString()}`
+        return this.parts
+            .map((part) => {
+                if (part === null) return 'null'
+                if (part === undefined) return 'undefined'
+                if (ethers.BigNumber.isBigNumber(part)) {
+                    return part.toString()
+                }
+                if (typeof part === 'object') {
+                    return JSON.stringify(part)
+                }
+                // At this point, part is a primitive (string, number, boolean, bigint, symbol)
+                return String(part as string | number | boolean | bigint | symbol)
+            })
+            .join(':')
     }
-}
 
-export class EntitlementRequest implements Keyable {
-    spaceId: string
-    channelId: string
-    userId: string
-    permission: Permission
-    constructor(spaceId: string, channelId: string, userId: string, permission: Permission) {
-        this.spaceId = spaceId
-        this.channelId = channelId
-        this.userId = userId
-        this.permission = permission
+    static spaceInfo(spaceId: string): Keyable {
+        return new Keyable('spaceInfo', spaceId)
     }
-    toKey(): string {
-        return `{spaceId:${this.spaceId},channelId:${this.channelId},userId:${this.userId},permission:${this.permission}}`
+
+    static getEntitlements(spaceAddress: string): Keyable {
+        return new Keyable('getEntitlements', spaceAddress)
+    }
+
+    static owner(spaceAddress: string): Keyable {
+        return new Keyable('owner', spaceAddress)
+    }
+
+    static balanceOf(accountAddress: string): Keyable {
+        return new Keyable('balanceOf', accountAddress)
+    }
+
+    static bannedTokenIds(spaceId: string): Keyable {
+        return new Keyable('bannedTokenIds', spaceId)
+    }
+
+    static ownerOfToken(spaceId: string, tokenId: ethers.BigNumber): Keyable {
+        return new Keyable('ownerOfToken', spaceId, tokenId)
+    }
+
+    static isTokenBanned(spaceId: string, tokenId: ethers.BigNumber): Keyable {
+        return new Keyable('isTokenBanned', spaceId, tokenId)
+    }
+
+    static entitlement(
+        spaceId: string,
+        channelId: string,
+        userId: string,
+        permission: Permission,
+    ): Keyable {
+        return new Keyable('entitlement', spaceId, channelId, userId, permission)
+    }
+
+    static spaceEntitlement(spaceId: string, permission: Permission): Keyable {
+        return new Keyable('spaceEntitlement', spaceId, permission)
+    }
+
+    static spaceEntitlementEvaluation(
+        spaceId: string,
+        rootKey: string,
+        permission: Permission,
+    ): Keyable {
+        return new Keyable('spaceEntitlementEval', spaceId, rootKey, permission)
+    }
+
+    static channelEntitlement(spaceId: string, channelId: string, permission: Permission): Keyable {
+        return new Keyable('channelEntitlement', spaceId, channelId, permission)
+    }
+
+    static channelEntitlementEvaluation(
+        spaceId: string,
+        channelNetworkId: string,
+        userId: string,
+        permission: Permission,
+    ): Keyable {
+        return new Keyable('channelEntitlementEval', spaceId, channelNetworkId, userId, permission)
     }
 }

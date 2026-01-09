@@ -7,42 +7,34 @@ import { SimpleCache } from '../cache/SimpleCache'
 import { TransactionOpts } from '../types/ContractTypes'
 import { SpaceAddressFromSpaceId } from '../utils/ut'
 import { GuardianFacetShim } from './GuardianFacetShim'
-
-class SpaceOwnerGetSpaceInfo implements Keyable {
-    spaceAddress: string
-    constructor(spaceAddress: string) {
-        this.spaceAddress = spaceAddress
-    }
-    toKey(): string {
-        return `getSpaceInfo:${this.spaceAddress}`
-    }
-}
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 
 export type { ISpaceOwnerBase }
 
 const { abi, connect } = SpaceOwner__factory
 
 export class SpaceOwner extends BaseContractShim<typeof connect> {
-    private readonly spaceInfoCache: SimpleCache<
-        SpaceOwnerGetSpaceInfo,
-        ISpaceOwnerBase.SpaceStructOutput
-    >
+    private readonly spaceInfoCache: SimpleCache<ISpaceOwnerBase.SpaceStructOutput>
     private readonly guardianFacet: GuardianFacetShim
 
-    constructor(address: string, provider: ethers.providers.Provider) {
+    constructor(
+        address: string,
+        provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
+    ) {
         super(address, provider, connect, abi)
 
         this.guardianFacet = new GuardianFacetShim(address, provider)
 
         this.spaceInfoCache = new SimpleCache({
             ttlSeconds: 15 * 60,
+            createStorageFn,
         })
     }
 
     public async getSpaceInfo(spaceAddress: string): Promise<ISpaceOwnerBase.SpaceStructOutput> {
-        return this.spaceInfoCache.executeUsingCache(
-            new SpaceOwnerGetSpaceInfo(spaceAddress),
-            async () => this.read.getSpaceInfo(spaceAddress),
+        return this.spaceInfoCache.executeUsingCache(Keyable.spaceInfo(spaceAddress), async () =>
+            this.read.getSpaceInfo(spaceAddress),
         )
     }
 
@@ -144,7 +136,7 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
             overrideExecution,
             transactionOpts,
         })
-        this.spaceInfoCache.remove(new SpaceOwnerGetSpaceInfo(spaceAddress))
+        await this.spaceInfoCache.remove(Keyable.spaceInfo(spaceAddress))
         return result
     }
 }

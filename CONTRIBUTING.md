@@ -77,10 +77,33 @@ e) you want a single script to run all tests within the package, add `"test": "b
 
 Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.
 
-## Publishing to npm
+## Changesets
 
-If you have the permission to publish to npm, you can run the following script to publish the packages to npm.
+When making changes to published packages, you must create a changeset:
 
+```bash
+bun changeset
 ```
-./scripts/publish-to-npm.sh
-```
+
+This guides you through:
+
+1. Selecting which packages changed
+2. Choosing version bump type
+3. Writing a summary for the changelog
+
+### When is a changeset required?
+
+- Any change to packages published to npm
+- Bug fixes, features, documentation updates affecting published code
+
+### When can you skip a changeset?
+
+- Changes to private packages (anvil-docker, docs, playground, stress, etc.)
+- Changes to CI/build tooling only
+- Changes to the `core/` directory
+
+### Release process
+
+1. Your PR merges to main (with changeset)
+2. A "Version Packages" PR is automatically created/updated
+3. Merging the Version Packages PR publishes to npm

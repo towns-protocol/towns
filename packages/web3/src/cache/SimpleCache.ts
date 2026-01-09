@@ -1,37 +1,53 @@
-import TTLCache from '@isaacs/ttlcache'
 import { Keyable } from './Keyable'
+import { ICacheStorage, CreateStorageFn } from './ICacheStorage'
+import { createDefaultStorage } from './TTLCacheStorage'
 
-export class SimpleCache<K extends Keyable, V> {
-    private cache: TTLCache<string, V>
+export interface SimpleCacheOptions<V> {
+    ttlSeconds?: number
+    maxSize?: number
+    /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
+    createStorageFn: CreateStorageFn<V> | undefined
+}
+
+export class SimpleCache<V> {
+    private readonly storage: ICacheStorage<V>
     private pendingFetches: Map<string, Promise<V>> = new Map()
 
     /**
-     * @param ttlSeconds Optional time-to-live for cache entries in seconds. If not provided, cache entries do not expire.
-     * @param maxSize Optional maximum number of entries in the cache.
+     * @param options.ttlSeconds Optional time-to-live for cache entries in seconds. If not provided, cache entries do not expire.
+     * @param options.maxSize Optional maximum number of entries in the cache.
+     * @param options.createStorageFn Optional factory to create storage backend. Defaults to in-memory TTLCache.
      */
-    constructor(args: { ttlSeconds?: number; maxSize?: number } = {}) {
-        const ttlMilliseconds = args.ttlSeconds !== undefined ? args.ttlSeconds * 1000 : Infinity
-        const maxSize = args.maxSize ?? 10_000
-        this.cache = new TTLCache({
-            ttl: ttlMilliseconds,
-            max: maxSize,
+    constructor(options: SimpleCacheOptions<V>) {
+        const ttlMs = options.ttlSeconds !== undefined ? options.ttlSeconds * 1000 : undefined
+        const createFn = options.createStorageFn ?? createDefaultStorage
+        this.storage = createFn({
+            ttlMs,
+            maxSize: options.maxSize,
         })
     }
 
-    get(key: K): V | undefined {
-        return this.cache.get(key.toKey())
+    async get(key: Keyable): Promise<V | undefined> {
+        return this.storage.get(key.toKey())
     }
 
-    add(key: K, value: V): void {
-        this.cache.set(key.toKey(), value)
+    async add(key: Keyable, value: V): Promise<void> {
+        return this.storage.set(key.toKey(), value)
     }
 
-    remove(key: K): void {
-        this.cache.delete(key.toKey())
+    async remove(key: Keyable): Promise<void> {
+        const cacheKey = key.toKey()
+        // Clear pending fetch first to prevent returning stale in-flight data
+        this.pendingFetches.delete(cacheKey)
+        return this.storage.delete(cacheKey)
     }
 
-    clear(): void {
-        this.cache.clear()
+    async clear(): Promise<void> {
+        // Clear all pending fetches first to prevent returning stale in-flight data
+        this.pendingFetches.clear()
+        if (this.storage.clear) {
+            return this.storage.clear()
+        }
     }
 
     /**
@@ -39,42 +55,53 @@ export class SimpleCache<K extends Keyable, V> {
      * stores the result, and returns it.
      */
     async executeUsingCache(
-        key: K,
-        fetchFn: (key: K) => Promise<V>,
+        key: Keyable,
+        fetchFn: (key: Keyable) => Promise<V>,
         opts?: { skipCache?: boolean },
     ): Promise<V> {
         const cacheKey = key.toKey()
+        const skipCache = opts?.skipCache === true
 
-        // 1. Check main cache
-        if (opts?.skipCache !== true) {
-            const cachedValue = this.cache.get(cacheKey)
-            if (cachedValue !== undefined) {
-                return cachedValue
+        // 1. Check for pending fetch FIRST (synchronous check before any await)
+        // This prevents race conditions where concurrent calls interleave
+        // Skip deduplication when skipCache is true - caller explicitly wants fresh data
+        if (!skipCache) {
+            const pendingPromise = this.pendingFetches.get(cacheKey)
+            if (pendingPromise) {
+                return pendingPromise
             }
         }
 
-        // 2. Check for pending fetch
-        const pendingPromise = this.pendingFetches.get(cacheKey)
-        if (pendingPromise) {
-            return pendingPromise // Return existing promise
+        // 2. Create promise that checks cache then fetches if needed
+        // Store it synchronously BEFORE any await to prevent races
+        const operationPromise = (async (): Promise<V> => {
+            // Check main cache
+            if (!skipCache) {
+                const cachedValue = await this.storage.get(cacheKey)
+                if (cachedValue !== undefined) {
+                    return cachedValue
+                }
+            }
+
+            // No cached value: Initiate fetch
+            const fetchedValue = await fetchFn(key)
+            // Add to main cache only on successful fetch
+            await this.storage.set(cacheKey, fetchedValue)
+            return fetchedValue
+        })()
+
+        // Only track in pendingFetches if not skipping cache
+        // skipCache calls run independently and don't deduplicate
+        if (!skipCache) {
+            this.pendingFetches.set(cacheKey, operationPromise)
         }
 
-        // 3. No cached value, no pending fetch: Initiate fetch
-        const fetchPromise = fetchFn(key).catch((err) => {
-            this.pendingFetches.delete(cacheKey)
-            throw err
-        })
-
-        this.pendingFetches.set(cacheKey, fetchPromise)
-
         try {
-            const fetchedValue = await fetchPromise
-            // Add to main cache only on successful fetch
-            this.cache.set(cacheKey, fetchedValue)
-            return fetchedValue
+            return await operationPromise
         } finally {
-            // Remove from pending fetches regardless of success or failure
-            this.pendingFetches.delete(cacheKey)
+            if (!skipCache) {
+                this.pendingFetches.delete(cacheKey)
+            }
         }
     }
 }

@@ -223,7 +223,7 @@ export async function createEntitlementStruct(
 ): Promise<EntitlementStruct[]> {
     const space = spaceIn
     // figure out the addresses for each entitlement module
-    const entitlementModules = await space.Entitlements.read.getEntitlements()
+    const entitlementModules = await space.Entitlements.getEntitlements()
     let userEntitlementAddress
     let ruleEntitlementAddress
     for (const module of entitlementModules) {

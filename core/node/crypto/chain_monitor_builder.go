@@ -132,9 +132,9 @@ type chainEventCallbacks []*chainEventCallback
 
 // onLogReceived calls all callbacks in the ecb callback set that are interested
 // in the given log.
-func (ecb chainEventCallbacks) onLogReceived(ctx context.Context, log types.Log) {
+func (ecb chainEventCallbacks) onLogReceived(ctx context.Context, log *types.Log) {
 	for _, cb := range ecb {
-		if !cb.alreadyProcessed(&log) {
+		if !cb.alreadyProcessed(log) {
 			if (cb.address == nil || *cb.address == log.Address) && matchTopics(cb.topics, log.Topics) {
 				cb.handler(ctx, log)
 			}

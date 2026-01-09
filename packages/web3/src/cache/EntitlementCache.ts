@@ -1,5 +1,6 @@
-import TTLCache from '@isaacs/ttlcache'
 import { Keyable } from './Keyable'
+import { CreateStorageFn } from './ICacheStorage'
+import { createDefaultStorage } from './TTLCacheStorage'
 
 export interface CacheResult<V> {
     value: V
@@ -7,61 +8,113 @@ export interface CacheResult<V> {
     isPositive: boolean
 }
 
-export class EntitlementCache<K extends Keyable, V> {
-    private readonly negativeCache: TTLCache<string, CacheResult<V>>
-    private readonly positiveCache: TTLCache<string, CacheResult<V>>
+export interface EntitlementCacheOptions<V> {
+    positiveCacheTTLSeconds?: number
+    negativeCacheTTLSeconds?: number
+    positiveCacheSize?: number
+    negativeCacheSize?: number
+    /** Factory function to create storage. Defaults to in-memory TTLCacheStorage */
+    createStorageFn: CreateStorageFn<CacheResult<V>> | undefined
+}
 
-    constructor(options?: {
-        positiveCacheTTLSeconds: number
-        negativeCacheTTLSeconds: number
-        positiveCacheSize?: number
-        negativeCacheSize?: number
-    }) {
+export class EntitlementCache<V> {
+    private readonly negativeStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly positiveStorage: ReturnType<CreateStorageFn<CacheResult<V>>>
+    private readonly pendingFetches: Map<string, Promise<CacheResult<V>>> = new Map()
+
+    constructor(options: EntitlementCacheOptions<V>) {
         const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
         const negativeCacheTTLSeconds = options?.negativeCacheTTLSeconds ?? 2
         const positiveCacheSize = options?.positiveCacheSize ?? 10000
         const negativeCacheSize = options?.negativeCacheSize ?? 10000
 
-        this.negativeCache = new TTLCache({
-            ttl: negativeCacheTTLSeconds * 1000,
-            max: negativeCacheSize,
-        })
-        this.positiveCache = new TTLCache({
-            ttl: positiveCacheTTLSeconds * 1000,
-            max: positiveCacheSize,
-        })
-    }
+        const createFn = options?.createStorageFn ?? createDefaultStorage
 
-    invalidate(keyable: K) {
-        const key = keyable.toKey()
-        this.negativeCache.delete(key)
-        this.positiveCache.delete(key)
+        this.negativeStorage = createFn({
+            ttlMs: negativeCacheTTLSeconds * 1000,
+            maxSize: negativeCacheSize,
+            keyPostfix: 'neg',
+        })
+
+        this.positiveStorage = createFn({
+            ttlMs: positiveCacheTTLSeconds * 1000,
+            maxSize: positiveCacheSize,
+            keyPostfix: 'pos',
+        })
     }
 
     async executeUsingCache(
-        keyable: K,
-        onCacheMiss: (k: K) => Promise<CacheResult<V>>,
+        keyable: Keyable,
+        onCacheMiss: (k: Keyable) => Promise<CacheResult<V>>,
+        opts?: { skipCache?: boolean },
     ): Promise<CacheResult<V>> {
         const key = keyable.toKey()
-        const negativeCacheResult = this.negativeCache.get(key)
-        if (negativeCacheResult !== undefined) {
-            negativeCacheResult.cacheHit = true
-            return negativeCacheResult
+        const skipCache = opts?.skipCache === true
+
+        // 1. Check for pending fetch FIRST (synchronous check before any await)
+        // This prevents race conditions where concurrent calls interleave
+        // Skip deduplication when skipCache is true - caller explicitly wants fresh data
+        if (!skipCache) {
+            const pendingPromise = this.pendingFetches.get(key)
+            if (pendingPromise) {
+                return pendingPromise
+            }
         }
 
-        const positiveCacheResult = this.positiveCache.get(key)
-        if (positiveCacheResult !== undefined) {
-            positiveCacheResult.cacheHit = true
-            return positiveCacheResult
+        // 2. Create promise that checks caches then fetches if needed
+        // Store it synchronously BEFORE any await to prevent races
+        const operationPromise = (async (): Promise<CacheResult<V>> => {
+            // Check caches only if not skipping
+            if (!skipCache) {
+                const negativeCacheResult = await this.negativeStorage.get(key)
+                if (negativeCacheResult !== undefined) {
+                    negativeCacheResult.cacheHit = true
+                    return negativeCacheResult
+                }
+
+                const positiveCacheResult = await this.positiveStorage.get(key)
+                if (positiveCacheResult !== undefined) {
+                    positiveCacheResult.cacheHit = true
+                    return positiveCacheResult
+                }
+            }
+
+            const result = await onCacheMiss(keyable)
+            if (result.isPositive) {
+                if (skipCache) {
+                    await Promise.all([
+                        this.negativeStorage.delete(key),
+                        this.positiveStorage.set(key, result),
+                    ])
+                } else {
+                    await this.positiveStorage.set(key, result)
+                }
+            } else {
+                if (skipCache) {
+                    await Promise.all([
+                        this.positiveStorage.delete(key),
+                        this.negativeStorage.set(key, result),
+                    ])
+                } else {
+                    await this.negativeStorage.set(key, result)
+                }
+            }
+
+            return result
+        })()
+
+        // Only track in pendingFetches if not skipping cache
+        // skipCache calls run independently and don't deduplicate
+        if (!skipCache) {
+            this.pendingFetches.set(key, operationPromise)
         }
 
-        const result = await onCacheMiss(keyable)
-        if (result.isPositive) {
-            this.positiveCache.set(key, result)
-        } else {
-            this.negativeCache.set(key, result)
+        try {
+            return await operationPromise
+        } finally {
+            if (!skipCache) {
+                this.pendingFetches.delete(key)
+            }
         }
-
-        return result
     }
 }

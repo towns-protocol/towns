@@ -10,9 +10,13 @@ export interface InitArgs extends BaseArgs {
     template?: string
 }
 
-export type UpdateArgs = BaseArgs
+export interface UpdateArgs extends BaseArgs {
+    skipAgentsMd?: boolean
+}
 
-export type CommandArgs = InitArgs | UpdateArgs
+export type SkillArgs = BaseArgs
+
+export type CommandArgs = InitArgs | UpdateArgs | SkillArgs
 
 // Command configurations for minimist
 const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
@@ -22,8 +26,10 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
         default: { template: 'quickstart' },
     },
     update: {
-        // No special config needed
+        boolean: ['skipAgentsMd'],
+        alias: { 'skip-agents-md': 'skipAgentsMd' },
     },
+    'install-skill': {},
 }
 
 /**
@@ -79,4 +85,8 @@ export function isInitArgs(args: CommandArgs): args is InitArgs {
 
 export function isUpdateArgs(args: CommandArgs): args is UpdateArgs {
     return args._[0] === 'update'
+}
+
+export function isSkillArgs(args: CommandArgs): args is SkillArgs {
+    return args._[0] === 'install-skill'
 }

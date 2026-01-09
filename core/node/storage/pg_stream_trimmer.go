@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"math"
 	"sync"
@@ -23,6 +24,9 @@ type trimTask struct {
 	streamId             StreamId
 	streamHistoryMbs     int64
 	retentionIntervalMbs int64
+	// targetMiniblock is the per-streamId trim target from on-chain config.
+	// -1 means no per-streamId target is configured.
+	targetMiniblock int64
 }
 
 // streamTrimmer handles periodic trimming of streams.
@@ -44,6 +48,11 @@ type streamTrimmer struct {
 	snapshotsPerStreamLock sync.Mutex
 	snapshotsPerStream     map[StreamId]uint64
 
+	// Track per-streamId trim targets that have been scheduled, with their miniblock numbers.
+	// A new trim task is scheduled when a streamId is added or its target miniblock increases.
+	scheduledPerStreamTargetsLock sync.Mutex
+	scheduledPerStreamTargets     map[StreamId]int64
+
 	stopOnce sync.Once
 	stop     chan struct{}
 
@@ -60,15 +69,16 @@ func newStreamTrimmer(
 	metrics infra.MetricsFactory,
 ) *streamTrimmer {
 	st := &streamTrimmer{
-		ctx:                ctx,
-		log:                logging.FromCtx(ctx).Named("stream-trimmer"),
-		store:              store,
-		config:             config,
-		trimmingBatchSize:  trimmingBatchSize,
-		workerPool:         workerPool,
-		pendingTasks:       make(map[StreamId]struct{}),
-		snapshotsPerStream: make(map[StreamId]uint64),
-		stop:               make(chan struct{}),
+		ctx:                       ctx,
+		log:                       logging.FromCtx(ctx).Named("stream-trimmer"),
+		store:                     store,
+		config:                    config,
+		trimmingBatchSize:         trimmingBatchSize,
+		workerPool:                workerPool,
+		pendingTasks:              make(map[StreamId]struct{}),
+		snapshotsPerStream:        make(map[StreamId]uint64),
+		scheduledPerStreamTargets: make(map[StreamId]int64),
+		stop:                      make(chan struct{}),
 		taskDuration: metrics.NewHistogramEx(
 			"stream_trimmer_task_duration_seconds",
 			"Stream trimmer task duration in seconds",
@@ -76,14 +86,20 @@ func newStreamTrimmer(
 		),
 	}
 
-	// Start the worker pool
+	// Start the worker pool monitor which also checks if streams must be trimmed through config
 	go st.monitorWorkerPool(ctx)
 
 	return st
 }
 
-// monitorWorkerPool monitors the worker pool and handles shutdown
+// configCheckInterval is how often the trimmer checks for new per-streamId trim targets in the config.
+const configCheckInterval = time.Minute
+
+// monitorWorkerPool monitors the worker pool, handles shutdown, and checks for config changes.
 func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
+	ticker := time.NewTicker(configCheckInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -92,6 +108,9 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 		case <-t.stop:
 			t.log.Info("Worker pool stopped due to stop signal")
 			return
+		case <-ticker.C:
+			// Periodically check for new per-streamId trim targets in the config
+			go t.scheduleNewPerStreamTargets()
 		}
 	}
 }
@@ -101,6 +120,42 @@ func (t *streamTrimmer) close() {
 	t.stopOnce.Do(func() {
 		close(t.stop)
 	})
+}
+
+// scheduleNewPerStreamTargets checks the on-chain config for per-streamId trim targets
+// and schedules trim tasks for any streamIds that are new or have a higher target miniblock.
+func (t *streamTrimmer) scheduleNewPerStreamTargets() {
+	cfg := t.config.Get()
+	if len(cfg.StreamTrimByStreamId) == 0 {
+		return
+	}
+
+	// Use TryLock to avoid blocking - if lock is held, skip this iteration
+	if !t.scheduledPerStreamTargetsLock.TryLock() {
+		return
+	}
+	defer t.scheduledPerStreamTargetsLock.Unlock()
+
+	for _, entry := range cfg.StreamTrimByStreamId {
+		scheduledMb, exists := t.scheduledPerStreamTargets[entry.StreamId]
+		// Schedule if streamId is new or target miniblock has increased
+		if !exists || entry.MiniblockNum > scheduledMb {
+			t.scheduledPerStreamTargets[entry.StreamId] = entry.MiniblockNum
+			t.tryScheduleTrimming(entry.StreamId)
+		}
+	}
+}
+
+// getTrimTargetForStream returns the configured per-streamId trim target.
+// Returns (target, true) if configured, (-1, false) if not.
+func (t *streamTrimmer) getTrimTargetForStream(streamId StreamId) (int64, bool) {
+	cfg := t.config.Get()
+	for _, entry := range cfg.StreamTrimByStreamId {
+		if bytes.Equal(entry.StreamId[:], streamId[:]) {
+			return int64(entry.MiniblockNum), true
+		}
+	}
+	return -1, false
 }
 
 // tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
@@ -145,21 +200,31 @@ func (t *streamTrimmer) computeTrimTask(streamId StreamId) (trimTask, bool) {
 		retentionIntervalMbs = max(interval, MinRetentionIntervalMiniblocks)
 	}
 
-	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 {
+	// Get per-streamId trim target from on-chain config
+	targetMiniblock, hasTarget := t.getTrimTargetForStream(streamId)
+
+	// If no per-type trimming is configured and no per-streamId target, skip
+	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 && !hasTarget {
 		return task, false
 	}
 
-	shouldSchedule := false
+	var shouldSchedule bool
 
-	t.snapshotsPerStreamLock.Lock()
-	count := t.snapshotsPerStream[streamId] + 1
-	if count%cfg.StreamTrimActivationFactor != 0 {
-		t.snapshotsPerStream[streamId] = count % cfg.StreamTrimActivationFactor
-	} else {
-		delete(t.snapshotsPerStream, streamId)
+	// Per-streamId targets should schedule immediately (bypass activation factor).
+	// This ensures dormant streams with configured targets are trimmed at startup.
+	if hasTarget {
 		shouldSchedule = true
+	} else {
+		t.snapshotsPerStreamLock.Lock()
+		count := t.snapshotsPerStream[streamId] + 1
+		if count%cfg.StreamTrimActivationFactor != 0 {
+			t.snapshotsPerStream[streamId] = count % cfg.StreamTrimActivationFactor
+		} else {
+			delete(t.snapshotsPerStream, streamId)
+			shouldSchedule = true
+		}
+		t.snapshotsPerStreamLock.Unlock()
 	}
-	t.snapshotsPerStreamLock.Unlock()
 
 	if !shouldSchedule {
 		return task, false
@@ -169,6 +234,7 @@ func (t *streamTrimmer) computeTrimTask(streamId StreamId) (trimTask, bool) {
 		streamId:             streamId,
 		streamHistoryMbs:     streamHistoryMbs,
 		retentionIntervalMbs: retentionIntervalMbs,
+		targetMiniblock:      targetMiniblock,
 	}, true
 }
 
@@ -274,6 +340,13 @@ func (t *streamTrimmer) processTrimTaskTx(
 	lastMbToKeep := lastSnapshotMiniblock - task.streamHistoryMbs
 	if lastMbToKeep < 0 || task.streamHistoryMbs <= 0 {
 		lastMbToKeep = 0
+	}
+
+	// Apply per-streamId target if configured.
+	// The per-streamId target specifies the miniblock number to trim to (delete everything before it).
+	// We take the maximum of per-type and per-streamId targets to ensure we don't trim more than either allows.
+	if task.targetMiniblock > 0 && task.targetMiniblock > lastMbToKeep {
+		lastMbToKeep = task.targetMiniblock
 	}
 
 	// Deleting all miniblocks below the calculated miniblock with a snapshot which is the closest to the lastMbToKeep.

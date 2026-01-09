@@ -48,11 +48,11 @@ const (
 	MediaStreamMembershipLimitsGDMConfigKey         = "media.streamMembershipLimits.77"
 	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
-	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
 	StreamTrimActivationFactorConfigKey             = "stream.trimactivationfactor"
+	StreamTrimByStreamIdConfigKey                   = "stream.trimbystreamid"
 	ServerEnableNode2NodeAuthConfigKey              = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
@@ -144,11 +144,6 @@ type OnChainSettings struct {
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
 
-	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
-	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
-	// TODO: remove this setting
-	StreamMiniblockRegistrationFrequency uint64 `mapstructure:"stream.miniblockRegistrationFrequency"`
-
 	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
 	StreamCachePollIntterval time.Duration `mapstructure:"stream.cacheExpirationPollIntervalMs"`
 
@@ -170,6 +165,10 @@ type OnChainSettings struct {
 	// once roughly N*F miniblocks have accumulated since the last trimmed snapshot. A value of 0 disables
 	// auto-trimming.
 	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimactivationfactor"`
+
+	// StreamTrimByStreamId is a list of per-stream trim targets.
+	// Each entry specifies a streamId and the miniblock number to trim to (delete all miniblocks before it).
+	StreamTrimByStreamId []StreamIdMiniblock `mapstructure:"stream.trimbystreamid"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
@@ -286,6 +285,13 @@ type StreamDistribution struct {
 	ExtraCandidatesCount uint64 `mapstructure:"stream.distribution.extracandidatescount"`
 }
 
+// StreamIdMiniblock represents a per-stream trim target configuration.
+// StreamId is the 32-byte stream identifier, MiniblockNum is the target miniblock to trim to.
+type StreamIdMiniblock struct {
+	StreamId     [32]byte
+	MiniblockNum int64
+}
+
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 21,
@@ -310,6 +316,7 @@ func DefaultOnChainSettings() *OnChainSettings {
 		StreamEphemeralStreamTTL:           time.Minute * 10,
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 		StreamTrimActivationFactor:         0, // 0 means snapshots trimming is disabled
+		StreamTrimByStreamId:               []StreamIdMiniblock{},
 
 		StreamHistoryMiniblocks: StreamHistoryMiniblocks{
 			UserInbox:    5000,
@@ -319,8 +326,6 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
-
-		StreamMiniblockRegistrationFrequency: 1,
 
 		MembershipLimits: MembershipLimitsSettings{
 			GDM: 48,
@@ -636,9 +641,9 @@ func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber blockcha
 	occ.activeBlock.Store(blockNumber.AsUint64())
 }
 
-func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
+func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event *types.Log) {
 	var e river.RiverConfigV1ConfigurationChanged
-	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {
+	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", *event); err != nil {
 		logging.FromCtx(ctx).Errorw("OnChainConfiguration: unable to decode ConfigurationChanged event")
 		return
 	}
@@ -679,6 +684,15 @@ var (
 	stringType, _              = abi.NewType(AbiTypeName_String, "", nil)
 	addressType, _             = abi.NewType(AbiTypeName_Address, "", nil)
 	addressDynamicArrayType, _ = abi.NewType(AbiTypeName_AddressArray, "", nil)
+
+	// streamIdMiniblockArrayType is the ABI type for encoding/decoding StreamIdMiniblock arrays.
+	// Encoded as tuple[](bytes32 streamId, uint64 miniblockNum).
+	// This type must match the StreamIdMiniblock struct in
+	// packages/contracts/scripts/interactions/InteractRiverRegistrySetTrimByStreamId.s.sol.
+	streamIdMiniblockArrayType, _ = abi.NewType("tuple[]", "StreamIdMiniblock[]", []abi.ArgumentMarshaling{
+		{Name: "streamId", Type: "bytes32"},
+		{Name: "miniblockNum", Type: "uint64"},
+	})
 )
 
 // ABIEncodeInt64 returns Solidity abi.encode(i)
@@ -776,9 +790,49 @@ func ABIDecodeAddressArray(data []byte) ([]common.Address, error) {
 	return args[0].([]common.Address), nil
 }
 
+// streamIdMiniblockTuple is an internal type used for ABI encoding/decoding.
+// The field names and types must match the ABI definition in streamIdMiniblockArrayType.
+type streamIdMiniblockTuple struct {
+	StreamId     [32]byte
+	MiniblockNum uint64
+}
+
+func ABIEncodeStreamIdMiniblockArray(items []StreamIdMiniblock) []byte {
+	tuples := make([]streamIdMiniblockTuple, len(items))
+	for i, item := range items {
+		tuples[i].StreamId = item.StreamId
+		tuples[i].MiniblockNum = uint64(item.MiniblockNum)
+	}
+	value, err := abi.Arguments{{Type: streamIdMiniblockArrayType}}.Pack(tuples)
+	if err != nil {
+		return nil
+	}
+	return value
+}
+
+func ABIDecodeStreamIdMiniblockArray(data []byte) ([]StreamIdMiniblock, error) {
+	args, err := abi.Arguments{{Type: streamIdMiniblockArrayType}}.Unpack(data)
+	if err != nil {
+		return nil, err
+	}
+	// The unpacked result is a slice of anonymous structs matching the tuple definition.
+	// go-ethereum ABI library uses json tags for the returned struct.
+	unpacked := args[0].([]struct {
+		StreamId     [32]byte `json:"streamId"`
+		MiniblockNum uint64   `json:"miniblockNum"`
+	})
+	result := make([]StreamIdMiniblock, len(unpacked))
+	for i, item := range unpacked {
+		result[i].StreamId = item.StreamId
+		result[i].MiniblockNum = int64(item.MiniblockNum)
+	}
+	return result, nil
+}
+
 var (
-	commonAddressType      = reflect.TypeOf(common.Address{})
-	commonAddressArrayType = reflect.TypeOf([]common.Address{})
+	commonAddressType              = reflect.TypeOf(common.Address{})
+	commonAddressArrayType         = reflect.TypeOf([]common.Address{})
+	streamIdMiniblockArrayReflType = reflect.TypeOf([]StreamIdMiniblock{})
 )
 
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
@@ -852,6 +906,12 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 					return v, nil
 				}
 				log.Errorw("failed to decode []address", "error", err, "bytes", from.Bytes())
+			} else if to.Type() == streamIdMiniblockArrayReflType {
+				v, err := ABIDecodeStreamIdMiniblockArray(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Errorw("failed to decode []StreamIdMiniblock", "error", err, "bytes", from.Bytes())
 			} else {
 				log.Errorw("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
 			}
