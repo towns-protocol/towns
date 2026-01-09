@@ -246,8 +246,12 @@ export const unpackStreamAndCookie = async (
             const miniblockHeaderEvent = events.find((event) => {
                 return event.event.payload.case === 'miniblockHeader'
             })
-            const miniblockHeader = miniblockHeaderEvent?.event.payload.value as MiniblockHeader
-            miniblockHeaderHash = miniblockHeader.snapshotHash
+            if (miniblockHeaderEvent) {
+                miniblockHeader = miniblockHeaderEvent.event
+                const miniblockHeaderPayload = miniblockHeaderEvent.event.payload
+                    .value as MiniblockHeader
+                miniblockHeaderHash = miniblockHeaderPayload.snapshotHash
+            }
         }
 
         snapshot = await unpackSnapshot(
