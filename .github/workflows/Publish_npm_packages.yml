@@ -93,7 +93,7 @@ jobs:
               id: changesets
               uses: changesets/action@v1
               with:
-                  version: bun run changeset:version:full
+                  version: bun run changeset:version:no-docgen
                   publish: bun run changeset:publish
                   title: 'Version Packages'
                   commit: 'Version Packages'

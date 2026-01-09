@@ -13,15 +13,43 @@ This file provides guidance to AI agents for building Towns Protocol bots.
 
 ## Base Payload
 
-All events include:
+All events use a discriminated union based on `isDm`:
+
 ```typescript
-{
-  userId: string      // Hex address (0x...)
-  spaceId: string
-  channelId: string
-  eventId: string     // Unique event ID (use as threadId/replyId when responding)
-  createdAt: Date
-}
+type BasePayload =
+  | {
+      userId: string      // Hex address (0x...)
+      spaceId: null       // Always null for DM channels
+      channelId: string
+      eventId: string     // Unique event ID (use as threadId/replyId when responding)
+      createdAt: Date
+      event: StreamEvent
+      isDm: true          // Discriminator: when true, spaceId is null
+    }
+  | {
+      userId: string      // Hex address (0x...)
+      spaceId: string    // Always a string for space channels
+      channelId: string
+      eventId: string     // Unique event ID (use as threadId/replyId when responding)
+      createdAt: Date
+      event: StreamEvent
+      isDm: false         // Discriminator: when false, spaceId is string
+    }
+```
+
+**Type Safety:** TypeScript automatically narrows the type based on `isDm`. When `isDm` is `true`, `spaceId` is guaranteed to be `null`. When `isDm` is `false`, `spaceId` is guaranteed to be a `string`.
+
+**Example:**
+```typescript
+bot.onMessage(async (handler, event) => {
+  if (event.isDm) {
+    // TypeScript knows spaceId is null here
+    console.log('DM channel, no space')
+  } else {
+    // TypeScript knows spaceId is string here
+    console.log(`Space: ${event.spaceId}`)
+  }
+})
 ```
 
 ## Event Handlers
