@@ -3,16 +3,34 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IL2Registry} from "../l2/IL2Registry.sol";
+import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 
 // libraries
-import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {LibString} from "solady/utils/LibString.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
 
 // contracts
 import {AddrResolverFacet} from "../l2/AddrResolverFacet.sol";
 
 library L2RegistrarMod {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          LAYOUT                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    struct Layout {
+        address registry;
+        uint256 coinType;
+        address spaceFactory;
+        address currency;
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -33,27 +51,30 @@ library L2RegistrarMod {
     /// @notice ASCII code for hyphen character
     bytes1 internal constant HYPHEN = 0x2d;
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STORAGE                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     /// keccak256(abi.encode(uint256(keccak256("towns.domains.registrar.storage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0xd8d4140311c6e36bf92b2f6d963b373d4b20ef4c79fad106c706a4d652ed9b00;
 
-    struct Layout {
-        address registry;
-        uint256 coinType;
-    }
-
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Emitted when a new subdomain is registered
+    /// @param label The subdomain label
+    /// @param owner The owner of the subdomain
     event NameRegistered(string indexed label, address indexed owner);
+
+    /// @notice Emitted when the space factory address is updated
+    /// @param spaceFactory The new space factory address
+    event SpaceFactorySet(address spaceFactory);
+
+    /// @notice Emitted when the registry address is updated
+    /// @param registry The new registry address
+    event RegistrySet(address registry);
+
+    /// @notice Emitted when the currency is updated
+    /// @param currency The new currency
+    event CurrencySet(address currency);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
@@ -61,6 +82,9 @@ library L2RegistrarMod {
 
     /// @notice Thrown when a label is invalid (wrong length, chars, or format)
     error L2Registrar__InvalidLabel();
+
+    /// @notice Thrown when caller is not a Towns smart account (IModularAccount)
+    error L2Registrar__NotSmartAccount();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -72,11 +96,6 @@ library L2RegistrarMod {
     /// @param subdomain The subdomain label to register (e.g., "alice")
     /// @param owner The address of the owner of the subdomain
     function register(Layout storage $, string calldata subdomain, address owner) internal {
-        // Validate label format
-        if (!validateLabel(subdomain)) {
-            L2Registrar__InvalidLabel.selector.revertWith();
-        }
-
         // Encode owner address as bytes for resolver record storage
         bytes memory addr = abi.encodePacked(owner);
 
@@ -107,6 +126,55 @@ library L2RegistrarMod {
         emit NameRegistered(subdomain, owner);
     }
 
+    function chargeFee(Layout storage $, string calldata label) internal {
+        if ($.spaceFactory == address(0)) return;
+        if ($.currency == address(0)) return;
+
+        address spaceFactory = $.spaceFactory;
+        address currency = $.currency;
+
+        bytes memory extraData = abi.encode(bytes(label).length);
+
+        uint256 expectedFee = IFeeManager(spaceFactory).calculateFee(
+            FeeTypesLib.DOMAIN_REGISTRATION,
+            msg.sender,
+            0,
+            extraData
+        );
+
+        bool isNative = currency == CurrencyTransfer.NATIVE_TOKEN;
+        if (!isNative) currency.safeApproveWithRetry(spaceFactory, expectedFee);
+
+        IFeeManager(spaceFactory).chargeFee{value: isNative ? expectedFee : 0}(
+            FeeTypesLib.DOMAIN_REGISTRATION,
+            msg.sender,
+            expectedFee,
+            currency,
+            expectedFee,
+            extraData
+        );
+
+        if (!isNative) currency.safeApprove(spaceFactory, 0);
+    }
+
+    /// @notice Validates caller is a Towns smart account (IModularAccount)
+    /// @dev Uses ERC-165 supportsInterface check
+    function onlySmartAccount() internal view {
+        // Must be a contract
+        if (msg.sender.code.length == 0) {
+            L2Registrar__NotSmartAccount.selector.revertWith();
+        }
+
+        // Must support IModularAccount interface
+        try IERC165(msg.sender).supportsInterface(type(IModularAccount).interfaceId) returns (
+            bool supported
+        ) {
+            if (!supported) L2Registrar__NotSmartAccount.selector.revertWith();
+        } catch {
+            L2Registrar__NotSmartAccount.selector.revertWith();
+        }
+    }
+
     /// @notice Checks if a subdomain is available for registration
     /// @dev Returns true if the label is valid and the subdomain doesn't exist
     /// @param $ The storage layout
@@ -114,7 +182,7 @@ library L2RegistrarMod {
     /// @return True if the subdomain is available, false otherwise
     function available(Layout storage $, string calldata subdomain) internal view returns (bool) {
         // Check label validity first
-        if (!validateLabel(subdomain)) return false;
+        if (!isValidLabel(subdomain)) return false;
 
         // Check if subdomain already exists by querying its owner
         // subdomainOwner returns address(0) if the subdomain doesn't exist
@@ -127,19 +195,18 @@ library L2RegistrarMod {
         return registry.subdomainOwner(subdomainHash) == address(0);
     }
 
+    /// @notice Validates a subdomain label for registration
+    /// @dev Checks: length (3-63), allowed chars (a-z, 0-9, hyphen), no leading/trailing hyphen
+    /// @param label The subdomain label to validate (e.g., "alice")
+    function validateLabel(string calldata label) internal pure {
+        if (!isValidLabel(label)) L2Registrar__InvalidLabel.selector.revertWith();
+    }
+
     /// @notice Checks if a label is valid without checking availability
     /// @dev Use this for UI validation before attempting registration
     /// @param label The subdomain label to validate
     /// @return True if the label format is valid
     function isValidLabel(string calldata label) internal pure returns (bool) {
-        return validateLabel(label);
-    }
-
-    /// @notice Validates a subdomain label for registration
-    /// @dev Checks: length (3-63), allowed chars (a-z, 0-9, hyphen), no leading/trailing hyphen
-    /// @param label The subdomain label to validate (e.g., "alice")
-    /// @return True if the label is valid
-    function validateLabel(string calldata label) internal pure returns (bool) {
         uint256 len = bytes(label).length;
 
         // Check length bounds
@@ -153,5 +220,14 @@ library L2RegistrarMod {
         if (b[0] == HYPHEN || b[len - 1] == HYPHEN) return false;
 
         return true;
+    }
+
+    /// @notice Returns the storage layout for the L2Registrar facet
+    /// @dev Uses diamond storage pattern to avoid slot collisions between facets
+    /// @return $ The storage pointer to the facet's layout
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 }
