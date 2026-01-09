@@ -185,8 +185,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 	require.NoError(err)
 	require.Len(blocks, 3)
 
-	expectedMask := StreamRecordEventMaskLastMiniblockHash |
-		StreamRecordEventMaskLastMiniblockNum |
+	expectedMask := StreamRecordEventMaskLastMiniblock |
 		StreamRecordEventMaskNodes |
 		StreamRecordEventMaskReplicationFactor |
 		StreamRecordEventMaskSealed
@@ -327,7 +326,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		blocks[0].EventMask,
 	)
 	require.Equal(
-		StreamRecordEventMaskLastMiniblockHash|StreamRecordEventMaskLastMiniblockNum|StreamRecordEventMaskSealed,
+		StreamRecordEventMaskLastMiniblock|StreamRecordEventMaskSealed,
 		blocks[1].EventMask,
 	)
 }

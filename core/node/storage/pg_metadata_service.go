@@ -30,8 +30,7 @@ const metadataRecordBlockNotifyChannel = "md_record_block"
 type StreamRecordEventMask int16
 
 const (
-	StreamRecordEventMaskLastMiniblockHash StreamRecordEventMask = 1 << iota
-	StreamRecordEventMaskLastMiniblockNum
+	StreamRecordEventMaskLastMiniblock StreamRecordEventMask = 1 << iota
 	StreamRecordEventMaskNodes
 	StreamRecordEventMaskReplicationFactor
 	StreamRecordEventMaskSealed
@@ -572,8 +571,7 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 		UpdatedAtBlock:    blockNum,
 	}
 
-	mask := StreamRecordEventMaskLastMiniblockHash |
-		StreamRecordEventMaskLastMiniblockNum |
+	mask := StreamRecordEventMaskLastMiniblock |
 		StreamRecordEventMaskNodes |
 		StreamRecordEventMaskReplicationFactor |
 		StreamRecordEventMaskSealed
@@ -731,7 +729,7 @@ func (s *PostgresMetadataServiceStore) applyUpdateStreamMiniblockTx(
 	record.Sealed = sealed
 	record.UpdatedAtBlock = blockNum
 
-	mask := StreamRecordEventMaskLastMiniblockHash | StreamRecordEventMaskLastMiniblockNum
+	mask := StreamRecordEventMaskLastMiniblock
 	if update.Sealed {
 		mask |= StreamRecordEventMaskSealed
 	}
