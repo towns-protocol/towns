@@ -152,6 +152,8 @@ library L2RegistryMod {
         results = new bytes[](length);
         for (uint256 i; i < length; ++i) {
             if (subdomainHash != bytes32(0)) {
+                if (data[i].length < 36)
+                    L2RegistryMod_SetRecordsInvalidNamehash.selector.revertWith();
                 bytes32 txNamehash = bytes32(data[i][4:36]);
                 if (txNamehash != subdomainHash)
                     L2RegistryMod_SetRecordsInvalidNamehash.selector.revertWith();
