@@ -41,8 +41,5 @@ interface IDMGating {
 
     /// @notice Get the combination mode for the caller
     /// @return The current combination mode
-    function getCombinationMode()
-        external
-        view
-        returns (DMGatingMod.CombinationMode);
+    function getCombinationMode() external view returns (DMGatingMod.CombinationMode);
 }

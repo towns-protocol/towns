@@ -19,10 +19,7 @@ contract DMGatingFacet is IDMGating, ReentrancyGuardTransient, Facet {
     }
 
     /// @inheritdoc IDMGating
-    function installCriteria(
-        address criteria,
-        bytes calldata data
-    ) external nonReentrant {
+    function installCriteria(address criteria, bytes calldata data) external nonReentrant {
         DMGatingMod.getStorage().installCriteria(msg.sender, criteria, data);
     }
 
@@ -32,9 +29,7 @@ contract DMGatingFacet is IDMGating, ReentrancyGuardTransient, Facet {
     }
 
     /// @inheritdoc IDMGating
-    function setCombinationMode(
-        DMGatingMod.CombinationMode mode
-    ) external nonReentrant {
+    function setCombinationMode(DMGatingMod.CombinationMode mode) external nonReentrant {
         DMGatingMod.getStorage().setCombinationMode(msg.sender, mode);
     }
 
@@ -43,12 +38,7 @@ contract DMGatingFacet is IDMGating, ReentrancyGuardTransient, Facet {
         address sender,
         bytes calldata extraData
     ) external view returns (bool) {
-        return
-            DMGatingMod.getStorage().canReceiveDMFrom(
-                msg.sender,
-                sender,
-                extraData
-            );
+        return DMGatingMod.getStorage().canReceiveDMFrom(msg.sender, sender, extraData);
     }
 
     /// @inheritdoc IDMGating
@@ -57,19 +47,12 @@ contract DMGatingFacet is IDMGating, ReentrancyGuardTransient, Facet {
     }
 
     /// @inheritdoc IDMGating
-    function isCriteriaInstalled(
-        address criteria
-    ) external view returns (bool) {
-        return
-            DMGatingMod.getStorage().isCriteriaInstalled(msg.sender, criteria);
+    function isCriteriaInstalled(address criteria) external view returns (bool) {
+        return DMGatingMod.getStorage().isCriteriaInstalled(msg.sender, criteria);
     }
 
     /// @inheritdoc IDMGating
-    function getCombinationMode()
-        external
-        view
-        returns (DMGatingMod.CombinationMode)
-    {
+    function getCombinationMode() external view returns (DMGatingMod.CombinationMode) {
         return DMGatingMod.getStorage().getCombinationMode(msg.sender);
     }
 }

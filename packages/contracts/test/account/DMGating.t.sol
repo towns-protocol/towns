@@ -48,9 +48,7 @@ contract DMGatingTest is ERC6900Setup {
         assertFalse(result, "Should block all DMs by default");
     }
 
-    function test_getInstalledCriteria_returnsEmpty_initially(
-        address user
-    ) external {
+    function test_getInstalledCriteria_returnsEmpty_initially(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -59,9 +57,7 @@ contract DMGatingTest is ERC6900Setup {
         assertEq(criteria.length, 0);
     }
 
-    function test_getCombinationMode_returnsAND_initially(
-        address user
-    ) external {
+    function test_getCombinationMode_returnsAND_initially(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -79,10 +75,7 @@ contract DMGatingTest is ERC6900Setup {
 
         vm.prank(address(account));
         vm.expectEmit(address(dmGating));
-        emit DMGatingMod.CriteriaInstalled(
-            address(account),
-            address(allowlistCriteria)
-        );
+        emit DMGatingMod.CriteriaInstalled(address(account), address(allowlistCriteria));
         dmGating.installCriteria(address(allowlistCriteria), "");
 
         vm.prank(address(account));
@@ -94,9 +87,7 @@ contract DMGatingTest is ERC6900Setup {
         assertEq(criteria[0], address(allowlistCriteria));
     }
 
-    function test_installCriteria_revertWhen_invalidCriteria(
-        address user
-    ) external {
+    function test_installCriteria_revertWhen_invalidCriteria(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -104,9 +95,7 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.installCriteria(address(0), "");
     }
 
-    function test_installCriteria_revertWhen_alreadyInstalled(
-        address user
-    ) external {
+    function test_installCriteria_revertWhen_alreadyInstalled(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -117,9 +106,7 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.installCriteria(address(allowlistCriteria), "");
     }
 
-    function test_installCriteria_revertWhen_maxCriteriaReached(
-        address user
-    ) external {
+    function test_installCriteria_revertWhen_maxCriteriaReached(address user) external {
         ModularAccount account = _createAccount(user);
 
         // Install 8 criteria (max)
@@ -148,19 +135,14 @@ contract DMGatingTest is ERC6900Setup {
 
         vm.prank(address(account));
         vm.expectEmit(address(dmGating));
-        emit DMGatingMod.CriteriaUninstalled(
-            address(account),
-            address(allowlistCriteria)
-        );
+        emit DMGatingMod.CriteriaUninstalled(address(account), address(allowlistCriteria));
         dmGating.uninstallCriteria(address(allowlistCriteria));
 
         vm.prank(address(account));
         assertFalse(dmGating.isCriteriaInstalled(address(allowlistCriteria)));
     }
 
-    function test_uninstallCriteria_revertWhen_notInstalled(
-        address user
-    ) external {
+    function test_uninstallCriteria_revertWhen_notInstalled(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -168,9 +150,7 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.uninstallCriteria(address(allowlistCriteria));
     }
 
-    function test_uninstallCriteria_revertWhen_invalidCriteria(
-        address user
-    ) external {
+    function test_uninstallCriteria_revertWhen_invalidCriteria(address user) external {
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -187,10 +167,7 @@ contract DMGatingTest is ERC6900Setup {
 
         vm.prank(address(account));
         vm.expectEmit(address(dmGating));
-        emit DMGatingMod.CombinationModeChanged(
-            address(account),
-            DMGatingMod.CombinationMode.OR
-        );
+        emit DMGatingMod.CombinationModeChanged(address(account), DMGatingMod.CombinationMode.OR);
         dmGating.setCombinationMode(DMGatingMod.CombinationMode.OR);
 
         vm.prank(address(account));
@@ -215,10 +192,7 @@ contract DMGatingTest is ERC6900Setup {
         allowed[0] = sender;
 
         vm.prank(address(account));
-        dmGating.installCriteria(
-            address(allowlistCriteria),
-            abi.encode(allowed)
-        );
+        dmGating.installCriteria(address(allowlistCriteria), abi.encode(allowed));
 
         // Install another criteria that will fail
         AllowlistCriteria emptyAllowlist = new AllowlistCriteria(address(dmGating));
@@ -273,10 +247,7 @@ contract DMGatingTest is ERC6900Setup {
         allowed[0] = sender;
 
         vm.prank(address(account));
-        dmGating.installCriteria(
-            address(allowlistCriteria),
-            abi.encode(allowed)
-        );
+        dmGating.installCriteria(address(allowlistCriteria), abi.encode(allowed));
 
         // Install another criteria with sender also in allowlist
         AllowlistCriteria secondAllowlist = new AllowlistCriteria(address(dmGating));
@@ -303,10 +274,7 @@ contract DMGatingTest is ERC6900Setup {
         allowed[0] = sender;
 
         vm.prank(address(account));
-        dmGating.installCriteria(
-            address(allowlistCriteria),
-            abi.encode(allowed)
-        );
+        dmGating.installCriteria(address(allowlistCriteria), abi.encode(allowed));
 
         // Install another criteria with empty allowlist (will fail)
         AllowlistCriteria emptyAllowlist = new AllowlistCriteria(address(dmGating));
@@ -317,20 +285,14 @@ contract DMGatingTest is ERC6900Setup {
         vm.prank(address(account));
         bool result = dmGating.canReceiveDMFrom(sender, "");
 
-        assertFalse(
-            result,
-            "Should block when any criteria fails in AND mode"
-        );
+        assertFalse(result, "Should block when any criteria fails in AND mode");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 ALLOWLIST INTEGRATION TESTS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_allowlistCriteria_addAndRemove(
-        address user,
-        address sender
-    ) external {
+    function test_allowlistCriteria_addAndRemove(address user, address sender) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
         ModularAccount account = _createAccount(user);

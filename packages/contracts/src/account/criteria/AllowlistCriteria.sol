@@ -56,8 +56,7 @@ contract AllowlistCriteria is ICriteria {
 
     /// @notice Restricts access to only the authorized DMGating module
     modifier onlyDMGating() {
-        if (msg.sender != dmGating)
-            AllowlistCriteria__Unauthorized.selector.revertWith();
+        if (msg.sender != dmGating) AllowlistCriteria__Unauthorized.selector.revertWith();
         _;
     }
 
@@ -81,10 +80,7 @@ contract AllowlistCriteria is ICriteria {
 
     /// @inheritdoc ICriteria
     /// @dev Only callable by the authorized DMGating module
-    function onInstall(
-        address account,
-        bytes calldata data
-    ) external override onlyDMGating {
+    function onInstall(address account, bytes calldata data) external override onlyDMGating {
         // Optionally initialize with addresses from data
         if (data.length > 0) {
             address[] memory addresses = abi.decode(data, (address[]));
@@ -134,9 +130,7 @@ contract AllowlistCriteria is ICriteria {
     /// @notice Get the allowlist for a specific account
     /// @param account The account to query
     /// @return Array of addresses in the account's allowlist
-    function getAllowlistFor(
-        address account
-    ) external view returns (address[] memory) {
+    function getAllowlistFor(address account) external view returns (address[] memory) {
         return _allowlists[account].values();
     }
 
@@ -151,10 +145,7 @@ contract AllowlistCriteria is ICriteria {
     /// @param account The account to query
     /// @param addr The address to check
     /// @return True if the address is in the account's allowlist
-    function isAllowedFor(
-        address account,
-        address addr
-    ) external view returns (bool) {
+    function isAllowedFor(address account, address addr) external view returns (bool) {
         return _allowlists[account].contains(addr);
     }
 
@@ -162,15 +153,11 @@ contract AllowlistCriteria is ICriteria {
     /*                    INTERNAL FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _addAddresses(
-        address account,
-        address[] memory addresses
-    ) internal {
+    function _addAddresses(address account, address[] memory addresses) internal {
         EnumerableSetLib.AddressSet storage allowlist = _allowlists[account];
         for (uint256 i; i < addresses.length; ++i) {
             address addr = addresses[i];
-            if (addr == address(0))
-                AllowlistCriteria__InvalidAddress.selector.revertWith();
+            if (addr == address(0)) AllowlistCriteria__InvalidAddress.selector.revertWith();
             if (allowlist.add(addr)) {
                 emit AddressAdded(account, addr);
             }
