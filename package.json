@@ -32,6 +32,7 @@
         "changeset": "changeset",
         "changeset:version": "changeset version",
         "changeset:version:full": "bun run changeset:version && bun run --filter @towns-protocol/react-sdk gen && ./packages/generated/scripts/copy-addresses.sh",
+        "changeset:version:no-docgen": "bun run changeset:version && ./packages/generated/scripts/copy-addresses.sh",
         "changeset:publish": "changeset publish"
     },
     "dependencies": {
