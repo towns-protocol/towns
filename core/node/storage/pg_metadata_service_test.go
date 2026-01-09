@@ -193,7 +193,8 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 	expectedMask := StreamRecordEventMaskLastMiniblock |
 		StreamRecordEventMaskNodes |
 		StreamRecordEventMaskReplicationFactor |
-		StreamRecordEventMaskSealed
+		StreamRecordEventMaskSealed |
+		StreamRecordEventMaskInserted
 
 	expectedByStream := map[shared.StreamId]common.Hash{
 		stream1: makeHash(0x01),

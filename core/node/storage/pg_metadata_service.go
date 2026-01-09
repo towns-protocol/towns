@@ -34,6 +34,7 @@ const (
 	StreamRecordEventMaskNodes
 	StreamRecordEventMaskReplicationFactor
 	StreamRecordEventMaskSealed
+	StreamRecordEventMaskInserted
 )
 
 type MetadataStreamRecord struct {
@@ -545,7 +546,8 @@ func (s *PostgresMetadataServiceStore) applyInsertStreamRecordTx(
 	mask := StreamRecordEventMaskLastMiniblock |
 		StreamRecordEventMaskNodes |
 		StreamRecordEventMaskReplicationFactor |
-		StreamRecordEventMaskSealed
+		StreamRecordEventMaskSealed |
+		StreamRecordEventMaskInserted
 
 	return record, mask, nil
 }
