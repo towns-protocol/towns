@@ -97,7 +97,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
         ChannelInfo calldata channel,
         SpaceOptions memory spaceOptions
     ) private returns (address spaceAddress) {
-        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage ims = ImplementationStorage.getStorage();
 
         // get the token id of the next space
         uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
@@ -315,7 +315,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
             ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
         }
         // mint token to and transfer to Architect
-        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage ims = ImplementationStorage.getStorage();
         ims.spaceOwnerToken.mintSpace(
             metadata.name,
             metadata.uri,
@@ -369,7 +369,7 @@ abstract contract CreateSpaceBase is IArchitectBase {
     ) internal returns (bytes memory initCode, bytes32 salt) {
         _verifyPricingModule(membershipSettings.pricingModule);
 
-        address spaceOwnerNFT = address(ImplementationStorage.layout().spaceOwnerToken);
+        address spaceOwnerNFT = address(ImplementationStorage.getStorage().spaceOwnerToken);
 
         // calculate salt
         salt = keccak256(abi.encode(spaceTokenId, block.timestamp, block.number, spaceOwnerNFT));

@@ -71,7 +71,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
 
     function _createSpace(SpaceInfo memory spaceInfo) internal returns (address spaceAddress) {
         ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage ims = ImplementationStorage.getStorage();
 
         // get the token id of the next space
         uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
@@ -147,7 +147,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     // =============================================================
 
     function _setLegacyRuleEntitlement(IRuleEntitlement entitlement) internal {
-        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage ds = ImplementationStorage.getStorage();
         ds.legacyRuleEntitlement = entitlement;
     }
 
@@ -273,7 +273,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         uint256 spaceTokenId,
         Membership memory membership
     ) internal returns (bytes memory initCode, bytes32 salt) {
-        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage ds = ImplementationStorage.getStorage();
 
         // calculate salt
         salt = keccak256(abi.encode(msg.sender, spaceTokenId, block.timestamp));

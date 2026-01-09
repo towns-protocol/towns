@@ -26,7 +26,7 @@ library ImplementationStorage {
         address _proxyInitializer;
     }
 
-    function layout() internal pure returns (Layout storage $) {
+    function getStorage() internal pure returns (Layout storage $) {
         assembly {
             $.slot := STORAGE_SLOT
         }

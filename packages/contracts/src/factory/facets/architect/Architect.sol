@@ -84,7 +84,7 @@ contract Architect is IArchitect, OwnableBase, PausableBase, ReentrancyGuard, Fa
             IRuleEntitlement legacyRuleEntitlement
         )
     {
-        ImplementationStorage.Layout storage $ = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage $ = ImplementationStorage.getStorage();
         return ($.spaceOwnerToken, $.userEntitlement, $.ruleEntitlement, $.legacyRuleEntitlement);
     }
 
@@ -108,7 +108,7 @@ contract Architect is IArchitect, OwnableBase, PausableBase, ReentrancyGuard, Fa
             Architect__NotContract.selector.revertWith();
         }
 
-        ImplementationStorage.Layout storage $ = ImplementationStorage.layout();
+        ImplementationStorage.Layout storage $ = ImplementationStorage.getStorage();
         $.spaceOwnerToken = spaceOwnerToken;
         $.userEntitlement = userEntitlement;
         $.ruleEntitlement = ruleEntitlement;
