@@ -11,6 +11,7 @@ import {
     isUSDC,
     isETH,
     getSpaceCurrency,
+    getSubscriptionSpaceCurrency,
 } from './utils'
 import { fetchAgentData } from './agentData'
 
@@ -97,9 +98,7 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceFactory, SpaceOwner } = context.contracts
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, event.args.space),
-    })
+    const space = await context.db.find(schema.space, { id: event.args.space })
     if (!space) {
         console.warn(`Space not found for SpaceOwner:SpaceOwner__UpdateSpace`, event.args.space)
         return
@@ -124,17 +123,14 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
             }),
         ])
 
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                paused: paused,
-                name: spaceInfo.name,
-                nameLowercased: spaceInfo.name.toLowerCase(),
-                uri: spaceInfo.uri,
-                shortDescription: spaceInfo.shortDescription,
-                longDescription: spaceInfo.longDescription,
-            })
-            .where(eq(schema.space.id, event.args.space))
+        await context.db.update(schema.space, { id: event.args.space }).set({
+            paused: paused,
+            name: spaceInfo.name,
+            nameLowercased: spaceInfo.name.toLowerCase(),
+            uri: spaceInfo.uri,
+            shortDescription: spaceInfo.shortDescription,
+            longDescription: spaceInfo.longDescription,
+        })
     } catch (error) {
         console.error(
             `Error processing SpaceOwner:SpaceOwner__UpdateSpace at blockNumber ${blockNumber}:`,
@@ -178,14 +174,11 @@ ponder.on('Space:MembershipCurrencyUpdated', async ({ event, context }) => {
         // Normalize currency: zero address means ETH
         const normalizedCurrency = newCurrency === ZERO_ADDRESS ? ETH_ADDRESS : newCurrency
 
-        const result = await context.db.sql
-            .update(schema.space)
-            .set({
-                currency: normalizedCurrency,
-            })
-            .where(eq(schema.space.id, spaceId))
+        const row = await context.db.update(schema.space, { id: spaceId }).set({
+            currency: normalizedCurrency,
+        })
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Space not found for MembershipCurrencyUpdated at block ${blockNumber}: ${spaceId}`,
             )
@@ -207,26 +200,21 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
     const blockNumber = event.block.number
     const spaceId = event.log.address
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, spaceId),
-    })
+    const space = await context.db.find(schema.space, { id: spaceId })
     if (!space) {
         console.warn(`Space not found for Space:SwapFeeConfigUpdated`, spaceId)
         return
     }
     try {
         // update swap fee table
-        const result = await context.db.sql
-            .update(schema.swapFee)
-            .set({
+        const existing = await context.db.find(schema.swapFee, { spaceId })
+        if (existing) {
+            await context.db.update(schema.swapFee, { spaceId }).set({
                 posterFeeBps: event.args.posterFeeBps,
                 collectPosterFeeToSpace: event.args.forwardPosterFee,
                 createdAt: blockNumber,
             })
-            .where(eq(schema.swapFee.spaceId, spaceId))
-
-        if (result.changes === 0) {
-            // Insert a new record if it doesn't exist
+        } else {
             await context.db.insert(schema.swapFee).values({
                 spaceId: spaceId,
                 posterFeeBps: event.args.posterFeeBps,
@@ -299,14 +287,10 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Directly update space metrics with inline calculations
-        // This eliminates the need to query current values first
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                swapVolume: sql`COALESCE(${schema.space.swapVolume}, 0) + ${ethAmount}`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update space metrics using Store API function-based update
+        await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+            swapVolume: (row.swapVolume ?? 0n) + ethAmount,
+        }))
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -397,8 +381,8 @@ ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existing = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
         if (!existing) {
             await context.db.insert(schema.stakers).values({
@@ -430,18 +414,15 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
             return
         }
 
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake) {
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    amount: existingStake.amount + event.args.amount,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                amount: existingStake.amount + event.args.amount,
+                createdAt: blockNumber,
+            })
 
             if (existingStake.delegatee) {
                 await handleStakeToSpace(context, existingStake.delegatee, event.args.amount)
@@ -459,8 +440,8 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake) {
@@ -476,13 +457,10 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
                 existingStake.amount,
             )
 
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    delegatee: event.args.delegatee,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                delegatee: event.args.delegatee,
+                createdAt: blockNumber,
+            })
         }
     } catch (error) {
         console.error(
@@ -496,8 +474,8 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingStake = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existingStake = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
 
         if (existingStake && existingStake.amount !== null) {
@@ -509,13 +487,10 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
                 await handleStakeToSpace(context, existingStake.delegatee, 0n - withdrawAmount)
             }
 
-            await context.db.sql
-                .update(schema.stakers)
-                .set({
-                    amount: newAmount,
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.stakers.depositId, event.args.depositId))
+            await context.db.update(schema.stakers, { depositId: event.args.depositId }).set({
+                amount: newAmount,
+                createdAt: blockNumber,
+            })
         }
     } catch (error) {
         console.error(
@@ -530,8 +505,8 @@ ponder.on('BaseRegistry:OperatorRegistered', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.operator.findFirst({
-            where: eq(schema.operator.address, event.args.operator),
+        const existing = await context.db.find(schema.operator, {
+            address: event.args.operator,
         })
         if (!existing) {
             await context.db.insert(schema.operator).values({
@@ -553,17 +528,14 @@ ponder.on('BaseRegistry:OperatorStatusChanged', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.operator.findFirst({
-            where: eq(schema.operator.address, event.args.operator),
+        const existing = await context.db.find(schema.operator, {
+            address: event.args.operator,
         })
         if (existing) {
-            await context.db.sql
-                .update(schema.operator)
-                .set({
-                    status: event.args.newStatus, // Status is one of: Standby, Approved, Active, Exiting
-                    createdAt: blockNumber,
-                })
-                .where(eq(schema.operator.address, event.args.operator))
+            await context.db.update(schema.operator, { address: event.args.operator }).set({
+                status: event.args.newStatus, // Status is one of: Standby, Approved, Active, Exiting
+                createdAt: blockNumber,
+            })
         } else {
             console.warn(
                 `No existing operator found for address ${event.args.operator} in OperatorStatusChanged event`,
@@ -581,8 +553,8 @@ ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existing = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
+        const existing = await context.db.find(schema.stakers, {
+            depositId: event.args.depositId,
         })
         if (!existing) {
             await context.db.insert(schema.stakers).values({
@@ -610,8 +582,8 @@ ponder.on('AppRegistry:AppCreated', async ({ event, context }) => {
     const { AppRegistry } = context.contracts
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
             console.warn(`App already exists for AppRegistry:AppCreated`, event.args.uid)
@@ -651,19 +623,16 @@ ponder.on('AppRegistry:AppRegistered', async ({ event, context }) => {
     const { AppRegistry } = context.contracts
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
 
         if (existingApp) {
             // App exists, just update registration status
-            await context.db.sql
-                .update(schema.app)
-                .set({
-                    isRegistered: true,
-                    appId: event.args.uid, // Update appId in case it wasn't set
-                })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isRegistered: true,
+                appId: event.args.uid, // Update appId in case it wasn't set
+            })
         } else {
             // App doesn't exist yet (AppRegistered fired before AppCreated)
             const appDetails = await context.client.readContract({
@@ -699,14 +668,13 @@ ponder.on('AppRegistry:AppUnregistered', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({ isRegistered: false })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isRegistered: false,
+            })
         }
     } catch (error) {
         console.error(
@@ -720,14 +688,13 @@ ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, event.args.app),
+        const existingApp = await context.db.find(schema.app, {
+            address: event.args.app,
         })
         if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({ isBanned: true })
-                .where(eq(schema.app.address, event.args.app))
+            await context.db.update(schema.app, { address: event.args.app }).set({
+                isBanned: true,
+            })
         }
     } catch (error) {
         console.error(
@@ -743,8 +710,8 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const existingApp = await context.db.sql.query.app.findFirst({
-            where: eq(schema.app.address, app),
+        const existingApp = await context.db.find(schema.app, {
+            address: app,
         })
         if (!existingApp) {
             console.warn(
@@ -808,20 +775,14 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
 
     try {
         // Soft delete installation record
-        const installResult = await context.db.sql
-            .update(schema.appInstallation)
+        const installResult = await context.db
+            .update(schema.appInstallation, { app, account })
             .set({
                 uninstalledAt: block.timestamp,
                 isActive: false,
             })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
 
-        if (installResult.changes === 0) {
+        if (!installResult) {
             console.warn(`No installation found for app ${app} in account ${account}`)
         }
 
@@ -850,20 +811,12 @@ ponder.on('AppRegistry:AppRenewed', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        const result = await context.db.sql
-            .update(schema.appInstallation)
-            .set({
-                lastRenewedAt: block.timestamp,
-                appId, // Update to current version if changed
-            })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
+        const result = await context.db.update(schema.appInstallation, { app, account }).set({
+            lastRenewedAt: block.timestamp,
+            appId, // Update to current version if changed
+        })
 
-        if (result.changes === 0) {
+        if (!result) {
             console.warn(`No installation found for renewal: app ${app} in account ${account}`)
         }
     } catch (error) {
@@ -881,20 +834,12 @@ ponder.on('AppRegistry:AppUpdated', async ({ event, context }) => {
 
     try {
         // Update the installation record
-        const result = await context.db.sql
-            .update(schema.appInstallation)
-            .set({
-                lastUpdatedAt: block.timestamp,
-                appId, // Update to new version/config
-            })
-            .where(
-                and(
-                    eq(schema.appInstallation.app, app),
-                    eq(schema.appInstallation.account, account),
-                ),
-            )
+        const result = await context.db.update(schema.appInstallation, { app, account }).set({
+            lastUpdatedAt: block.timestamp,
+            appId, // Update to new version/config
+        })
 
-        if (result.changes === 0) {
+        if (!result) {
             console.warn(`No installation found for update: app ${app} in account ${account}`)
         }
     } catch (error) {
@@ -912,10 +857,10 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
 
     try {
         // Mark old version as no longer latest or current
-        await context.db.sql
-            .update(schema.appVersion)
-            .set({ isLatest: false, isCurrent: false })
-            .where(and(eq(schema.appVersion.app, app), eq(schema.appVersion.appId, oldVersionId)))
+        await context.db.update(schema.appVersion, { app, appId: oldVersionId }).set({
+            isLatest: false,
+            isCurrent: false,
+        })
 
         await context.db
             .insert(schema.appVersion)
@@ -941,13 +886,10 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
             })
 
         // Update app's current version (keep appId immutable as stable identifier)
-        await context.db.sql
-            .update(schema.app)
-            .set({
-                currentVersionId: newVersionId,
-                lastUpdatedAt: block.timestamp,
-            })
-            .where(eq(schema.app.address, app))
+        await context.db.update(schema.app, { address: app }).set({
+            currentVersionId: newVersionId,
+            lastUpdatedAt: block.timestamp,
+        })
     } catch (error) {
         console.error(
             `Error processing AppRegistry:AppUpgraded at blockNumber ${blockNumber}:`,
@@ -986,15 +928,9 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
             )
             const agentData = await fetchAgentData(agentUri, 3, 1000, owner, ENVIRONMENT)
             if (agentData) {
-                await context.db.sql
-                    .update(schema.agentIdentity)
-                    .set({ agentData: agentData })
-                    .where(
-                        and(
-                            eq(schema.agentIdentity.app, owner),
-                            eq(schema.agentIdentity.agentId, agentId),
-                        ),
-                    )
+                await context.db.update(schema.agentIdentity, { app: owner, agentId }).set({
+                    agentData: agentData,
+                })
                 console.info(
                     `[AgentRegistered] Successfully stored agent data: agentId=${agentId}, app=${owner}`,
                 )
@@ -1193,16 +1129,13 @@ ponder.on('AppRegistry:NewFeedback', async ({ event, context }) => {
         const totalCount = Number(totalCountResult[0]?.count || 0)
 
         // Update summary
-        await context.db.sql
-            .update(schema.agentReputationSummary)
-            .set({
-                totalFeedback: totalCount,
-                activeFeedback: count,
-                averageRating: avgRating,
-                uniqueReviewers: uniqueReviewers,
-                lastFeedbackAt: blockTimestamp,
-            })
-            .where(eq(schema.agentReputationSummary.app, agent.app))
+        await context.db.update(schema.agentReputationSummary, { app: agent.app }).set({
+            totalFeedback: totalCount,
+            activeFeedback: count,
+            averageRating: avgRating,
+            uniqueReviewers: uniqueReviewers,
+            lastFeedbackAt: blockTimestamp,
+        })
     } catch (error) {
         console.error(
             `Error processing AppRegistry:NewFeedback at blockNumber ${blockNumber}:`,
@@ -1228,19 +1161,12 @@ ponder.on('AppRegistry:FeedbackRevoked', async ({ event, context }) => {
         }
 
         // Update feedback revoked status
-        await context.db.sql
-            .update(schema.agentFeedback)
+        await context.db
+            .update(schema.agentFeedback, { agentId, reviewerAddress, feedbackIndex })
             .set({
                 isRevoked: true,
                 revokedAt: blockTimestamp,
             })
-            .where(
-                and(
-                    eq(schema.agentFeedback.agentId, agentId),
-                    eq(schema.agentFeedback.reviewerAddress, reviewerAddress),
-                    eq(schema.agentFeedback.feedbackIndex, feedbackIndex),
-                ),
-            )
 
         // Recalculate reputation summary (excluding revoked)
         const activeFeedbackList = await context.db.sql.query.agentFeedback.findMany({
@@ -1273,15 +1199,12 @@ ponder.on('AppRegistry:FeedbackRevoked', async ({ event, context }) => {
         const revokedCount = Number(revokedCountResult[0]?.count || 0)
 
         // Update summary
-        await context.db.sql
-            .update(schema.agentReputationSummary)
-            .set({
-                totalFeedback: totalCount,
-                activeFeedback: count,
-                revokedFeedback: revokedCount,
-                averageRating: avgRating,
-            })
-            .where(eq(schema.agentReputationSummary.app, agent.app))
+        await context.db.update(schema.agentReputationSummary, { app: agent.app }).set({
+            totalFeedback: totalCount,
+            activeFeedback: count,
+            revokedFeedback: revokedCount,
+            averageRating: avgRating,
+        })
     } catch (error) {
         console.error(
             `Error processing AppRegistry:FeedbackRevoked at blockNumber ${blockNumber}:`,
@@ -1325,12 +1248,11 @@ ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
             .onConflictDoNothing()
 
         // Increment response count in summary
-        await context.db.sql
-            .update(schema.agentReputationSummary)
-            .set({
-                totalResponses: sql`${schema.agentReputationSummary.totalResponses} + 1`,
-            })
-            .where(eq(schema.agentReputationSummary.app, agent.app))
+        await context.db
+            .update(schema.agentReputationSummary, { app: agent.app })
+            .set((existing: typeof schema.agentReputationSummary.$inferSelect) => ({
+                totalResponses: (existing.totalResponses ?? 0) + 1,
+            }))
     } catch (error) {
         console.error(
             `Error processing AppRegistry:ResponseAppended at blockNumber ${blockNumber}:`,
@@ -1389,13 +1311,10 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 .onConflictDoNothing()
         }
 
-        // Update memberCount
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update memberCount using Store API function-based update
+        await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+            memberCount: (row.memberCount ?? 0n) + 1n,
+        }))
     } catch (error) {
         console.error(`Error processing Space:MembershipTokenIssued for space ${spaceId}:`, error)
     }
@@ -1443,21 +1362,15 @@ ponder.on('Space:MembershipPaid', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space membership volume metrics
+        // Update space membership volume metrics using Store API function-based update
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                joinVolume: (row.joinVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    joinUSDCVolume: sql`COALESCE(${schema.space.joinUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                joinUSDCVolume: (row.joinUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
     } catch (error) {
         console.error(
@@ -1514,55 +1427,42 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space metrics - route to correct currency column
+        // Update space metrics - route to correct currency column using Store API
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                tipVolume: (row.tipVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    tipUSDCVolume: sql`COALESCE(${schema.space.tipUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                tipUSDCVolume: (row.tipUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
 
         // Update tip leaderboard for sender - route to correct columns
-        const result = await context.db.sql
-            .update(schema.tipLeaderboard)
-            .set({
-                tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
+        const row = await context.db
+            .update(schema.tipLeaderboard, { user: sender, spaceId })
+            .set((existing: typeof schema.tipLeaderboard.$inferSelect) => ({
+                tipsSentCount: (existing.tipsSentCount ?? 0) + 1,
                 // Route amounts to correct currency columns
                 ...(currencyIsETH && {
-                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                    totalSent: (existing.totalSent ?? 0n) + ethAmount,
                 }),
                 ...(currencyIsUSDC && {
-                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
+                    totalSentUSDC: (existing.totalSentUSDC ?? 0n) + usdcAmount,
                 }),
                 ...(senderType === 'Member' &&
                     currencyIsETH && {
-                        memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
-                        memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                        memberTipsSent: (existing.memberTipsSent ?? 0) + 1,
+                        memberTotalSent: (existing.memberTotalSent ?? 0n) + ethAmount,
                     }),
                 ...(senderType === 'Member' &&
                     currencyIsUSDC && {
-                        memberTotalSentUSDC: sql`${schema.tipLeaderboard.memberTotalSentUSDC} + ${usdcAmount}`,
+                        memberTotalSentUSDC: (existing.memberTotalSentUSDC ?? 0n) + usdcAmount,
                     }),
                 lastActivity: blockTimestamp,
-            })
-            .where(
-                and(
-                    eq(schema.tipLeaderboard.user, sender),
-                    eq(schema.tipLeaderboard.spaceId, spaceId),
-                ),
-            )
-            .returning()
+            }))
 
-        if (result.length === 0) {
+        if (!row) {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
@@ -1649,67 +1549,52 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
-        // Update space bot tip volume - route to correct column
+        // Update space bot tip volume - route to correct column using Store API
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                botTipVolume: (row.botTipVolume ?? 0n) + ethAmount,
+            }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    botTipUSDCVolume: sql`COALESCE(${schema.space.botTipUSDCVolume}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.space.id, spaceId))
+            await context.db.update(schema.space, { id: spaceId }).set((row) => ({
+                botTipUSDCVolume: (row.botTipUSDCVolume ?? 0n) + usdcAmount,
+            }))
         }
 
         // Update app tip metrics - route to correct column
         if (currencyIsETH) {
-            await context.db.sql
-                .update(schema.app)
-                .set({
-                    tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
-                    tipsVolume: sql`COALESCE(${schema.app.tipsVolume}, 0) + ${ethAmount}`,
-                })
-                .where(eq(schema.app.address, receiver))
+            await context.db
+                .update(schema.app, { address: receiver })
+                .set((existing: typeof schema.app.$inferSelect) => ({
+                    tipsCount: (existing.tipsCount ?? 0n) + 1n,
+                    tipsVolume: (existing.tipsVolume ?? 0n) + ethAmount,
+                }))
         } else if (currencyIsUSDC) {
-            await context.db.sql
-                .update(schema.app)
-                .set({
-                    tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
-                    tipsVolumeUSDC: sql`COALESCE(${schema.app.tipsVolumeUSDC}, 0) + ${usdcAmount}`,
-                })
-                .where(eq(schema.app.address, receiver))
+            await context.db
+                .update(schema.app, { address: receiver })
+                .set((existing: typeof schema.app.$inferSelect) => ({
+                    tipsCount: (existing.tipsCount ?? 0n) + 1n,
+                    tipsVolumeUSDC: (existing.tipsVolumeUSDC ?? 0n) + usdcAmount,
+                }))
         }
 
         // Update tip leaderboard for sender (bot tips) - route to correct columns
-        const result = await context.db.sql
-            .update(schema.tipLeaderboard)
-            .set({
-                tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
-                botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
+        const leaderboardRow = await context.db
+            .update(schema.tipLeaderboard, { user: sender, spaceId })
+            .set((existing: typeof schema.tipLeaderboard.$inferSelect) => ({
+                tipsSentCount: (existing.tipsSentCount ?? 0) + 1,
+                botTipsSent: (existing.botTipsSent ?? 0) + 1,
                 ...(currencyIsETH && {
-                    totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
-                    botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                    totalSent: (existing.totalSent ?? 0n) + ethAmount,
+                    botTotalSent: (existing.botTotalSent ?? 0n) + ethAmount,
                 }),
                 ...(currencyIsUSDC && {
-                    totalSentUSDC: sql`${schema.tipLeaderboard.totalSentUSDC} + ${usdcAmount}`,
-                    botTotalSentUSDC: sql`${schema.tipLeaderboard.botTotalSentUSDC} + ${usdcAmount}`,
+                    totalSentUSDC: (existing.totalSentUSDC ?? 0n) + usdcAmount,
+                    botTotalSentUSDC: (existing.botTotalSentUSDC ?? 0n) + usdcAmount,
                 }),
                 lastActivity: blockTimestamp,
-            })
-            .where(
-                and(
-                    eq(schema.tipLeaderboard.user, sender),
-                    eq(schema.tipLeaderboard.spaceId, spaceId),
-                ),
-            )
-            .returning()
+            }))
 
-        if (result.length === 0) {
+        if (!leaderboardRow) {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
@@ -1780,16 +1665,13 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
     const spaceId = event.log.address
 
     try {
-        const result = await context.db.sql
-            .update(schema.review)
-            .set({
-                comment: event.args.comment,
-                rating: event.args.rating,
-                updatedAt: blockTimestamp,
-            })
-            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+        const row = await context.db.update(schema.review, { spaceId, user: event.args.user }).set({
+            comment: event.args.comment,
+            rating: event.args.rating,
+            updatedAt: blockTimestamp,
+        })
 
-        if (result.changes === 0) {
+        if (!row) {
             // If the review doesn't exist, create it (edge case)
             console.warn(
                 `Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`,
@@ -1813,11 +1695,12 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
     const spaceId = event.log.address
 
     try {
-        const result = await context.db.sql
-            .delete(schema.review)
-            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+        const deleted = await context.db.delete(schema.review, {
+            spaceId,
+            user: event.args.user,
+        })
 
-        if (result.changes === 0) {
+        if (!deleted) {
             console.warn(
                 `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
             )
@@ -1887,20 +1770,25 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 active: false,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for pause: ${event.args.account}_${event.args.entityId}`,
             )
@@ -1917,20 +1805,25 @@ ponder.on('SubscriptionModule:SubscriptionActivated', async ({ event, context })
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 active: true,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for activation: ${event.args.account}_${event.args.entityId}`,
             )
@@ -1947,22 +1840,27 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 nextRenewalTime: event.args.nextRenewalTime,
                 expiresAt: event.args.expiresAt,
                 lastRenewalTime: blockTimestamp,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for renewal: ${event.args.account}_${event.args.entityId}`,
             )
@@ -1979,20 +1877,25 @@ ponder.on('SubscriptionModule:SubscriptionSynced', async ({ event, context }) =>
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 nextRenewalTime: event.args.newNextRenewalTime,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for sync: ${event.args.account}_${event.args.entityId}`,
             )
@@ -2009,21 +1912,26 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 active: false,
                 nextRenewalTime: 0n,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for deactivation: ${event.args.account}_${event.args.entityId}`,
             )
@@ -2040,21 +1948,26 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
     const blockTimestamp = event.block.timestamp
 
     try {
-        const result = await context.db.sql
-            .update(schema.subscription)
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
+        const row = await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 renewalAmount: event.args.amount,
                 totalSpent: event.args.totalSpent,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
 
-        if (result.changes === 0) {
+        if (!row) {
             console.warn(
                 `Subscription not found for spent update: ${event.args.account}_${event.args.entityId}`,
             )
@@ -2071,6 +1984,13 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
+        const currency = await getSubscriptionSpaceCurrency(
+            context,
+            event.args.account,
+            event.args.entityId,
+            event.block.number,
+        )
+
         // Record the failure
         await context.db.insert(schema.subscriptionFailure).values({
             account: event.args.account,
@@ -2079,18 +1999,16 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
             reason: event.args.reason,
         })
 
-        await context.db.sql
-            .update(schema.subscription)
+        await context.db
+            .update(schema.subscription, {
+                account: event.args.account,
+                entityId: event.args.entityId,
+            })
             .set({
                 active: false,
                 updatedAt: blockTimestamp,
+                ...(currency !== null && { currency }),
             })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
     } catch (error) {
         console.error(
             `Error processing SubscriptionModule:BatchRenewalSkipped tx ${event.transaction.hash}:`,
@@ -2129,6 +2047,9 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
     try {
         // Only update the timestamp, not the renewal times
         // The SubscriptionModule events handle nextRenewalTime and lastRenewalTime properly
+        // uses raw sql (slower) since spaceId, tokenId are not primary keys.
+        // note: the preferred method that is 100x more efficient is to use the drizzle orm
+        // see: https://ponder.sh/docs/indexing/write
         await context.db.sql
             .update(schema.subscription)
             .set({
