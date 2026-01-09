@@ -23,8 +23,6 @@
         "csb:turbo-no-sdk": "bash -c 'bun run turbo run build test:ci $(bun run csb:list:filter-without-sdk)'",
         "lint": "oxlint . --ignore-path .oxlintignore",
         "lint:fix": "oxlint . --fix --ignore-path .oxlintignore",
-        "postinstall": "husky install",
-        "prepare": "husky install",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "syncpack:check": "syncpack list-mismatches",
