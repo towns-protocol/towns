@@ -30,8 +30,6 @@
         "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.14.8",
         "eslint-config-ponder": "^0.9.27",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-prettier": "^5.2.6",
         "prettier": "^3.5.3",
         "tsx": "^4.7.1",
         "typescript": "~5.8.3"

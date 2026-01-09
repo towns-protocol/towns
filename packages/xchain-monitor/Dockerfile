@@ -29,7 +29,6 @@ COPY ./packages/contracts/package.json ./packages/contracts/
 COPY ./packages/web3/package.json ./packages/web3/
 COPY ./packages/utils/package.json ./packages/utils/
 COPY ./packages/proto/package.json ./packages/proto/
-COPY ./packages/eslint-config/package.json ./packages/eslint-config/
 COPY ./packages/prettier-config/package.json ./packages/prettier-config/
 COPY ./protocol/package.json ./protocol/
 

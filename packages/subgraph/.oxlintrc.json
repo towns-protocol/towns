@@ -6,8 +6,8 @@
     },
     "rules": {
         "no-console": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unused-vars": [
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unused-vars": [
             "error",
             {
                 "argsIgnorePattern": "^_",
@@ -15,6 +15,6 @@
                 "caughtErrors": "none"
             }
         ],
-        "@typescript-eslint/ban-ts-comment": "off"
+        "typescript/ban-ts-comment": "off"
     }
 }

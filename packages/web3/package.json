@@ -30,8 +30,6 @@
     "devDependencies": {
         "@types/node": "^20.14.8",
         "debug": "^4.3.4",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-import-x": "^4.10.2",
         "typed-emitter": "^2.1.0",
         "typescript": "~5.8.3",
         "vitest": "^3.2.3"

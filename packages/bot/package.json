@@ -35,8 +35,6 @@
         "@hono/node-server": "^1.14.0",
         "@types/jsonwebtoken": "^9.0.9",
         "@types/node": "^20.14.8",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-import-x": "^4.10.2",
         "fake-indexeddb": "^6.0.1",
         "hono": "^4.7.11",
         "nanoid": "^4.0.0",
