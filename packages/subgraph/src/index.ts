@@ -1436,10 +1436,24 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             }))
         }
 
-        // Update tip leaderboard for sender - route to correct columns
-        const row = await context.db
-            .update(schema.tipLeaderboard, { user: sender, spaceId })
-            .set((existing: typeof schema.tipLeaderboard.$inferSelect) => ({
+        // Update tip leaderboard for sender - use upsert pattern
+        await context.db
+            .insert(schema.tipLeaderboard)
+            .values({
+                user: sender,
+                spaceId: spaceId,
+                totalSent: currencyIsETH ? ethAmount : 0n,
+                totalSentUSDC: currencyIsUSDC ? usdcAmount : 0n,
+                tipsSentCount: 1,
+                memberTipsSent: senderType === 'Member' ? 1 : 0,
+                memberTotalSent: senderType === 'Member' && currencyIsETH ? ethAmount : 0n,
+                memberTotalSentUSDC: senderType === 'Member' && currencyIsUSDC ? usdcAmount : 0n,
+                botTipsSent: 0,
+                botTotalSent: 0n,
+                botTotalSentUSDC: 0n,
+                lastActivity: blockTimestamp,
+            })
+            .onConflictDoUpdate((existing) => ({
                 tipsSentCount: (existing.tipsSentCount ?? 0) + 1,
                 // Route amounts to correct currency columns
                 ...(currencyIsETH && {
@@ -1459,23 +1473,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                     }),
                 lastActivity: blockTimestamp,
             }))
-
-        if (!row) {
-            await context.db.insert(schema.tipLeaderboard).values({
-                user: sender,
-                spaceId: spaceId,
-                totalSent: currencyIsETH ? ethAmount : 0n,
-                totalSentUSDC: currencyIsUSDC ? usdcAmount : 0n,
-                tipsSentCount: 1,
-                memberTipsSent: senderType === 'Member' ? 1 : 0,
-                memberTotalSent: senderType === 'Member' && currencyIsETH ? ethAmount : 0n,
-                memberTotalSentUSDC: senderType === 'Member' && currencyIsUSDC ? usdcAmount : 0n,
-                botTipsSent: 0,
-                botTotalSent: 0n,
-                botTotalSentUSDC: 0n,
-                lastActivity: blockTimestamp,
-            })
-        }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
