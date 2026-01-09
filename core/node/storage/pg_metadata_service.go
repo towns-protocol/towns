@@ -99,6 +99,7 @@ type MetadataServiceStore interface {
 	BatchUpdateStreamRecords(
 		ctx context.Context,
 		updates []*MetadataStreamRecordUpdate,
+		numBlocksToKeep int64,
 	) (int64, []error, error)
 	GetStreamRecord(
 		ctx context.Context,
@@ -338,9 +339,13 @@ func (s *PostgresMetadataServiceStore) listStreamRecordsPageTx(
 func (s *PostgresMetadataServiceStore) BatchUpdateStreamRecords(
 	ctx context.Context,
 	updates []*MetadataStreamRecordUpdate,
+	numBlocksToKeep int64,
 ) (int64, []error, error) {
 	if len(updates) == 0 {
 		return 0, nil, RiverError(protocol.Err_INVALID_ARGUMENT, "updates must not be empty")
+	}
+	if numBlocksToKeep < 0 {
+		return 0, nil, RiverError(protocol.Err_INVALID_ARGUMENT, "numBlocksToKeep must be non-negative")
 	}
 
 	errs := make([]error, len(updates))
@@ -387,6 +392,19 @@ func (s *PostgresMetadataServiceStore) BatchUpdateStreamRecords(
 					return err
 				}
 				blockSlot++
+			}
+
+			if numBlocksToKeep > 0 {
+				cutoff := blockNum - numBlocksToKeep + 1
+				if cutoff > 0 {
+					if _, err := tx.Exec(
+						ctx,
+						`DELETE FROM md_blocks WHERE block_num < $1`,
+						cutoff,
+					); err != nil {
+						return err
+					}
+				}
 			}
 
 			return nil

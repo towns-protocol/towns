@@ -119,7 +119,7 @@ func TestMetadataServiceStore_ListGetCounts(t *testing.T) {
 		},
 	}
 
-	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, updates)
+	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, updates, 10)
 	require.NoError(err)
 	require.EqualValues(0, blockNum)
 	require.Len(errs, len(updates))
@@ -236,7 +236,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		},
 	}
 
-	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, initial)
+	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, initial, 10)
 	require.NoError(err)
 	require.EqualValues(0, blockNum)
 	for _, err := range errs {
@@ -274,7 +274,7 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 		},
 	}
 
-	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, updates)
+	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, updates, 10)
 	require.NoError(err)
 	require.EqualValues(1, blockNum)
 	require.Len(errs, len(updates))
@@ -332,6 +332,144 @@ func TestMetadataServiceStore_BatchUpdateErrorsAndBlocks(t *testing.T) {
 	)
 }
 
+func TestMetadataServiceStore_BatchUpdateTrimsBlocks(t *testing.T) {
+	params := setupMetadataServiceStoreTest(t)
+	require := require.New(t)
+	store := params.store
+	ctx := params.ctx
+
+	stream1 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+
+	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Insert: &InsertMetadataStreamRecord{
+				StreamId:          stream1,
+				LastMiniblockHash: makeHash(0x01),
+				LastMiniblockNum:  0,
+				NodeIndexes:       []int32{1, 2},
+				ReplicationFactor: 2,
+			},
+		},
+	}, 2)
+	require.NoError(err)
+	require.EqualValues(0, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Miniblock: &UpdateMetadataStreamMiniblock{
+				StreamId:          stream1,
+				PrevMiniblockHash: makeHash(0x01),
+				LastMiniblockHash: makeHash(0x02),
+				LastMiniblockNum:  1,
+			},
+		},
+	}, 2)
+	require.NoError(err)
+	require.EqualValues(1, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Placement: &UpdateMetadataStreamPlacement{
+				StreamId:          stream1,
+				NodeIndexes:       []int32{2, 3},
+				ReplicationFactor: 2,
+			},
+		},
+	}, 2)
+	require.NoError(err)
+	require.EqualValues(2, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blocks, err := store.GetRecordBlocks(ctx, 0, 10)
+	require.NoError(err)
+
+	blockNums := make(map[int64]struct{})
+	for _, block := range blocks {
+		blockNums[block.BlockNum] = struct{}{}
+	}
+	require.Len(blockNums, 2)
+	_, hasBlock0 := blockNums[0]
+	require.False(hasBlock0)
+	_, hasBlock1 := blockNums[1]
+	require.True(hasBlock1)
+	_, hasBlock2 := blockNums[2]
+	require.True(hasBlock2)
+}
+
+func TestMetadataServiceStore_BatchUpdateNoTrimWhenZero(t *testing.T) {
+	params := setupMetadataServiceStoreTest(t)
+	require := require.New(t)
+	store := params.store
+	ctx := params.ctx
+
+	stream1 := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+
+	blockNum, errs, err := store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Insert: &InsertMetadataStreamRecord{
+				StreamId:          stream1,
+				LastMiniblockHash: makeHash(0x01),
+				LastMiniblockNum:  0,
+				NodeIndexes:       []int32{1, 2},
+				ReplicationFactor: 2,
+			},
+		},
+	}, 0)
+	require.NoError(err)
+	require.EqualValues(0, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Miniblock: &UpdateMetadataStreamMiniblock{
+				StreamId:          stream1,
+				PrevMiniblockHash: makeHash(0x01),
+				LastMiniblockHash: makeHash(0x02),
+				LastMiniblockNum:  1,
+			},
+		},
+	}, 0)
+	require.NoError(err)
+	require.EqualValues(1, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blockNum, errs, err = store.BatchUpdateStreamRecords(ctx, []*MetadataStreamRecordUpdate{
+		{
+			Placement: &UpdateMetadataStreamPlacement{
+				StreamId:          stream1,
+				NodeIndexes:       []int32{2, 3},
+				ReplicationFactor: 2,
+			},
+		},
+	}, 0)
+	require.NoError(err)
+	require.EqualValues(2, blockNum)
+	require.Len(errs, 1)
+	require.NoError(errs[0])
+
+	blocks, err := store.GetRecordBlocks(ctx, 0, 10)
+	require.NoError(err)
+
+	blockNums := make(map[int64]struct{})
+	for _, block := range blocks {
+		blockNums[block.BlockNum] = struct{}{}
+	}
+	require.Len(blockNums, 3)
+	_, hasBlock0 := blockNums[0]
+	require.True(hasBlock0)
+	_, hasBlock1 := blockNums[1]
+	require.True(hasBlock1)
+	_, hasBlock2 := blockNums[2]
+	require.True(hasBlock2)
+}
+
 func TestMetadataServiceStore_GetRecordBlocksValidation(t *testing.T) {
 	params := setupMetadataServiceStoreTest(t)
 	require := require.New(t)
@@ -368,7 +506,7 @@ func TestMetadataServiceStore_OnNewRecordBlock(t *testing.T) {
 				ReplicationFactor: 2,
 			},
 		},
-	})
+	}, 10)
 	require.NoError(err)
 	require.Len(errsSlice, 1)
 	require.NoError(errsSlice[0])
