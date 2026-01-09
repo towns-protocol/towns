@@ -276,7 +276,7 @@ library AppManagerMod {
         }
 
         // Resize array to actual count
-        assembly {
+        assembly ("memory-safe") {
             mstore(apps, activeCount)
         }
     }
