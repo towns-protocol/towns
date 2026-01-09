@@ -102,6 +102,21 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+            - name: Add CodeRabbit ignore to PR description
+              if: steps.changesets.outputs.pullRequestNumber
+              env:
+                  GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
+                  PR_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+              run: |
+                  CURRENT_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body')
+                  if [[ "$CURRENT_BODY" != *"@coderabbitai ignore"* ]]; then
+                    # Use a temp file to avoid shell expansion issues with special characters
+                    BODY_FILE=$(mktemp)
+                    printf '%s\n\n%s' "@coderabbitai ignore" "$CURRENT_BODY" > "$BODY_FILE"
+                    gh pr edit "$PR_NUMBER" --body-file "$BODY_FILE"
+                    rm -f "$BODY_FILE"
+                  fi
+
             - name: Push tags
               if: steps.changesets.outputs.published == 'true'
               run: git push origin --tags
