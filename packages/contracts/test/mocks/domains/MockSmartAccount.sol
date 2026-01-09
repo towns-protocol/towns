@@ -8,6 +8,8 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// @notice A mock contract that supports IModularAccount interface for testing
 contract MockSmartAccount {
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IModularAccount).interfaceId || interfaceId == type(IERC165).interfaceId;
+        return
+            interfaceId == type(IModularAccount).interfaceId ||
+            interfaceId == type(IERC165).interfaceId;
     }
 }
