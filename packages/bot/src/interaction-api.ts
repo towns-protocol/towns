@@ -149,7 +149,7 @@ export function flattenedComponentToPayload(
             component: { case: 'textInput', value: { placeholder: component.placeholder } },
         }
     }
-    checkNever(type, `Unknown component type: ${type}`)
+    checkNever(type, `Unknown component type: ${type as string}`)
 }
 
 // Convert flattened request to payload content

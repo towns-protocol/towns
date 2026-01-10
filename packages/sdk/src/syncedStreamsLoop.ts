@@ -475,6 +475,7 @@ export class SyncedStreamsLoop {
                                 default:
                                     logNever(
                                         value.syncOp,
+                                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                                         `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
                                     )
                                     break

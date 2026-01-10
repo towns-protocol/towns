@@ -33,7 +33,6 @@ COPY ./packages/web3/package.json ./packages/web3/
 COPY ./packages/utils/package.json ./packages/utils/
 COPY ./packages/encryption/package.json ./packages/encryption/
 COPY ./packages/rpc-connector/package.json ./packages/rpc-connector/
-COPY ./packages/eslint-config/package.json ./packages/eslint-config/
 COPY ./packages/prettier-config/package.json ./packages/prettier-config/
 COPY ./protocol/package.json ./protocol/
 

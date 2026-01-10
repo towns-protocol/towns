@@ -33,6 +33,7 @@ export class MetricsDiscovery {
     }
 
     private async getTargetNodes() {
+        // eslint-disable-next-line no-console
         console.info('Getting target nodes')
         const allNodes = await this.riverRegistry.nodeRegistry.read.getAllNodes()
         return allNodes.filter((node) => MetricsDiscovery.isTargeted(node))

@@ -1,0 +1,20 @@
+{
+    "$schema": "https://oxc.rs/schemas/oxlintrc.json",
+    "plugins": ["typescript"],
+    "env": {
+        "node": true
+    },
+    "rules": {
+        "no-console": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_",
+                "caughtErrors": "none"
+            }
+        ],
+        "typescript/ban-ts-comment": "off"
+    }
+}

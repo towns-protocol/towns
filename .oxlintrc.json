@@ -1,0 +1,50 @@
+{
+    "$schema": "https://oxc.rs/schemas/oxlintrc.json",
+    "plugins": ["typescript", "import", "unicorn"],
+    "env": {
+        "node": true
+    },
+    "rules": {
+        "no-console": "error",
+        "import/no-extraneous-dependencies": "error",
+        "typescript/require-await": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_",
+                "caughtErrors": "none"
+            }
+        ],
+        "typescript/restrict-template-expressions": [
+            "error",
+            {
+                "allowNever": true,
+                "allowBoolean": true,
+                "allowNumber": true,
+                "allowAny": true,
+                "allowNullish": true
+            }
+        ],
+        "typescript/no-empty-function": [
+            "error",
+            {
+                "allow": ["arrowFunctions"]
+            }
+        ],
+        "typescript/ban-ts-comment": "off"
+    },
+    "overrides": [
+        {
+            "files": ["**/*.test.*", "**/*.test_util.*"],
+            "rules": {
+                "typescript/no-unsafe-call": "off",
+                "typescript/no-floating-promises": "off",
+                "typescript/no-non-null-assertion": "off",
+                "typescript/no-unsafe-argument": "off"
+            }
+        }
+    ]
+}

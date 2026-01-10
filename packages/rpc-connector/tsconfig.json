@@ -5,7 +5,7 @@
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": ["vitest/globals"]
+        "types": ["node", "vitest/globals"]
     },
     "include": ["./src/**/*"]
 }

@@ -15,7 +15,6 @@
         "outDir": "dist",
         "inlineSourceMap": true,
         "resolveJsonModule": true,
-        "baseUrl": ".",
         "paths": {
             "@generated/*": ["./generated/*"]
         }

@@ -6,8 +6,6 @@
     "scripts": {
         "build": "tsup",
         "dev": "tsx src/index.ts",
-        "lint": "eslint src --ext .ts",
-        "lint:fix": "eslint src --ext .ts --fix",
         "watch": "tsup --watch"
     },
     "bin": "index.js",
@@ -32,11 +30,6 @@
         "@types/minimist": "^1.2.5",
         "@types/node": "^20.14.8",
         "@types/prompts": "^2.4.9",
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
-        "eslint": "^8.57.1",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-import-x": "^4.10.2",
         "tsup": "^8.3.5",
         "typescript": "~5.8.3"
     },

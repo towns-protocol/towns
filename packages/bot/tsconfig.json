@@ -3,7 +3,7 @@
     "compilerOptions": {
         "rootDir": "./src" /* Specify the root folder within your source files. */,
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
-        "types": ["vitest/globals"]
+        "types": ["node", "vitest/globals"]
     },
     "include": ["src/**/*.ts", "src/**/*.test.ts"],
     "exclude": []

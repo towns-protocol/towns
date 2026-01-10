@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react-swc'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
-import { default as checker } from 'vite-plugin-checker'
+import oxlint from 'vite-plugin-oxlint'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import wasm from 'vite-plugin-wasm'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
@@ -21,11 +21,8 @@ export default ({ mode }: { mode: string }) => {
             nodePolyfills(),
             wasm(),
             tsconfigPaths(),
-            checker({
-                typescript: true,
-                eslint: {
-                    lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
-                },
+            oxlint({
+                path: 'src',
             }),
             react(),
         ],

@@ -1,17 +1,9 @@
 {
-    "root": true,
-    "extends": [
-        "eslint:recommended",
-        "plugin:import-x/recommended",
-        "plugin:import-x/typescript",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/recommended-requiring-type-checking",
-        "plugin:prettier/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": { "project": ["./tsconfig.json"] },
-    "plugins": ["@typescript-eslint", "import-x", "eslint-plugin-tsdoc"],
-    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
+    "$schema": "https://oxc.rs/schemas/oxlintrc.json",
+    "plugins": ["typescript", "import", "unicorn"],
+    "env": {
+        "node": true
+    },
     "rules": {
         "no-console": "error",
         "no-restricted-imports": [
@@ -29,17 +21,12 @@
                 ]
             }
         ],
-        "import-x/no-extraneous-dependencies": [
-            "error",
-            {
-                "packageDir": "."
-            }
-        ],
-        "@typescript-eslint/require-await": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-unused-vars": [
+        "import/no-extraneous-dependencies": "error",
+        "typescript/require-await": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-non-null-assertion": "off",
+        "typescript/no-unused-vars": [
             "error",
             {
                 "argsIgnorePattern": "^_",
@@ -47,7 +34,7 @@
                 "caughtErrors": "none"
             }
         ],
-        "@typescript-eslint/restrict-template-expressions": [
+        "typescript/restrict-template-expressions": [
             "error",
             {
                 "allowNever": true,
@@ -57,23 +44,22 @@
                 "allowNullish": true
             }
         ],
-        "@typescript-eslint/no-empty-function": [
+        "typescript/no-empty-function": [
             "error",
             {
                 "allow": ["arrowFunctions"]
             }
         ],
-        "@typescript-eslint/ban-ts-comment": "off",
-        "tsdoc/syntax": "warn"
+        "typescript/ban-ts-comment": "off"
     },
     "overrides": [
         {
             "files": ["**/*.test.*", "**/*.test_util.*"],
             "rules": {
-                "@typescript-eslint/no-unsafe-call": "off",
-                "@typescript-eslint/no-non-null-assertion": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
-                "tsdoc/syntax": "off"
+                "typescript/no-unsafe-call": "off",
+                "typescript/no-floating-promises": "off",
+                "typescript/no-non-null-assertion": "off",
+                "typescript/no-unsafe-argument": "off"
             }
         }
     ]

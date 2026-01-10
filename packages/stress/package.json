@@ -8,7 +8,6 @@
         "build-esbuild": "bun esbuild.config.mjs",
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "generate-wallets": "node --enable-source-maps ./dist/generateWallets.cjs",
-        "lint": "eslint . --ext .ts",
         "nft": "node --enable-source-maps ./dist/nft.cjs",
         "notifications": "node --enable-source-maps ./dist/notifications.cjs",
         "start": "node --enable-source-maps ./dist/start.cjs",
@@ -42,13 +41,7 @@
     "devDependencies": {
         "@types/debug": "^4.1.8",
         "@types/node": "^20.14.8",
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
         "esbuild": "^0.25.9",
-        "eslint": "^8.57.1",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-import-x": "^4.10.2",
-        "eslint-plugin-jest": "^27.2.3",
         "typed-emitter": "^2.1.0",
         "typescript": "~5.8.3",
         "vitest": "^3.2.3"
