@@ -1108,6 +1108,22 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         SECURITY                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_stakeOnBehalf_revertIf_ownerIsSelf() public {
+        vm.expectRevert(RewardsDistribution__InvalidOwner.selector);
+        rewardsDistributionFacet.stakeOnBehalf(
+            1 ether,
+            OPERATOR,
+            address(this),
+            baseRegistry,
+            0,
+            ""
+        );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          HELPERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
