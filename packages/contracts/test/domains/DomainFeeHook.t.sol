@@ -4,6 +4,9 @@ pragma solidity ^0.8.29;
 // interfaces
 import {IFeeHook, FeeHookResult} from "src/factory/facets/fee/IFeeHook.sol";
 
+// libraries
+import {Validator} from "src/utils/libraries/Validator.sol";
+
 // contracts
 import {DomainFeeHook} from "src/domains/hooks/DomainFeeHook.sol";
 
@@ -149,6 +152,39 @@ contract DomainFeeHookTest is L2ResolverBaseSetup {
         feeHook.setPriceTiers(lengths, prices);
     }
 
+    function test_revertWhen_setPriceTiers_tooManyLengths() external {
+        uint256[] memory lengths = new uint256[](11);
+        uint256[] memory prices = new uint256[](11);
+
+        for (uint256 i; i < 11; ++i) {
+            lengths[i] = i + 1;
+            prices[i] = (i + 1) * 1 ether;
+        }
+
+        vm.prank(deployer);
+        vm.expectRevert(DomainFeeHook.DomainFeeHook__TooManyLengths.selector);
+        feeHook.setPriceTiers(lengths, prices);
+    }
+
+    function test_setPriceTiers_maxLength() external {
+        // Exactly 10 should succeed
+        uint256[] memory lengths = new uint256[](10);
+        uint256[] memory prices = new uint256[](10);
+
+        for (uint256 i; i < 10; ++i) {
+            lengths[i] = i + 1;
+            prices[i] = (i + 1) * 1 ether;
+        }
+
+        vm.prank(deployer);
+        feeHook.setPriceTiers(lengths, prices);
+
+        // Verify all tiers were set
+        for (uint256 i; i < 10; ++i) {
+            assertEq(feeHook.getPrice(lengths[i]), prices[i], "Tier should be set");
+        }
+    }
+
     function test_setDefaultPrice() external {
         uint256 newPrice = 50 ether;
 
@@ -221,16 +257,16 @@ contract DomainFeeHookTest is L2ResolverBaseSetup {
         feeHook.setFeeManager(_randomAddress());
     }
 
-    function test_onChargeFee_revertWhen_noFeeManagerSet() external {
-        // Deploy a new hook without setting feeManager
-        DomainFeeHook newHook = new DomainFeeHook(deployer, address(0), DEFAULT_PRICE);
+    function test_revertWhen_constructor_zeroFeeManager() external {
+        // Constructor should revert when feeManager is zero address
+        vm.expectRevert(Validator.InvalidAddress.selector);
+        new DomainFeeHook(deployer, address(0), DEFAULT_PRICE);
+    }
 
-        bytes memory context = abi.encode(uint256(5));
-
-        // Should revert because feeManager is address(0)
-        vm.prank(address(feeManager));
-        vm.expectRevert(DomainFeeHook.DomainFeeHook__Unauthorized.selector);
-        newHook.onChargeFee(bytes32(0), alice, 0, context);
+    function test_revertWhen_setFeeManager_zeroAddress() external {
+        vm.prank(deployer);
+        vm.expectRevert(Validator.InvalidAddress.selector);
+        feeHook.setFeeManager(address(0));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -506,12 +542,12 @@ contract DomainFeeHookTest is L2ResolverBaseSetup {
     }
 
     function testFuzz_setPriceTiers_batch(uint8 count) external {
-        vm.assume(count > 0 && count <= 50); // Reasonable batch size
+        vm.assume(count > 0 && count <= 10); // Max 10 tiers per batch
 
         uint256[] memory lengths = new uint256[](count);
         uint256[] memory prices = new uint256[](count);
 
-        for (uint256 i = 0; i < count; i++) {
+        for (uint256 i = 0; i < count; ++i) {
             lengths[i] = i + 1; // Start from 1 to avoid 0
             prices[i] = (i + 1) * 1 ether;
         }
@@ -520,7 +556,7 @@ contract DomainFeeHookTest is L2ResolverBaseSetup {
         feeHook.setPriceTiers(lengths, prices);
 
         // Verify all tiers were set
-        for (uint256 i = 0; i < count; i++) {
+        for (uint256 i = 0; i < count; ++i) {
             assertEq(feeHook.getPrice(lengths[i]), prices[i], "Batch tier mismatch");
         }
     }
@@ -583,11 +619,28 @@ contract DomainFeeHookTest is L2ResolverBaseSetup {
         uint256 defaultPrice
     ) external {
         vm.assume(owner != address(0));
+        vm.assume(feeManagerAddr != address(0));
 
         DomainFeeHook newHook = new DomainFeeHook(owner, feeManagerAddr, defaultPrice);
 
         assertEq(newHook.owner(), owner, "Owner should be set");
         assertEq(newHook.getFeeManager(), feeManagerAddr, "FeeManager should be set");
         assertEq(newHook.getDefaultPrice(), defaultPrice, "Default price should be set");
+    }
+
+    function testFuzz_setPriceTiers_tooManyLengths(uint8 count) external {
+        vm.assume(count > 10);
+
+        uint256[] memory lengths = new uint256[](count);
+        uint256[] memory prices = new uint256[](count);
+
+        for (uint256 i; i < count; ++i) {
+            lengths[i] = i + 1;
+            prices[i] = (i + 1) * 1 ether;
+        }
+
+        vm.prank(deployer);
+        vm.expectRevert(DomainFeeHook.DomainFeeHook__TooManyLengths.selector);
+        feeHook.setPriceTiers(lengths, prices);
     }
 }

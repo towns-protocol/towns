@@ -6,6 +6,7 @@ import {IFeeHook, FeeHookResult} from "../../factory/facets/fee/IFeeHook.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+import {Validator} from "../../utils/libraries/Validator.sol";
 
 // contracts
 import {Ownable} from "solady/auth/Ownable.sol";
@@ -57,6 +58,9 @@ contract DomainFeeHook is IFeeHook, Ownable {
     /// @notice Thrown when caller is not the authorized FeeManager
     error DomainFeeHook__Unauthorized();
 
+    /// @notice Thrown when the number of lengths exceeds the maximum allowed
+    error DomainFeeHook__TooManyLengths();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -67,6 +71,7 @@ contract DomainFeeHook is IFeeHook, Ownable {
     constructor(address owner, address feeManager, uint256 defaultPrice) {
         _initializeOwner(owner);
         Layout storage $ = getStorage();
+        Validator.checkAddress(feeManager);
         ($.feeManager, $.defaultPrice) = (feeManager, defaultPrice);
         emit FeeManagerSet(feeManager);
         emit DefaultPriceSet(defaultPrice);
@@ -84,6 +89,7 @@ contract DomainFeeHook is IFeeHook, Ownable {
         bytes calldata context
     ) external returns (FeeHookResult memory result) {
         Layout storage $ = getStorage();
+
         // Restrict to authorized FeeManager only
         if (msg.sender != $.feeManager) DomainFeeHook__Unauthorized.selector.revertWith();
 
@@ -93,10 +99,11 @@ contract DomainFeeHook is IFeeHook, Ownable {
     }
 
     /// @notice Sets the fee manager address
-    /// @param feeManager_ The fee manager address authorized to call onChargeFee
-    function setFeeManager(address feeManager_) external onlyOwner {
-        getStorage().feeManager = feeManager_;
-        emit FeeManagerSet(feeManager_);
+    /// @param feeManager The fee manager address authorized to call onChargeFee
+    function setFeeManager(address feeManager) external onlyOwner {
+        Validator.checkAddress(feeManager);
+        getStorage().feeManager = feeManager;
+        emit FeeManagerSet(feeManager);
     }
 
     /// @notice Sets the default price for registrations
@@ -122,6 +129,7 @@ contract DomainFeeHook is IFeeHook, Ownable {
         uint256[] calldata prices
     ) external onlyOwner {
         if (lengths.length != prices.length) DomainFeeHook__LengthMismatch.selector.revertWith();
+        if (lengths.length > 10) DomainFeeHook__TooManyLengths.selector.revertWith();
 
         Layout storage $ = getStorage();
         for (uint256 i; i < lengths.length; ++i) {
