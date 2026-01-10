@@ -20,19 +20,6 @@ interface IReferralsBase {
         address recipient;
     }
 
-    // errors
-
-    /// @notice Error thrown when an invalid referral code is provided
-    error Referrals__InvalidReferralCode();
-    /// @notice Error thrown when invalid basis points are provided
-    error Referrals__InvalidBasisPoints();
-    /// @notice Error thrown when an invalid recipient address is provided
-    error Referrals__InvalidRecipient();
-    /// @notice Error thrown when an invalid bps fee is provided
-    error Referrals__InvalidBpsFee();
-    /// @notice Error thrown when a referral already exists
-    error Referrals__ReferralAlreadyExists();
-
     // events
 
     /// @notice Event emitted when a new referral is registered
@@ -58,6 +45,19 @@ interface IReferralsBase {
     /// @notice Event emitted when the default bps fee is updated
     /// @param defaultBpsFee The new default bps fee
     event DefaultBpsFeeUpdated(uint256 defaultBpsFee);
+
+    // errors
+
+    /// @notice Error thrown when an invalid referral code is provided
+    error Referrals__InvalidReferralCode();
+    /// @notice Error thrown when invalid basis points are provided
+    error Referrals__InvalidBasisPoints();
+    /// @notice Error thrown when an invalid recipient address is provided
+    error Referrals__InvalidRecipient();
+    /// @notice Error thrown when an invalid bps fee is provided
+    error Referrals__InvalidBpsFee();
+    /// @notice Error thrown when a referral already exists
+    error Referrals__ReferralAlreadyExists();
 }
 
 /// @title IReferrals
@@ -66,11 +66,6 @@ interface IReferrals is IReferralsBase {
     /// @notice Register a new referral
     /// @param referral The referral information to register
     function registerReferral(Referral memory referral) external;
-
-    /// @notice Get information about a specific referral
-    /// @param referralCode The unique code of the referral to retrieve
-    /// @return The referral information
-    function referralInfo(string memory referralCode) external view returns (Referral memory);
 
     /// @notice Update a referral
     /// @param referral The referral information to update
@@ -84,13 +79,18 @@ interface IReferrals is IReferralsBase {
     /// @param bps The new max bps fee
     function setMaxBpsFee(uint256 bps) external;
 
-    /// @notice Get the max bps fee
-    /// @return The max bps fee
-    function maxBpsFee() external view returns (uint256);
-
     /// @notice Set the default bps fee
     /// @param bps The new default bps fee
     function setDefaultBpsFee(uint256 bps) external;
+
+    /// @notice Get information about a specific referral
+    /// @param referralCode The unique code of the referral to retrieve
+    /// @return The referral information
+    function referralInfo(string memory referralCode) external view returns (Referral memory);
+
+    /// @notice Get the max bps fee
+    /// @return The max bps fee
+    function maxBpsFee() external view returns (uint256);
 
     /// @notice Get the default bps fee
     /// @return The default bps fee

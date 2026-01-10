@@ -18,9 +18,6 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 library StakingRewards {
     using CustomRevert for bytes4;
 
-    uint256 internal constant SCALE_FACTOR = 1e36;
-    uint256 internal constant MAX_COMMISSION_RATE = 10_000;
-
     /// @notice The deposit information
     /// @param amount The amount of stakeToken that is staked
     /// @param owner The address of the depositor
@@ -78,6 +75,9 @@ library StakingRewards {
         mapping(uint256 depositId => Deposit) depositById;
     }
 
+    uint256 internal constant SCALE_FACTOR = 1e36;
+    uint256 internal constant MAX_COMMISSION_RATE = 10_000;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -87,56 +87,6 @@ library StakingRewards {
     error StakingRewards__InvalidRewardRate();
     error StakingRewards__InsufficientReward();
     error StakingRewards__CommissionExceedsStake();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          VIEWERS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Gets the last time rewards were distributed (capped at current timestamp)
-    function lastTimeRewardDistributed(Layout storage self) internal view returns (uint256) {
-        return FixedPointMathLib.min(self.rewardEndTime, block.timestamp);
-    }
-
-    /// @notice Calculates the current accumulated reward per token
-    function currentRewardPerTokenAccumulated(Layout storage self) internal view returns (uint256) {
-        // cache storage reads
-        (
-            uint96 totalStaked,
-            uint256 lastUpdateTime,
-            uint256 rewardRate,
-            uint256 rewardPerTokenAccumulated
-        ) = (
-                self.totalStaked,
-                self.lastUpdateTime,
-                self.rewardRate,
-                self.rewardPerTokenAccumulated
-            );
-        if (totalStaked == 0) return rewardPerTokenAccumulated;
-
-        uint256 elapsedTime;
-        unchecked {
-            elapsedTime = lastTimeRewardDistributed(self) - lastUpdateTime;
-        }
-        return
-            rewardPerTokenAccumulated +
-            FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
-    }
-
-    /// @notice Calculates current scaled reward for a beneficiary's treasure
-    function currentRewardScaled(
-        Layout storage self,
-        Treasure storage treasure
-    ) internal view returns (uint256) {
-        uint256 rewardPerTokenGrowth;
-        unchecked {
-            rewardPerTokenGrowth =
-                currentRewardPerTokenAccumulated(self) -
-                treasure.rewardPerTokenAccumulated;
-        }
-        return
-            treasure.unclaimedRewardSnapshot +
-            (uint256(treasure.earningPower) * rewardPerTokenGrowth);
-    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       STATE MUTATING                       */
@@ -390,6 +340,56 @@ library StakingRewards {
         // no updateReward needed: reward math is associative, pending rewards
         // will be correctly calculated on next updateReward call
         toTreasure.unclaimedRewardSnapshot += transferredAmount;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          VIEWERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Gets the last time rewards were distributed (capped at current timestamp)
+    function lastTimeRewardDistributed(Layout storage self) internal view returns (uint256) {
+        return FixedPointMathLib.min(self.rewardEndTime, block.timestamp);
+    }
+
+    /// @notice Calculates the current accumulated reward per token
+    function currentRewardPerTokenAccumulated(Layout storage self) internal view returns (uint256) {
+        // cache storage reads
+        (
+            uint96 totalStaked,
+            uint256 lastUpdateTime,
+            uint256 rewardRate,
+            uint256 rewardPerTokenAccumulated
+        ) = (
+                self.totalStaked,
+                self.lastUpdateTime,
+                self.rewardRate,
+                self.rewardPerTokenAccumulated
+            );
+        if (totalStaked == 0) return rewardPerTokenAccumulated;
+
+        uint256 elapsedTime;
+        unchecked {
+            elapsedTime = lastTimeRewardDistributed(self) - lastUpdateTime;
+        }
+        return
+            rewardPerTokenAccumulated +
+            FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
+    }
+
+    /// @notice Calculates current scaled reward for a beneficiary's treasure
+    function currentRewardScaled(
+        Layout storage self,
+        Treasure storage treasure
+    ) internal view returns (uint256) {
+        uint256 rewardPerTokenGrowth;
+        unchecked {
+            rewardPerTokenGrowth =
+                currentRewardPerTokenAccumulated(self) -
+                treasure.rewardPerTokenAccumulated;
+        }
+        return
+            treasure.unclaimedRewardSnapshot +
+            (uint256(treasure.earningPower) * rewardPerTokenGrowth);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

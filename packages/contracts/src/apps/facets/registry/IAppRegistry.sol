@@ -21,6 +21,23 @@ interface IAppRegistryBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event AppRegistered(address indexed app, bytes32 uid);
+    event AppUnregistered(address indexed app, bytes32 uid);
+    event AppBanned(address indexed app, bytes32 uid);
+    event AppSchemaSet(bytes32 uid);
+    event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpdated(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpgraded(
+        address indexed app,
+        bytes32 indexed oldVersionId,
+        bytes32 indexed newVersionId
+    );
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     error AppAlreadyRegistered();
@@ -42,66 +59,11 @@ interface IAppRegistryBase {
 
     error AppRegistry__InvalidDuration();
     error AppRegistry__InvalidPrice();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event AppRegistered(address indexed app, bytes32 uid);
-    event AppUnregistered(address indexed app, bytes32 uid);
-    event AppBanned(address indexed app, bytes32 uid);
-    event AppSchemaSet(bytes32 uid);
-    event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
-    event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
-    event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
-    event AppUpdated(address indexed app, address indexed account, bytes32 indexed appId);
-    event AppUpgraded(
-        address indexed app,
-        bytes32 indexed oldVersionId,
-        bytes32 indexed newVersionId
-    );
 }
 
 /// @title IAppRegistry Interface
 /// @notice Interface for managing app registrations and permissions
 interface IAppRegistry is IAppRegistryBase {
-    /// @notice Get the schema structure used for registering apps
-    /// @return The schema structure
-    function getAppSchema() external view returns (string memory);
-
-    /// @notice Get the active schema ID used for app attestations
-    /// @return The schema ID
-    function getAppSchemaId() external view returns (bytes32);
-
-    /// @notice Get the attestation for a app
-    /// @param appId The app ID
-    /// @return The attestation
-    function getAppById(bytes32 appId) external view returns (App memory);
-
-    /// @notice Get the apps price
-    /// @param app The app address
-    /// @return The price
-    function getAppPrice(address app) external view returns (uint256);
-
-    /// @notice Get the duration of an app
-    /// @param app The app address
-    /// @return duration The duration of the app
-    function getAppDuration(address app) external view returns (uint48);
-
-    /// @notice Get the current version (attestation UID) for a app
-    /// @param app The app address
-    /// @return The attestation UID representing the current version
-    function getLatestAppId(address app) external view returns (bytes32);
-
-    /// @notice Get the app address associated with a client
-    /// @param client The client address
-    /// @return The app address
-    function getAppByClient(address client) external view returns (address);
-
-    /// @notice Check if a app is banned
-    /// @param app The app address
-    /// @return isBanned True if the app is banned, false otherwise
-    function isAppBanned(address app) external view returns (bool);
-
     /// @notice Register a new app with permissions
     /// @param app The app address to register
     /// @param client The client contract address that will use this app
@@ -139,4 +101,42 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external returns (bytes32);
+
+    /// @notice Get the schema structure used for registering apps
+    /// @return The schema structure
+    function getAppSchema() external view returns (string memory);
+
+    /// @notice Get the active schema ID used for app attestations
+    /// @return The schema ID
+    function getAppSchemaId() external view returns (bytes32);
+
+    /// @notice Get the attestation for a app
+    /// @param appId The app ID
+    /// @return The attestation
+    function getAppById(bytes32 appId) external view returns (App memory);
+
+    /// @notice Get the apps price
+    /// @param app The app address
+    /// @return The price
+    function getAppPrice(address app) external view returns (uint256);
+
+    /// @notice Get the duration of an app
+    /// @param app The app address
+    /// @return duration The duration of the app
+    function getAppDuration(address app) external view returns (uint48);
+
+    /// @notice Get the current version (attestation UID) for a app
+    /// @param app The app address
+    /// @return The attestation UID representing the current version
+    function getLatestAppId(address app) external view returns (bytes32);
+
+    /// @notice Get the app address associated with a client
+    /// @param client The client address
+    /// @return The app address
+    function getAppByClient(address client) external view returns (address);
+
+    /// @notice Check if a app is banned
+    /// @param app The app address
+    /// @return isBanned True if the app is banned, false otherwise
+    function isAppBanned(address app) external view returns (bool);
 }

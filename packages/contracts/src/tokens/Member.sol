@@ -12,6 +12,42 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // @notice TEST CONTRACT, DO NOT USE IN PRODUCTION
 contract Member is ERC721, Ownable {
+    /// @notice the current minting state
+    enum MintState {
+        Allowlist,
+        Waitlist,
+        Public
+    }
+
+    // =============================================================
+    //                           CONSTANTS
+    // =============================================================
+
+    /// @notice the total supply of the collection
+    uint256 public constant TOTAL_SUPPLY = 2500;
+
+    /// @notice the mint price for an individual nft
+    uint256 public constant MINT_PRICE = 0.08 ether;
+
+    // =============================================================
+    //                           STORAGE
+    // =============================================================
+
+    /// @notice the base uri
+    string public baseURI;
+
+    /// @notice mapping to track if a wallet has already minted
+    mapping(address => bool) public _hasMinted;
+
+    /// @notice the root of the merkle tree for the allowlist
+    bytes32 internal immutable _merkleRoot;
+
+    /// @notice the current minting state
+    MintState internal _mintState;
+
+    // @notice the counter token id for the next mint
+    uint256 public currentTokenId;
+
     /// @notice emitted when an NFT is minted
     /// @param recipient the address that receives the NFT
     event Minted(address indexed recipient, uint256 tokenId, uint256 timestamp);
@@ -54,42 +90,6 @@ contract Member is ERC721, Ownable {
 
     /// @notice thrown when the proof is invalid
     error InvalidProof();
-
-    /// @notice the current minting state
-    enum MintState {
-        Allowlist,
-        Waitlist,
-        Public
-    }
-
-    // =============================================================
-    //                           CONSTANTS
-    // =============================================================
-
-    /// @notice the total supply of the collection
-    uint256 public constant TOTAL_SUPPLY = 2500;
-
-    /// @notice the mint price for an individual nft
-    uint256 public constant MINT_PRICE = 0.08 ether;
-
-    // =============================================================
-    //                           STORAGE
-    // =============================================================
-
-    /// @notice the base uri
-    string public baseURI;
-
-    /// @notice mapping to track if a wallet has already minted
-    mapping(address => bool) public _hasMinted;
-
-    /// @notice the root of the merkle tree for the allowlist
-    bytes32 internal immutable _merkleRoot;
-
-    /// @notice the current minting state
-    MintState internal _mintState;
-
-    // @notice the counter token id for the next mint
-    uint256 public currentTokenId;
 
     // =============================================================
     //                          CONSTRUCTOR

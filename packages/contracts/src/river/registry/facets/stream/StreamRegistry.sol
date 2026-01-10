@@ -24,6 +24,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for string;
 
+    uint64 internal constant STREAM_REPL_FACTOR_MASK = 0xFF;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STREAMS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -384,8 +386,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             mstore(offset, cache)
         }
     }
-
-    uint64 internal constant STREAM_REPL_FACTOR_MASK = 0xFF;
 
     /// @dev helper function to calculate the reserved0 field for the stream with the given
     /// reserved0

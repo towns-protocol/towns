@@ -41,16 +41,16 @@ interface ITownsPoints is ITownsPointsBase {
     /// @param value The amount of points to mint
     function mint(address to, uint256 value) external;
 
-    /// @notice Get the points from an eligible action
-    /// @param action The action to get the points from
-    /// @param data The data of the action
-    function getPoints(Action action, bytes calldata data) external view returns (uint256);
-
     /// @notice Allows a user to check in and earn points based on their streak
     /// @dev Users must wait at least 24 hours between check-ins
     /// @dev If a user checks in within 48 hours of their last check-in, their streak continues
     /// @dev Otherwise, their streak resets to 1
     function checkIn() external;
+
+    /// @notice Get the points from an eligible action
+    /// @param action The action to get the points from
+    /// @param data The data of the action
+    function getPoints(Action action, bytes calldata data) external view returns (uint256);
 
     /// @notice Gets the current check-in streak for a user
     /// @param user The address of the user to query

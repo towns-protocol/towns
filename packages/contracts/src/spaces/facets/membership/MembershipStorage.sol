@@ -8,11 +8,6 @@ pragma solidity ^0.8.23;
 // contracts
 
 library MembershipStorage {
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.membership.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 public constant STORAGE_SLOT =
-        0xc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb600;
-
     struct Layout {
         mapping(uint256 => address) deprecatedMemberByTokenId;
         mapping(address => uint256) deprecatedTokenIdByMember;
@@ -31,6 +26,11 @@ library MembershipStorage {
         string membershipImage;
         bool freeAllocationEnabled;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.membership.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 public constant STORAGE_SLOT =
+        0xc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb600;
 
     function layout() internal pure returns (Layout storage $) {
         assembly {

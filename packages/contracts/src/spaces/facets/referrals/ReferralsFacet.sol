@@ -25,11 +25,6 @@ contract ReferralsFacet is IReferrals, ReferralsBase, Entitled, Facet {
     }
 
     /// @inheritdoc IReferrals
-    function referralInfo(string memory referralCode) external view returns (Referral memory) {
-        return _referralInfo(referralCode);
-    }
-
-    /// @inheritdoc IReferrals
     function updateReferral(Referral memory referral) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _updateReferral(referral);
@@ -48,14 +43,19 @@ contract ReferralsFacet is IReferrals, ReferralsBase, Entitled, Facet {
     }
 
     /// @inheritdoc IReferrals
-    function maxBpsFee() external view returns (uint256) {
-        return _maxBpsFee();
-    }
-
-    /// @inheritdoc IReferrals
     function setDefaultBpsFee(uint256 bps) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setDefaultBpsFee(bps);
+    }
+
+    /// @inheritdoc IReferrals
+    function referralInfo(string memory referralCode) external view returns (Referral memory) {
+        return _referralInfo(referralCode);
+    }
+
+    /// @inheritdoc IReferrals
+    function maxBpsFee() external view returns (uint256) {
+        return _maxBpsFee();
     }
 
     /// @inheritdoc IReferrals

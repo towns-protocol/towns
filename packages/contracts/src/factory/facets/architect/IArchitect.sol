@@ -87,6 +87,7 @@ interface IArchitectBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
+    event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
@@ -98,11 +99,29 @@ interface IArchitectBase {
     error Architect__NotContract();
     error Architect__InvalidPricingModule();
     error Architect__UnexpectedETH();
-
-    event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 }
 
 interface IArchitect is IArchitectBase {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Implementations                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function setSpaceArchitectImplementations(
+        ISpaceOwner ownerTokenImplementation,
+        IUserEntitlement userEntitlementImplementation,
+        IRuleEntitlementV2 ruleEntitlementImplementation,
+        IRuleEntitlement legacyRuleEntitlement
+    ) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Proxy Initializer                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Sets a new proxy initializer
+    /// @param proxyInitializer The address of the new ISpaceProxyInitializer contract to be set
+    /// @dev This function should only be callable by the contract owner or authorized roles
+    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Registry                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -114,13 +133,6 @@ interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Implementations                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function setSpaceArchitectImplementations(
-        ISpaceOwner ownerTokenImplementation,
-        IUserEntitlement userEntitlementImplementation,
-        IRuleEntitlementV2 ruleEntitlementImplementation,
-        IRuleEntitlement legacyRuleEntitlement
-    ) external;
 
     function getSpaceArchitectImplementations()
         external
@@ -139,9 +151,4 @@ interface IArchitect is IArchitectBase {
     /// @notice Retrieves the current proxy initializer
     /// @return The address of the current ISpaceProxyInitializer contract
     function getProxyInitializer() external view returns (ISpaceProxyInitializer);
-
-    /// @notice Sets a new proxy initializer
-    /// @param proxyInitializer The address of the new ISpaceProxyInitializer contract to be set
-    /// @dev This function should only be callable by the contract owner or authorized roles
-    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external;
 }

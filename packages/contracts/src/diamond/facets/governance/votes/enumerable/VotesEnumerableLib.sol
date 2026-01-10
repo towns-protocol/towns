@@ -23,9 +23,29 @@ library VotesEnumerableLib {
     bytes32 internal constant STORAGE_SLOT =
         0xed095a1d53cef9e2be0aab14d20856bfa3fbcc76a945321739a0da68a6078e00;
 
-    function layout() internal pure returns (Layout storage l) {
-        assembly {
-            l.slot := STORAGE_SLOT
+    function setDelegators(
+        address account,
+        address newDelegatee,
+        address currentDelegatee
+    ) internal {
+        Layout storage ds = layout();
+
+        // If current delegatee is address(0), add account to delegators
+        if (currentDelegatee == address(0)) {
+            ds.delegators.add(account);
+        } else {
+            // Remove account from current delegatee's delegators
+            ds.delegatorsByDelegatee[currentDelegatee].remove(account);
+        }
+
+        if (newDelegatee == address(0)) {
+            // Remove account from delegators and reset delegation time
+            ds.delegators.remove(account);
+            ds.delegationTimeForDelegator[account] = 0;
+        } else {
+            // Add account to new delegatee's delegators and update timestamp
+            ds.delegatorsByDelegatee[newDelegatee].add(account);
+            ds.delegationTimeForDelegator[account] = block.timestamp;
         }
     }
 
@@ -74,29 +94,9 @@ library VotesEnumerableLib {
         return (delegators, next);
     }
 
-    function setDelegators(
-        address account,
-        address newDelegatee,
-        address currentDelegatee
-    ) internal {
-        Layout storage ds = layout();
-
-        // If current delegatee is address(0), add account to delegators
-        if (currentDelegatee == address(0)) {
-            ds.delegators.add(account);
-        } else {
-            // Remove account from current delegatee's delegators
-            ds.delegatorsByDelegatee[currentDelegatee].remove(account);
-        }
-
-        if (newDelegatee == address(0)) {
-            // Remove account from delegators and reset delegation time
-            ds.delegators.remove(account);
-            ds.delegationTimeForDelegator[account] = 0;
-        } else {
-            // Add account to new delegatee's delegators and update timestamp
-            ds.delegatorsByDelegatee[newDelegatee].add(account);
-            ds.delegationTimeForDelegator[account] = block.timestamp;
+    function layout() internal pure returns (Layout storage l) {
+        assembly {
+            l.slot := STORAGE_SLOT
         }
     }
 }

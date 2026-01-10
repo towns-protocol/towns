@@ -144,6 +144,13 @@ interface IWalletLink is IWalletLinkBase {
      */
     function setDefaultWallet(address defaultWallet) external;
 
+    /**
+     * @notice sets the dependency address for a given dependency label
+     * @param dependency the dependency label to set
+     * @param dependencyAddress the dependency address to set
+     */
+    function setDependency(bytes32 dependency, address dependencyAddress) external;
+
     // =============================================================
     //                      External - Read
     // =============================================================
@@ -208,11 +215,4 @@ interface IWalletLink is IWalletLinkBase {
      * @param dependency the dependency label to get
      */
     function getDependency(bytes32 dependency) external view returns (address);
-
-    /**
-     * @notice sets the dependency address for a given dependency label
-     * @param dependency the dependency label to set
-     * @param dependencyAddress the dependency address to set
-     */
-    function setDependency(bytes32 dependency, address dependencyAddress) external;
 }

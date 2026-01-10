@@ -9,6 +9,12 @@ pragma solidity ^0.8.23;
 
 interface IBanningBase {
     // =============================================================
+    //                           Events
+    // =============================================================
+    event Banned(address indexed moderator, uint256 indexed tokenId);
+    event Unbanned(address indexed moderator, uint256 indexed tokenId);
+
+    // =============================================================
     //                           Errors
     // =============================================================
     error Banning__InvalidTokenId(uint256 tokenId);
@@ -16,12 +22,6 @@ interface IBanningBase {
     error Banning__NotBanned(uint256 tokenId);
     error Banning__CannotBanSelf();
     error Banning__CannotBanOwner();
-
-    // =============================================================
-    //                           Events
-    // =============================================================
-    event Banned(address indexed moderator, uint256 indexed tokenId);
-    event Unbanned(address indexed moderator, uint256 indexed tokenId);
 }
 
 interface IBanning is IBanningBase {

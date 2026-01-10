@@ -8,14 +8,14 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IERC5643Base {
+    /// @notice Emitted when a subscription expiration changes
+    /// @dev When a subscription is canceled, the expiration value should also be 0.
+    event SubscriptionUpdate(uint256 indexed tokenId, uint64 expiration);
+
     error ERC5643__InvalidTokenId(uint256 tokenId);
     error ERC5643__SubscriptionNotRenewable(uint256 tokenId);
     error ERC5643__NotApprovedOrOwner();
     error ERC5643__DurationZero();
-
-    /// @notice Emitted when a subscription expiration changes
-    /// @dev When a subscription is canceled, the expiration value should also be 0.
-    event SubscriptionUpdate(uint256 indexed tokenId, uint64 expiration);
 }
 
 interface IERC5643 is IERC5643Base {

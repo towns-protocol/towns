@@ -8,10 +8,6 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IGuardianBase {
-    error Guardian_Enabled();
-    error Guardian_AlreadyEnabled();
-    error Guardian_AlreadyDisabled();
-
     event GuardianUpdated(
         address indexed caller,
         bool indexed enabled,
@@ -20,6 +16,10 @@ interface IGuardianBase {
     );
 
     event GuardianDefaultCooldownUpdated(uint256 indexed cooldown);
+
+    error Guardian_Enabled();
+    error Guardian_AlreadyEnabled();
+    error Guardian_AlreadyDisabled();
 }
 
 interface IGuardian is IGuardianBase {

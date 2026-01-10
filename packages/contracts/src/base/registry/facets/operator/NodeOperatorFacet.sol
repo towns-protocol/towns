@@ -17,6 +17,20 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    // =============================================================
+    //                           Modifiers
+    // =============================================================
+
+    // only an existing claimer for that operator can call this function
+    modifier onlyClaimer(address claimer, address operator) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+
+        if (!ds.operatorsByClaimer[claimer].contains(operator)) {
+            revert NodeOperator__NotClaimer();
+        }
+        _;
+    }
+
     function __NodeOperator_init() external onlyInitializing {
         _addInterface(type(INodeOperator).interfaceId);
     }
@@ -48,12 +62,6 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     // =============================================================
     //                           Operator Status
     // =============================================================
-
-    /// @inheritdoc INodeOperator
-    function isOperator(address operator) external view returns (bool) {
-        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-        return ds.operators.contains(operator);
-    }
 
     /// @inheritdoc INodeOperator
     function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external onlyOwner {
@@ -101,12 +109,6 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
         emit OperatorStatusChanged(operator, newStatus);
     }
 
-    /// @inheritdoc INodeOperator
-    function getOperatorStatus(address operator) external view returns (NodeOperatorStatus) {
-        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-        return ds.statusByOperator[operator];
-    }
-
     // =============================================================
     //                           Operator Info
     // =============================================================
@@ -136,16 +138,6 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
         emit OperatorClaimAddressChanged(operator, claimer);
     }
 
-    /// @inheritdoc INodeOperator
-    function getClaimAddressForOperator(address operator) external view returns (address) {
-        return NodeOperatorStorage.layout().claimerByOperator[operator];
-    }
-
-    function getOperators() external view returns (address[] memory) {
-        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-        return ds.operators.values();
-    }
-
     // =============================================================
     //                           Commission
     // =============================================================
@@ -168,22 +160,34 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
         emit OperatorCommissionChanged(msg.sender, rateBps);
     }
 
+    // =============================================================
+    //                           View Functions
+    // =============================================================
+
+    /// @inheritdoc INodeOperator
+    function isOperator(address operator) external view returns (bool) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.operators.contains(operator);
+    }
+
+    /// @inheritdoc INodeOperator
+    function getOperatorStatus(address operator) external view returns (NodeOperatorStatus) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.statusByOperator[operator];
+    }
+
+    /// @inheritdoc INodeOperator
+    function getClaimAddressForOperator(address operator) external view returns (address) {
+        return NodeOperatorStorage.layout().claimerByOperator[operator];
+    }
+
+    function getOperators() external view returns (address[] memory) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.operators.values();
+    }
+
     function getCommissionRate(address operator) external view returns (uint256) {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
         return ds.commissionByOperator[operator];
-    }
-
-    // =============================================================
-    //                           Modifiers
-    // =============================================================
-
-    // only an existing claimer for that operator can call this function
-    modifier onlyClaimer(address claimer, address operator) {
-        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-
-        if (!ds.operatorsByClaimer[claimer].contains(operator)) {
-            revert NodeOperator__NotClaimer();
-        }
-        _;
     }
 }

@@ -17,15 +17,19 @@ abstract contract EntitlementGated is
     ReentrancyGuard,
     Facet
 {
+    /// @inheritdoc IEntitlementGated
+    function postEntitlementCheckResultV2(
+        bytes32 transactionId,
+        uint256 roleId,
+        NodeVoteStatus result
+    ) external payable onlyEntitlementChecker nonReentrant {
+        _postEntitlementCheckResultV2(transactionId, roleId, result);
+    }
+
     function __EntitlementGated_init(
         IEntitlementChecker entitlementChecker
     ) external onlyInitializing {
         __EntitlementGated_init_unchained(entitlementChecker);
-    }
-
-    function __EntitlementGated_init_unchained(IEntitlementChecker entitlementChecker) internal {
-        _addInterface(type(IEntitlementGated).interfaceId);
-        _setEntitlementChecker(entitlementChecker);
     }
 
     /// @inheritdoc IEntitlementGated
@@ -38,19 +42,15 @@ abstract contract EntitlementGated is
     }
 
     /// @inheritdoc IEntitlementGated
-    function postEntitlementCheckResultV2(
-        bytes32 transactionId,
-        uint256 roleId,
-        NodeVoteStatus result
-    ) external payable onlyEntitlementChecker nonReentrant {
-        _postEntitlementCheckResultV2(transactionId, roleId, result);
-    }
-
-    /// @inheritdoc IEntitlementGated
     function getRuleData(
         bytes32 transactionId,
         uint256 roleId
     ) external view returns (IRuleEntitlement.RuleData memory) {
         return _getRuleData(transactionId, roleId);
+    }
+
+    function __EntitlementGated_init_unchained(IEntitlementChecker entitlementChecker) internal {
+        _addInterface(type(IEntitlementGated).interfaceId);
+        _setEntitlementChecker(entitlementChecker);
     }
 }

@@ -52,11 +52,6 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
     }
 
     /// @inheritdoc ITipping
-    function tipsByCurrencyAndTokenId(uint256, address) external pure returns (uint256) {
-        Deprecated.selector.revertWith();
-    }
-
-    /// @inheritdoc ITipping
     function tippingCurrencies() external view returns (address[] memory) {
         return AccountTippingMod.getStorage().currencies.values();
     }
@@ -69,5 +64,10 @@ contract AccountTippingFacet is ITipping, ReentrancyGuardTransient, Facet {
     /// @inheritdoc ITipping
     function tipAmountByCurrency(address currency) external view returns (uint256) {
         return AccountTippingMod.getStorage().currencyStats[currency].amount;
+    }
+
+    /// @inheritdoc ITipping
+    function tipsByCurrencyAndTokenId(uint256, address) external pure returns (uint256) {
+        Deprecated.selector.revertWith();
     }
 }

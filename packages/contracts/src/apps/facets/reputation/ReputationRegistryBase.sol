@@ -23,15 +23,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
     using SignatureCheckerLib for bytes32;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
-    error Reputation__InvalidScore();
-    error Reputation__AgentNotExists();
-    error Reputation__SelfFeedbackNotAllowed();
-    error Reputation__InvalidSignature();
-    error Reputation__InvalidSignerAddress();
-    error Reputation__InvalidFeedbackIndex();
-
-    bytes32 constant EMPTY_TAG = bytes32(0);
-
     struct CachedFeedback {
         address client;
         uint8 rating;
@@ -39,6 +30,23 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         bytes32 tag1;
         bytes32 tag2;
     }
+
+    struct AllFeedback {
+        address[] clients;
+        uint8[] scores;
+        bytes32[] tag1s;
+        bytes32[] tag2s;
+        bool[] revokedStatuses;
+    }
+
+    bytes32 constant EMPTY_TAG = bytes32(0);
+
+    error Reputation__InvalidScore();
+    error Reputation__AgentNotExists();
+    error Reputation__SelfFeedbackNotAllowed();
+    error Reputation__InvalidSignature();
+    error Reputation__InvalidSignerAddress();
+    error Reputation__InvalidFeedbackIndex();
 
     function _giveFeedback(uint256 agentId, Feedback memory feedback) internal {
         if (feedback.rating > 100) Reputation__InvalidScore.selector.revertWith();
@@ -111,6 +119,20 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         );
     }
 
+    function _createAttestation(
+        bytes32 schemaId,
+        address recipient,
+        Feedback memory feedback
+    ) internal returns (bytes32 attestationId) {
+        AttestationRequest memory request;
+        request.schema = schemaId;
+        request.data.recipient = recipient;
+        request.data.revocable = true;
+        request.data.refUID = EMPTY_UID;
+        request.data.data = abi.encode(feedback);
+        return _attest(msg.sender, 0, request).uid;
+    }
+
     function _getLastIndex(
         uint256 agentId,
         address reviewerAddress
@@ -170,14 +192,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         averageRating = count > 0 ? uint8(totalRating / count) : 0;
     }
 
-    struct AllFeedback {
-        address[] clients;
-        uint8[] scores;
-        bytes32[] tag1s;
-        bytes32[] tag2s;
-        bool[] revokedStatuses;
-    }
-
     function _readAllFeedback(
         uint256 agentId,
         address[] calldata reviewers,
@@ -217,6 +231,43 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
             allFeedback.revokedStatuses[i] = cache[i].revoked;
         }
     }
+
+    function _getResponseCount(
+        uint256 agentId,
+        address reviewerAddress,
+        uint64 feedbackIndex,
+        address[] calldata responders
+    ) internal view returns (uint256 count) {
+        ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
+
+        if (reviewerAddress == address(0)) {
+            return _countAllClientsResponses(agentId, responders, $);
+        }
+
+        if (feedbackIndex == 0) {
+            return _countReviewerAllFeedback(agentId, reviewerAddress, responders, $);
+        }
+
+        return _countSingleFeedback(agentId, reviewerAddress, feedbackIndex, responders, $);
+    }
+
+    function _getClients(uint256 agentId) internal view returns (address[] memory) {
+        return ReputationRegistryStorage.getLayout().clients[agentId].values();
+    }
+
+    function _verifyNotSelfFeedback(address agent, uint256 agentId) internal view {
+        if (
+            msg.sender == agent ||
+            _isApprovedForAll(agent, msg.sender) ||
+            _getApproved(agentId) == msg.sender
+        ) {
+            Reputation__SelfFeedbackNotAllowed.selector.revertWith();
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     Private Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _populateCache(
         CachedFeedback[] memory cache,
@@ -281,25 +332,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
                 }
             }
         }
-    }
-
-    function _getResponseCount(
-        uint256 agentId,
-        address reviewerAddress,
-        uint64 feedbackIndex,
-        address[] calldata responders
-    ) internal view returns (uint256 count) {
-        ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
-
-        if (reviewerAddress == address(0)) {
-            return _countAllClientsResponses(agentId, responders, $);
-        }
-
-        if (feedbackIndex == 0) {
-            return _countReviewerAllFeedback(agentId, reviewerAddress, responders, $);
-        }
-
-        return _countSingleFeedback(agentId, reviewerAddress, feedbackIndex, responders, $);
     }
 
     function _countAllClientsResponses(
@@ -406,28 +438,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         }
     }
 
-    function _getClients(uint256 agentId) internal view returns (address[] memory) {
-        return ReputationRegistryStorage.getLayout().clients[agentId].values();
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     Utility Functions                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _createAttestation(
-        bytes32 schemaId,
-        address recipient,
-        Feedback memory feedback
-    ) internal returns (bytes32 attestationId) {
-        AttestationRequest memory request;
-        request.schema = schemaId;
-        request.data.recipient = recipient;
-        request.data.revocable = true;
-        request.data.refUID = EMPTY_UID;
-        request.data.data = abi.encode(feedback);
-        return _attest(msg.sender, 0, request).uid;
-    }
-
     function _estimateMaxFeedback(
         uint256 agentId,
         address[] memory clientList,
@@ -435,16 +445,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
     ) private view returns (uint256 maxCount) {
         for (uint256 i; i < clientList.length; ++i) {
             maxCount += $.lastIndex[agentId][clientList[i]];
-        }
-    }
-
-    function _verifyNotSelfFeedback(address agent, uint256 agentId) internal view {
-        if (
-            msg.sender == agent ||
-            _isApprovedForAll(agent, msg.sender) ||
-            _getApproved(agentId) == msg.sender
-        ) {
-            Reputation__SelfFeedbackNotAllowed.selector.revertWith();
         }
     }
 }

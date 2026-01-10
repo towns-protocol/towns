@@ -60,18 +60,18 @@ abstract contract MembershipJoin is
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
-    /// @notice Constant representing the permission to join a space
-    bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
-
-    /// @notice Constant representing the joinSpace(address) function selector
-    bytes4 internal constant JOIN_SPACE_SELECTOR = bytes4(keccak256("joinSpace(address)"));
-
     struct PricingDetails {
         uint256 basePrice;
         uint256 protocolFee;
         uint256 amountDue;
         bool shouldCharge;
     }
+
+    /// @notice Constant representing the permission to join a space
+    bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
+
+    /// @notice Constant representing the joinSpace(address) function selector
+    bytes4 internal constant JOIN_SPACE_SELECTOR = bytes4(keccak256("joinSpace(address)"));
 
     /// @notice Encodes data for joining a space
     /// @param selector The type of transaction (join with or without referral)

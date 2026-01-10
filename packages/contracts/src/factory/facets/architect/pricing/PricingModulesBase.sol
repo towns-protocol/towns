@@ -17,11 +17,6 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 library PricingModulesBase {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function isPricingModule(address module) internal view returns (bool) {
-        PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
-        return ds.pricingModules.contains(module);
-    }
-
     function addPricingModule(address module) internal {
         PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
 
@@ -57,6 +52,11 @@ library PricingModulesBase {
         ds.pricingModules.remove(module);
 
         emit IPricingModulesBase.PricingModuleRemoved(module);
+    }
+
+    function isPricingModule(address module) internal view returns (bool) {
+        PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
+        return ds.pricingModules.contains(module);
     }
 
     function listPricingModules()

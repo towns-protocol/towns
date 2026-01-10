@@ -16,13 +16,6 @@ abstract contract BaseApp is ITownsApp {
         _onPayment(msg.sender, msg.value);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
-        return
-            interfaceId == type(ITownsApp).interfaceId ||
-            interfaceId == type(IExecutionModule).interfaceId ||
-            interfaceId == type(IModule).interfaceId;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    Base App Functions                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -49,16 +42,23 @@ abstract contract BaseApp is ITownsApp {
         return _accessDuration();
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return
+            interfaceId == type(ITownsApp).interfaceId ||
+            interfaceId == type(IExecutionModule).interfaceId ||
+            interfaceId == type(IModule).interfaceId;
+    }
+
     // Hooks
     function _onInstall(bytes calldata postInstallData) internal virtual {}
 
     function _onUninstall(bytes calldata postUninstallData) internal virtual {}
+
+    function _onPayment(address payer, uint256 amount) internal virtual {}
 
     function _moduleOwner() internal view virtual returns (address) {}
 
     function _installPrice() internal view virtual returns (uint256) {}
 
     function _accessDuration() internal view virtual returns (uint48) {}
-
-    function _onPayment(address payer, uint256 amount) internal virtual {}
 }

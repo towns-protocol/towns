@@ -23,12 +23,6 @@ contract SchemaRegistry is ISchemaRegistry, SchemaBase, OwnableBase, Facet {
     /*                     Schema Management                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Returns the full semver contract version.
-    /// @return Semver contract version as a string.
-    function version() external pure returns (string memory) {
-        return "1.0.0";
-    }
-
     /// @notice Register a schema
     /// @param schema The schema to register e.g. "(address plugin,string pluginType,bool audited)"
     /// @param resolver A contract that will validate the schema whenever someone attests to it
@@ -47,5 +41,11 @@ contract SchemaRegistry is ISchemaRegistry, SchemaBase, OwnableBase, Facet {
     /// @return The schema record
     function getSchema(bytes32 uid) external view returns (SchemaRecord memory) {
         return _getSchema(uid);
+    }
+
+    /// @notice Returns the full semver contract version.
+    /// @return Semver contract version as a string.
+    function version() external pure returns (string memory) {
+        return "1.0.0";
     }
 }

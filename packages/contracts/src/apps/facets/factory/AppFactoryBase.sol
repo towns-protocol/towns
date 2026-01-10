@@ -60,18 +60,6 @@ abstract contract AppFactoryBase is IAppFactoryBase {
         emit EntryPointSet(oldEntryPoint, entryPoint);
     }
 
-    function _getBeacon(bytes32 beaconId) internal view returns (address beacon) {
-        return AppFactoryStorage.getLayout().beacons[beaconId];
-    }
-
-    function _getBeacons() internal view returns (bytes32[] memory beaconIds) {
-        return AppFactoryStorage.getLayout().beaconIds.values();
-    }
-
-    function _getDefaultBeaconId() internal view returns (bytes32 beaconId) {
-        return AppFactoryStorage.getLayout().beaconIds.at(0);
-    }
-
     /// @notice Create an upgradeable simple app contract
     /// @param params The parameters of the app
     function _createApp(
@@ -98,6 +86,18 @@ abstract contract AppFactoryBase is IAppFactoryBase {
                 address(this)
             )
         );
+    }
+
+    function _getBeacon(bytes32 beaconId) internal view returns (address beacon) {
+        return AppFactoryStorage.getLayout().beacons[beaconId];
+    }
+
+    function _getBeacons() internal view returns (bytes32[] memory beaconIds) {
+        return AppFactoryStorage.getLayout().beaconIds.values();
+    }
+
+    function _getDefaultBeaconId() internal view returns (bytes32 beaconId) {
+        return AppFactoryStorage.getLayout().beaconIds.at(0);
     }
 
     function _validateParams(AppParams calldata params) internal pure {

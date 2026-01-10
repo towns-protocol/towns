@@ -8,13 +8,13 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface ILockBase {
-    error LockNotAuthorized();
-
     /// @notice Emitted when the lock is updated.
     /// @param account The account that was updated.
     /// @param enabled Whether the lock is enabled.
     /// @param expiration The expiration of the lock.
     event LockUpdated(address indexed account, bool indexed enabled, uint256 expiration);
+
+    error LockNotAuthorized();
 }
 
 interface ILock is ILockBase {

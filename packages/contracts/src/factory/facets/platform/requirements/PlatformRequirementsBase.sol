@@ -14,11 +14,6 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     using CustomRevert for bytes4;
 
-    // Denominator
-    function _getDenominator() internal pure virtual returns (uint256) {
-        return 10_000;
-    }
-
     // Fee Recipient
     function _setFeeRecipient(address recipient) internal {
         if (recipient == address(0)) {
@@ -120,5 +115,10 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
     function _isRouterWhitelisted(address router) internal view returns (bool) {
         return PlatformRequirementsStorage.layout().whitelistedRouters[router];
+    }
+
+    // Denominator
+    function _getDenominator() internal pure virtual returns (uint256) {
+        return 10_000;
     }
 }

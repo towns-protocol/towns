@@ -17,14 +17,6 @@ import {GroupLib} from "./GroupLib.sol";
 library ExecutorStorage {
     using GroupLib for Group;
 
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.executor.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0xb7e2813a9de15ce5ee4c1718778708cd70fd7ee3d196d203c0f40369a8d4a600;
-
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.executor.transient.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant TRANSIENT_STORAGE_SLOT =
-        0x50b382cc42d5e85c7df990b4496d41f5c12a6bb29194f1db29e58a2d7a053600;
-
     struct Layout {
         // Execution ID
         bytes32 executionId;
@@ -37,6 +29,14 @@ library ExecutorStorage {
         // Hook Config ID => Hook Config
         mapping(bytes32 configId => HookConfig config) hooks;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.executor.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xb7e2813a9de15ce5ee4c1718778708cd70fd7ee3d196d203c0f40369a8d4a600;
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.executor.transient.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant TRANSIENT_STORAGE_SLOT =
+        0x50b382cc42d5e85c7df990b4496d41f5c12a6bb29194f1db29e58a2d7a053600;
 
     function getLayout() internal pure returns (Layout storage l) {
         assembly {

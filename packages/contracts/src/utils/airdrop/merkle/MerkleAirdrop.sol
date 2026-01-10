@@ -29,28 +29,6 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
     }
 
     /// @inheritdoc IMerkleAirdrop
-    function getMerkleRoot() public view returns (bytes32) {
-        return MerkleAirdropStorage.layout().merkleRoot;
-    }
-
-    /// @inheritdoc IMerkleAirdrop
-    function getToken() public view returns (IERC20) {
-        return MerkleAirdropStorage.layout().token;
-    }
-
-    /// @inheritdoc IMerkleAirdrop
-    function getMessageHash(
-        address account,
-        uint256 amount,
-        address receiver
-    ) public view returns (bytes32) {
-        return
-            _hashTypedDataV4(
-                keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
-            );
-    }
-
-    /// @inheritdoc IMerkleAirdrop
     function claim(
         address account,
         uint256 amount,
@@ -78,6 +56,28 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         emit Claimed(account, amount, recipient);
 
         SafeTransferLib.safeTransfer(address(ds.token), recipient, amount);
+    }
+
+    /// @inheritdoc IMerkleAirdrop
+    function getMerkleRoot() public view returns (bytes32) {
+        return MerkleAirdropStorage.layout().merkleRoot;
+    }
+
+    /// @inheritdoc IMerkleAirdrop
+    function getToken() public view returns (IERC20) {
+        return MerkleAirdropStorage.layout().token;
+    }
+
+    /// @inheritdoc IMerkleAirdrop
+    function getMessageHash(
+        address account,
+        uint256 amount,
+        address receiver
+    ) public view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
+            );
     }
 
     // =============================================================

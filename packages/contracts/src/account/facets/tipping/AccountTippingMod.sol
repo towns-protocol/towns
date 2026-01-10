@@ -20,10 +20,6 @@ library AccountTippingMod {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("towns.account.tipping.mod.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0x2a95e0ca73c50924d5ddd84672da871cae538509d7dabaedae2f730a19f18300;
-
     /// @notice Stats for a currency
     /// @param total The total number of tips
     /// @param amount The total amount of tips
@@ -42,12 +38,9 @@ library AccountTippingMod {
         mapping(address account => mapping(address currency => Stats stats)) accountStatsByCurrency;
     }
 
-    /// @notice Returns the storage layout for the AccountTippingMod
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    // keccak256(abi.encode(uint256(keccak256("towns.account.tipping.mod.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0x2a95e0ca73c50924d5ddd84672da871cae538509d7dabaedae2f730a19f18300;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -120,6 +113,19 @@ library AccountTippingMod {
         CurrencyTransfer.transferCurrency(currency, from, receiver, amount);
     }
 
+    /// @notice Deposits a tip
+    /// @param to The address to deposit the tip to
+    /// @param currency The currency of the tip
+    /// @param amount The amount of the tip
+    function depositTip(address to, address currency, uint256 amount) internal {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+            if (msg.value != amount) ITippingBase.MsgValueMismatch.selector.revertWith();
+        } else {
+            if (msg.value != 0) ITippingBase.UnexpectedETH.selector.revertWith();
+            CurrencyTransfer.transferCurrency(currency, msg.sender, to, amount);
+        }
+    }
+
     /// @notice Validates a tip
     /// @param sender The address of the sender
     /// @param receiver The address of the recipient
@@ -138,16 +144,10 @@ library AccountTippingMod {
         if (sender == receiver) ITippingBase.CannotTipSelf.selector.revertWith();
     }
 
-    /// @notice Deposits a tip
-    /// @param to The address to deposit the tip to
-    /// @param currency The currency of the tip
-    /// @param amount The amount of the tip
-    function depositTip(address to, address currency, uint256 amount) internal {
-        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            if (msg.value != amount) ITippingBase.MsgValueMismatch.selector.revertWith();
-        } else {
-            if (msg.value != 0) ITippingBase.UnexpectedETH.selector.revertWith();
-            CurrencyTransfer.transferCurrency(currency, msg.sender, to, amount);
+    /// @notice Returns the storage layout for the AccountTippingMod
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
         }
     }
 }

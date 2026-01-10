@@ -16,14 +16,14 @@ interface ISpaceOwnerBase {
         string longDescription;
     }
 
+    event SpaceOwner__UpdateSpace(address indexed space);
+    event SpaceOwner__SetFactory(address factory);
+    event SpaceOwner__SetDefaultUri(string uri);
+
     error SpaceOwner__OnlyFactoryAllowed();
     error SpaceOwner__OnlySpaceOwnerAllowed();
     error SpaceOwner__SpaceNotFound();
     error SpaceOwner__DefaultUriNotSet();
-
-    event SpaceOwner__UpdateSpace(address indexed space);
-    event SpaceOwner__SetFactory(address factory);
-    event SpaceOwner__SetDefaultUri(string uri);
 }
 
 interface ISpaceOwner is ISpaceOwnerBase {

@@ -21,26 +21,6 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         __ReputationRegistry_init_unchained(feedbackSchema, responseSchema);
     }
 
-    function __ReputationRegistry_init_unchained(
-        string calldata feedbackSchema,
-        string calldata responseSchema
-    ) internal {
-        bytes32 feedbackSchemaId = _registerSchema(
-            feedbackSchema,
-            ISchemaResolver(address(0)),
-            true
-        );
-        bytes32 responseSchemaId = _registerSchema(
-            responseSchema,
-            ISchemaResolver(address(0)),
-            true
-        );
-
-        ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
-        $.feedbackSchemaId = feedbackSchemaId;
-        $.responseSchemaId = responseSchemaId;
-    }
-
     /// @inheritdoc IReputationRegistry
     function giveFeedback(
         uint256 agentId,
@@ -151,5 +131,29 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
     /// @inheritdoc IReputationRegistry
     function getLastIndex(uint256 agentId, address clientAddress) external view returns (uint64) {
         return _getLastIndex(agentId, clientAddress);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTERNAL FUNCTIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __ReputationRegistry_init_unchained(
+        string calldata feedbackSchema,
+        string calldata responseSchema
+    ) internal {
+        bytes32 feedbackSchemaId = _registerSchema(
+            feedbackSchema,
+            ISchemaResolver(address(0)),
+            true
+        );
+        bytes32 responseSchemaId = _registerSchema(
+            responseSchema,
+            ISchemaResolver(address(0)),
+            true
+        );
+
+        ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
+        $.feedbackSchemaId = feedbackSchemaId;
+        $.responseSchemaId = responseSchemaId;
     }
 }

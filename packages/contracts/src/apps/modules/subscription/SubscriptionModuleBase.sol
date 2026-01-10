@@ -52,14 +52,6 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
     /*                           Internal                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _hasEntityId(
-        SubscriptionModuleStorage.Layout storage $,
-        address account,
-        uint32 entityId
-    ) internal view returns (bool) {
-        return $.entityIds[account].contains(entityId);
-    }
-
     /// @dev Syncs subscription state with current membership data
     /// @param sub The subscription storage to update
     /// @param membershipFacet The membership facet to query
@@ -156,21 +148,21 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         emit SubscriptionSpent(params.account, params.entityId, actualRenewalPrice, sub.spent);
     }
 
-    /// @dev Determines the appropriate renewal buffer time based on membership duration
-    /// @param duration The membership duration in seconds
-    /// @return The appropriate buffer time in seconds before expiration
-    function _getRenewalBuffer(uint256 duration) internal pure returns (uint256) {
-        // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
-        if (duration <= 1 hours) return BUFFER_IMMEDIATE;
+    function _pauseSubscription(
+        Subscription storage sub,
+        address account,
+        uint32 entityId
+    ) internal {
+        sub.active = false;
+        emit SubscriptionPaused(account, entityId);
+    }
 
-        // For memberships shorter than 6 hours, use short buffer (1 hour)
-        if (duration <= 6 hours) return BUFFER_SHORT;
-
-        // For memberships shorter than 24 hours, use medium buffer (6 hours)
-        if (duration <= 24 hours) return BUFFER_MEDIUM;
-
-        // For memberships longer than 24 hours, use long buffer (12 hours)
-        return BUFFER_LONG;
+    function _hasEntityId(
+        SubscriptionModuleStorage.Layout storage $,
+        address account,
+        uint32 entityId
+    ) internal view returns (bool) {
+        return $.entityIds[account].contains(entityId);
     }
 
     /// @dev Calculates the base renewal time without minimum buffer enforcement
@@ -265,6 +257,23 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         return (false, false, SkipReason.NONE);
     }
 
+    /// @dev Determines the appropriate renewal buffer time based on membership duration
+    /// @param duration The membership duration in seconds
+    /// @return The appropriate buffer time in seconds before expiration
+    function _getRenewalBuffer(uint256 duration) internal pure returns (uint256) {
+        // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
+        if (duration <= 1 hours) return BUFFER_IMMEDIATE;
+
+        // For memberships shorter than 6 hours, use short buffer (1 hour)
+        if (duration <= 6 hours) return BUFFER_SHORT;
+
+        // For memberships shorter than 24 hours, use medium buffer (6 hours)
+        if (duration <= 24 hours) return BUFFER_MEDIUM;
+
+        // For memberships longer than 24 hours, use long buffer (12 hours)
+        return BUFFER_LONG;
+    }
+
     /// @dev Converts a SkipReason enum to its string representation
     /// @param reason The skip reason to convert
     /// @return The string representation of the reason
@@ -279,14 +288,5 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         if (reason == SkipReason.DURATION_CHANGED) return "DURATION_CHANGED";
         if (reason == SkipReason.CURRENCY_CHANGED) return "CURRENCY_CHANGED";
         return "";
-    }
-
-    function _pauseSubscription(
-        Subscription storage sub,
-        address account,
-        uint32 entityId
-    ) internal {
-        sub.active = false;
-        emit SubscriptionPaused(account, entityId);
     }
 }

@@ -10,13 +10,13 @@ import {LockStorage} from "./LockStorage.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 abstract contract LockBase is ILockBase {
-    function __LockBase_init(uint256 cooldown) internal {
-        _setDefaultCooldown(cooldown);
-    }
-
     modifier onlyAllowed() {
         if (!_canLock()) CustomRevert.revertWith(LockNotAuthorized.selector);
         _;
+    }
+
+    function __LockBase_init(uint256 cooldown) internal {
+        _setDefaultCooldown(cooldown);
     }
 
     /// @dev Sets the default cooldown for the lock.

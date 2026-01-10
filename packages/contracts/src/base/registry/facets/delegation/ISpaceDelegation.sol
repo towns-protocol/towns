@@ -3,6 +3,14 @@ pragma solidity ^0.8.23;
 
 interface ISpaceDelegationBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    event SpaceDelegatedToOperator(address indexed space, address indexed operator);
+    event RiverTokenChanged(address indexed riverToken);
+    event SpaceFactoryChanged(address indexed spaceFactory);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -14,14 +22,6 @@ interface ISpaceDelegationBase {
     error SpaceDelegation__AlreadyDelegated(address operator);
     error SpaceDelegation__NotDelegated();
     error SpaceDelegation__InvalidStakeRequirement();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    event SpaceDelegatedToOperator(address indexed space, address indexed operator);
-    event RiverTokenChanged(address indexed riverToken);
-    event SpaceFactoryChanged(address indexed spaceFactory);
 }
 
 interface ISpaceDelegation is ISpaceDelegationBase {
@@ -37,6 +37,18 @@ interface ISpaceDelegation is ISpaceDelegationBase {
     /// @notice Removes a space delegation from an operator
     /// @param space The address of the space
     function removeSpaceDelegation(address space) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           FACTORY                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Sets the address of the space factory
+    /// @param spaceFactory The address of the space factory
+    function setSpaceFactory(address spaceFactory) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           VIEWS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Gets the operator address for a given space
     /// @param space The address of the space
@@ -54,14 +66,6 @@ interface ISpaceDelegation is ISpaceDelegationBase {
     /// @param operator The address of the operator
     /// @return The total amount delegated to the operator
     function getTotalDelegation(address operator) external view returns (uint256);
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FACTORY                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Sets the address of the space factory
-    /// @param spaceFactory The address of the space factory
-    function setSpaceFactory(address spaceFactory) external;
 
     /// @notice Gets the address of the space factory
     /// @return The address of the space factory

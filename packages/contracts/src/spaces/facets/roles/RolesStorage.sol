@@ -17,11 +17,6 @@ library RolesStorage {
     using CustomRevert for bytes4;
     using StringSet for StringSet.Set;
 
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.roles.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
-
     struct Role {
         string name;
         bool isImmutable;
@@ -37,6 +32,11 @@ library RolesStorage {
         mapping(uint256 roleId => EnumerableSet.Bytes32Set) channelOverridesByRole;
         mapping(uint256 roleId => mapping(bytes32 channelId => StringSet.Set)) permissionOverridesByRole;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.roles.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
 
     function layout() internal pure returns (Layout storage ds) {
         assembly {

@@ -56,6 +56,85 @@ abstract contract VotesBase is EIP712Base, Nonces {
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     // =============================================================
+    //                           Internal
+    // =============================================================
+
+    /**
+     * @dev Delegates votes from signer to `delegatee`.
+     */
+    function _delegateBySig(
+        address delegatee,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        require(block.timestamp <= expiry, "Votes: signature expired");
+        address signer = ECDSA.recover(
+            _hashTypedDataV4(keccak256(abi.encode(_DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
+            v,
+            r,
+            s
+        );
+
+        _useCheckedNonce(signer, nonce);
+        _delegate(signer, delegatee);
+    }
+
+    /**
+     * @dev Delegate all of `account`'s voting units to `delegatee`.
+     *
+     * Emits events {IVotes-DelegateChanged} and {IVotes-DelegateVotesChanged}.
+     */
+    function _delegate(address account, address delegatee) internal virtual {
+        _beforeDelegate(account, delegatee);
+
+        address oldDelegate = _delegates(account);
+        VotesStorage.layout()._delegation[account] = delegatee;
+
+        emit IVotes.DelegateChanged(account, oldDelegate, delegatee);
+        _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
+
+        _afterDelegate(account, delegatee);
+    }
+
+    /**
+     * @dev Transfers, mints, or burns voting units. To register a mint, `from` should be zero. To
+     * register a burn, `to`
+     * should be zero. Total supply of voting units will be adjusted with mints and burns.
+     */
+    function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
+        if (from == address(0)) {
+            _push(VotesStorage.layout()._totalCheckpoints, _add, SafeCastLib.toUint224(amount));
+        }
+        if (to == address(0)) {
+            _push(
+                VotesStorage.layout()._totalCheckpoints,
+                _subtract,
+                SafeCastLib.toUint224(amount)
+            );
+        }
+        _moveDelegateVotes(_delegates(from), _delegates(to), amount);
+    }
+
+    /**
+     * @dev Hook that is called before any delegate operation. This includes {delegate} and
+     * {delegateBySig}.
+     * @param signer The account that signs the delegation.
+     * @param delegatee The account that will be delegated to.
+     */
+    function _beforeDelegate(address signer, address delegatee) internal virtual {}
+
+    /**
+     * @dev Hook that is called after any delegate operation. This includes {delegate} and
+     * {delegateBySig}.
+     * @param account The account that has been delegated.
+     * @param delegatee The account that has been delegated to.
+     */
+    function _afterDelegate(address account, address delegatee) internal virtual {}
+
+    // =============================================================
     //                           ERC 5805
     // =============================================================
 
@@ -142,36 +221,9 @@ abstract contract VotesBase is EIP712Base, Nonces {
     }
 
     /**
-     * @dev Delegates votes from signer to `delegatee`.
-     */
-    function _delegateBySig(
-        address delegatee,
-        uint256 nonce,
-        uint256 expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) internal {
-        require(block.timestamp <= expiry, "Votes: signature expired");
-        address signer = ECDSA.recover(
-            _hashTypedDataV4(keccak256(abi.encode(_DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
-            v,
-            r,
-            s
-        );
-
-        _useCheckedNonce(signer, nonce);
-        _delegate(signer, delegatee);
-    }
-
-    /**
      * @dev Must return the voting units held by an account.
      */
     function _getVotingUnits(address) internal view virtual returns (uint256);
-
-    // =============================================================
-    //                           Internal
-    // =============================================================
 
     /**
      * @dev Returns the current total supply of votes.
@@ -180,41 +232,9 @@ abstract contract VotesBase is EIP712Base, Nonces {
         return VotesStorage.layout()._totalCheckpoints.latest();
     }
 
-    /**
-     * @dev Delegate all of `account`'s voting units to `delegatee`.
-     *
-     * Emits events {IVotes-DelegateChanged} and {IVotes-DelegateVotesChanged}.
-     */
-    function _delegate(address account, address delegatee) internal virtual {
-        _beforeDelegate(account, delegatee);
-
-        address oldDelegate = _delegates(account);
-        VotesStorage.layout()._delegation[account] = delegatee;
-
-        emit IVotes.DelegateChanged(account, oldDelegate, delegatee);
-        _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
-
-        _afterDelegate(account, delegatee);
-    }
-
-    /**
-     * @dev Transfers, mints, or burns voting units. To register a mint, `from` should be zero. To
-     * register a burn, `to`
-     * should be zero. Total supply of voting units will be adjusted with mints and burns.
-     */
-    function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
-        if (from == address(0)) {
-            _push(VotesStorage.layout()._totalCheckpoints, _add, SafeCastLib.toUint224(amount));
-        }
-        if (to == address(0)) {
-            _push(
-                VotesStorage.layout()._totalCheckpoints,
-                _subtract,
-                SafeCastLib.toUint224(amount)
-            );
-        }
-        _moveDelegateVotes(_delegates(from), _delegates(to), amount);
-    }
+    // =============================================================
+    //                           Private
+    // =============================================================
 
     /**
      * @dev Moves delegated votes from one delegate to another.
@@ -255,20 +275,4 @@ abstract contract VotesBase is EIP712Base, Nonces {
     function _subtract(uint224 a, uint224 b) private pure returns (uint224) {
         return a - b;
     }
-
-    /**
-     * @dev Hook that is called before any delegate operation. This includes {delegate} and
-     * {delegateBySig}.
-     * @param signer The account that signs the delegation.
-     * @param delegatee The account that will be delegated to.
-     */
-    function _beforeDelegate(address signer, address delegatee) internal virtual {}
-
-    /**
-     * @dev Hook that is called after any delegate operation. This includes {delegate} and
-     * {delegateBySig}.
-     * @param account The account that has been delegated.
-     * @param delegatee The account that has been delegated to.
-     */
-    function _afterDelegate(address account, address delegatee) internal virtual {}
 }

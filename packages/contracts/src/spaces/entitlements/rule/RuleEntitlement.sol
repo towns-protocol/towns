@@ -38,26 +38,13 @@ contract RuleEntitlement is
 {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    mapping(uint256 => Entitlement) internal entitlementsByRoleId;
-
-    address public SPACE_ADDRESS;
-
     string public constant name = "Rule Entitlement";
     string public constant description = "Entitlement for crosschain rules";
     string public constant moduleType = "RuleEntitlement";
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    mapping(uint256 => Entitlement) internal entitlementsByRoleId;
 
-    function initialize(address _space) public initializer {
-        __UUPSUpgradeable_init();
-        __ERC165_init();
-        __Context_init();
-
-        SPACE_ADDRESS = _space;
-    }
+    address public SPACE_ADDRESS;
 
     modifier onlySpace() {
         if (_msgSender() != SPACE_ADDRESS) {
@@ -66,29 +53,9 @@ contract RuleEntitlement is
         _;
     }
 
-    /// @notice allow the contract to be upgraded while retaining state
-    /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    // @inheritdoc IEntitlement
-    function isCrosschain() external pure override returns (bool) {
-        // TODO possible optimization: return false if no crosschain operations
-        return true;
-    }
-
-    // @inheritdoc IEntitlement
-    function isEntitled(
-        bytes32, //channelId,
-        address[] memory, //user,
-        bytes32 //permission
-    ) external pure returns (bool) {
-        // TODO possible optimization: if there are no crosschain operations, evaluate locally
-        return false;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
     // @inheritdoc IEntitlement
@@ -163,11 +130,44 @@ contract RuleEntitlement is
         return abi.encode(entitlement.data);
     }
 
+    function getRuleData(uint256 roleId) external view returns (RuleData memory data) {
+        return entitlementsByRoleId[roleId].data;
+    }
+
+    // @inheritdoc IEntitlement
+    function isCrosschain() external pure override returns (bool) {
+        // TODO possible optimization: return false if no crosschain operations
+        return true;
+    }
+
+    // @inheritdoc IEntitlement
+    function isEntitled(
+        bytes32, //channelId,
+        address[] memory, //user,
+        bytes32 //permission
+    ) external pure returns (bool) {
+        // TODO possible optimization: if there are no crosschain operations, evaluate locally
+        return false;
+    }
+
     function encodeRuleData(RuleData calldata data) external pure returns (bytes memory) {
         return abi.encode(data);
     }
 
-    function getRuleData(uint256 roleId) external view returns (RuleData memory data) {
-        return entitlementsByRoleId[roleId].data;
+    function initialize(address _space) public initializer {
+        __UUPSUpgradeable_init();
+        __ERC165_init();
+        __Context_init();
+
+        SPACE_ADDRESS = _space;
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return
+            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /// @notice allow the contract to be upgraded while retaining state
+    /// @param newImplementation address of the new implementation
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 }

@@ -31,13 +31,6 @@ abstract contract ExecutorBase is IExecutorBase {
     /*                           GROUP MANAGEMENT                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Gets the group configuration for a group ID.
-    /// @param groupId The ID of the group.
-    /// @return The group configuration.
-    function _getGroup(bytes32 groupId) internal view returns (Group storage) {
-        return ExecutorStorage.getLayout().groups[groupId];
-    }
-
     /// @notice Creates a new group and marks it as active.
     /// @param groupId The ID of the group to create.
     /// @param status The status to set (active/inactive).
@@ -50,10 +43,6 @@ abstract contract ExecutorBase is IExecutorBase {
             group.expiration = expiration;
         }
         emit GroupStatusSet(groupId, status);
-    }
-
-    function _getGroupExpiration(bytes32 groupId) internal view returns (uint48) {
-        return _getGroup(groupId).expiration;
     }
 
     /// @notice Creates a new group and marks it as active without expiration.
@@ -136,6 +125,17 @@ abstract contract ExecutorBase is IExecutorBase {
 
         _getGroup(groupId).setGrantDelay(grantDelay, minSetback);
         emit GroupGrantDelaySet(groupId, grantDelay);
+    }
+
+    /// @notice Gets the group configuration for a group ID.
+    /// @param groupId The ID of the group.
+    /// @return The group configuration.
+    function _getGroup(bytes32 groupId) internal view returns (Group storage) {
+        return ExecutorStorage.getLayout().groups[groupId];
+    }
+
+    function _getGroupExpiration(bytes32 groupId) internal view returns (uint48) {
+        return _getGroup(groupId).expiration;
     }
 
     /// @notice Gets the guardian for a group.

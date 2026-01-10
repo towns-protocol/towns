@@ -55,96 +55,16 @@ abstract contract ERC721ABase is IERC721ABase {
     bytes32 internal constant _TRANSFER_EVENT_SIGNATURE =
         0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef;
 
+    // =============================================================
+    //                      INTERNAL (NON-VIEW)
+    // =============================================================
+
     function __ERC721ABase_init(string memory name, string memory symbol) internal {
         ERC721AStorage.Layout storage ds = ERC721AStorage.layout();
 
         ds._name = name;
         ds._symbol = symbol;
         ds._currentIndex = _startTokenId();
-    }
-
-    // =============================================================
-    //                           EXTERNAL
-    // =============================================================
-    function _totalSupply() internal view returns (uint256) {
-        // Counter underflow is impossible as _burnCounter cannot be incremented
-        // more than `_currentIndex - _startTokenId()` times.
-        unchecked {
-            return
-                ERC721AStorage.layout()._currentIndex -
-                ERC721AStorage.layout()._burnCounter -
-                _startTokenId();
-        }
-    }
-
-    function _balanceOf(address owner) internal view returns (uint256) {
-        return ERC721AStorage.balanceOf(owner);
-    }
-
-    // =============================================================
-    //                   TOKEN COUNTING OPERATIONS
-    // =============================================================
-
-    /**
-     * @dev Returns the starting token ID.
-     * To change the starting token ID, please override this function.
-     */
-    function _startTokenId() internal view virtual returns (uint256) {
-        return 0;
-    }
-
-    /**
-     * @dev Returns the next token ID to be minted.
-     */
-    function _nextTokenId() internal view virtual returns (uint256) {
-        return ERC721AStorage.layout()._currentIndex;
-    }
-
-    /**
-     * @dev Returns the total amount of tokens minted in the contract.
-     */
-    function _totalMinted() internal view virtual returns (uint256) {
-        // Counter underflow is impossible as `_currentIndex` does not decrement,
-        // and it is initialized to `_startTokenId()`.
-        unchecked {
-            return ERC721AStorage.layout()._currentIndex - _startTokenId();
-        }
-    }
-
-    /**
-     * @dev Returns the total number of tokens burned.
-     */
-    function _totalBurned() internal view virtual returns (uint256) {
-        return ERC721AStorage.layout()._burnCounter;
-    }
-
-    // =============================================================
-    //                    ADDRESS DATA OPERATIONS
-    // =============================================================
-
-    /**
-     * Returns the number of tokens minted by `owner`.
-     */
-    function _numberMinted(address owner) internal view returns (uint256) {
-        return
-            (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_MINTED) &
-            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
-    }
-
-    /**
-     * Returns the number of tokens burned by or on behalf of `owner`.
-     */
-    function _numberBurned(address owner) internal view returns (uint256) {
-        return
-            (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_BURNED) &
-            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
-    }
-
-    /**
-     * Returns the auxiliary data for `owner`. (e.g. number of whitelist mint slots used).
-     */
-    function _getAux(address owner) internal view returns (uint64) {
-        return uint64(ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_AUX);
     }
 
     /**
@@ -163,34 +83,6 @@ abstract contract ERC721ABase is IERC721ABase {
     }
 
     /**
-     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
-     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, it can be overridden in child contracts.
-     */
-    function _baseURI() internal view virtual returns (string memory) {
-        return "";
-    }
-
-    // =============================================================
-    //                     OWNERSHIPS OPERATIONS
-    // =============================================================
-
-    /**
-     * @dev Gas spent here starts off proportional to the maximum mint batch size.
-     * It gradually moves to O(1) as tokens get transferred around over time.
-     */
-    function _ownershipOf(uint256 tokenId) internal view virtual returns (TokenOwnership memory) {
-        return _unpackedOwnership(ERC721AStorage.packedOwnershipOf(_startTokenId(), tokenId));
-    }
-
-    /**
-     * @dev Returns the unpacked `TokenOwnership` struct at `index`.
-     */
-    function _ownershipAt(uint256 index) internal view virtual returns (TokenOwnership memory) {
-        return _unpackedOwnership(ERC721AStorage.layout()._packedOwnerships[index]);
-    }
-
-    /**
      * @dev Initializes the ownership slot minted at `index` for efficiency purposes.
      */
     function _initializeOwnershipAt(uint256 index) internal virtual {
@@ -201,103 +93,6 @@ abstract contract ERC721ABase is IERC721ABase {
             );
         }
     }
-
-    /**
-     * @dev Returns the unpacked `TokenOwnership` struct from `packed`.
-     */
-    function _unpackedOwnership(
-        uint256 packed
-    ) internal pure returns (TokenOwnership memory ownership) {
-        ownership.addr = address(uint160(packed));
-        ownership.startTimestamp = uint64(packed >> _BITPOS_START_TIMESTAMP);
-        ownership.burned = packed & ERC721AStorage._BITMASK_BURNED != 0;
-        ownership.extraData = uint24(packed >> _BITPOS_EXTRA_DATA);
-    }
-
-    /**
-     * @dev Packs ownership data into a single uint256.
-     */
-    function _packOwnershipData(
-        address owner,
-        uint256 flags
-    ) internal view returns (uint256 result) {
-        assembly {
-            // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
-            owner := and(owner, _BITMASK_ADDRESS)
-            // `owner | (block.timestamp << _BITPOS_START_TIMESTAMP) | flags`.
-            result := or(owner, or(shl(_BITPOS_START_TIMESTAMP, timestamp()), flags))
-        }
-    }
-
-    /**
-     * @dev Returns the `nextInitialized` flag set if `quantity` equals 1.
-     */
-    function _nextInitializedFlag(uint256 quantity) internal pure returns (uint256 result) {
-        // For branchless setting of the `nextInitialized` flag.
-        assembly {
-            // `(quantity == 1) << _BITPOS_NEXT_INITIALIZED`.
-            result := shl(_BITPOS_NEXT_INITIALIZED, eq(quantity, 1))
-        }
-    }
-
-    // =============================================================
-    //                      APPROVAL OPERATIONS
-    // =============================================================
-
-    /**
-     * @dev Returns whether `tokenId` exists.
-     *
-     * Tokens can be managed by their owner or approved accounts via {approve} or
-     * {setApprovalForAll}.
-     *
-     * Tokens start existing when they are minted. See {_mint}.
-     */
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return
-            _startTokenId() <= tokenId &&
-            tokenId < ERC721AStorage.layout()._currentIndex && // If
-            // within bounds,
-            ERC721AStorage.layout()._packedOwnerships[tokenId] & ERC721AStorage._BITMASK_BURNED ==
-            0; // and not
-        // burned.
-    }
-
-    /**
-     * @dev Returns whether `msgSender` is equal to `approvedAddress` or `owner`.
-     */
-    function _isSenderApprovedOrOwner(
-        address approvedAddress,
-        address owner,
-        address msgSender
-    ) internal pure returns (bool result) {
-        assembly {
-            // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
-            owner := and(owner, _BITMASK_ADDRESS)
-            // Mask `msgSender` to the lower 160 bits, in case the upper bits somehow aren't clean.
-            msgSender := and(msgSender, _BITMASK_ADDRESS)
-            // `msgSender == owner || msgSender == approvedAddress`.
-            result := or(eq(msgSender, owner), eq(msgSender, approvedAddress))
-        }
-    }
-
-    /**
-     * @dev Returns the storage slot and value for the approved address of `tokenId`.
-     */
-    function _getApprovedSlotAndAddress(
-        uint256 tokenId
-    ) internal view returns (uint256 approvedAddressSlot, address approvedAddress) {
-        TokenApprovalRef storage tokenApproval = ERC721AStorage.layout()._tokenApprovals[tokenId];
-
-        // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId].value`.
-        assembly {
-            approvedAddressSlot := tokenApproval.slot
-            approvedAddress := sload(approvedAddressSlot)
-        }
-    }
-
-    // =============================================================
-    //                      TRANSFER OPERATIONS
-    // =============================================================
 
     /**
      * @dev Hook that is called before a set of serially-ordered token IDs
@@ -380,10 +175,6 @@ abstract contract ERC721ABase is IERC721ABase {
             }
         }
     }
-
-    // =============================================================
-    //                        MINT OPERATIONS
-    // =============================================================
 
     /**
      * @dev Mints `quantity` tokens and transfers them to `to`.
@@ -560,31 +351,6 @@ abstract contract ERC721ABase is IERC721ABase {
         _safeMint(to, quantity, "");
     }
 
-    // =============================================================
-    //                       APPROVAL OPERATIONS
-    // =============================================================
-    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
-        return ERC721AStorage.ownerAt(_startTokenId(), tokenId);
-    }
-
-    /**
-     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
-     *
-     * See {setApprovalForAll}.
-     */
-    function _isApprovedForAll(
-        address owner,
-        address operator
-    ) internal view virtual returns (bool) {
-        return ERC721AStorage.layout()._operatorApprovals[owner][operator];
-    }
-
-    function _getApproved(uint256 tokenId) internal view virtual returns (address) {
-        if (!_exists(tokenId)) revert ApprovalQueryForNonexistentToken();
-
-        return ERC721AStorage.layout()._tokenApprovals[tokenId].value;
-    }
-
     /**
      * @dev Equivalent to `_approve(to, tokenId, false)`.
      */
@@ -619,10 +385,6 @@ abstract contract ERC721ABase is IERC721ABase {
         ERC721AStorage.layout()._tokenApprovals[tokenId].value = to;
         emit Approval(owner, to, tokenId);
     }
-
-    // =============================================================
-    //                        BURN OPERATIONS
-    // =============================================================
 
     /**
      * @dev Equivalent to `_burn(tokenId, false)`.
@@ -718,10 +480,6 @@ abstract contract ERC721ABase is IERC721ABase {
         }
     }
 
-    // =============================================================
-    //                     EXTRA DATA OPERATIONS
-    // =============================================================
-
     /**
      * @dev Directly sets the extra data for the ownership data `index`.
      */
@@ -737,6 +495,177 @@ abstract contract ERC721ABase is IERC721ABase {
             (packed & _BITMASK_EXTRA_DATA_COMPLEMENT) |
             (extraDataCasted << _BITPOS_EXTRA_DATA);
         ERC721AStorage.layout()._packedOwnerships[index] = packed;
+    }
+
+    // =============================================================
+    //                      INTERNAL VIEW
+    // =============================================================
+
+    function _totalSupply() internal view returns (uint256) {
+        // Counter underflow is impossible as _burnCounter cannot be incremented
+        // more than `_currentIndex - _startTokenId()` times.
+        unchecked {
+            return
+                ERC721AStorage.layout()._currentIndex -
+                ERC721AStorage.layout()._burnCounter -
+                _startTokenId();
+        }
+    }
+
+    function _balanceOf(address owner) internal view returns (uint256) {
+        return ERC721AStorage.balanceOf(owner);
+    }
+
+    /**
+     * @dev Returns the starting token ID.
+     * To change the starting token ID, please override this function.
+     */
+    function _startTokenId() internal view virtual returns (uint256) {
+        return 0;
+    }
+
+    /**
+     * @dev Returns the next token ID to be minted.
+     */
+    function _nextTokenId() internal view virtual returns (uint256) {
+        return ERC721AStorage.layout()._currentIndex;
+    }
+
+    /**
+     * @dev Returns the total amount of tokens minted in the contract.
+     */
+    function _totalMinted() internal view virtual returns (uint256) {
+        // Counter underflow is impossible as `_currentIndex` does not decrement,
+        // and it is initialized to `_startTokenId()`.
+        unchecked {
+            return ERC721AStorage.layout()._currentIndex - _startTokenId();
+        }
+    }
+
+    /**
+     * @dev Returns the total number of tokens burned.
+     */
+    function _totalBurned() internal view virtual returns (uint256) {
+        return ERC721AStorage.layout()._burnCounter;
+    }
+
+    /**
+     * Returns the number of tokens minted by `owner`.
+     */
+    function _numberMinted(address owner) internal view returns (uint256) {
+        return
+            (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_MINTED) &
+            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
+    }
+
+    /**
+     * Returns the number of tokens burned by or on behalf of `owner`.
+     */
+    function _numberBurned(address owner) internal view returns (uint256) {
+        return
+            (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_BURNED) &
+            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
+    }
+
+    /**
+     * Returns the auxiliary data for `owner`. (e.g. number of whitelist mint slots used).
+     */
+    function _getAux(address owner) internal view returns (uint64) {
+        return uint64(ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_AUX);
+    }
+
+    /**
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, it can be overridden in child contracts.
+     */
+    function _baseURI() internal view virtual returns (string memory) {
+        return "";
+    }
+
+    /**
+     * @dev Gas spent here starts off proportional to the maximum mint batch size.
+     * It gradually moves to O(1) as tokens get transferred around over time.
+     */
+    function _ownershipOf(uint256 tokenId) internal view virtual returns (TokenOwnership memory) {
+        return _unpackedOwnership(ERC721AStorage.packedOwnershipOf(_startTokenId(), tokenId));
+    }
+
+    /**
+     * @dev Returns the unpacked `TokenOwnership` struct at `index`.
+     */
+    function _ownershipAt(uint256 index) internal view virtual returns (TokenOwnership memory) {
+        return _unpackedOwnership(ERC721AStorage.layout()._packedOwnerships[index]);
+    }
+
+    /**
+     * @dev Packs ownership data into a single uint256.
+     */
+    function _packOwnershipData(
+        address owner,
+        uint256 flags
+    ) internal view returns (uint256 result) {
+        assembly {
+            // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
+            owner := and(owner, _BITMASK_ADDRESS)
+            // `owner | (block.timestamp << _BITPOS_START_TIMESTAMP) | flags`.
+            result := or(owner, or(shl(_BITPOS_START_TIMESTAMP, timestamp()), flags))
+        }
+    }
+
+    /**
+     * @dev Returns whether `tokenId` exists.
+     *
+     * Tokens can be managed by their owner or approved accounts via {approve} or
+     * {setApprovalForAll}.
+     *
+     * Tokens start existing when they are minted. See {_mint}.
+     */
+    function _exists(uint256 tokenId) internal view virtual returns (bool) {
+        return
+            _startTokenId() <= tokenId &&
+            tokenId < ERC721AStorage.layout()._currentIndex && // If
+            // within bounds,
+            ERC721AStorage.layout()._packedOwnerships[tokenId] & ERC721AStorage._BITMASK_BURNED ==
+            0; // and not
+        // burned.
+    }
+
+    /**
+     * @dev Returns the storage slot and value for the approved address of `tokenId`.
+     */
+    function _getApprovedSlotAndAddress(
+        uint256 tokenId
+    ) internal view returns (uint256 approvedAddressSlot, address approvedAddress) {
+        TokenApprovalRef storage tokenApproval = ERC721AStorage.layout()._tokenApprovals[tokenId];
+
+        // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId].value`.
+        assembly {
+            approvedAddressSlot := tokenApproval.slot
+            approvedAddress := sload(approvedAddressSlot)
+        }
+    }
+
+    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
+        return ERC721AStorage.ownerAt(_startTokenId(), tokenId);
+    }
+
+    /**
+     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
+     *
+     * See {setApprovalForAll}.
+     */
+    function _isApprovedForAll(
+        address owner,
+        address operator
+    ) internal view virtual returns (bool) {
+        return ERC721AStorage.layout()._operatorApprovals[owner][operator];
+    }
+
+    function _getApproved(uint256 tokenId) internal view virtual returns (address) {
+        if (!_exists(tokenId)) revert ApprovalQueryForNonexistentToken();
+
+        return ERC721AStorage.layout()._tokenApprovals[tokenId].value;
     }
 
     /**
@@ -772,10 +701,6 @@ abstract contract ERC721ABase is IERC721ABase {
         return uint256(_extraData(from, to, extraData)) << _BITPOS_EXTRA_DATA;
     }
 
-    // =============================================================
-    //                       OTHER OPERATIONS
-    // =============================================================
-
     /**
      * @dev Returns the message sender (defaults to `msg.sender`).
      *
@@ -783,6 +708,51 @@ abstract contract ERC721ABase is IERC721ABase {
      */
     function _msgSenderERC721A() internal view virtual returns (address) {
         return msg.sender;
+    }
+
+    // =============================================================
+    //                      INTERNAL PURE
+    // =============================================================
+
+    /**
+     * @dev Returns the unpacked `TokenOwnership` struct from `packed`.
+     */
+    function _unpackedOwnership(
+        uint256 packed
+    ) internal pure returns (TokenOwnership memory ownership) {
+        ownership.addr = address(uint160(packed));
+        ownership.startTimestamp = uint64(packed >> _BITPOS_START_TIMESTAMP);
+        ownership.burned = packed & ERC721AStorage._BITMASK_BURNED != 0;
+        ownership.extraData = uint24(packed >> _BITPOS_EXTRA_DATA);
+    }
+
+    /**
+     * @dev Returns the `nextInitialized` flag set if `quantity` equals 1.
+     */
+    function _nextInitializedFlag(uint256 quantity) internal pure returns (uint256 result) {
+        // For branchless setting of the `nextInitialized` flag.
+        assembly {
+            // `(quantity == 1) << _BITPOS_NEXT_INITIALIZED`.
+            result := shl(_BITPOS_NEXT_INITIALIZED, eq(quantity, 1))
+        }
+    }
+
+    /**
+     * @dev Returns whether `msgSender` is equal to `approvedAddress` or `owner`.
+     */
+    function _isSenderApprovedOrOwner(
+        address approvedAddress,
+        address owner,
+        address msgSender
+    ) internal pure returns (bool result) {
+        assembly {
+            // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
+            owner := and(owner, _BITMASK_ADDRESS)
+            // Mask `msgSender` to the lower 160 bits, in case the upper bits somehow aren't clean.
+            msgSender := and(msgSender, _BITMASK_ADDRESS)
+            // `msgSender == owner || msgSender == approvedAddress`.
+            result := or(eq(msgSender, owner), eq(msgSender, approvedAddress))
+        }
     }
 
     /**

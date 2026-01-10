@@ -175,6 +175,21 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SPACE DELEGATION                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Sweeps the rewards in the space delegation to the operator if necessary
+    function _sweepSpaceRewardsIfNecessary(address space) internal {
+        address operator = _getOperatorBySpace(space);
+        if (operator == address(0)) return;
+
+        StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
+        uint256 scaledReward = staking.transferReward(space, operator);
+
+        if (scaledReward != 0) emit SpaceRewardsSwept(space, operator, scaledReward);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          OPERATOR                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -200,21 +215,6 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         if (!nos.operators.contains(delegatee)) return false;
         NodeOperatorStatus status = nos.statusByOperator[delegatee];
         return status == NodeOperatorStatus.Approved || status == NodeOperatorStatus.Active;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      SPACE DELEGATION                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Sweeps the rewards in the space delegation to the operator if necessary
-    function _sweepSpaceRewardsIfNecessary(address space) internal {
-        address operator = _getOperatorBySpace(space);
-        if (operator == address(0)) return;
-
-        StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        uint256 scaledReward = staking.transferReward(space, operator);
-
-        if (scaledReward != 0) emit SpaceRewardsSwept(space, operator, scaledReward);
     }
 
     /// @dev Checks if the delegatee is a space

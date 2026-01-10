@@ -76,62 +76,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppSchemaSet(schemaId);
     }
 
-    /// @notice Retrieves the current schema ID
-    /// @return The current schema ID
-    function _getSchemaId() internal view returns (bytes32) {
-        return AppRegistryStorage.getLayout().schemaId;
-    }
-
-    /// @notice Gets the latest version ID for a app
-    /// @param app The address of the app
-    /// @return The latest version ID
-    function _getLatestAppId(address app) internal view returns (bytes32) {
-        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
-        return appInfo.latestVersion;
-    }
-
-    /// @notice Checks if an app is banned
-    /// @param app The address of the app to check
-    /// @return True if the app is banned, false otherwise
-    function _isBanned(address app) internal view returns (bool) {
-        return AppRegistryStorage.getLayout().apps[app].isBanned;
-    }
-
-    function _getAppPrice(address app) internal view returns (uint256 price) {
-        try ITownsApp(app).installPrice() returns (uint256 installPrice) {
-            (price, ) = _getTotalRequiredPayment(installPrice);
-        } catch {
-            (price, ) = _getTotalRequiredPayment(0);
-        }
-    }
-
-    function _getAppDuration(address app) internal view returns (uint48 duration) {
-        try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
-            duration = LibAppRegistry.validateDuration(accessDuration);
-        } catch {
-            duration = LibAppRegistry.validateDuration(0);
-        }
-        return duration;
-    }
-
-    /// @notice Retrieves detailed information about an app by its ID
-    /// @param appId The unique identifier of the app
-    /// @return appData A struct containing all app information including module, owner, clients, permissions, and manifest
-    /// @dev Returns an empty app struct if the appId is not found
-    function _getAppById(bytes32 appId) internal view returns (App memory appData) {
-        Attestation memory att = _getAttestation(appId);
-        if (att.uid == EMPTY_UID) return appData;
-        appData = abi.decode(att.data, (App));
-        appData.appId = att.uid;
-    }
-
-    /// @notice Retrieves the app address associated with a client
-    /// @param client The client address
-    /// @return The app address associated with the client
-    function _getAppByClient(address client) internal view returns (address) {
-        return AppRegistryStorage.getLayout().client[client].app;
-    }
-
     function _upgradeApp(
         ITownsApp app,
         address client,
@@ -307,22 +251,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppRenewed(app, account, appId);
     }
 
-    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
-        IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 baseFee = platform.getMembershipFee();
-        if (installPrice == 0) return baseFee;
-        uint256 bpsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
-        return FixedPointMathLib.max(bpsFee, baseFee);
-    }
-
-    function _getTotalRequiredPayment(
-        uint256 installPrice
-    ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
-        protocolFee = _getProtocolFee(installPrice);
-        if (installPrice == 0) return (0, protocolFee);
-        return (installPrice + protocolFee, protocolFee);
-    }
-
     /// @notice Charges for app installation including protocol fees and developer payment
     /// @param payer The address paying for the installation
     /// @param recipient The address receiving the developer payment
@@ -398,6 +326,78 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         request.data.refUID = appData.appId;
         request.data.data = abi.encode(appData);
         newVersionId = _attest(msg.sender, msg.value, request).uid;
+    }
+
+    /// @notice Retrieves the current schema ID
+    /// @return The current schema ID
+    function _getSchemaId() internal view returns (bytes32) {
+        return AppRegistryStorage.getLayout().schemaId;
+    }
+
+    /// @notice Gets the latest version ID for a app
+    /// @param app The address of the app
+    /// @return The latest version ID
+    function _getLatestAppId(address app) internal view returns (bytes32) {
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        return appInfo.latestVersion;
+    }
+
+    /// @notice Checks if an app is banned
+    /// @param app The address of the app to check
+    /// @return True if the app is banned, false otherwise
+    function _isBanned(address app) internal view returns (bool) {
+        return AppRegistryStorage.getLayout().apps[app].isBanned;
+    }
+
+    function _getAppPrice(address app) internal view returns (uint256 price) {
+        try ITownsApp(app).installPrice() returns (uint256 installPrice) {
+            (price, ) = _getTotalRequiredPayment(installPrice);
+        } catch {
+            (price, ) = _getTotalRequiredPayment(0);
+        }
+    }
+
+    function _getAppDuration(address app) internal view returns (uint48 duration) {
+        try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
+            duration = LibAppRegistry.validateDuration(accessDuration);
+        } catch {
+            duration = LibAppRegistry.validateDuration(0);
+        }
+        return duration;
+    }
+
+    /// @notice Retrieves detailed information about an app by its ID
+    /// @param appId The unique identifier of the app
+    /// @return appData A struct containing all app information including module, owner, clients, permissions, and manifest
+    /// @dev Returns an empty app struct if the appId is not found
+    function _getAppById(bytes32 appId) internal view returns (App memory appData) {
+        Attestation memory att = _getAttestation(appId);
+        if (att.uid == EMPTY_UID) return appData;
+        appData = abi.decode(att.data, (App));
+        appData.appId = att.uid;
+    }
+
+    /// @notice Retrieves the app address associated with a client
+    /// @param client The client address
+    /// @return The app address associated with the client
+    function _getAppByClient(address client) internal view returns (address) {
+        return AppRegistryStorage.getLayout().client[client].app;
+    }
+
+    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 baseFee = platform.getMembershipFee();
+        if (installPrice == 0) return baseFee;
+        uint256 bpsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
+        return FixedPointMathLib.max(bpsFee, baseFee);
+    }
+
+    function _getTotalRequiredPayment(
+        uint256 installPrice
+    ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
+        protocolFee = _getProtocolFee(installPrice);
+        if (installPrice == 0) return (0, protocolFee);
+        return (installPrice + protocolFee, protocolFee);
     }
 
     /// @notice Validates inputs for adding a new app

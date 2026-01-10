@@ -7,6 +7,16 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
+enum NodeStatus {
+    NotInitialized, // Initial entry, node is not contacted in any way
+    RemoteOnly, // Node proxies data, does not store any data
+    Operational, // Node servers existing data, accepts stream creation
+    Failed, // Node crash-exited, can be set by DAO
+    Departing, // Node continues to serve traffic, new streams are not allocated, data needs to be
+    // moved out to other nodes before grace period.
+    Deleted // Final state before RemoveNode can be called
+}
+
 struct Stream {
     bytes32 lastMiniblockHash; // 32 bytes, slot 0
     uint64 lastMiniblockNum; // 8 bytes, part of slot 1
@@ -32,16 +42,6 @@ struct SetStreamReplicationFactor {
     bytes32 streamId;
     address[] nodes;
     uint8 replicationFactor;
-}
-
-enum NodeStatus {
-    NotInitialized, // Initial entry, node is not contacted in any way
-    RemoteOnly, // Node proxies data, does not store any data
-    Operational, // Node servers existing data, accepts stream creation
-    Failed, // Node crash-exited, can be set by DAO
-    Departing, // Node continues to serve traffic, new streams are not allocated, data needs to be
-    // moved out to other nodes before grace period.
-    Deleted // Final state before RemoveNode can be called
 }
 
 struct Node {

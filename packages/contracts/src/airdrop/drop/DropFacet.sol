@@ -36,10 +36,6 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
         __DropFacet_init_unchained(rewardsDistribution);
     }
 
-    function __DropFacet_init_unchained(address rewardsDistribution) internal {
-        _setRewardsDistribution(rewardsDistribution);
-    }
-
     /// @inheritdoc IDropFacet
     function addClaimCondition(DropGroup.ClaimCondition calldata condition) external onlyOwner {
         _addClaimCondition(condition);
@@ -166,6 +162,10 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INTERNAL FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __DropFacet_init_unchained(address rewardsDistribution) internal {
+        _setRewardsDistribution(rewardsDistribution);
+    }
 
     function _burnPoints(address from, uint256 amount) internal {
         if (amount == 0) return;

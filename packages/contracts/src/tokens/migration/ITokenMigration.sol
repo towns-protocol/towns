@@ -9,15 +9,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // contracts
 
 interface ITokenMigrationBase {
+    // Events
+    event TokensMigrated(address indexed account, uint256 amount);
+    event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
+
     // Errors
     error TokenMigration__InvalidBalance();
     error TokenMigration__InvalidAllowance();
     error TokenMigration__NotEnoughTokenBalance();
     error TokenMigration__InvalidTokens();
-
-    // Events
-    event TokensMigrated(address indexed account, uint256 amount);
-    event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
 }
 
 interface ITokenMigration is ITokenMigrationBase {

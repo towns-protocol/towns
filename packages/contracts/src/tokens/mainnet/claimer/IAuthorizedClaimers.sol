@@ -3,14 +3,14 @@ pragma solidity ^0.8.23;
 
 // This contract is used to authorize claimers to claim rewards on the authorizer's behalf
 interface IAuthorizedClaimersBase {
+    // Events
+    event AuthorizedClaimerChanged(address indexed authorizer, address indexed claimer);
+    event AuthorizedClaimerRemoved(address indexed authorizer);
+
     // Errors
     error AuthorizedClaimers_ClaimerAlreadyAuthorized();
     error AuthorizedClaimers_InvalidSignature();
     error AuthorizedClaimers_ExpiredSignature();
-
-    // Events
-    event AuthorizedClaimerChanged(address indexed authorizer, address indexed claimer);
-    event AuthorizedClaimerRemoved(address indexed authorizer);
 }
 
 interface IAuthorizedClaimers is IAuthorizedClaimersBase {

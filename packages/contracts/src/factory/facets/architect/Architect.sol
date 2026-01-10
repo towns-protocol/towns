@@ -36,20 +36,6 @@ contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, Reen
     }
 
     // =============================================================
-    //                            Space
-    // =============================================================
-
-    /// @inheritdoc IArchitect
-    function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
-        return _getSpaceByTokenId(tokenId);
-    }
-
-    /// @inheritdoc IArchitect
-    function getTokenIdBySpace(address space) external view returns (uint256) {
-        return _getTokenIdBySpace(space);
-    }
-
-    // =============================================================
     //                         Implementations
     // =============================================================
 
@@ -67,6 +53,33 @@ contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, Reen
             legacyRuleEntitlement
         );
     }
+
+    // =============================================================
+    //                         Proxy Initializer
+    // =============================================================
+
+    /// @inheritdoc IArchitect
+    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external onlyOwner {
+        _setProxyInitializer(proxyInitializer);
+    }
+
+    // =============================================================
+    //                            Space
+    // =============================================================
+
+    /// @inheritdoc IArchitect
+    function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
+        return _getSpaceByTokenId(tokenId);
+    }
+
+    /// @inheritdoc IArchitect
+    function getTokenIdBySpace(address space) external view returns (uint256) {
+        return _getTokenIdBySpace(space);
+    }
+
+    // =============================================================
+    //                         Implementations
+    // =============================================================
 
     /// @inheritdoc IArchitect
     function getSpaceArchitectImplementations()
@@ -89,10 +102,5 @@ contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, Reen
     /// @inheritdoc IArchitect
     function getProxyInitializer() external view returns (ISpaceProxyInitializer) {
         return _getProxyInitializer();
-    }
-
-    /// @inheritdoc IArchitect
-    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external onlyOwner {
-        _setProxyInitializer(proxyInitializer);
     }
 }

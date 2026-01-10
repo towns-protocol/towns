@@ -8,16 +8,16 @@ pragma solidity ^0.8.23;
 // contracts
 interface IImplementationRegistryBase {
     // =============================================================
-    //                           Errors
-    // =============================================================
-    error InvalidContractType();
-    error InvalidVersion();
-
-    // =============================================================
     //                           Events
     // =============================================================
     event ImplementationAdded(address implementation, bytes32 contractType, uint32 version);
     event ImplementationApproved(address implementation, bool approved);
+
+    // =============================================================
+    //                           Errors
+    // =============================================================
+    error InvalidContractType();
+    error InvalidVersion();
 }
 
 interface IImplementationRegistry is IImplementationRegistryBase {

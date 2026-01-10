@@ -20,6 +20,39 @@ contract L2RegistryFacet is IL2Registry, Facet {
     using L2RegistryMod for L2RegistryMod.Layout;
     using ERC721Lib for MinimalERC721Storage;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        EXTERNAL PAYABLE                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IERC721A
+    function transferFrom(address from, address to, uint256 tokenId) external payable {
+        L2RegistryMod.getStorage().token.transferFrom(from, to, tokenId);
+    }
+
+    /// @inheritdoc IERC721A
+    function safeTransferFrom(address from, address to, uint256 tokenId) external payable {
+        L2RegistryMod.getStorage().token.safeTransferFrom(from, to, tokenId);
+    }
+
+    /// @inheritdoc IERC721A
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes calldata data
+    ) external payable {
+        L2RegistryMod.getStorage().token.safeTransferFrom(from, to, tokenId, data);
+    }
+
+    /// @inheritdoc IERC721A
+    function approve(address to, uint256 tokenId) external payable {
+        L2RegistryMod.getStorage().token.approve(to, tokenId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        EXTERNAL                             */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Initializes the registry with a root domain and mints it to the admin
     /// @param domain The full domain name (e.g., "towns.eth")
     /// @param admin The address that will own the root domain NFT
@@ -75,6 +108,15 @@ contract L2RegistryFacet is IL2Registry, Facet {
         $.setMetadata(node, data);
     }
 
+    /// @inheritdoc IERC721A
+    function setApprovalForAll(address operator, bool approved) external {
+        L2RegistryMod.getStorage().token.setApprovalForAll(operator, approved);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        EXTERNAL VIEW                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Returns the metadata bytes for a subdomain
     /// @param node The namehash of the subdomain
     /// @return The metadata bytes (empty if not set)
@@ -101,6 +143,50 @@ contract L2RegistryFacet is IL2Registry, Facet {
         return L2RegistryMod.getStorage().baseNode;
     }
 
+    /// @inheritdoc IERC721A
+    function totalSupply() external view returns (uint256) {
+        return L2RegistryMod.getStorage().token.totalSupply;
+    }
+
+    /// @inheritdoc IERC721A
+    function balanceOf(address owner) external view returns (uint256) {
+        return L2RegistryMod.getStorage().token.balanceOf(owner);
+    }
+
+    /// @inheritdoc IERC721A
+    function ownerOf(uint256 tokenId) external view returns (address) {
+        return L2RegistryMod.getStorage().token.ownerOf(tokenId);
+    }
+
+    /// @inheritdoc IERC721A
+    function getApproved(uint256 tokenId) external view returns (address) {
+        return L2RegistryMod.getStorage().token.getApproved(tokenId);
+    }
+
+    /// @inheritdoc IERC721A
+    function isApprovedForAll(address owner, address operator) external view returns (bool) {
+        return L2RegistryMod.getStorage().token.isApprovedForAll(owner, operator);
+    }
+
+    /// @inheritdoc IERC721A
+    function tokenURI(uint256 tokenId) external view returns (string memory) {
+        return L2RegistryMod.getStorage().tokenURI(tokenId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        EXTERNAL PURE                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IERC721A
+    function name() external pure returns (string memory) {
+        return "Towns Domain Registry";
+    }
+
+    /// @inheritdoc IERC721A
+    function symbol() external pure returns (string memory) {
+        return "TDR";
+    }
+
     /// @notice Computes the namehash of a domain name
     /// @param node The domain name (e.g., "alice.towns.eth")
     /// @return The namehash (bytes32)
@@ -125,79 +211,5 @@ contract L2RegistryFacet is IL2Registry, Facet {
         string calldata subdomain
     ) external pure returns (bytes32) {
         return L2RegistryMod.encodeNode(domainHash, subdomain);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        IERC721 FUNCTIONS                    */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @inheritdoc IERC721A
-    function totalSupply() external view returns (uint256) {
-        return L2RegistryMod.getStorage().token.totalSupply;
-    }
-
-    /// @inheritdoc IERC721A
-    function balanceOf(address owner) external view returns (uint256) {
-        return L2RegistryMod.getStorage().token.balanceOf(owner);
-    }
-
-    /// @inheritdoc IERC721A
-    function ownerOf(uint256 tokenId) external view returns (address) {
-        return L2RegistryMod.getStorage().token.ownerOf(tokenId);
-    }
-
-    /// @inheritdoc IERC721A
-    function transferFrom(address from, address to, uint256 tokenId) external payable {
-        L2RegistryMod.getStorage().token.transferFrom(from, to, tokenId);
-    }
-
-    /// @inheritdoc IERC721A
-    function safeTransferFrom(address from, address to, uint256 tokenId) external payable {
-        L2RegistryMod.getStorage().token.safeTransferFrom(from, to, tokenId);
-    }
-
-    /// @inheritdoc IERC721A
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external payable {
-        L2RegistryMod.getStorage().token.safeTransferFrom(from, to, tokenId, data);
-    }
-
-    /// @inheritdoc IERC721A
-    function approve(address to, uint256 tokenId) external payable {
-        L2RegistryMod.getStorage().token.approve(to, tokenId);
-    }
-
-    /// @inheritdoc IERC721A
-    function setApprovalForAll(address operator, bool approved) external {
-        L2RegistryMod.getStorage().token.setApprovalForAll(operator, approved);
-    }
-
-    /// @inheritdoc IERC721A
-    function getApproved(uint256 tokenId) external view returns (address) {
-        return L2RegistryMod.getStorage().token.getApproved(tokenId);
-    }
-
-    /// @inheritdoc IERC721A
-    function isApprovedForAll(address owner, address operator) external view returns (bool) {
-        return L2RegistryMod.getStorage().token.isApprovedForAll(owner, operator);
-    }
-
-    /// @inheritdoc IERC721A
-    function name() external pure returns (string memory) {
-        return "Towns Domain Registry";
-    }
-
-    /// @inheritdoc IERC721A
-    function symbol() external pure returns (string memory) {
-        return "TDR";
-    }
-
-    /// @inheritdoc IERC721A
-    function tokenURI(uint256 tokenId) external view returns (string memory) {
-        return L2RegistryMod.getStorage().tokenURI(tokenId);
     }
 }

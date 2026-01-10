@@ -17,31 +17,20 @@ library AddrResolverMod {
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           TYPES                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev SLIP-44 coin type for Ethereum (used for addr(node) without coinType parameter)
-    uint256 private constant COIN_TYPE_ETH = 60;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // keccak256(abi.encode(uint256(keccak256("ens.domains.addr.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0x8b8a0bb4a3fe0b42465b90b4b0685ae0e89754526abbe657b793f43051265600;
 
     /// @notice Storage layout with versioned addresses: version => node => coinType => address bytes
     struct Layout {
         mapping(uint64 => mapping(bytes32 => mapping(uint256 => bytes))) versionable_addresses;
     }
 
-    /// @notice Returns the storage layout for this module
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    /// @dev SLIP-44 coin type for Ethereum (used for addr(node) without coinType parameter)
+    uint256 private constant COIN_TYPE_ETH = 60;
+
+    // keccak256(abi.encode(uint256(keccak256("ens.domains.addr.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0x8b8a0bb4a3fe0b42465b90b4b0685ae0e89754526abbe657b793f43051265600;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -90,6 +79,13 @@ library AddrResolverMod {
             return payable(0);
         }
         return bytesToAddress(a);
+    }
+
+    /// @notice Returns the storage layout for this module
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 
     /// @notice Converts 20-byte address data to an address type

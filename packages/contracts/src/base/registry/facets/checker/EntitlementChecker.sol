@@ -24,10 +24,6 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
-    function __EntitlementChecker_init() external onlyInitializing {
-        _addInterface(type(IEntitlementChecker).interfaceId);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        MODIFIERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -51,6 +47,14 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
             EntitlementChecker_OperatorNotActive.selector.revertWith();
         }
         _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INITIALIZER                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __EntitlementChecker_init() external onlyInitializing {
+        _addInterface(type(IEntitlementChecker).interfaceId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

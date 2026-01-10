@@ -53,30 +53,6 @@ struct Schedule {
 
 interface IExecutorBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    error CallerAlreadyRegistered();
-    error CallerNotRegistered();
-    error ExecutionAlreadyRegistered();
-    error ExecutionNotRegistered();
-    error ExecutorCallFailed();
-    error ExecutionNotFound();
-    error UnauthorizedCall();
-    error AlreadyScheduled();
-    error NotScheduled();
-    error NotReady();
-    error Expired();
-    error UnauthorizedCancel();
-    error UnauthorizedRenounce();
-    error UnauthorizedTarget();
-    error ExecutionFunctionAlreadySet();
-    error NullModule();
-    error ExecutionHookAlreadySet();
-    error ModuleInstallCallbackFailed();
-    error InvalidDataLength();
-    error InvalidExpiration();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -103,6 +79,30 @@ interface IExecutorBase {
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
     event GroupStatusSet(bytes32 indexed groupId, bool active);
     event GroupExpirationSet(bytes32 indexed groupId, uint48 expiration);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    error CallerAlreadyRegistered();
+    error CallerNotRegistered();
+    error ExecutionAlreadyRegistered();
+    error ExecutionNotRegistered();
+    error ExecutorCallFailed();
+    error ExecutionNotFound();
+    error UnauthorizedCall();
+    error AlreadyScheduled();
+    error NotScheduled();
+    error NotReady();
+    error Expired();
+    error UnauthorizedCancel();
+    error UnauthorizedRenounce();
+    error UnauthorizedTarget();
+    error ExecutionFunctionAlreadySet();
+    error NullModule();
+    error ExecutionHookAlreadySet();
+    error ModuleInstallCallbackFailed();
+    error InvalidDataLength();
+    error InvalidExpiration();
 }
 
 interface IExecutor is IExecutorBase {

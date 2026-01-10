@@ -10,43 +10,6 @@ import {IMetadata} from "./IMetadata.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract MetadataFacet is IMetadata, OwnableBase, Facet {
-    function __MetadataFacet_init(
-        bytes32 _contractType,
-        string memory _contractURI
-    ) external onlyInitializing {
-        __MetadataFacet_init_unchained(_contractType, _contractURI);
-    }
-
-    function __MetadataFacet_init_unchained(
-        bytes32 _contractType,
-        string memory _contractURI
-    ) internal {
-        _addInterface(type(IMetadata).interfaceId);
-
-        MetadataStorage.Layout storage ds = MetadataStorage.layout();
-        ds.contractType = _contractType;
-        ds.contractURI = _contractURI;
-    }
-
-    function contractType() external view returns (bytes32) {
-        return MetadataStorage.layout().contractType;
-    }
-
-    function contractVersion() external view virtual returns (uint32) {
-        return _getInitializedVersion();
-    }
-
-    function contractURI() external view returns (string memory) {
-        return MetadataStorage.layout().contractURI;
-    }
-
-    function setContractURI(string calldata uri) external onlyOwner {
-        MetadataStorage.layout().contractURI = uri;
-        emit ContractURIChanged(uri);
-    }
-}
-
 // =============================================================
 //                           Storage
 // =============================================================
@@ -67,5 +30,42 @@ library MetadataStorage {
         assembly {
             ds.slot := slot
         }
+    }
+}
+
+contract MetadataFacet is IMetadata, OwnableBase, Facet {
+    function __MetadataFacet_init(
+        bytes32 _contractType,
+        string memory _contractURI
+    ) external onlyInitializing {
+        __MetadataFacet_init_unchained(_contractType, _contractURI);
+    }
+
+    function setContractURI(string calldata uri) external onlyOwner {
+        MetadataStorage.layout().contractURI = uri;
+        emit ContractURIChanged(uri);
+    }
+
+    function contractType() external view returns (bytes32) {
+        return MetadataStorage.layout().contractType;
+    }
+
+    function contractVersion() external view virtual returns (uint32) {
+        return _getInitializedVersion();
+    }
+
+    function contractURI() external view returns (string memory) {
+        return MetadataStorage.layout().contractURI;
+    }
+
+    function __MetadataFacet_init_unchained(
+        bytes32 _contractType,
+        string memory _contractURI
+    ) internal {
+        _addInterface(type(IMetadata).interfaceId);
+
+        MetadataStorage.Layout storage ds = MetadataStorage.layout();
+        ds.contractType = _contractType;
+        ds.contractURI = _contractURI;
     }
 }

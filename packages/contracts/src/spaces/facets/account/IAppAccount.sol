@@ -8,6 +8,10 @@ import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IE
 
 // contracts
 interface IAppAccountBase {
+    event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
+    event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
+    event ExecutionUpdated(address indexed module, ExecutionManifest manifest);
+
     error InvalidAppAddress(address app);
     error InvalidManifest();
     error UnauthorizedSelector();
@@ -15,10 +19,6 @@ interface IAppAccountBase {
     error AppAlreadyInstalled();
     error UnauthorizedApp(address app);
     error InvalidCaller();
-
-    event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
-    event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
-    event ExecutionUpdated(address indexed module, ExecutionManifest manifest);
 }
 
 interface IAppAccount is IAppAccountBase {

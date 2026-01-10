@@ -360,12 +360,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Dependencies Functions                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function _getDependency(bytes32 dependency) internal view returns (address) {
-        return WalletLib.layout().dependencies[dependency];
-    }
-
     function _setDependency(bytes32 dependency, address dependencyAddress) internal {
         WalletLib.layout().dependencies[dependency] = dependencyAddress;
+    }
+
+    function _getDependency(bytes32 dependency) internal view returns (address) {
+        return WalletLib.layout().dependencies[dependency];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

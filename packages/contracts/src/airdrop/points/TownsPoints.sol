@@ -19,6 +19,22 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          MODIFIERS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    modifier onlySpace() {
+        address spaceFactory = TownsPointsStorage.layout().spaceFactory;
+        if (IArchitect(spaceFactory).getTokenIdBySpace(msg.sender) == 0) {
+            CustomRevert.revertWith(TownsPoints__InvalidSpace.selector);
+        }
+        _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INITIALIZER                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function __TownsPoints_init(address spaceFactory) external onlyInitializing {
         TownsPointsStorage.Layout storage ds = TownsPointsStorage.layout();
         ds.spaceFactory = spaceFactory;
@@ -29,14 +45,6 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           POINTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    modifier onlySpace() {
-        address spaceFactory = TownsPointsStorage.layout().spaceFactory;
-        if (IArchitect(spaceFactory).getTokenIdBySpace(msg.sender) == 0) {
-            CustomRevert.revertWith(TownsPoints__InvalidSpace.selector);
-        }
-        _;
-    }
 
     /// @inheritdoc ITownsPoints
     function batchMintPoints(bytes calldata data) external onlyOwner {
@@ -73,27 +81,6 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
         }
     }
 
-    /// @inheritdoc ITownsPoints
-    function getPoints(Action action, bytes calldata data) external pure returns (uint256 points) {
-        if (action == Action.JoinSpace) {
-            uint256 membershipPrice = abi.decode(data, (uint256));
-            points = membershipPrice * 200_000;
-        }
-
-        if (action == Action.CheckIn) {
-            (uint256 lastCheckIn, uint256 streak, uint256 currentTime) = abi.decode(
-                data,
-                (uint256, uint256, uint256)
-            );
-            (points, ) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
-        }
-
-        if (action == Action.Tip || action == Action.Swap) {
-            uint256 protocolFee = abi.decode(data, (uint256));
-            points = (protocolFee * 2_000_000) / 3;
-        }
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           CHECKIN                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -117,16 +104,6 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
         TownsPointsStorage.layout().inner.mint(msg.sender, pointsToAward);
         emit Transfer(address(0), msg.sender, pointsToAward);
         emit CheckedIn(msg.sender, pointsToAward, newStreak, block.timestamp);
-    }
-
-    /// @inheritdoc ITownsPoints
-    function getCurrentStreak(address user) external view returns (uint256) {
-        return CheckIn.getCurrentStreak(user);
-    }
-
-    /// @inheritdoc ITownsPoints
-    function getLastCheckIn(address user) external view returns (uint256) {
-        return CheckIn.getLastCheckIn(user);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -160,6 +137,16 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
         return true;
     }
 
+    /// @inheritdoc ITownsPoints
+    function getCurrentStreak(address user) external view returns (uint256) {
+        return CheckIn.getCurrentStreak(user);
+    }
+
+    /// @inheritdoc ITownsPoints
+    function getLastCheckIn(address user) external view returns (uint256) {
+        return CheckIn.getLastCheckIn(user);
+    }
+
     /// @inheritdoc IERC20
     function allowance(address owner, address spender) external view returns (uint256) {
         return TownsPointsStorage.layout().inner.allowance(owner, spender);
@@ -187,6 +174,27 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     /// @inheritdoc IERC20Metadata
     function symbol() external pure returns (string memory) {
         return "TWP";
+    }
+
+    /// @inheritdoc ITownsPoints
+    function getPoints(Action action, bytes calldata data) external pure returns (uint256 points) {
+        if (action == Action.JoinSpace) {
+            uint256 membershipPrice = abi.decode(data, (uint256));
+            points = membershipPrice * 200_000;
+        }
+
+        if (action == Action.CheckIn) {
+            (uint256 lastCheckIn, uint256 streak, uint256 currentTime) = abi.decode(
+                data,
+                (uint256, uint256, uint256)
+            );
+            (points, ) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
+        }
+
+        if (action == Action.Tip || action == Action.Swap) {
+            uint256 protocolFee = abi.decode(data, (uint256));
+            points = (protocolFee * 2_000_000) / 3;
+        }
     }
 
     /// @inheritdoc IERC20Metadata

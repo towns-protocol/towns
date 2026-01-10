@@ -16,8 +16,6 @@ import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspecti
  * @notice Network: Base (Sepolia)
  */
 contract TieredLogPricingOracleV2 is IMembershipPricing, IntrospectionFacet {
-    AggregatorV3Interface internal dataFeed;
-
     uint256 internal constant SCALE = 1e18; // 1 ether
     uint256 internal constant CENT_SCALE = 100;
     uint256 internal constant LOG_BASE = 10 ** 16;
@@ -26,6 +24,8 @@ contract TieredLogPricingOracleV2 is IMembershipPricing, IntrospectionFacet {
     // Cached values for optimization
     uint256 private immutable exchangeRateDecimals;
     uint256 private immutable exchangeRateScale;
+
+    AggregatorV3Interface internal dataFeed;
 
     // Error messages
     error TieredLogPricingOracle__InvalidAnswer();

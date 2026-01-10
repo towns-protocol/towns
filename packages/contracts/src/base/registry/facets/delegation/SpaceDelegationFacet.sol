@@ -132,6 +132,14 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     }
 
     /// @inheritdoc ISpaceDelegation
+    function setSpaceFactory(address spaceFactory) external onlyOwner {
+        if (spaceFactory == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
+
+        SpaceDelegationStorage.layout().spaceFactory = spaceFactory;
+        emit SpaceFactoryChanged(spaceFactory);
+    }
+
+    /// @inheritdoc ISpaceDelegation
     function getSpaceDelegation(address space) external view returns (address) {
         return SpaceDelegationStorage.layout().operatorBySpace[space];
     }
@@ -146,18 +154,6 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     /// @inheritdoc ISpaceDelegation
     function getTotalDelegation(address operator) external view returns (uint256) {
         return _getTotalDelegation(operator);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FACTORY                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @inheritdoc ISpaceDelegation
-    function setSpaceFactory(address spaceFactory) external onlyOwner {
-        if (spaceFactory == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
-
-        SpaceDelegationStorage.layout().spaceFactory = spaceFactory;
-        emit SpaceFactoryChanged(spaceFactory);
     }
 
     /// @inheritdoc ISpaceDelegation

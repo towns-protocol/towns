@@ -16,15 +16,6 @@ interface IReviewBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    error ReviewFacet__InvalidCommentLength();
-    error ReviewFacet__InvalidRating();
-    error ReviewFacet__ReviewAlreadyExists();
-    error ReviewFacet__ReviewDoesNotExist();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -36,6 +27,15 @@ interface IReviewBase {
 
     /// @notice Emitted when a review is deleted
     event ReviewDeleted(address indexed user);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    error ReviewFacet__InvalidCommentLength();
+    error ReviewFacet__InvalidRating();
+    error ReviewFacet__ReviewAlreadyExists();
+    error ReviewFacet__ReviewDoesNotExist();
 }
 
 interface IReview is IReviewBase {

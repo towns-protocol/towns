@@ -26,22 +26,6 @@ interface IRewardsDistributionBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Self-explanatory
-    error RewardsDistribution__NotBeneficiary();
-    error RewardsDistribution__NotClaimer();
-    error RewardsDistribution__NotDepositOwner();
-    error RewardsDistribution__NotRewardNotifier();
-    error RewardsDistribution__NotOperatorOrSpace();
-    error RewardsDistribution__NotActiveOperator();
-    error RewardsDistribution__ExpiredDeadline();
-    error RewardsDistribution__InvalidSignature();
-    error RewardsDistribution__CannotWithdrawFromSelf();
-    error RewardsDistribution__NoPendingWithdrawal();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -130,6 +114,22 @@ interface IRewardsDistributionBase {
     /// @param operator The address of the operator
     /// @param scaledReward The scaled amount of rewardToken that is swept
     event SpaceRewardsSwept(address indexed space, address indexed operator, uint256 scaledReward);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Self-explanatory
+    error RewardsDistribution__NotBeneficiary();
+    error RewardsDistribution__NotClaimer();
+    error RewardsDistribution__NotDepositOwner();
+    error RewardsDistribution__NotRewardNotifier();
+    error RewardsDistribution__NotOperatorOrSpace();
+    error RewardsDistribution__NotActiveOperator();
+    error RewardsDistribution__ExpiredDeadline();
+    error RewardsDistribution__InvalidSignature();
+    error RewardsDistribution__CannotWithdrawFromSelf();
+    error RewardsDistribution__NoPendingWithdrawal();
 }
 
 /// @title IRewardsDistribution

@@ -92,16 +92,6 @@ interface IIdentityRegistry is IIdentityRegistryBase {
         MetadataEntry[] calldata metadata
     ) external returns (uint256 agentId);
 
-    /// @notice Retrieve metadata value for a specific agent and metadataKey
-    /// @dev Returns empty bytes if the metadataKey does not exist
-    /// @param agentId The unique identifier of the agent
-    /// @param metadataKey The metadata key to retrieve
-    /// @return The metadata value stored as bytes
-    function getMetadata(
-        uint256 agentId,
-        string memory metadataKey
-    ) external view returns (bytes memory);
-
     /// @notice Set or update metadata for a specific agent
     /// @dev Only callable by the agent owner, approved operator, or token-specific approved address.
     ///      Emits MetadataSet event.
@@ -120,6 +110,16 @@ interface IIdentityRegistry is IIdentityRegistryBase {
     /// @param agentId The unique identifier of the agent
     /// @param agentUri The new URI pointing to the agent's updated registration file
     function setAgentUri(uint256 agentId, string calldata agentUri) external;
+
+    /// @notice Retrieve metadata value for a specific agent and metadataKey
+    /// @dev Returns empty bytes if the metadataKey does not exist
+    /// @param agentId The unique identifier of the agent
+    /// @param metadataKey The metadata key to retrieve
+    /// @return The metadata value stored as bytes
+    function getMetadata(
+        uint256 agentId,
+        string memory metadataKey
+    ) external view returns (bytes memory);
 
     /// @notice Get the tokenURI for an agent
     /// @dev Returns the URI pointing to the agent's registration file.

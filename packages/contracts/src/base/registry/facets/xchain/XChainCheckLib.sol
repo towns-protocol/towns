@@ -16,6 +16,32 @@ library XChainCheckLib {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    function processNodeVote(
+        XChainLib.Check storage self,
+        uint256 requestId,
+        IEntitlementGatedBase.NodeVoteStatus result
+    ) internal {
+        uint256 voteCount = self.votes[requestId].length;
+        bool voteRecorded = false;
+
+        for (uint256 i; i < voteCount; ++i) {
+            IEntitlementGatedBase.NodeVote storage currentVote = self.votes[requestId][i];
+
+            if (currentVote.node == msg.sender) {
+                if (currentVote.vote != IEntitlementGatedBase.NodeVoteStatus.NOT_VOTED) {
+                    IEntitlementGatedBase.EntitlementGated_NodeAlreadyVoted.selector.revertWith();
+                }
+                currentVote.vote = result;
+                voteRecorded = true;
+                break; // Exit early once vote is recorded
+            }
+        }
+
+        if (!voteRecorded) {
+            IEntitlementGatedBase.EntitlementGated_NodeNotFound.selector.revertWith();
+        }
+    }
+
     function validateVotingEligibility(
         XChainLib.Check storage self,
         XChainLib.Request storage request,
@@ -52,32 +78,6 @@ library XChainCheckLib {
         // normalize address(0) to NATIVE_TOKEN for pre-upgrade requests
         address currency = request.currency;
         context.currency = currency == address(0) ? CurrencyTransfer.NATIVE_TOKEN : currency;
-    }
-
-    function processNodeVote(
-        XChainLib.Check storage self,
-        uint256 requestId,
-        IEntitlementGatedBase.NodeVoteStatus result
-    ) internal {
-        uint256 voteCount = self.votes[requestId].length;
-        bool voteRecorded = false;
-
-        for (uint256 i; i < voteCount; ++i) {
-            IEntitlementGatedBase.NodeVote storage currentVote = self.votes[requestId][i];
-
-            if (currentVote.node == msg.sender) {
-                if (currentVote.vote != IEntitlementGatedBase.NodeVoteStatus.NOT_VOTED) {
-                    IEntitlementGatedBase.EntitlementGated_NodeAlreadyVoted.selector.revertWith();
-                }
-                currentVote.vote = result;
-                voteRecorded = true;
-                break; // Exit early once vote is recorded
-            }
-        }
-
-        if (!voteRecorded) {
-            IEntitlementGatedBase.EntitlementGated_NodeNotFound.selector.revertWith();
-        }
     }
 
     function calculateVoteResults(

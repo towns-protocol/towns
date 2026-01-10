@@ -25,6 +25,22 @@ abstract contract SimpleAccountBase is IAccount, ISimpleAccountBase {
     /*                         Hooks                              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Internal function to validate the signature of the user operation.
+    /// @param userOp The user operation to validate.
+    /// @param userOpHash The hash of the user operation.
+    /// @return validationData The validation data.
+    function _validateSignature(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual returns (uint256 validationData);
+
+    /// @dev Internal function to pay the prefund.
+    /// @param missingAccountFunds The missing account funds.
+    function _payPrefund(uint256 missingAccountFunds) internal virtual {
+        if (missingAccountFunds == 0) return;
+        SafeTransferLib.safeTransferETH(msg.sender, missingAccountFunds);
+    }
+
     /// @dev Internal function to require the sender to be the entry point.
     function _requireFromEntryPoint() internal view virtual {
         if (msg.sender != address(entryPoint()))
@@ -36,23 +52,7 @@ abstract contract SimpleAccountBase is IAccount, ISimpleAccountBase {
         _requireFromEntryPoint();
     }
 
-    /// @dev Internal function to validate the signature of the user operation.
-    /// @param userOp The user operation to validate.
-    /// @param userOpHash The hash of the user operation.
-    /// @return validationData The validation data.
-    function _validateSignature(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal virtual returns (uint256 validationData);
-
     /// @dev Internal function to validate the nonce of the user operation.
     /// @param nonce The nonce of the user operation.
     function _validateNonce(uint256 nonce) internal view virtual {}
-
-    /// @dev Internal function to pay the prefund.
-    /// @param missingAccountFunds The missing account funds.
-    function _payPrefund(uint256 missingAccountFunds) internal virtual {
-        if (missingAccountFunds == 0) return;
-        SafeTransferLib.safeTransferETH(msg.sender, missingAccountFunds);
-    }
 }

@@ -27,23 +27,23 @@ contract UserEntitlement is
 {
     using EnumerableSet for EnumerableSet.UintSet;
 
-    address constant EVERYONE_ADDRESS = address(1);
-    address public SPACE_ADDRESS;
-
     struct Entitlement {
         address grantedBy;
         uint256 grantedTime;
         address[] users;
     }
 
+    address constant EVERYONE_ADDRESS = address(1);
+    string public constant name = "User Entitlement";
+    string public constant description = "Entitlement for users";
+    string public constant moduleType = "UserEntitlement";
+
+    address public SPACE_ADDRESS;
+
     /// @notice mapping holding all the entitlements by RoleId added to Entitlement
     mapping(uint256 => Entitlement) internal entitlementsByRoleId;
     mapping(address => uint256[]) internal roleIdsByUser;
     EnumerableSet.UintSet allEntitlementRoleIds;
-
-    string public constant name = "User Entitlement";
-    string public constant description = "Entitlement for users";
-    string public constant moduleType = "UserEntitlement";
 
     modifier onlySpace() {
         if (_msgSender() != SPACE_ADDRESS) {
@@ -55,42 +55,6 @@ contract UserEntitlement is
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
-    }
-
-    function initialize(address _space) public initializer {
-        __UUPSUpgradeable_init();
-        __ERC165_init();
-        __Context_init();
-
-        SPACE_ADDRESS = _space;
-    }
-
-    /// @notice allow the contract to be upgraded while retaining state
-    /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    // @inheritdoc IEntitlement
-    function isCrosschain() external pure override returns (bool) {
-        return false;
-    }
-
-    // @inheritdoc IEntitlement
-    function isEntitled(
-        bytes32 channelId,
-        address[] memory wallets,
-        bytes32 permission
-    ) external view returns (bool) {
-        // Check if channelId is not equal to the zero value for bytes32
-        if (channelId != bytes32(0)) {
-            return _isEntitledToChannel(channelId, wallets, permission);
-        } else {
-            return _isEntitledToSpace(wallets, permission);
-        }
     }
 
     // @inheritdoc IEntitlement
@@ -142,8 +106,58 @@ contract UserEntitlement is
     }
 
     // @inheritdoc IEntitlement
+    function isEntitled(
+        bytes32 channelId,
+        address[] memory wallets,
+        bytes32 permission
+    ) external view returns (bool) {
+        // Check if channelId is not equal to the zero value for bytes32
+        if (channelId != bytes32(0)) {
+            return _isEntitledToChannel(channelId, wallets, permission);
+        } else {
+            return _isEntitledToSpace(wallets, permission);
+        }
+    }
+
+    // @inheritdoc IEntitlement
     function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory) {
         return abi.encode(entitlementsByRoleId[roleId].users);
+    }
+
+    // @inheritdoc IEntitlement
+    function isCrosschain() external pure override returns (bool) {
+        return false;
+    }
+
+    function initialize(address _space) public initializer {
+        __UUPSUpgradeable_init();
+        __ERC165_init();
+        __Context_init();
+
+        SPACE_ADDRESS = _space;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return
+            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /// @notice allow the contract to be upgraded while retaining state
+    /// @param newImplementation address of the new implementation
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
+
+    function _removeRoleIdFromUser(address user, uint256 roleId) internal {
+        uint256[] storage roles = roleIdsByUser[user];
+        for (uint256 i = 0; i < roles.length; i++) {
+            if (roles[i] == roleId) {
+                roles[i] = roles[roles.length - 1];
+                roles.pop();
+                return;
+            }
+        }
+
+        // Optional: Revert if the roleId is not found
+        revert("Role ID not found for the user");
     }
 
     /// @notice checks is a user is entitled to a specific channel
@@ -249,20 +263,6 @@ contract UserEntitlement is
         }
 
         return false;
-    }
-
-    function _removeRoleIdFromUser(address user, uint256 roleId) internal {
-        uint256[] storage roles = roleIdsByUser[user];
-        for (uint256 i = 0; i < roles.length; i++) {
-            if (roles[i] == roleId) {
-                roles[i] = roles[roles.length - 1];
-                roles.pop();
-                return;
-            }
-        }
-
-        // Optional: Revert if the roleId is not found
-        revert("Role ID not found for the user");
     }
 
     /**

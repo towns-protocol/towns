@@ -11,6 +11,23 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {VotesBase} from "./VotesBase.sol";
 
 abstract contract Votes is VotesBase, IERC5805 {
+    /// @inheritdoc IVotes
+    function delegate(address delegatee) public virtual {
+        _delegate(msg.sender, delegatee);
+    }
+
+    /// @inheritdoc IVotes
+    function delegateBySig(
+        address delegatee,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual {
+        return _delegateBySig(delegatee, nonce, expiry, v, r, s);
+    }
+
     /// @inheritdoc IERC6372
     function clock() public view virtual returns (uint48) {
         return _clock();
@@ -42,22 +59,5 @@ abstract contract Votes is VotesBase, IERC5805 {
     /// @inheritdoc IVotes
     function delegates(address account) public view virtual returns (address) {
         return _delegates(account);
-    }
-
-    /// @inheritdoc IVotes
-    function delegate(address delegatee) public virtual {
-        _delegate(msg.sender, delegatee);
-    }
-
-    /// @inheritdoc IVotes
-    function delegateBySig(
-        address delegatee,
-        uint256 nonce,
-        uint256 expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public virtual {
-        return _delegateBySig(delegatee, nonce, expiry, v, r, s);
     }
 }

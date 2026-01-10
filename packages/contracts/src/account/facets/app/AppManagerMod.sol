@@ -15,30 +15,6 @@ library AppManagerMod {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Thrown when the app ID is invalid
-    error AppManager__InvalidAppId();
-
-    /// @notice Thrown when the app is already installed
-    error AppManager__AppAlreadyInstalled();
-
-    /// @notice Thrown when the app is not installed
-    error AppManager__AppNotInstalled();
-
-    /// @notice Thrown when the app is not registered
-    error AppManager__AppNotRegistered();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         STORAGE                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // keccak256(abi.encode(uint256(keccak256("towns.account.app.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0x2e45e2674c3081261f26138b3a1b39b0261feef8186e18fcf5badd4929fe7b00;
-
     struct App {
         bytes32 appId;
         address app;
@@ -55,13 +31,29 @@ library AppManagerMod {
         mapping(address account => mapping(address app => bytes32 appId)) appIdByApp;
     }
 
-    /// @notice Returns the storage layout for the AppManager
-    /// @return $ The storage layout
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         STORAGE                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // keccak256(abi.encode(uint256(keccak256("towns.account.app.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0x2e45e2674c3081261f26138b3a1b39b0261feef8186e18fcf5badd4929fe7b00;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Thrown when the app ID is invalid
+    error AppManager__InvalidAppId();
+
+    /// @notice Thrown when the app is already installed
+    error AppManager__AppAlreadyInstalled();
+
+    /// @notice Thrown when the app is not installed
+    error AppManager__AppNotInstalled();
+
+    /// @notice Thrown when the app is not registered
+    error AppManager__AppNotRegistered();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -206,6 +198,24 @@ library AppManagerMod {
         });
     }
 
+    /// @notice Enables an app
+    /// @param account The account that owns the app
+    /// @param app The app address to enable
+    function enableApp(Layout storage $, address account, address app) internal {
+        bytes32 appId = $.appIdByApp[account][app];
+        if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
+        $.appById[account][appId].active = true;
+    }
+
+    /// @notice Disables an app
+    /// @param account The account that owns the app
+    /// @param app The app address to disable
+    function disableApp(Layout storage $, address account, address app) internal {
+        bytes32 appId = $.appIdByApp[account][app];
+        if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
+        $.appById[account][appId].active = false;
+    }
+
     /// @notice Checks if an app is installed
     /// @param account The account to check
     /// @param app The app address
@@ -271,24 +281,6 @@ library AppManagerMod {
         }
     }
 
-    /// @notice Enables an app
-    /// @param account The account that owns the app
-    /// @param app The app address to enable
-    function enableApp(Layout storage $, address account, address app) internal {
-        bytes32 appId = $.appIdByApp[account][app];
-        if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
-        $.appById[account][appId].active = true;
-    }
-
-    /// @notice Disables an app
-    /// @param account The account that owns the app
-    /// @param app The app address to disable
-    function disableApp(Layout storage $, address account, address app) internal {
-        bytes32 appId = $.appIdByApp[account][app];
-        if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
-        $.appById[account][appId].active = false;
-    }
-
     /// @notice Checks if an app is entitled to a permission
     /// @param account The account to check
     /// @param module The app module address
@@ -349,6 +341,14 @@ library AppManagerMod {
             return currentExpiration + newDuration;
         } else {
             return uint48(block.timestamp) + newDuration;
+        }
+    }
+
+    /// @notice Returns the storage layout for the AppManager
+    /// @return $ The storage layout
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
         }
     }
 }

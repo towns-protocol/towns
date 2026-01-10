@@ -25,6 +25,11 @@ interface IEntitlementGatedBase {
         uint256[] roleIds;
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event EntitlementCheckResultPosted(bytes32 indexed transactionId, NodeVoteStatus result);
+
     error EntitlementGated_InvalidAddress();
     error EntitlementGated_TransactionCheckAlreadyRegistered();
     error EntitlementGated_TransactionCheckAlreadyCompleted();
@@ -35,10 +40,6 @@ interface IEntitlementGatedBase {
     error EntitlementGated_InvalidEntitlement();
     error EntitlementGated_RequestIdNotFound();
     error EntitlementGated_InvalidValue();
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event EntitlementCheckResultPosted(bytes32 indexed transactionId, NodeVoteStatus result);
 }
 
 interface IEntitlementGated is IEntitlementGatedBase {

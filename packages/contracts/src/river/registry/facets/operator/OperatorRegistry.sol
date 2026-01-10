@@ -60,13 +60,13 @@ contract OperatorRegistry is IOperatorRegistry, RegistryModifiers, OwnableBase, 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IOperatorRegistry
-    function isOperator(address operator) public view returns (bool) {
-        return ds.operators.contains(operator);
+    function getAllOperators() external view returns (address[] memory) {
+        return ds.operators.values();
     }
 
     /// @inheritdoc IOperatorRegistry
-    function getAllOperators() external view returns (address[] memory) {
-        return ds.operators.values();
+    function isOperator(address operator) public view returns (bool) {
+        return ds.operators.contains(operator);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

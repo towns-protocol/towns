@@ -58,37 +58,6 @@ interface ISwapRouterBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Error thrown when an invalid router is specified
-    error SwapRouter__InvalidRouter();
-
-    /// @notice Error thrown when an invalid amount is provided
-    error SwapRouter__InvalidAmount();
-
-    /// @notice Error thrown when the output amount is less than the minimum expected
-    error SwapRouter__InsufficientOutput();
-
-    /// @notice Error thrown when ETH is sent but not expected (tokenIn is not the native token)
-    error SwapRouter__UnexpectedETH();
-
-    /// @notice Error thrown when an invalid BPS value is provided
-    error SwapRouter__InvalidBps();
-
-    /// @notice Error thrown when native token is used with permit (not supported)
-    error SwapRouter__NativeTokenNotSupportedWithPermit();
-
-    /// @notice Error thrown when recipient is not specified (address(0))
-    error SwapRouter__RecipientRequired();
-
-    /// @notice Error thrown when tokenIn and tokenOut are the same
-    error SwapRouter__SameToken();
-
-    /// @notice Error thrown when the poster fee in permit doesn't match the actual configured fee
-    error SwapRouter__PosterFeeMismatch();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -127,6 +96,37 @@ interface ISwapRouterBase {
         uint256 protocolAmount,
         uint256 posterAmount
     );
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Error thrown when an invalid router is specified
+    error SwapRouter__InvalidRouter();
+
+    /// @notice Error thrown when an invalid amount is provided
+    error SwapRouter__InvalidAmount();
+
+    /// @notice Error thrown when the output amount is less than the minimum expected
+    error SwapRouter__InsufficientOutput();
+
+    /// @notice Error thrown when ETH is sent but not expected (tokenIn is not the native token)
+    error SwapRouter__UnexpectedETH();
+
+    /// @notice Error thrown when an invalid BPS value is provided
+    error SwapRouter__InvalidBps();
+
+    /// @notice Error thrown when native token is used with permit (not supported)
+    error SwapRouter__NativeTokenNotSupportedWithPermit();
+
+    /// @notice Error thrown when recipient is not specified (address(0))
+    error SwapRouter__RecipientRequired();
+
+    /// @notice Error thrown when tokenIn and tokenOut are the same
+    error SwapRouter__SameToken();
+
+    /// @notice Error thrown when the poster fee in permit doesn't match the actual configured fee
+    error SwapRouter__PosterFeeMismatch();
 }
 
 interface ISwapRouter is ISwapRouterBase {

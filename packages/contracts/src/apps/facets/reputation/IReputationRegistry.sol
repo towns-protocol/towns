@@ -57,12 +57,6 @@ interface IReputationRegistryBase {
 /// @dev This contract implements the ERC-8004 Reputation Registry specification, which enables
 ///      discovering and trusting agents across organizational boundaries through reputation signals.
 interface IReputationRegistry is IReputationRegistryBase {
-    /// @notice Returns the address of the identity registry where agents are registered as NFTs
-    /// @dev The identity registry is an ERC-721 contract where each agent has a unique token ID.
-    ///      This registry links reputation data to agent identities defined in the ERC-8004 Identity Registry.
-    /// @return The address of the identity registry contract
-    function getIdentityRegistry() external view returns (address);
-
     /// @notice Posts feedback for an agent after completing a task or interaction
     /// @param agentId The NFT token ID of the agent being reviewed
     /// @param score The rating from 0 (worst) to 100 (best)
@@ -100,6 +94,12 @@ interface IReputationRegistry is IReputationRegistryBase {
         string calldata responseUri,
         bytes32 responseHash
     ) external;
+
+    /// @notice Returns the address of the identity registry where agents are registered as NFTs
+    /// @dev The identity registry is an ERC-721 contract where each agent has a unique token ID.
+    ///      This registry links reputation data to agent identities defined in the ERC-8004 Identity Registry.
+    /// @return The address of the identity registry contract
+    function getIdentityRegistry() external view returns (address);
 
     /// @notice Retrieves aggregated reputation statistics for an agent with optional filtering
     /// @param agentId The NFT token ID of the agent

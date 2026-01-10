@@ -18,10 +18,6 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for string;
 
-    function isNode(address nodeAddress) public view returns (bool) {
-        return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
-    }
-
     function registerNode(
         address nodeAddress,
         string memory url,
@@ -121,6 +117,10 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         }
 
         return nodes;
+    }
+
+    function isNode(address nodeAddress) public view returns (bool) {
+        return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
     }
 
     function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {

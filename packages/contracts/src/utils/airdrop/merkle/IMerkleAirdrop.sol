@@ -7,18 +7,18 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // contracts
 interface IMerkleAirdropBase {
-    error MerkleAirdrop__InvalidProof();
-    error MerkleAirdrop__AlreadyClaimed();
-    error MerkleAirdrop__InvalidSignature();
-
-    event Claimed(address account, uint256 amount, address recipient);
-    event MerkleRootUpdated(bytes32 merkleRoot);
-
     struct AirdropClaim {
         address account;
         uint256 amount;
         address receiver;
     }
+
+    event Claimed(address account, uint256 amount, address recipient);
+    event MerkleRootUpdated(bytes32 merkleRoot);
+
+    error MerkleAirdrop__InvalidProof();
+    error MerkleAirdrop__AlreadyClaimed();
+    error MerkleAirdrop__InvalidSignature();
 }
 
 interface IMerkleAirdrop is IMerkleAirdropBase {

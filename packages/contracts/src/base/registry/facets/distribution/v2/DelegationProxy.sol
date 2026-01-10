@@ -11,13 +11,13 @@ contract DelegationProxy is Initializable {
     address public factory;
     address public stakeToken;
 
-    constructor() payable {
-        _disableInitializers();
-    }
-
     modifier onlyFactory() {
         require(msg.sender == factory);
         _;
+    }
+
+    constructor() payable {
+        _disableInitializers();
     }
 
     /// @notice Initializes the contract with the stake token, delegates it to the given address

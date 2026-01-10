@@ -18,24 +18,24 @@ interface IPricingModulesBase {
     }
 
     // =============================================================
-    //                           Errors
-    // =============================================================
-    error InvalidPricingModule(address module);
-
-    // =============================================================
     //                           Events
     // =============================================================
     event PricingModuleAdded(address indexed module);
     event PricingModuleUpdated(address indexed module);
     event PricingModuleRemoved(address indexed module);
+
+    // =============================================================
+    //                           Errors
+    // =============================================================
+    error InvalidPricingModule(address module);
 }
 
 interface IPricingModules is IPricingModulesBase {
-    function isPricingModule(address module) external view returns (bool);
-
     function addPricingModule(address module) external;
 
     function removePricingModule(address module) external;
+
+    function isPricingModule(address module) external view returns (bool);
 
     function listPricingModules() external view returns (PricingModule[] memory);
 }

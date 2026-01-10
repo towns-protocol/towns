@@ -49,27 +49,9 @@ contract SimpleAppFacet is
         __SimpleAppFacet_init_unchained(data);
     }
 
-    function __SimpleAppFacet_init_unchained(bytes calldata data) internal {
-        _addInterface(type(ISimpleApp).interfaceId);
-        _addInterface(type(ITownsApp).interfaceId);
-        _addInterface(type(IModule).interfaceId);
-        _addInterface(type(IExecutionModule).interfaceId);
-        _addInterface(type(IERC721Receiver).interfaceId);
-        _addInterface(type(IERC1155Receiver).interfaceId);
-        _addInterface(type(IERC5267).interfaceId);
-        _initializeState(data);
-    }
-
     /// @inheritdoc ITownsApp
     function initialize(bytes calldata data) external initializer {
         __SimpleAppFacet_init_unchained(data);
-    }
-
-    /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(BaseApp, IntrospectionFacet) returns (bool) {
-        return _supportsInterface(interfaceId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -129,21 +111,9 @@ contract SimpleAppFacet is
         emit PermissionsUpdated(permissions);
     }
 
-    /// @inheritdoc IExecutionModule
-    function executionManifest() external pure returns (ExecutionManifest memory) {
-        // solhint-disable no-empty-blocks
-    }
-
-    // Public functions
     /// @inheritdoc ISimpleApp
     function getAgentId() external view returns (uint256) {
         return SimpleAppStorage.getLayout().agentId;
-    }
-
-    /// @inheritdoc IModule
-    function moduleId() public view returns (string memory) {
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        return $.name;
     }
 
     /// @inheritdoc ITownsApp
@@ -152,7 +122,64 @@ contract SimpleAppFacet is
         return $.permissions;
     }
 
+    /// @inheritdoc IExecutionModule
+    function executionManifest() external pure returns (ExecutionManifest memory) {
+        // solhint-disable no-empty-blocks
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(BaseApp, IntrospectionFacet) returns (bool) {
+        return _supportsInterface(interfaceId);
+    }
+
+    /// @inheritdoc IModule
+    function moduleId() public view returns (string memory) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.name;
+    }
+
     // Internal functions
+    function _initializeState(bytes calldata data) internal {
+        (
+            address owner,
+            string memory appId,
+            bytes32[] memory permissions,
+            uint256 installPrice,
+            uint48 accessDuration,
+            address client,
+            address entryPoint,
+            address coordinator
+        ) = abi.decode(
+                data,
+                (address, string, bytes32[], uint256, uint48, address, address, address)
+            );
+        _transferOwnership(owner);
+        __IntrospectionBase_init();
+        __SimpleAccountFacet_init_unchained(entryPoint, coordinator);
+        __EIP712_init_unchained(appId, "1");
+        __ERC1271_init_unchained(owner);
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        $.name = appId;
+        $.permissions = permissions;
+        $.installPrice = installPrice;
+        $.accessDuration = accessDuration;
+        $.client = client;
+        emit SimpleAppInitialized(owner, client);
+    }
+
+    function __SimpleAppFacet_init_unchained(bytes calldata data) internal {
+        _addInterface(type(ISimpleApp).interfaceId);
+        _addInterface(type(ITownsApp).interfaceId);
+        _addInterface(type(IModule).interfaceId);
+        _addInterface(type(IExecutionModule).interfaceId);
+        _addInterface(type(IERC721Receiver).interfaceId);
+        _addInterface(type(IERC1155Receiver).interfaceId);
+        _addInterface(type(IERC5267).interfaceId);
+        _initializeState(data);
+    }
+
     /// @dev Custom implementation supporting both owner and client
     function _erc1271IsValidSignatureNowCalldata(
         bytes32 hash,
@@ -189,33 +216,5 @@ contract SimpleAppFacet is
 
     function _moduleOwner() internal view override returns (address) {
         return _owner();
-    }
-
-    function _initializeState(bytes calldata data) internal {
-        (
-            address owner,
-            string memory appId,
-            bytes32[] memory permissions,
-            uint256 installPrice,
-            uint48 accessDuration,
-            address client,
-            address entryPoint,
-            address coordinator
-        ) = abi.decode(
-                data,
-                (address, string, bytes32[], uint256, uint48, address, address, address)
-            );
-        _transferOwnership(owner);
-        __IntrospectionBase_init();
-        __SimpleAccountFacet_init_unchained(entryPoint, coordinator);
-        __EIP712_init_unchained(appId, "1");
-        __ERC1271_init_unchained(owner);
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        $.name = appId;
-        $.permissions = permissions;
-        $.installPrice = installPrice;
-        $.accessDuration = accessDuration;
-        $.client = client;
-        emit SimpleAppInitialized(owner, client);
     }
 }

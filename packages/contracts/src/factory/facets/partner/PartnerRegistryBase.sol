@@ -90,6 +90,20 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         emit PartnerRemoved(account);
     }
 
+    function _setMaxPartnerFee(uint256 fee) internal {
+        PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
+        ds.partnerSettings.maxPartnerFee = fee;
+
+        emit MaxPartnerFeeSet(fee);
+    }
+
+    function _setRegistryFee(uint256 fee) internal {
+        PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
+        ds.partnerSettings.registryFee = fee;
+
+        emit RegistryFeeSet(fee);
+    }
+
     function _partner(address account) internal view returns (Partner memory partner) {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
@@ -111,22 +125,8 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         fee = ds.partnerSettings.maxPartnerFee;
     }
 
-    function _setMaxPartnerFee(uint256 fee) internal {
-        PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
-        ds.partnerSettings.maxPartnerFee = fee;
-
-        emit MaxPartnerFeeSet(fee);
-    }
-
     function _registryFee() internal view returns (uint256 fee) {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
         fee = ds.partnerSettings.registryFee;
-    }
-
-    function _setRegistryFee(uint256 fee) internal {
-        PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
-        ds.partnerSettings.registryFee = fee;
-
-        emit RegistryFeeSet(fee);
     }
 }

@@ -15,21 +15,6 @@ import {MainnetDelegationBase} from "src/base/registry/facets/mainnet/MainnetDel
 
 contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, OwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        INITIALIZERS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function __MainnetDelegation_init(address messenger) external onlyInitializing {
-        __MainnetDelegation_init_unchained(messenger);
-    }
-
-    function __MainnetDelegation_init_unchained(address messenger) internal {
-        _addInterface(type(IMainnetDelegation).interfaceId);
-        MainnetDelegationStorage.layout().messenger = messenger;
-
-        emit CrossDomainMessengerSet(messenger);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          MODIFIER                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -42,6 +27,14 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
             "MainnetDelegation: sender is not the cross-domain messenger"
         );
         _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INITIALIZERS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __MainnetDelegation_init(address messenger) external onlyInitializing {
+        __MainnetDelegation_init_unchained(messenger);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -122,5 +115,16 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
         address claimer
     ) external view returns (address[] memory) {
         return _getDelegatorsByAuthorizedClaimer(claimer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __MainnetDelegation_init_unchained(address messenger) internal {
+        _addInterface(type(IMainnetDelegation).interfaceId);
+        MainnetDelegationStorage.layout().messenger = messenger;
+
+        emit CrossDomainMessengerSet(messenger);
     }
 }

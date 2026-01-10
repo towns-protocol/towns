@@ -18,10 +18,6 @@ library L2RegistryMod {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("towns.domains.facets.l2.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0xd006f5666f0513641f83237d8fe37b671902940d193477fdbf21bf0fa624e400;
-
     /// @notice Storage layout for the L2 registry
     /// @dev baseNode is the root domain hash (e.g., namehash("towns.eth")), names maps node to DNS-encoded name, metadata is arbitrary bytes set by registrar, registrars are approved minters, token is the ERC721 storage
     struct Layout {
@@ -32,12 +28,9 @@ library L2RegistryMod {
         MinimalERC721Storage token;
     }
 
-    /// @notice Returns the storage layout for this module
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    // keccak256(abi.encode(uint256(keccak256("towns.domains.facets.l2.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0xd006f5666f0513641f83237d8fe37b671902940d193477fdbf21bf0fa624e400;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -183,11 +176,6 @@ library L2RegistryMod {
         emit BaseNodeUpdated(baseNode);
     }
 
-    /// @notice Checks if an address is an approved registrar
-    function isRegistrar(Layout storage $, address registrar) internal view returns (bool) {
-        return $.registrars[registrar];
-    }
-
     /// @notice Sets or updates the metadata for a node
     /// @dev Only callable by registrar. Metadata is arbitrary bytes that the registrar can interpret (e.g., expiration, tier, etc.)
     /// @param node The namehash of the subdomain
@@ -195,6 +183,11 @@ library L2RegistryMod {
     function setMetadata(Layout storage $, bytes32 node, bytes calldata data) internal {
         $.metadata[node] = data;
         emit MetadataSet(node, data);
+    }
+
+    /// @notice Checks if an address is an approved registrar
+    function isRegistrar(Layout storage $, address registrar) internal view returns (bool) {
+        return $.registrars[registrar];
     }
 
     /// @notice Returns the metadata bytes for a node
@@ -215,26 +208,6 @@ library L2RegistryMod {
         );
 
         return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
-    }
-
-    /// @notice Computes the namehash of a subdomain from its parent node and label (keccak256(parentNode, keccak256(label)))
-    function encodeNode(bytes32 parentNode, string calldata label) internal pure returns (bytes32) {
-        bytes32 labelhash = keccak256(bytes(label));
-        return keccak256(abi.encodePacked(parentNode, labelhash));
-    }
-
-    /// @notice Encodes a label and parent name into DNS wire format (length-prefixed label + parent name bytes)
-    function encodeName(
-        string memory label,
-        bytes memory name
-    ) internal pure returns (bytes memory ret) {
-        if (bytes(label).length < 1) {
-            L2RegistryMod_LabelTooShort.selector.revertWith();
-        }
-        if (bytes(label).length > 255) {
-            L2RegistryMod_LabelTooLong.selector.revertWith();
-        }
-        return abi.encodePacked(uint8(bytes(label).length), label, name);
     }
 
     /// @notice Reverts if caller is neither the node owner nor an approved registrar
@@ -282,5 +255,32 @@ library L2RegistryMod {
         }
 
         return true;
+    }
+
+    /// @notice Returns the storage layout for this module
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
+    }
+
+    /// @notice Computes the namehash of a subdomain from its parent node and label (keccak256(parentNode, keccak256(label)))
+    function encodeNode(bytes32 parentNode, string calldata label) internal pure returns (bytes32) {
+        bytes32 labelhash = keccak256(bytes(label));
+        return keccak256(abi.encodePacked(parentNode, labelhash));
+    }
+
+    /// @notice Encodes a label and parent name into DNS wire format (length-prefixed label + parent name bytes)
+    function encodeName(
+        string memory label,
+        bytes memory name
+    ) internal pure returns (bytes memory ret) {
+        if (bytes(label).length < 1) {
+            L2RegistryMod_LabelTooShort.selector.revertWith();
+        }
+        if (bytes(label).length > 255) {
+            L2RegistryMod_LabelTooLong.selector.revertWith();
+        }
+        return abi.encodePacked(uint8(bytes(label).length), label, name);
     }
 }

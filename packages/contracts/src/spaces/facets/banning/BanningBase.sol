@@ -18,13 +18,13 @@ abstract contract BanningBase is IBanningBase {
         emit Banned(msg.sender, tokenId);
     }
 
-    function _isBanned(uint256 tokenId) internal view returns (bool isBanned) {
-        return BanningStorage.layout().bannedIds.contains(tokenId);
-    }
-
     function _unban(uint256 tokenId) internal {
         BanningStorage.layout().bannedIds.remove(tokenId);
         emit Unbanned(msg.sender, tokenId);
+    }
+
+    function _isBanned(uint256 tokenId) internal view returns (bool isBanned) {
+        return BanningStorage.layout().bannedIds.contains(tokenId);
     }
 
     function _bannedTokenIds() internal view returns (uint256[] memory) {

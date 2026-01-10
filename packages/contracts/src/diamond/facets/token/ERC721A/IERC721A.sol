@@ -33,6 +33,44 @@ interface IERC721ABase {
     }
 
     // =============================================================
+    //                            IERC721
+    // =============================================================
+
+    /**
+     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+    /**
+     * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
+     */
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+
+    /**
+     * @dev Emitted when `owner` enables or disables
+     * (`approved`) `operator` to manage all of its assets.
+     */
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+
+    // =============================================================
+    //                           IERC2309
+    // =============================================================
+
+    /**
+     * @dev Emitted when tokens in `fromTokenId` to `toTokenId`
+     * (inclusive) is transferred from `from` to `to`, as defined in the
+     * [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard.
+     *
+     * See {_mintERC2309} for more details.
+     */
+    event ConsecutiveTransfer(
+        uint256 indexed fromTokenId,
+        uint256 toTokenId,
+        address indexed from,
+        address indexed to
+    );
+
+    // =============================================================
     //                           ERRORS
     // =============================================================
 
@@ -101,44 +139,6 @@ interface IERC721ABase {
      * The `extraData` cannot be set on an unintialized ownership slot.
      */
     error OwnershipNotInitializedForExtraData();
-
-    // =============================================================
-    //                            IERC721
-    // =============================================================
-
-    /**
-     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
-    /**
-     * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
-     */
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-
-    /**
-     * @dev Emitted when `owner` enables or disables
-     * (`approved`) `operator` to manage all of its assets.
-     */
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-
-    // =============================================================
-    //                           IERC2309
-    // =============================================================
-
-    /**
-     * @dev Emitted when tokens in `fromTokenId` to `toTokenId`
-     * (inclusive) is transferred from `from` to `to`, as defined in the
-     * [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard.
-     *
-     * See {_mintERC2309} for more details.
-     */
-    event ConsecutiveTransfer(
-        uint256 indexed fromTokenId,
-        uint256 toTokenId,
-        address indexed from,
-        address indexed to
-    );
 }
 
 /**
@@ -146,29 +146,8 @@ interface IERC721ABase {
  */
 interface IERC721A is IERC721ABase {
     // =============================================================
-    //                         TOKEN COUNTERS
+    //                     EXTERNAL PAYABLE
     // =============================================================
-
-    /**
-     * @dev Returns the total number of tokens in existence.
-     * Burned tokens will reduce the count.
-     * To get the total number of tokens minted, please see {_totalMinted}.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the number of tokens in `owner`'s account.
-     */
-    function balanceOf(address owner) external view returns (uint256 balance);
-
-    /**
-     * @dev Returns the owner of the `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function ownerOf(uint256 tokenId) external view returns (address owner);
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`,
@@ -233,6 +212,10 @@ interface IERC721A is IERC721ABase {
      */
     function approve(address to, uint256 tokenId) external payable;
 
+    // =============================================================
+    //                     EXTERNAL (NON-VIEW)
+    // =============================================================
+
     /**
      * @dev Approve or remove `operator` as an operator for the caller.
      * Operators can call {transferFrom} or {safeTransferFrom}
@@ -245,6 +228,31 @@ interface IERC721A is IERC721ABase {
      * Emits an {ApprovalForAll} event.
      */
     function setApprovalForAll(address operator, bool _approved) external;
+
+    // =============================================================
+    //                         EXTERNAL VIEW
+    // =============================================================
+
+    /**
+     * @dev Returns the total number of tokens in existence.
+     * Burned tokens will reduce the count.
+     * To get the total number of tokens minted, please see {_totalMinted}.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the number of tokens in `owner`'s account.
+     */
+    function balanceOf(address owner) external view returns (uint256 balance);
+
+    /**
+     * @dev Returns the owner of the `tokenId` token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function ownerOf(uint256 tokenId) external view returns (address owner);
 
     /**
      * @dev Returns the account approved for `tokenId` token.

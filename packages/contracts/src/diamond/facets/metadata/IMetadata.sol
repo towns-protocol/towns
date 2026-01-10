@@ -13,6 +13,9 @@ interface IMetadataBase {
 }
 
 interface IMetadata is IMetadataBase {
+    /// @dev Sets the metadata URI of the contract
+    function setContractURI(string calldata uri) external;
+
     /// @dev Returns the contract type
     function contractType() external view returns (bytes32);
 
@@ -21,7 +24,4 @@ interface IMetadata is IMetadataBase {
 
     /// @dev Returns the metadata URI of the contract
     function contractURI() external view returns (string memory);
-
-    /// @dev Sets the metadata URI of the contract
-    function setContractURI(string calldata uri) external;
 }

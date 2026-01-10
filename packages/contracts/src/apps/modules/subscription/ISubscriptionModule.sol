@@ -17,24 +17,6 @@ interface ISubscriptionModuleBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    error SubscriptionModule__InactiveSubscription();
-    error SubscriptionModule__InvalidSpace();
-    error SubscriptionModule__InvalidSender();
-    error SubscriptionModule__NotSupported();
-    error SubscriptionModule__InvalidEntityId();
-    error SubscriptionModule__InvalidCaller();
-    error SubscriptionModule__ExceedsMaxBatchSize();
-    error SubscriptionModule__EmptyBatch();
-    error SubscriptionModule__InvalidTokenOwner();
-    error SubscriptionModule__ActiveSubscription();
-    error SubscriptionModule__MembershipBanned();
-    error SubscriptionModule__MembershipExpired();
-    error SubscriptionModule__SubscriptionAlreadyInstalled();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -82,6 +64,24 @@ interface ISubscriptionModuleBase {
     event OperatorGranted(address indexed operator);
     event OperatorRevoked(address indexed operator);
     event SpaceFactoryChanged(address indexed spaceFactory);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    error SubscriptionModule__InactiveSubscription();
+    error SubscriptionModule__InvalidSpace();
+    error SubscriptionModule__InvalidSender();
+    error SubscriptionModule__NotSupported();
+    error SubscriptionModule__InvalidEntityId();
+    error SubscriptionModule__InvalidCaller();
+    error SubscriptionModule__ExceedsMaxBatchSize();
+    error SubscriptionModule__EmptyBatch();
+    error SubscriptionModule__InvalidTokenOwner();
+    error SubscriptionModule__ActiveSubscription();
+    error SubscriptionModule__MembershipBanned();
+    error SubscriptionModule__MembershipExpired();
+    error SubscriptionModule__SubscriptionAlreadyInstalled();
 }
 
 interface ISubscriptionModule is ISubscriptionModuleBase {

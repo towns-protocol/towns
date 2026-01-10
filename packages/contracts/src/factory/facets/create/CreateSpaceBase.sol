@@ -83,91 +83,6 @@ abstract contract CreateSpaceBase is IArchitectBase {
         );
     }
 
-    function _createSpaceCore(
-        Metadata calldata metadata,
-        IMembershipBase.Membership calldata settings,
-        string[] calldata permissions,
-        MembershipRequirements memory requirements,
-        ChannelInfo calldata channel,
-        SpaceOptions memory spaceOptions
-    ) private returns (address spaceAddress) {
-        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
-
-        // get the token id of the next space
-        uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
-
-        // deploy space
-        spaceAddress = _deploySpace(spaceTokenId, metadata, settings, spaceOptions);
-
-        // deploy user entitlement
-        IUserEntitlement userEntitlement = IUserEntitlement(
-            _deployEntitlement(ims.userEntitlement, spaceAddress)
-        );
-
-        // deploy token entitlement
-        IRuleEntitlement ruleEntitlement = IRuleEntitlement(
-            _deployEntitlement(ims.ruleEntitlement, spaceAddress)
-        );
-
-        address[] memory entitlements = new address[](2);
-        entitlements[0] = address(userEntitlement);
-        entitlements[1] = address(ruleEntitlement);
-
-        // set entitlements as immutable
-        IEntitlementsManager(spaceAddress).addImmutableEntitlements(entitlements);
-
-        // create minter role with requirements
-        string[] memory joinPermissions = new string[](1);
-        joinPermissions[0] = Permissions.JoinSpace;
-        if (requirements.everyone) {
-            _createEveryoneEntitlement(spaceAddress, MINTER_ROLE, joinPermissions, userEntitlement);
-        } else {
-            _createEntitlementForRole(
-                spaceAddress,
-                MINTER_ROLE,
-                joinPermissions,
-                requirements,
-                userEntitlement,
-                ruleEntitlement
-            );
-        }
-
-        uint256 memberRoleId;
-
-        // if entitlement are synced, create a role with the membership requirements
-        if (requirements.syncEntitlements) {
-            memberRoleId = _createEntitlementForRole(
-                spaceAddress,
-                settings.name,
-                permissions,
-                requirements,
-                userEntitlement,
-                ruleEntitlement
-            );
-        } else {
-            // else create a role with the everyone entitlement
-            memberRoleId = _createEveryoneEntitlement(
-                spaceAddress,
-                settings.name,
-                permissions,
-                userEntitlement
-            );
-        }
-
-        // create default channel
-        _createDefaultChannel(spaceAddress, memberRoleId, channel);
-
-        // transfer nft to sender
-        IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
-            address(this),
-            spaceOptions.to,
-            spaceTokenId
-        );
-
-        // emit event
-        emit SpaceCreated(spaceOptions.to, spaceTokenId, spaceAddress);
-    }
-
     function _createSpace(
         SpaceInfo calldata spaceInfo,
         SpaceOptions memory spaceOptions
@@ -375,5 +290,94 @@ abstract contract CreateSpaceBase is IArchitectBase {
                 )
             )
         );
+    }
+
+    // =============================================================
+    //                      Private Helpers
+    // =============================================================
+
+    function _createSpaceCore(
+        Metadata calldata metadata,
+        IMembershipBase.Membership calldata settings,
+        string[] calldata permissions,
+        MembershipRequirements memory requirements,
+        ChannelInfo calldata channel,
+        SpaceOptions memory spaceOptions
+    ) private returns (address spaceAddress) {
+        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
+
+        // get the token id of the next space
+        uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
+
+        // deploy space
+        spaceAddress = _deploySpace(spaceTokenId, metadata, settings, spaceOptions);
+
+        // deploy user entitlement
+        IUserEntitlement userEntitlement = IUserEntitlement(
+            _deployEntitlement(ims.userEntitlement, spaceAddress)
+        );
+
+        // deploy token entitlement
+        IRuleEntitlement ruleEntitlement = IRuleEntitlement(
+            _deployEntitlement(ims.ruleEntitlement, spaceAddress)
+        );
+
+        address[] memory entitlements = new address[](2);
+        entitlements[0] = address(userEntitlement);
+        entitlements[1] = address(ruleEntitlement);
+
+        // set entitlements as immutable
+        IEntitlementsManager(spaceAddress).addImmutableEntitlements(entitlements);
+
+        // create minter role with requirements
+        string[] memory joinPermissions = new string[](1);
+        joinPermissions[0] = Permissions.JoinSpace;
+        if (requirements.everyone) {
+            _createEveryoneEntitlement(spaceAddress, MINTER_ROLE, joinPermissions, userEntitlement);
+        } else {
+            _createEntitlementForRole(
+                spaceAddress,
+                MINTER_ROLE,
+                joinPermissions,
+                requirements,
+                userEntitlement,
+                ruleEntitlement
+            );
+        }
+
+        uint256 memberRoleId;
+
+        // if entitlement are synced, create a role with the membership requirements
+        if (requirements.syncEntitlements) {
+            memberRoleId = _createEntitlementForRole(
+                spaceAddress,
+                settings.name,
+                permissions,
+                requirements,
+                userEntitlement,
+                ruleEntitlement
+            );
+        } else {
+            // else create a role with the everyone entitlement
+            memberRoleId = _createEveryoneEntitlement(
+                spaceAddress,
+                settings.name,
+                permissions,
+                userEntitlement
+            );
+        }
+
+        // create default channel
+        _createDefaultChannel(spaceAddress, memberRoleId, channel);
+
+        // transfer nft to sender
+        IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
+            address(this),
+            spaceOptions.to,
+            spaceTokenId
+        );
+
+        // emit event
+        emit SpaceCreated(spaceOptions.to, spaceTokenId, spaceAddress);
     }
 }

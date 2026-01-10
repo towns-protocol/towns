@@ -4,17 +4,6 @@ pragma solidity ^0.8.23;
 import {IERC721ABase} from "./IERC721A.sol";
 
 library ERC721AStorage {
-    // keccak256(abi.encode(uint256(keccak256("diamond.facets.token.ERC721A.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0x6569bde4a160c636ea8b8d11acb83a60d7fec0b8f2e09389306cba0e1340df00;
-
-    // Mask of an entry in packed address data.
-    uint256 internal constant _BITMASK_ADDRESS_DATA_ENTRY = (1 << 64) - 1;
-
-    // The bit mask of the `burned` bit in packed ownership.
-    uint256 internal constant _BITMASK_BURNED = 1 << 224;
-
     struct Layout {
         // =============================================================
         //                            STORAGE
@@ -53,21 +42,16 @@ library ERC721AStorage {
         mapping(address => mapping(address => bool)) _operatorApprovals;
     }
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 slot = STORAGE_SLOT;
-        assembly {
-            l.slot := slot
-        }
-    }
+    // keccak256(abi.encode(uint256(keccak256("diamond.facets.token.ERC721A.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0x6569bde4a160c636ea8b8d11acb83a60d7fec0b8f2e09389306cba0e1340df00;
 
-    function balanceOf(address owner) internal view returns (uint256) {
-        if (owner == address(0)) revert IERC721ABase.BalanceQueryForZeroAddress();
-        return layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
-    }
+    // Mask of an entry in packed address data.
+    uint256 internal constant _BITMASK_ADDRESS_DATA_ENTRY = (1 << 64) - 1;
 
-    function ownerAt(uint256 startTokenId, uint256 tokenId) internal view returns (address) {
-        return address(uint160(packedOwnershipOf(startTokenId, tokenId)));
-    }
+    // The bit mask of the `burned` bit in packed ownership.
+    uint256 internal constant _BITMASK_BURNED = 1 << 224;
 
     /**
      * Returns the packed ownership data of `tokenId`.
@@ -111,5 +95,21 @@ library ERC721AStorage {
             }
         }
         revert IERC721ABase.OwnerQueryForNonexistentToken();
+    }
+
+    function balanceOf(address owner) internal view returns (uint256) {
+        if (owner == address(0)) revert IERC721ABase.BalanceQueryForZeroAddress();
+        return layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
+    }
+
+    function ownerAt(uint256 startTokenId, uint256 tokenId) internal view returns (address) {
+        return address(uint160(packedOwnershipOf(startTokenId, tokenId)));
+    }
+
+    function layout() internal pure returns (Layout storage l) {
+        bytes32 slot = STORAGE_SLOT;
+        assembly {
+            l.slot := slot
+        }
     }
 }

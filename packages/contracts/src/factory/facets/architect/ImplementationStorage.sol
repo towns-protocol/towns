@@ -15,12 +15,6 @@ import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitial
 // contracts
 
 library ImplementationStorage {
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.architect.implementation.storage")) -
-    // 1))
-    // & ~bytes32(uint256(0xff))
-    bytes32 internal constant SLOT_POSITION =
-        0x9e34afa7b4d27d347d25d9d9dab4f1a106fa081382e6c4243e834d093e787d00;
-
     struct Layout {
         ISpaceOwner spaceOwnerToken;
         IUserEntitlement userEntitlement;
@@ -30,6 +24,12 @@ library ImplementationStorage {
         IRuleEntitlement legacyRuleEntitlement;
         ISpaceProxyInitializer proxyInitializer;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.architect.implementation.storage")) -
+    // 1))
+    // & ~bytes32(uint256(0xff))
+    bytes32 internal constant SLOT_POSITION =
+        0x9e34afa7b4d27d347d25d9d9dab4f1a106fa081382e6c4243e834d093e787d00;
 
     function layout() internal pure returns (Layout storage ds) {
         bytes32 position = SLOT_POSITION;

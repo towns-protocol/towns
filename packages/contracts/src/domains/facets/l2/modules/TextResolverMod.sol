@@ -12,21 +12,14 @@ library TextResolverMod {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("ens.domains.text.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
-        0xccd57d47affdb87d4363b03aa46f3e8c1b9394057f472ce512f3a1ec1c667400;
-
     /// @notice Storage layout with versioned text records: version => node => key => value
     struct Layout {
         mapping(uint64 => mapping(bytes32 => mapping(string => string))) versionable_texts;
     }
 
-    /// @notice Returns the storage layout for this module
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    // keccak256(abi.encode(uint256(keccak256("ens.domains.text.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0xccd57d47affdb87d4363b03aa46f3e8c1b9394057f472ce512f3a1ec1c667400;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
@@ -58,5 +51,12 @@ library TextResolverMod {
         string calldata key
     ) internal view returns (string memory) {
         return $.versionable_texts[version][node][key];
+    }
+
+    /// @notice Returns the storage layout for this module
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 }

@@ -26,6 +26,14 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
     /// @param entitlements The entitlements to add
     function addImmutableEntitlements(address[] calldata entitlements) external;
 
+    /// @notice Adds an entitlement to the space
+    /// @param entitlement The entitlement to add
+    function addEntitlementModule(address entitlement) external;
+
+    /// @notice Removes an entitlement from the space
+    /// @param entitlement The entitlement to remove
+    function removeEntitlementModule(address entitlement) external;
+
     /// @notice Checks if a user is entitled to a permission in the space
     /// @param user The user to check
     /// @param permission The permission to check
@@ -45,14 +53,6 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
         address user,
         string calldata permission
     ) external view returns (bool);
-
-    /// @notice Adds an entitlement to the space
-    /// @param entitlement The entitlement to add
-    function addEntitlementModule(address entitlement) external;
-
-    /// @notice Removes an entitlement from the space
-    /// @param entitlement The entitlement to remove
-    function removeEntitlementModule(address entitlement) external;
 
     /// @notice Gets an entitlement from the space
     /// @param entitlement The entitlement to get

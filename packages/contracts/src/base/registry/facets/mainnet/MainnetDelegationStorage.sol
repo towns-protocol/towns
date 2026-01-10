@@ -10,11 +10,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library MainnetDelegationStorage {
-    // keccak256(abi.encode(uint256(keccak256("tokens.river.base.delegation.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0x264df150e9e008a39dd109254e3af3cdadbfbd33261903d1163f43eaee68e700;
-
     struct Layout {
         mapping(address operator => EnumerableSet.AddressSet) delegatorsByOperator;
         mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
@@ -27,6 +22,11 @@ library MainnetDelegationStorage {
         mapping(address delegator => uint256 depositId) depositIdByDelegator;
         bytes32 delegationDigest;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("tokens.river.base.delegation.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0x264df150e9e008a39dd109254e3af3cdadbfbd33261903d1163f43eaee68e700;
 
     function layout() internal pure returns (Layout storage s) {
         assembly {

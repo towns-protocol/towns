@@ -28,15 +28,6 @@ struct VoteResults {
 }
 
 interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
-    /// @notice Checks if a specific entitlement check request has been completed
-    /// @param transactionId The unique identifier of the transaction
-    /// @param requestId The ID of the specific check request
-    /// @return bool True if the check is completed, false otherwise
-    function isCheckCompleted(
-        bytes32 transactionId,
-        uint256 requestId
-    ) external view returns (bool);
-
     /// @notice Allows protocol to provide a refund for a timed-out entitlement check
     /// @dev Will revert if the contract has insufficient funds
     /// @param senderAddress The address to receive the refund
@@ -52,4 +43,13 @@ interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
         uint256 roleId,
         NodeVoteStatus result
     ) external;
+
+    /// @notice Checks if a specific entitlement check request has been completed
+    /// @param transactionId The unique identifier of the transaction
+    /// @param requestId The ID of the specific check request
+    /// @return bool True if the check is completed, false otherwise
+    function isCheckCompleted(
+        bytes32 transactionId,
+        uint256 requestId
+    ) external view returns (bool);
 }

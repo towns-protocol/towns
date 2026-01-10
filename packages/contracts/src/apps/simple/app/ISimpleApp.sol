@@ -9,27 +9,6 @@ import {IIdentityRegistryBase} from "../../facets/identity/IIdentityRegistry.sol
 // contracts
 
 interface ISimpleAppBase {
-    /// @notice Thrown when the recipient address is the zero address
-    error SimpleApp__ZeroAddress();
-
-    /// @notice Thrown when there is no balance to withdraw
-    error SimpleApp__NoBalanceToWithdraw();
-
-    /// @notice Thrown when the currency address is the zero address
-    error SimpleApp__InvalidAddressInput();
-
-    /// @notice Thrown when the amount is zero
-    error SimpleApp__InvalidAmount();
-
-    /// @notice Thrown when the caller is not allowed
-    error SimpleApp__InvalidCaller();
-
-    /// @notice Thrown when the currency is invalid
-    error SimpleApp__InvalidCurrency();
-
-    /// @notice Thrown when the agent is already promoted
-    error SimpleApp__AgentAlreadyPromoted();
-
     /// @notice Emitted when the app is initialized
     /// @param owner The owner of the app
     /// @param client The client of the app
@@ -64,6 +43,27 @@ interface ISimpleAppBase {
     /// @param owner The owner of the app
     /// @param agentId The ID of the agent
     event AgentPromoted(address indexed owner, uint256 indexed agentId);
+
+    /// @notice Thrown when the recipient address is the zero address
+    error SimpleApp__ZeroAddress();
+
+    /// @notice Thrown when there is no balance to withdraw
+    error SimpleApp__NoBalanceToWithdraw();
+
+    /// @notice Thrown when the currency address is the zero address
+    error SimpleApp__InvalidAddressInput();
+
+    /// @notice Thrown when the amount is zero
+    error SimpleApp__InvalidAmount();
+
+    /// @notice Thrown when the caller is not allowed
+    error SimpleApp__InvalidCaller();
+
+    /// @notice Thrown when the currency is invalid
+    error SimpleApp__InvalidCurrency();
+
+    /// @notice Thrown when the agent is already promoted
+    error SimpleApp__AgentAlreadyPromoted();
 }
 
 interface ISimpleApp is ISimpleAppBase {

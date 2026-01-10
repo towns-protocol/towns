@@ -28,10 +28,6 @@ contract IdentityRegistryFacet is
         __ERC721A_init_unchained("Towns Bot Agent", "TBA");
     }
 
-    function __IdentityRegistryFacet_init_unchained() internal {
-        _addInterface(type(IIdentityRegistry).interfaceId);
-    }
-
     /// @inheritdoc IIdentityRegistry
     function register() external returns (uint256 agentId) {
         _verifyAgent();
@@ -104,10 +100,8 @@ contract IdentityRegistryFacet is
     /*                      INTERNAL FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _verifyMetadataLength(MetadataEntry[] calldata metadata) internal pure {
-        uint256 metadataLength = metadata.length;
-        if (metadataLength > MAX_METADATA_ENTRIES)
-            IdentityRegistry__TooManyMetadataEntries.selector.revertWith();
+    function __IdentityRegistryFacet_init_unchained() internal {
+        _addInterface(type(IIdentityRegistry).interfaceId);
     }
 
     function _verifyAgent() internal view {
@@ -131,5 +125,11 @@ contract IdentityRegistryFacet is
 
     function _startTokenId() internal pure override returns (uint256) {
         return 1;
+    }
+
+    function _verifyMetadataLength(MetadataEntry[] calldata metadata) internal pure {
+        uint256 metadataLength = metadata.length;
+        if (metadataLength > MAX_METADATA_ENTRIES)
+            IdentityRegistry__TooManyMetadataEntries.selector.revertWith();
     }
 }

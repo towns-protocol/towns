@@ -10,11 +10,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library EntitlementsManagerStorage {
-    // keccak256(abi.encode(uint256(keccak256("spaces.facets.entitlements.manager.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0xa558e822bd359dacbe30f0da89cbfde5f95895b441e13a4864caec1423c93100;
-
     struct Entitlement {
         IEntitlement entitlement;
         bool isImmutable;
@@ -25,6 +20,11 @@ library EntitlementsManagerStorage {
         mapping(address => Entitlement) entitlementByAddress;
         EnumerableSet.AddressSet entitlements;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("spaces.facets.entitlements.manager.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xa558e822bd359dacbe30f0da89cbfde5f95895b441e13a4864caec1423c93100;
 
     function layout() internal pure returns (Layout storage ds) {
         assembly {

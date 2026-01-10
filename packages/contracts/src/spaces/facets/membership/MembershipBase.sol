@@ -21,6 +21,10 @@ abstract contract MembershipBase is IMembershipBase {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function __MembershipBase_init(Membership memory info, address spaceFactory) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
@@ -48,8 +52,45 @@ abstract contract MembershipBase is IMembershipBase {
         }
     }
 
+    function _setMembershipDuration(uint64 duration) internal {
+        _verifyDuration(duration);
+        MembershipStorage.layout().membershipDuration = duration;
+    }
+
+    function _setPricingModule(address newPricingModule) internal {
+        MembershipStorage.layout().pricingModule = newPricingModule;
+    }
+
+    function _setMembershipRenewalPrice(uint256 tokenId, uint256 pricePaid) internal {
+        MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
+    }
+
+    function _setMembershipFreeAllocation(uint256 newAllocation) internal {
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
+        ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
+    }
+
+    function _setMembershipSupplyLimit(uint256 newLimit) internal {
+        MembershipStorage.layout().membershipMaxSupply = newLimit;
+    }
+
+    /// @dev Sets the membership currency. Only currencies with an enabled fee config in FeeManager
+    /// can be set. Native token (address(0) or NATIVE_TOKEN) is always supported.
+    function _setMembershipCurrency(address currency) internal {
+        if (!(currency == address(0) || currency == CurrencyTransfer.NATIVE_TOKEN)) {
+            bytes32 feeType = FeeTypesLib.membership(currency);
+            FeeConfig memory config = IFeeManager(_getSpaceFactory()).getFeeConfig(feeType);
+            if (!config.enabled) Membership__UnsupportedCurrency.selector.revertWith();
+        }
+        MembershipStorage.layout().membershipCurrency = currency;
+    }
+
+    function _setMembershipImage(string memory image) internal {
+        MembershipStorage.layout().membershipImage = image;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         MEMBERSHIP                         */
+    /*                        INTERNAL VIEW                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _getMembershipPrice(
@@ -67,23 +108,12 @@ abstract contract MembershipBase is IMembershipBase {
             IFeeManager(_getSpaceFactory()).calculateFee(feeType, address(0), membershipPrice, "");
     }
 
-    /// @notice Returns the fee type for the membership currency
-    /// @dev Uses dynamic fee type for non-native currencies
-    function _getMembershipFeeType(address currency) internal pure returns (bytes32) {
-        if (currency == CurrencyTransfer.NATIVE_TOKEN) return FeeTypesLib.MEMBERSHIP;
-        return FeeTypesLib.membership(currency);
-    }
-
     function _getTotalMembershipPayment(
         uint256 membershipPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
         totalRequired = membershipPrice + protocolFee;
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          DURATION                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _verifyDuration(uint64 duration) internal view {
         uint256 maxDuration = _getPlatformRequirements().getMembershipDuration();
@@ -99,15 +129,6 @@ abstract contract MembershipBase is IMembershipBase {
         if (duration == 0) duration = _getPlatformRequirements().getMembershipDuration();
     }
 
-    function _setMembershipDuration(uint64 duration) internal {
-        _verifyDuration(duration);
-        MembershipStorage.layout().membershipDuration = duration;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       PRICING MODULE                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function _verifyPricingModule(address pricingModule) internal view {
         if (pricingModule == address(0)) Membership__InvalidPricingModule.selector.revertWith();
 
@@ -116,20 +137,8 @@ abstract contract MembershipBase is IMembershipBase {
         }
     }
 
-    function _setPricingModule(address newPricingModule) internal {
-        MembershipStorage.layout().pricingModule = newPricingModule;
-    }
-
     function _getPricingModule() internal view returns (address) {
         return MembershipStorage.layout().pricingModule;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           RENEWAL                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _setMembershipRenewalPrice(uint256 tokenId, uint256 pricePaid) internal {
-        MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
     }
 
     function _getMembershipRenewalPrice(
@@ -147,20 +156,11 @@ abstract contract MembershipBase is IMembershipBase {
         return FixedPointMathLib.min(lockedRenewalPrice, currentPrice);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         ALLOCATION                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function _verifyFreeAllocation(uint256 newAllocation) internal view {
         // verify newLimit is not more than the allowed platform limit
         if (newAllocation > _getPlatformRequirements().getMembershipMintLimit()) {
             Membership__InvalidFreeAllocation.selector.revertWith();
         }
-    }
-
-    function _setMembershipFreeAllocation(uint256 newAllocation) internal {
-        MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
     }
 
     function _getMembershipFreeAllocation() internal view returns (uint256) {
@@ -171,36 +171,8 @@ abstract contract MembershipBase is IMembershipBase {
         return _getPlatformRequirements().getMembershipMintLimit();
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        SUPPLY LIMIT                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _verifyMaxSupply(uint256 newLimit, uint256 totalSupply) internal pure {
-        // if the new limit is less than the current total supply, revert
-        if (newLimit < totalSupply) Membership__InvalidMaxSupply.selector.revertWith();
-    }
-
-    function _setMembershipSupplyLimit(uint256 newLimit) internal {
-        MembershipStorage.layout().membershipMaxSupply = newLimit;
-    }
-
     function _getMembershipSupplyLimit() internal view returns (uint256) {
         return MembershipStorage.layout().membershipMaxSupply;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          CURRENCY                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Sets the membership currency. Only currencies with an enabled fee config in FeeManager
-    /// can be set. Native token (address(0) or NATIVE_TOKEN) is always supported.
-    function _setMembershipCurrency(address currency) internal {
-        if (!(currency == address(0) || currency == CurrencyTransfer.NATIVE_TOKEN)) {
-            bytes32 feeType = FeeTypesLib.membership(currency);
-            FeeConfig memory config = IFeeManager(_getSpaceFactory()).getFeeConfig(feeType);
-            if (!config.enabled) Membership__UnsupportedCurrency.selector.revertWith();
-        }
-        MembershipStorage.layout().membershipCurrency = currency;
     }
 
     function _getMembershipCurrency() internal view returns (address currency) {
@@ -208,10 +180,6 @@ abstract contract MembershipBase is IMembershipBase {
         // Normalize address(0) to NATIVE_TOKEN for backwards compatibility
         if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FACTORY                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _getSpaceFactory() internal view returns (address) {
         return MembershipStorage.layout().spaceFactory;
@@ -221,15 +189,23 @@ abstract contract MembershipBase is IMembershipBase {
         return IPlatformRequirements(_getSpaceFactory());
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                            IMAGE                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function _getMembershipImage() internal view returns (string memory) {
         return MembershipStorage.layout().membershipImage;
     }
 
-    function _setMembershipImage(string memory image) internal {
-        MembershipStorage.layout().membershipImage = image;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INTERNAL PURE                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Returns the fee type for the membership currency
+    /// @dev Uses dynamic fee type for non-native currencies
+    function _getMembershipFeeType(address currency) internal pure returns (bytes32) {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) return FeeTypesLib.MEMBERSHIP;
+        return FeeTypesLib.membership(currency);
+    }
+
+    function _verifyMaxSupply(uint256 newLimit, uint256 totalSupply) internal pure {
+        // if the new limit is less than the current total supply, revert
+        if (newLimit < totalSupply) Membership__InvalidMaxSupply.selector.revertWith();
     }
 }

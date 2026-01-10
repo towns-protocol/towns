@@ -8,6 +8,15 @@ pragma solidity ^0.8.24;
 // contracts
 
 library CheckIn {
+    struct CheckInData {
+        uint256 streak;
+        uint256 lastCheckIn;
+    }
+
+    struct Layout {
+        mapping(address => CheckInData) checkInsByAddress;
+    }
+
     // keccak256(abi.encode(uint256(keccak256("river.tokens.checkin.storage")) - 1)) &
     // ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
@@ -19,13 +28,12 @@ library CheckIn {
     // streak
     uint256 internal constant CHECK_IN_WAIT_PERIOD = 1 days; // Time between check-ins
 
-    struct CheckInData {
-        uint256 streak;
-        uint256 lastCheckIn;
+    function getCurrentStreak(address user) internal view returns (uint256) {
+        return layout().checkInsByAddress[user].streak;
     }
 
-    struct Layout {
-        mapping(address => CheckInData) checkInsByAddress;
+    function getLastCheckIn(address user) internal view returns (uint256) {
+        return layout().checkInsByAddress[user].lastCheckIn;
     }
 
     function layout() internal pure returns (Layout storage l) {
@@ -59,13 +67,5 @@ library CheckIn {
             : newStreak * 1 ether;
 
         return (pointsToAward, newStreak);
-    }
-
-    function getCurrentStreak(address user) internal view returns (uint256) {
-        return layout().checkInsByAddress[user].streak;
-    }
-
-    function getLastCheckIn(address user) internal view returns (uint256) {
-        return layout().checkInsByAddress[user].lastCheckIn;
     }
 }

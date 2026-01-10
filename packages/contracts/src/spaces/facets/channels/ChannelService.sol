@@ -46,19 +46,6 @@ library ChannelService {
         }
     }
 
-    function getChannel(
-        bytes32 channelId
-    ) internal view returns (bytes32 id, string memory metadata, bool disabled) {
-        checkChannelExists(channelId);
-
-        ChannelStorage.Layout storage channel = ChannelStorage.layout();
-        ChannelStorage.Channel storage channelInfo = channel.channelById[channelId];
-
-        id = channelInfo.id;
-        metadata = channelInfo.metadata;
-        disabled = channelInfo.disabled;
-    }
-
     function updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
         checkChannelExists(channelId);
 
@@ -84,6 +71,47 @@ library ChannelService {
 
         // remove all roles from channel
         channel.rolesByChannelId[channelId].clear();
+    }
+
+    function addRoleToChannel(bytes32 channelId, uint256 roleId) internal {
+        checkChannelExists(channelId);
+        checkChannelNotDisabled(channelId);
+
+        // check role isn't in channel already
+        ChannelStorage.Layout storage channel = ChannelStorage.layout();
+        EnumerableSet.UintSet storage roles = channel.rolesByChannelId[channelId];
+        if (roles.contains(roleId)) {
+            IChannelBase.ChannelService__RoleAlreadyExists.selector.revertWith();
+        }
+
+        roles.add(roleId);
+    }
+
+    function removeRoleFromChannel(bytes32 channelId, uint256 roleId) internal {
+        checkChannelExists(channelId);
+        checkChannelNotDisabled(channelId);
+
+        // check role exists in channel
+        ChannelStorage.Layout storage channel = ChannelStorage.layout();
+        EnumerableSet.UintSet storage roles = channel.rolesByChannelId[channelId];
+        if (!roles.contains(roleId)) {
+            IChannelBase.ChannelService__RoleDoesNotExist.selector.revertWith();
+        }
+
+        roles.remove(roleId);
+    }
+
+    function getChannel(
+        bytes32 channelId
+    ) internal view returns (bytes32 id, string memory metadata, bool disabled) {
+        checkChannelExists(channelId);
+
+        ChannelStorage.Layout storage channel = ChannelStorage.layout();
+        ChannelStorage.Channel storage channelInfo = channel.channelById[channelId];
+
+        id = channelInfo.id;
+        metadata = channelInfo.metadata;
+        disabled = channelInfo.disabled;
     }
 
     function getChannelIds() internal view returns (bytes32[] memory) {
@@ -115,34 +143,6 @@ library ChannelService {
         assembly ("memory-safe") {
             mstore(channelIds, count)
         }
-    }
-
-    function addRoleToChannel(bytes32 channelId, uint256 roleId) internal {
-        checkChannelExists(channelId);
-        checkChannelNotDisabled(channelId);
-
-        // check role isn't in channel already
-        ChannelStorage.Layout storage channel = ChannelStorage.layout();
-        EnumerableSet.UintSet storage roles = channel.rolesByChannelId[channelId];
-        if (roles.contains(roleId)) {
-            IChannelBase.ChannelService__RoleAlreadyExists.selector.revertWith();
-        }
-
-        roles.add(roleId);
-    }
-
-    function removeRoleFromChannel(bytes32 channelId, uint256 roleId) internal {
-        checkChannelExists(channelId);
-        checkChannelNotDisabled(channelId);
-
-        // check role exists in channel
-        ChannelStorage.Layout storage channel = ChannelStorage.layout();
-        EnumerableSet.UintSet storage roles = channel.rolesByChannelId[channelId];
-        if (!roles.contains(roleId)) {
-            IChannelBase.ChannelService__RoleDoesNotExist.selector.revertWith();
-        }
-
-        roles.remove(roleId);
     }
 
     function getRolesByChannel(bytes32 channelId) internal view returns (uint256[] memory) {

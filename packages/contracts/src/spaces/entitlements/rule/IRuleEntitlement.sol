@@ -20,18 +20,6 @@ import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
  */
 interface IRuleEntitlementBase {
     // =============================================================
-    //                           Errors
-    // =============================================================
-    error CheckOperationsLimitReaced(uint256 limit);
-    error OperationsLimitReached(uint256 limit);
-    error LogicalOperationLimitReached(uint256 limit);
-    error InvalidCheckOperationIndex(uint8 operationIndex, uint8 checkOperationsLength);
-    error InvalidLogicalOperationIndex(uint8 operationIndex, uint8 logicalOperationsLength);
-    error InvalidOperationType(CombinedOperationType opType);
-    error InvalidLeftOperationIndex(uint8 leftOperationIndex, uint8 currentOperationIndex);
-    error InvalidRightOperationIndex(uint8 rightOperationIndex, uint8 currentOperationIndex);
-
-    // =============================================================
     //                           Enums
     // =============================================================
     enum CheckOperationType {
@@ -131,6 +119,18 @@ interface IRuleEntitlementBase {
     struct NativeCoinBalanceParams {
         uint256 threshold;
     }
+
+    // =============================================================
+    //                           Errors
+    // =============================================================
+    error CheckOperationsLimitReaced(uint256 limit);
+    error OperationsLimitReached(uint256 limit);
+    error LogicalOperationLimitReached(uint256 limit);
+    error InvalidCheckOperationIndex(uint8 operationIndex, uint8 checkOperationsLength);
+    error InvalidLogicalOperationIndex(uint8 operationIndex, uint8 logicalOperationsLength);
+    error InvalidOperationType(CombinedOperationType opType);
+    error InvalidLeftOperationIndex(uint8 leftOperationIndex, uint8 currentOperationIndex);
+    error InvalidRightOperationIndex(uint8 rightOperationIndex, uint8 currentOperationIndex);
 }
 
 interface IRuleEntitlementV2 is IRuleEntitlementBase, IEntitlement {

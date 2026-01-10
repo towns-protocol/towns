@@ -29,24 +29,9 @@ contract FeeManagerFacet is
         __FeeManagerFacet__init_unchained(protocolRecipient);
     }
 
-    function __FeeManagerFacet__init_unchained(address protocolRecipient) internal {
-        _setProtocolFeeRecipient(protocolRecipient);
-        _setInitialFeeConfigs(protocolRecipient);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       FEE OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @inheritdoc IFeeManager
-    function calculateFee(
-        bytes32 feeType,
-        address user,
-        uint256 amount,
-        bytes calldata extraData
-    ) external view returns (uint256 finalFee) {
-        return _calculateFee(feeType, user, amount, extraData);
-    }
 
     /// @inheritdoc IFeeManager
     function chargeFee(
@@ -91,6 +76,16 @@ contract FeeManagerFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IFeeManager
+    function calculateFee(
+        bytes32 feeType,
+        address user,
+        uint256 amount,
+        bytes calldata extraData
+    ) external view returns (uint256 finalFee) {
+        return _calculateFee(feeType, user, amount, extraData);
+    }
+
+    /// @inheritdoc IFeeManager
     function getFeeConfig(bytes32 feeType) external view returns (FeeConfig memory config) {
         return _getFeeConfig(feeType);
     }
@@ -103,6 +98,15 @@ contract FeeManagerFacet is
     /// @inheritdoc IFeeManager
     function getProtocolFeeRecipient() external view returns (address recipient) {
         return _getProtocolFeeRecipient();
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __FeeManagerFacet__init_unchained(address protocolRecipient) internal {
+        _setProtocolFeeRecipient(protocolRecipient);
+        _setInitialFeeConfigs(protocolRecipient);
     }
 
     function _setInitialFeeConfigs(address protocolRecipient) internal {

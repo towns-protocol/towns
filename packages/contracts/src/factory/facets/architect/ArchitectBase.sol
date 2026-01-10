@@ -22,17 +22,6 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 abstract contract ArchitectBase is IArchitectBase {
     // =============================================================
-    //                           Spaces
-    // =============================================================
-    function _getTokenIdBySpace(address space) internal view returns (uint256) {
-        return ArchitectStorage.layout().tokenIdBySpace[space];
-    }
-
-    function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
-        return ArchitectStorage.layout().spaceByTokenId[tokenId];
-    }
-
-    // =============================================================
     //                           Implementations
     // =============================================================
 
@@ -59,6 +48,32 @@ abstract contract ArchitectBase is IArchitectBase {
         ds.legacyRuleEntitlement = legacyRuleEntitlement;
     }
 
+    // =============================================================
+    //                         Proxy Initializer
+    // =============================================================
+
+    function _setProxyInitializer(ISpaceProxyInitializer proxyInitializer) internal {
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ds.proxyInitializer = proxyInitializer;
+
+        emit Architect__ProxyInitializerSet(address(proxyInitializer));
+    }
+
+    // =============================================================
+    //                           Spaces
+    // =============================================================
+    function _getTokenIdBySpace(address space) internal view returns (uint256) {
+        return ArchitectStorage.layout().tokenIdBySpace[space];
+    }
+
+    function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+        return ArchitectStorage.layout().spaceByTokenId[tokenId];
+    }
+
+    // =============================================================
+    //                           Implementations
+    // =============================================================
+
     function _getImplementations()
         internal
         view
@@ -84,12 +99,5 @@ abstract contract ArchitectBase is IArchitectBase {
     // =============================================================
     function _getProxyInitializer() internal view returns (ISpaceProxyInitializer) {
         return ImplementationStorage.layout().proxyInitializer;
-    }
-
-    function _setProxyInitializer(ISpaceProxyInitializer proxyInitializer) internal {
-        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-        ds.proxyInitializer = proxyInitializer;
-
-        emit Architect__ProxyInitializerSet(address(proxyInitializer));
     }
 }

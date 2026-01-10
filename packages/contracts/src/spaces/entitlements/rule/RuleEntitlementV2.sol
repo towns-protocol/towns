@@ -33,8 +33,10 @@ contract RuleEntitlementV2 is
     UUPSUpgradeable,
     IRuleEntitlementV2
 {
-    mapping(uint256 => Entitlement) internal entitlementsByRoleId;
-    address public SPACE_ADDRESS;
+    // @custom:storage-location erc7201:spaces.entitlements.rule.storage
+    struct Layout {
+        mapping(uint256 => EntitlementV2) entitlementsByRoleIdV2;
+    }
 
     // TODO: abstract to a base contract
     // keccak256(abi.encode(uint256(keccak256("spaces.entitlements.rule.storage")) - 1)) &
@@ -42,27 +44,13 @@ contract RuleEntitlementV2 is
     bytes32 private constant STORAGE_SLOT =
         0xa7ba26993e5aed586ba0b4d511980a49b23ea33e13d5f0920b7e42ae1a27cc00;
 
-    // @custom:storage-location erc7201:spaces.entitlements.rule.storage
-    struct Layout {
-        mapping(uint256 => EntitlementV2) entitlementsByRoleIdV2;
-    }
-
     string public constant name = "Rule Entitlement V2";
     string public constant description = "Entitlement for crosschain rules";
     string public constant moduleType = "RuleEntitlementV2";
     bool public constant isCrosschain = true;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize(address _space) public initializer {
-        __UUPSUpgradeable_init();
-        __ERC165_init();
-        __Context_init();
-        SPACE_ADDRESS = _space;
-    }
+    mapping(uint256 => Entitlement) internal entitlementsByRoleId;
+    address public SPACE_ADDRESS;
 
     modifier onlySpace() {
         if (_msgSender() != SPACE_ADDRESS) {
@@ -71,37 +59,14 @@ contract RuleEntitlementV2 is
         _;
     }
 
-    // =============================================================
-    //                           Admin
-    // =============================================================
-
-    /// @notice allow the contract to be upgraded while retaining state
-    /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
-
-    /// @notice get the storage slot for the contract
-    /// @return ds storage slot
-    function layout() internal pure returns (Layout storage ds) {
-        assembly {
-            ds.slot := STORAGE_SLOT
-        }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
     // =============================================================
     //                           External
     // =============================================================
-
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return
-            interfaceId == type(IEntitlement).interfaceId ||
-            interfaceId == type(IRuleEntitlementV2).interfaceId ||
-            super.supportsInterface(interfaceId);
-    }
-
-    // @inheritdoc IEntitlement
-    function isEntitled(bytes32, address[] memory, bytes32) external pure returns (bool) {
-        return false;
-    }
 
     // @inheritdoc IEntitlement
     function setEntitlement(uint256 roleId, bytes calldata entitlementData) external onlySpace {
@@ -187,10 +152,6 @@ contract RuleEntitlementV2 is
         return entitlement.data;
     }
 
-    function encodeRuleData(RuleDataV2 calldata data) external pure returns (bytes memory) {
-        return abi.encode(data);
-    }
-
     function getRuleData(uint256 roleId) external view returns (RuleData memory data) {
         return entitlementsByRoleId[roleId].data;
     }
@@ -203,12 +164,48 @@ contract RuleEntitlementV2 is
         return abi.decode(ruleData, (RuleDataV2));
     }
 
+    // @inheritdoc IEntitlement
+    function isEntitled(bytes32, address[] memory, bytes32) external pure returns (bool) {
+        return false;
+    }
+
+    function encodeRuleData(RuleDataV2 calldata data) external pure returns (bytes memory) {
+        return abi.encode(data);
+    }
+
+    function initialize(address _space) public initializer {
+        __UUPSUpgradeable_init();
+        __ERC165_init();
+        __Context_init();
+        SPACE_ADDRESS = _space;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return
+            interfaceId == type(IEntitlement).interfaceId ||
+            interfaceId == type(IRuleEntitlementV2).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
     // =============================================================
     //                           Internal
     // =============================================================
+
+    /// @notice allow the contract to be upgraded while retaining state
+    /// @param newImplementation address of the new implementation
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
+
     function _removeRuleDataV1(uint256 roleId) internal {
         if (entitlementsByRoleId[roleId].grantedBy != address(0)) {
             delete entitlementsByRoleId[roleId];
+        }
+    }
+
+    /// @notice get the storage slot for the contract
+    /// @return ds storage slot
+    function layout() internal pure returns (Layout storage ds) {
+        assembly {
+            ds.slot := STORAGE_SLOT
         }
     }
 }

@@ -19,6 +19,10 @@ import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
  * _Available since v4.5._
  */
 library Checkpoints {
+    // =============================================================
+    //                           Type Definitions
+    // =============================================================
+
     struct History {
         Checkpoint[] _checkpoints;
     }
@@ -26,6 +30,58 @@ library Checkpoints {
     struct Checkpoint {
         uint32 _blockNumber;
         uint224 _value;
+    }
+
+    struct Trace224 {
+        Checkpoint224[] _checkpoints;
+    }
+
+    struct Checkpoint224 {
+        uint32 _key;
+        uint224 _value;
+    }
+
+    struct Trace160 {
+        Checkpoint160[] _checkpoints;
+    }
+
+    struct Checkpoint160 {
+        uint96 _key;
+        uint160 _value;
+    }
+
+    // =============================================================
+    //                      History Functions
+    // =============================================================
+
+    /**
+     * @dev Pushes a value onto a History so that it is stored as the checkpoint for the current
+     * block.
+     *
+     * Returns previous value and new value.
+     */
+    function push(History storage self, uint256 value) internal returns (uint256, uint256) {
+        return
+            _insert(
+                self._checkpoints,
+                SafeCastLib.toUint32(block.number),
+                SafeCastLib.toUint224(value)
+            );
+    }
+
+    /**
+     * @dev Pushes a value onto a History, by updating the latest value using binary operation `op`.
+     * The new value will
+     * be set to `op(latest, delta)`.
+     *
+     * Returns previous value and new value.
+     */
+    function push(
+        History storage self,
+        function(uint256, uint256) view returns (uint256) op,
+        uint256 delta
+    ) internal returns (uint256, uint256) {
+        return push(self, op(latest(self), delta));
     }
 
     /**
@@ -83,36 +139,6 @@ library Checkpoints {
     }
 
     /**
-     * @dev Pushes a value onto a History so that it is stored as the checkpoint for the current
-     * block.
-     *
-     * Returns previous value and new value.
-     */
-    function push(History storage self, uint256 value) internal returns (uint256, uint256) {
-        return
-            _insert(
-                self._checkpoints,
-                SafeCastLib.toUint32(block.number),
-                SafeCastLib.toUint224(value)
-            );
-    }
-
-    /**
-     * @dev Pushes a value onto a History, by updating the latest value using binary operation `op`.
-     * The new value will
-     * be set to `op(latest, delta)`.
-     *
-     * Returns previous value and new value.
-     */
-    function push(
-        History storage self,
-        function(uint256, uint256) view returns (uint256) op,
-        uint256 delta
-    ) internal returns (uint256, uint256) {
-        return push(self, op(latest(self), delta));
-    }
-
-    /**
      * @dev Returns the value in the most recent checkpoint, or zero if there are no checkpoints.
      */
     function latest(History storage self) internal view returns (uint224) {
@@ -143,6 +169,202 @@ library Checkpoints {
     function length(History storage self) internal view returns (uint256) {
         return self._checkpoints.length;
     }
+
+    // =============================================================
+    //                      Trace224 Functions
+    // =============================================================
+
+    /**
+     * @dev Pushes a (`key`, `value`) pair into a Trace224 so that it is stored as the checkpoint.
+     *
+     * Returns previous value and new value.
+     */
+    function push(
+        Trace224 storage self,
+        uint32 key,
+        uint224 value
+    ) internal returns (uint224, uint224) {
+        return _insert(self._checkpoints, key, value);
+    }
+
+    /**
+     * @dev Returns the value in the first (oldest) checkpoint with key greater or equal than the
+     * search key, or zero if there is none.
+     */
+    function lowerLookup(Trace224 storage self, uint32 key) internal view returns (uint224) {
+        uint256 len = self._checkpoints.length;
+        uint256 pos = _lowerBinaryLookup(self._checkpoints, key, 0, len);
+        return pos == len ? 0 : _unsafeAccess(self._checkpoints, pos)._value;
+    }
+
+    /**
+     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
+     * search key, or zero if there is none.
+     */
+    function upperLookup(Trace224 storage self, uint32 key) internal view returns (uint224) {
+        uint256 len = self._checkpoints.length;
+        uint256 pos = _upperBinaryLookup(self._checkpoints, key, 0, len);
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
+     * search key, or zero if there is none.
+     *
+     * NOTE: This is a variant of {upperLookup} that is optimised to find "recent" checkpoint
+     * (checkpoints with high keys).
+     */
+    function upperLookupRecent(Trace224 storage self, uint32 key) internal view returns (uint224) {
+        uint256 len = self._checkpoints.length;
+
+        uint256 low = 0;
+        uint256 high = len;
+
+        if (len > 5) {
+            uint256 mid = len - FixedPointMathLib.sqrt(len);
+            if (key < _unsafeAccess(self._checkpoints, mid)._key) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        uint256 pos = _upperBinaryLookup(self._checkpoints, key, low, high);
+
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns the value in the most recent checkpoint, or zero if there are no checkpoints.
+     */
+    function latest(Trace224 storage self) internal view returns (uint224) {
+        uint256 pos = self._checkpoints.length;
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns whether there is a checkpoint in the structure (i.e. it is not empty), and if so
+     * the key and value
+     * in the most recent checkpoint.
+     */
+    function latestCheckpoint(
+        Trace224 storage self
+    ) internal view returns (bool exists, uint32 _key, uint224 _value) {
+        uint256 pos = self._checkpoints.length;
+        if (pos == 0) {
+            return (false, 0, 0);
+        } else {
+            Checkpoint224 memory ckpt = _unsafeAccess(self._checkpoints, pos - 1);
+            return (true, ckpt._key, ckpt._value);
+        }
+    }
+
+    /**
+     * @dev Returns the number of checkpoint.
+     */
+    function length(Trace224 storage self) internal view returns (uint256) {
+        return self._checkpoints.length;
+    }
+
+    // =============================================================
+    //                      Trace160 Functions
+    // =============================================================
+
+    /**
+     * @dev Pushes a (`key`, `value`) pair into a Trace160 so that it is stored as the checkpoint.
+     *
+     * Returns previous value and new value.
+     */
+    function push(
+        Trace160 storage self,
+        uint96 key,
+        uint160 value
+    ) internal returns (uint160, uint160) {
+        return _insert(self._checkpoints, key, value);
+    }
+
+    /**
+     * @dev Returns the value in the first (oldest) checkpoint with key greater or equal than the
+     * search key, or zero if there is none.
+     */
+    function lowerLookup(Trace160 storage self, uint96 key) internal view returns (uint160) {
+        uint256 len = self._checkpoints.length;
+        uint256 pos = _lowerBinaryLookup(self._checkpoints, key, 0, len);
+        return pos == len ? 0 : _unsafeAccess(self._checkpoints, pos)._value;
+    }
+
+    /**
+     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
+     * search key, or zero if there is none.
+     */
+    function upperLookup(Trace160 storage self, uint96 key) internal view returns (uint160) {
+        uint256 len = self._checkpoints.length;
+        uint256 pos = _upperBinaryLookup(self._checkpoints, key, 0, len);
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
+     * search key, or zero if there is none.
+     *
+     * NOTE: This is a variant of {upperLookup} that is optimised to find "recent" checkpoint
+     * (checkpoints with high keys).
+     */
+    function upperLookupRecent(Trace160 storage self, uint96 key) internal view returns (uint160) {
+        uint256 len = self._checkpoints.length;
+
+        uint256 low = 0;
+        uint256 high = len;
+
+        if (len > 5) {
+            uint256 mid = len - FixedPointMathLib.sqrt(len);
+            if (key < _unsafeAccess(self._checkpoints, mid)._key) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        uint256 pos = _upperBinaryLookup(self._checkpoints, key, low, high);
+
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns the value in the most recent checkpoint, or zero if there are no checkpoints.
+     */
+    function latest(Trace160 storage self) internal view returns (uint160) {
+        uint256 pos = self._checkpoints.length;
+        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
+    }
+
+    /**
+     * @dev Returns whether there is a checkpoint in the structure (i.e. it is not empty), and if so
+     * the key and value
+     * in the most recent checkpoint.
+     */
+    function latestCheckpoint(
+        Trace160 storage self
+    ) internal view returns (bool exists, uint96 _key, uint160 _value) {
+        uint256 pos = self._checkpoints.length;
+        if (pos == 0) {
+            return (false, 0, 0);
+        } else {
+            Checkpoint160 memory ckpt = _unsafeAccess(self._checkpoints, pos - 1);
+            return (true, ckpt._key, ckpt._value);
+        }
+    }
+
+    /**
+     * @dev Returns the number of checkpoint.
+     */
+    function length(Trace160 storage self) internal view returns (uint256) {
+        return self._checkpoints.length;
+    }
+
+    // =============================================================
+    //                      Private Functions - Checkpoint
+    // =============================================================
 
     /**
      * @dev Pushes a (`key`, `value`) pair into an ordered list of checkpoints, either by inserting
@@ -242,106 +464,9 @@ library Checkpoints {
         }
     }
 
-    struct Trace224 {
-        Checkpoint224[] _checkpoints;
-    }
-
-    struct Checkpoint224 {
-        uint32 _key;
-        uint224 _value;
-    }
-
-    /**
-     * @dev Pushes a (`key`, `value`) pair into a Trace224 so that it is stored as the checkpoint.
-     *
-     * Returns previous value and new value.
-     */
-    function push(
-        Trace224 storage self,
-        uint32 key,
-        uint224 value
-    ) internal returns (uint224, uint224) {
-        return _insert(self._checkpoints, key, value);
-    }
-
-    /**
-     * @dev Returns the value in the first (oldest) checkpoint with key greater or equal than the
-     * search key, or zero if there is none.
-     */
-    function lowerLookup(Trace224 storage self, uint32 key) internal view returns (uint224) {
-        uint256 len = self._checkpoints.length;
-        uint256 pos = _lowerBinaryLookup(self._checkpoints, key, 0, len);
-        return pos == len ? 0 : _unsafeAccess(self._checkpoints, pos)._value;
-    }
-
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
-     * search key, or zero if there is none.
-     */
-    function upperLookup(Trace224 storage self, uint32 key) internal view returns (uint224) {
-        uint256 len = self._checkpoints.length;
-        uint256 pos = _upperBinaryLookup(self._checkpoints, key, 0, len);
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
-     * search key, or zero if there is none.
-     *
-     * NOTE: This is a variant of {upperLookup} that is optimised to find "recent" checkpoint
-     * (checkpoints with high keys).
-     */
-    function upperLookupRecent(Trace224 storage self, uint32 key) internal view returns (uint224) {
-        uint256 len = self._checkpoints.length;
-
-        uint256 low = 0;
-        uint256 high = len;
-
-        if (len > 5) {
-            uint256 mid = len - FixedPointMathLib.sqrt(len);
-            if (key < _unsafeAccess(self._checkpoints, mid)._key) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        uint256 pos = _upperBinaryLookup(self._checkpoints, key, low, high);
-
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns the value in the most recent checkpoint, or zero if there are no checkpoints.
-     */
-    function latest(Trace224 storage self) internal view returns (uint224) {
-        uint256 pos = self._checkpoints.length;
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns whether there is a checkpoint in the structure (i.e. it is not empty), and if so
-     * the key and value
-     * in the most recent checkpoint.
-     */
-    function latestCheckpoint(
-        Trace224 storage self
-    ) internal view returns (bool exists, uint32 _key, uint224 _value) {
-        uint256 pos = self._checkpoints.length;
-        if (pos == 0) {
-            return (false, 0, 0);
-        } else {
-            Checkpoint224 memory ckpt = _unsafeAccess(self._checkpoints, pos - 1);
-            return (true, ckpt._key, ckpt._value);
-        }
-    }
-
-    /**
-     * @dev Returns the number of checkpoint.
-     */
-    function length(Trace224 storage self) internal view returns (uint256) {
-        return self._checkpoints.length;
-    }
+    // =============================================================
+    //                      Private Functions - Checkpoint224
+    // =============================================================
 
     /**
      * @dev Pushes a (`key`, `value`) pair into an ordered list of checkpoints, either by inserting
@@ -441,106 +566,9 @@ library Checkpoints {
         }
     }
 
-    struct Trace160 {
-        Checkpoint160[] _checkpoints;
-    }
-
-    struct Checkpoint160 {
-        uint96 _key;
-        uint160 _value;
-    }
-
-    /**
-     * @dev Pushes a (`key`, `value`) pair into a Trace160 so that it is stored as the checkpoint.
-     *
-     * Returns previous value and new value.
-     */
-    function push(
-        Trace160 storage self,
-        uint96 key,
-        uint160 value
-    ) internal returns (uint160, uint160) {
-        return _insert(self._checkpoints, key, value);
-    }
-
-    /**
-     * @dev Returns the value in the first (oldest) checkpoint with key greater or equal than the
-     * search key, or zero if there is none.
-     */
-    function lowerLookup(Trace160 storage self, uint96 key) internal view returns (uint160) {
-        uint256 len = self._checkpoints.length;
-        uint256 pos = _lowerBinaryLookup(self._checkpoints, key, 0, len);
-        return pos == len ? 0 : _unsafeAccess(self._checkpoints, pos)._value;
-    }
-
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
-     * search key, or zero if there is none.
-     */
-    function upperLookup(Trace160 storage self, uint96 key) internal view returns (uint160) {
-        uint256 len = self._checkpoints.length;
-        uint256 pos = _upperBinaryLookup(self._checkpoints, key, 0, len);
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key lower or equal than the
-     * search key, or zero if there is none.
-     *
-     * NOTE: This is a variant of {upperLookup} that is optimised to find "recent" checkpoint
-     * (checkpoints with high keys).
-     */
-    function upperLookupRecent(Trace160 storage self, uint96 key) internal view returns (uint160) {
-        uint256 len = self._checkpoints.length;
-
-        uint256 low = 0;
-        uint256 high = len;
-
-        if (len > 5) {
-            uint256 mid = len - FixedPointMathLib.sqrt(len);
-            if (key < _unsafeAccess(self._checkpoints, mid)._key) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        uint256 pos = _upperBinaryLookup(self._checkpoints, key, low, high);
-
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns the value in the most recent checkpoint, or zero if there are no checkpoints.
-     */
-    function latest(Trace160 storage self) internal view returns (uint160) {
-        uint256 pos = self._checkpoints.length;
-        return pos == 0 ? 0 : _unsafeAccess(self._checkpoints, pos - 1)._value;
-    }
-
-    /**
-     * @dev Returns whether there is a checkpoint in the structure (i.e. it is not empty), and if so
-     * the key and value
-     * in the most recent checkpoint.
-     */
-    function latestCheckpoint(
-        Trace160 storage self
-    ) internal view returns (bool exists, uint96 _key, uint160 _value) {
-        uint256 pos = self._checkpoints.length;
-        if (pos == 0) {
-            return (false, 0, 0);
-        } else {
-            Checkpoint160 memory ckpt = _unsafeAccess(self._checkpoints, pos - 1);
-            return (true, ckpt._key, ckpt._value);
-        }
-    }
-
-    /**
-     * @dev Returns the number of checkpoint.
-     */
-    function length(Trace160 storage self) internal view returns (uint256) {
-        return self._checkpoints.length;
-    }
+    // =============================================================
+    //                      Private Functions - Checkpoint160
+    // =============================================================
 
     /**
      * @dev Pushes a (`key`, `value`) pair into an ordered list of checkpoints, either by inserting

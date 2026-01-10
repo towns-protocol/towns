@@ -2,12 +2,6 @@
 pragma solidity ^0.8.23;
 
 abstract contract UpgradeableBeaconBase {
-    /// @dev The new implementation is not a deployed contract.
-    error NewImplementationHasNoCode();
-
-    /// @dev Emitted when the proxy's implementation is upgraded.
-    event Upgraded(address indexed implementation);
-
     /// @dev `keccak256(bytes("Upgraded(address)"))`.
     uint256 private constant _UPGRADED_EVENT_SIGNATURE =
         0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b;
@@ -15,6 +9,12 @@ abstract contract UpgradeableBeaconBase {
     /// @dev The storage slot for the implementation address.
     /// `uint72(bytes9(keccak256("_UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT")))`.
     uint256 internal constant _UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT = 0x911c5a209f08d5ec5e;
+
+    /// @dev Emitted when the proxy's implementation is upgraded.
+    event Upgraded(address indexed implementation);
+
+    /// @dev The new implementation is not a deployed contract.
+    error NewImplementationHasNoCode();
 
     function __UpgradeableBeacon_init_unchained(address initialImplementation) internal {
         _setImplementation(initialImplementation);

@@ -5,22 +5,6 @@ import {ISwapRouterBase} from "../../../router/ISwapRouter.sol";
 
 interface ISwapFacetBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Error thrown when the swap router address is not set
-    error SwapFacet__SwapRouterNotSet();
-
-    /// @notice Error thrown when the total fee exceeds the maximum allowed
-    error SwapFacet__TotalFeeTooHigh();
-
-    /// @notice Error thrown when ETH is sent with permit swap (not supported)
-    error SwapFacet__UnexpectedETH();
-
-    /// @notice Error thrown when poster address is invalid for the current fee configuration
-    error SwapFacet__InvalidPosterInput();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -44,6 +28,22 @@ interface ISwapFacetBase {
     /// @param posterFeeBps Poster fee in basis points
     /// @param forwardPosterFee Whether to forward the poster fee to the poster (default: false, fees go to space)
     event SwapFeeConfigUpdated(uint16 posterFeeBps, bool forwardPosterFee);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Error thrown when the swap router address is not set
+    error SwapFacet__SwapRouterNotSet();
+
+    /// @notice Error thrown when the total fee exceeds the maximum allowed
+    error SwapFacet__TotalFeeTooHigh();
+
+    /// @notice Error thrown when ETH is sent with permit swap (not supported)
+    error SwapFacet__UnexpectedETH();
+
+    /// @notice Error thrown when poster address is invalid for the current fee configuration
+    error SwapFacet__InvalidPosterInput();
 }
 
 interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {

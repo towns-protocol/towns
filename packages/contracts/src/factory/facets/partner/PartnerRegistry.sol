@@ -20,14 +20,6 @@ contract PartnerRegistry is PartnerRegistryBase, OwnableBase, IPartnerRegistry, 
         _registerPartner(partner);
     }
 
-    function partnerInfo(address account) external view returns (Partner memory) {
-        return _partner(account);
-    }
-
-    function partnerFee(address account) external view returns (uint256 fee) {
-        return _partnerFee(account);
-    }
-
     function updatePartner(Partner calldata partner) external {
         _updatePartner(partner);
     }
@@ -39,19 +31,27 @@ contract PartnerRegistry is PartnerRegistryBase, OwnableBase, IPartnerRegistry, 
     // =============================================================
     //                           ADMIN
     // =============================================================
-    function maxPartnerFee() external view returns (uint256 fee) {
-        return _maxPartnerFee();
-    }
-
     function setMaxPartnerFee(uint256 fee) external onlyOwner {
         _setMaxPartnerFee(fee);
     }
 
-    function registryFee() external view returns (uint256 fee) {
-        return _registryFee();
-    }
-
     function setRegistryFee(uint256 fee) external onlyOwner {
         _setRegistryFee(fee);
+    }
+
+    function partnerInfo(address account) external view returns (Partner memory) {
+        return _partner(account);
+    }
+
+    function partnerFee(address account) external view returns (uint256 fee) {
+        return _partnerFee(account);
+    }
+
+    function maxPartnerFee() external view returns (uint256 fee) {
+        return _maxPartnerFee();
+    }
+
+    function registryFee() external view returns (uint256 fee) {
+        return _registryFee();
     }
 }

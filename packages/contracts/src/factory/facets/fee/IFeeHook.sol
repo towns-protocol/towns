@@ -54,21 +54,6 @@ struct FeeHookResult {
 /// }
 /// ```
 interface IFeeHook {
-    /// @notice Calculates fee for estimation purposes (view function)
-    /// @dev This function MUST be view/pure and not modify state
-    /// @dev Used by UIs and contracts for fee previews
-    /// @param feeType The type of fee being calculated
-    /// @param user The address being charged the fee
-    /// @param baseFee The base fee amount before hook processing
-    /// @param context Additional context (e.g., amount being tipped, item being purchased)
-    /// @return result Fee calculation result with final fee
-    function calculateFee(
-        bytes32 feeType,
-        address user,
-        uint256 baseFee,
-        bytes calldata context
-    ) external view returns (FeeHookResult memory result);
-
     /// @notice Processes fee during actual charging (may mutate state)
     /// @dev This function MAY modify state (e.g., quota tracking, usage counts)
     /// @dev Called during actual fee charging via `FeeManager.chargeFee()`
@@ -83,4 +68,19 @@ interface IFeeHook {
         uint256 baseFee,
         bytes calldata context
     ) external returns (FeeHookResult memory result);
+
+    /// @notice Calculates fee for estimation purposes (view function)
+    /// @dev This function MUST be view/pure and not modify state
+    /// @dev Used by UIs and contracts for fee previews
+    /// @param feeType The type of fee being calculated
+    /// @param user The address being charged the fee
+    /// @param baseFee The base fee amount before hook processing
+    /// @param context Additional context (e.g., amount being tipped, item being purchased)
+    /// @return result Fee calculation result with final fee
+    function calculateFee(
+        bytes32 feeType,
+        address user,
+        uint256 baseFee,
+        bytes calldata context
+    ) external view returns (FeeHookResult memory result);
 }

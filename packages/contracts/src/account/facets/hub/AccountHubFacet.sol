@@ -45,13 +45,6 @@ contract AccountHubFacet is
         __AccountHubFacet_init_unchained(spaceFactory, appRegistry);
     }
 
-    function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
-        Validator.checkAddress(spaceFactory);
-        Validator.checkAddress(appRegistry);
-        AccountHubMod.Layout storage $ = AccountHubMod.getStorage();
-        ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
-    }
-
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
@@ -72,6 +65,8 @@ contract AccountHubFacet is
         AccountHubMod.getStorage().setAppRegistry(appRegistry);
     }
 
+    function postExecutionHook(uint32, bytes calldata) external {}
+
     function getSpaceFactory() external view returns (address) {
         return AccountHubMod.getStorage().spaceFactory;
     }
@@ -83,6 +78,28 @@ contract AccountHubFacet is
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC-6900 MODULE                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        ACCOUNT MODULE                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function isInstalled(address account) external view returns (bool) {
+        return AccountHubMod.getStorage().isInstalled(account);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MODULE HOOKS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function preExecutionHook(
+        uint32,
+        address sender,
+        uint256,
+        bytes calldata
+    ) external view returns (bytes memory) {
+        AccountHubMod.getStorage().onlyRegistry(sender);
+        return "";
+    }
 
     /// @inheritdoc IModule
     function moduleId() external pure returns (string memory) {
@@ -202,26 +219,13 @@ contract AccountHubFacet is
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        ACCOUNT MODULE                      */
+    /*                      INTERNAL FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function isInstalled(address account) external view returns (bool) {
-        return AccountHubMod.getStorage().isInstalled(account);
+    function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
+        Validator.checkAddress(spaceFactory);
+        Validator.checkAddress(appRegistry);
+        AccountHubMod.Layout storage $ = AccountHubMod.getStorage();
+        ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      MODULE HOOKS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function preExecutionHook(
-        uint32,
-        address sender,
-        uint256,
-        bytes calldata
-    ) external view returns (bytes memory) {
-        AccountHubMod.getStorage().onlyRegistry(sender);
-        return "";
-    }
-
-    function postExecutionHook(uint32, bytes calldata) external {}
 }

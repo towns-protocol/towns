@@ -21,6 +21,32 @@ abstract contract ChannelBase is IChannelBase {
         emit ChannelCreated(msg.sender, channelId);
     }
 
+    function _setChannelRoleOverrides(bytes32 channelId, uint256[] memory roleIds) internal {
+        for (uint256 i; i < roleIds.length; ++i) {
+            _addRoleToChannel(channelId, roleIds[i]);
+        }
+    }
+
+    function _updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
+        ChannelService.updateChannel(channelId, metadata, disabled);
+        emit ChannelUpdated(msg.sender, channelId);
+    }
+
+    function _removeChannel(bytes32 channelId) internal {
+        ChannelService.removeChannel(channelId);
+        emit ChannelRemoved(msg.sender, channelId);
+    }
+
+    function _addRoleToChannel(bytes32 channelId, uint256 roleId) internal {
+        ChannelService.addRoleToChannel(channelId, roleId);
+        emit ChannelRoleAdded(msg.sender, channelId, roleId);
+    }
+
+    function _removeRoleFromChannel(bytes32 channelId, uint256 roleId) internal {
+        ChannelService.removeRoleFromChannel(channelId, roleId);
+        emit ChannelRoleRemoved(msg.sender, channelId, roleId);
+    }
+
     function _getChannel(bytes32 channelId) internal view returns (Channel memory channel) {
         (, string memory metadata, bool disabled) = ChannelService.getChannel(channelId);
 
@@ -55,33 +81,7 @@ abstract contract ChannelBase is IChannelBase {
         }
     }
 
-    function _setChannelRoleOverrides(bytes32 channelId, uint256[] memory roleIds) internal {
-        for (uint256 i; i < roleIds.length; ++i) {
-            _addRoleToChannel(channelId, roleIds[i]);
-        }
-    }
-
-    function _updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
-        ChannelService.updateChannel(channelId, metadata, disabled);
-        emit ChannelUpdated(msg.sender, channelId);
-    }
-
-    function _removeChannel(bytes32 channelId) internal {
-        ChannelService.removeChannel(channelId);
-        emit ChannelRemoved(msg.sender, channelId);
-    }
-
     function _getRolesByChannel(bytes32 channelId) internal view returns (uint256[] memory) {
         return ChannelService.getRolesByChannel(channelId);
-    }
-
-    function _addRoleToChannel(bytes32 channelId, uint256 roleId) internal {
-        ChannelService.addRoleToChannel(channelId, roleId);
-        emit ChannelRoleAdded(msg.sender, channelId, roleId);
-    }
-
-    function _removeRoleFromChannel(bytes32 channelId, uint256 roleId) internal {
-        ChannelService.removeRoleFromChannel(channelId, roleId);
-        emit ChannelRoleRemoved(msg.sender, channelId, roleId);
     }
 }

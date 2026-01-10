@@ -15,6 +15,10 @@ abstract contract PointsBase {
     /// @dev The implementation ID for the TownsPoints contract
     bytes32 internal constant AIRDROP_DIAMOND = bytes32("RiverAirdrop");
 
+    function _mintPoints(address airdropDiamond, address to, uint256 amount) internal {
+        ITownsPoints(airdropDiamond).mint(to, amount);
+    }
+
     function _getAirdropDiamond() internal view returns (address) {
         return
             IImplementationRegistry(MembershipStorage.layout().spaceFactory)
@@ -27,9 +31,5 @@ abstract contract PointsBase {
         bytes memory data
     ) internal view returns (uint256) {
         return ITownsPoints(airdropDiamond).getPoints(action, data);
-    }
-
-    function _mintPoints(address airdropDiamond, address to, uint256 amount) internal {
-        ITownsPoints(airdropDiamond).mint(to, amount);
     }
 }

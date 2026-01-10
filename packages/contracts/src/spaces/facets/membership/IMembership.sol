@@ -42,6 +42,24 @@ interface IMembershipBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    event MembershipPriceUpdated(uint256 indexed price);
+    event MembershipLimitUpdated(uint256 indexed limit);
+    event MembershipCurrencyUpdated(address indexed currency);
+    event MembershipFeeRecipientUpdated(address indexed recipient);
+    event MembershipFreeAllocationUpdated(uint256 indexed allocation);
+    event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
+    event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
+    /// @notice Emitted when a membership payment is processed (new membership or renewal)
+    /// @param currency The currency used for payment (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH)
+    /// @param price The base membership price paid
+    /// @param protocolFee The protocol fee paid
+    event MembershipPaid(address indexed currency, uint256 price, uint256 protocolFee);
+    event MembershipTokenRejected(address indexed recipient);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -63,29 +81,11 @@ interface IMembershipBase {
 
     /// @notice Error thrown when currency is not supported for fees
     error Membership__UnsupportedCurrency();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    event MembershipPriceUpdated(uint256 indexed price);
-    event MembershipLimitUpdated(uint256 indexed limit);
-    event MembershipCurrencyUpdated(address indexed currency);
-    event MembershipFeeRecipientUpdated(address indexed recipient);
-    event MembershipFreeAllocationUpdated(uint256 indexed allocation);
-    event MembershipWithdrawal(address indexed currency, address indexed recipient, uint256 amount);
-    event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
-    /// @notice Emitted when a membership payment is processed (new membership or renewal)
-    /// @param currency The currency used for payment (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH)
-    /// @param price The base membership price paid
-    /// @param protocolFee The protocol fee paid
-    event MembershipPaid(address indexed currency, uint256 price, uint256 protocolFee);
-    event MembershipTokenRejected(address indexed recipient);
 }
 
 interface IMembership is IMembershipBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           MINTING                          */
+    /*                      EXTERNAL PAYABLE                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Unified entry point for joining spaces with different configurations
@@ -109,29 +109,49 @@ interface IMembership is IMembershipBase {
     /// @param tokenId The token id of the membership
     function renewMembership(uint256 tokenId) external payable;
 
-    /// @notice Return the expiration date of a membership
-    /// @param tokenId The token id of the membership
-    function expiresAt(uint256 tokenId) external view returns (uint256);
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         DURATION                           */
+    /*                         EXTERNAL                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Get the membership duration
-    /// @return The membership duration
-    function getMembershipDuration() external view returns (uint64);
 
     /// @notice Set the membership duration
     /// @param duration The new membership duration in seconds
     function setMembershipDuration(uint64 duration) external;
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       PRICING MODULE                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @notice Set the membership pricing module
     /// @param pricingModule The new pricing module
     function setMembershipPricingModule(address pricingModule) external;
+
+    /// @notice Set the membership price
+    /// @param newPrice The new membership price
+    function setMembershipPrice(uint256 newPrice) external;
+
+    /// @notice Set the membership free allocation
+    /// @param newAllocation The new membership free allocation
+    function setMembershipFreeAllocation(uint256 newAllocation) external;
+
+    /// @notice Set the membership limit
+    /// @param newLimit The new membership limit
+    function setMembershipLimit(uint256 newLimit) external;
+
+    /// @notice Set the membership image
+    /// @param image The new membership image
+    function setMembershipImage(string calldata image) external;
+
+    /// @notice Set the membership currency
+    /// @param currency The new membership currency address
+    function setMembershipCurrency(address currency) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       EXTERNAL VIEW                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Return the expiration date of a membership
+    /// @param tokenId The token id of the membership
+    function expiresAt(uint256 tokenId) external view returns (uint256);
+
+    /// @notice Get the membership duration
+    /// @return The membership duration
+    function getMembershipDuration() external view returns (uint64);
 
     /// @notice Get the membership pricing module
     /// @return The membership pricing module
@@ -140,14 +160,6 @@ interface IMembership is IMembershipBase {
     /// @notice Get the protocol fee
     /// @return The protocol fee
     function getProtocolFee() external view returns (uint256);
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          PRICING                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Set the membership price
-    /// @param newPrice The new membership price
-    function setMembershipPrice(uint256 newPrice) external;
 
     /// @notice Get the membership price
     /// @return The membership price
@@ -158,53 +170,21 @@ interface IMembership is IMembershipBase {
     /// @return The membership renewal price
     function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256);
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         ALLOCATION                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Set the membership free allocation
-    /// @param newAllocation The new membership free allocation
-    function setMembershipFreeAllocation(uint256 newAllocation) external;
-
     /// @notice Get the membership free allocation
     /// @return The membership free allocation
     function getMembershipFreeAllocation() external view returns (uint256);
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          LIMITS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Set the membership limit
-    /// @param newLimit The new membership limit
-    function setMembershipLimit(uint256 newLimit) external;
 
     /// @notice Get the membership limit
     /// @return The membership limit
     function getMembershipLimit() external view returns (uint256);
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           IMAGE                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Set the membership image
-    /// @param image The new membership image
-    function setMembershipImage(string calldata image) external;
-
     /// @notice Get the membership image
     /// @return The membership image
     function getMembershipImage() external view returns (string memory);
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          GETTERS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @notice Get the membership currency
     /// @return The membership currency
     function getMembershipCurrency() external view returns (address);
-
-    /// @notice Set the membership currency
-    /// @param currency The new membership currency address
-    function setMembershipCurrency(address currency) external;
 
     /// @notice Get the space factory
     /// @return The space factory

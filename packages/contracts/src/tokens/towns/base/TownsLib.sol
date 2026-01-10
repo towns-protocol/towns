@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 /// @title TownsLib
 library TownsLib {
+    struct Layout {
+        address remoteToken;
+    }
+
     /// @notice Address of the L2StandardBridge predeploy.
     address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000010;
 
@@ -13,10 +17,6 @@ library TownsLib {
     // ~bytes32(uint256(0xff))
     bytes32 constant STORAGE_SLOT =
         0x708ba15393f53e4db9d749d00ba2ba89a43d1e182bc44eaf801b83b223310b00;
-
-    struct Layout {
-        address remoteToken;
-    }
 
     function layout() internal pure returns (Layout storage l) {
         assembly {

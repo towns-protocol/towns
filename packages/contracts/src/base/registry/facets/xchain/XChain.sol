@@ -29,14 +29,6 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
     }
 
     /// @inheritdoc IXChain
-    function isCheckCompleted(
-        bytes32 transactionId,
-        uint256 requestId
-    ) external view returns (bool) {
-        return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
-    }
-
-    /// @inheritdoc IXChain
     function provideXChainRefund(address senderAddress, bytes32 transactionId) external onlyOwner {
         XChainLib.Layout storage layout = XChainLib.layout();
 
@@ -95,13 +87,17 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         }
     }
 
-    /// @notice Checks if quorum has been reached (more than half voted the same way)
-    /// @param results The vote counting results
-    /// @return hasQuorum True if quorum is reached
-    function _hasReachedQuorum(VoteResults memory results) internal pure returns (bool hasQuorum) {
-        uint256 quorumThreshold = results.totalNodes / 2;
-        return results.passed > quorumThreshold || results.failed > quorumThreshold;
+    /// @inheritdoc IXChain
+    function isCheckCompleted(
+        bytes32 transactionId,
+        uint256 requestId
+    ) external view returns (bool) {
+        return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Internal                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Completes the voting for a specific request and finalizes the transaction
     /// @param context The voting context
@@ -145,10 +141,6 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         );
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Internal                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function _checkAllRequestsCompleted(bytes32 transactionId) internal view returns (bool) {
         XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
 
@@ -159,5 +151,13 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
             }
         }
         return true;
+    }
+
+    /// @notice Checks if quorum has been reached (more than half voted the same way)
+    /// @param results The vote counting results
+    /// @return hasQuorum True if quorum is reached
+    function _hasReachedQuorum(VoteResults memory results) internal pure returns (bool hasQuorum) {
+        uint256 quorumThreshold = results.totalNodes / 2;
+        return results.passed > quorumThreshold || results.failed > quorumThreshold;
     }
 }

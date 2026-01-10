@@ -19,19 +19,6 @@ interface IEntitlementCheckerBase {
         V3 // ETH or ERC20 escrow (uses currency + amount)
     }
 
-    error EntitlementChecker_InvalidCheckType();
-    error EntitlementChecker_NodeAlreadyRegistered();
-    error EntitlementChecker_NodeNotRegistered();
-    error EntitlementChecker_InsufficientNumberOfNodes();
-    error EntitlementChecker_InvalidNodeOperator();
-    error EntitlementChecker_InvalidOperator();
-    error EntitlementChecker_OperatorNotActive();
-    error EntitlementChecker_NoPendingRequests();
-    error EntitlementChecker_InsufficientFunds();
-    error EntitlementChecker_NoRefundsAvailable();
-    error EntitlementChecker_InvalidValue();
-    error EntitlementChecker_DuplicateRequestId();
-
     // Events
     event NodeRegistered(address indexed nodeAddress);
     event NodeUnregistered(address indexed nodeAddress);
@@ -53,6 +40,19 @@ interface IEntitlementCheckerBase {
         uint256 roleId,
         address[] selectedNodes
     );
+
+    error EntitlementChecker_InvalidCheckType();
+    error EntitlementChecker_NodeAlreadyRegistered();
+    error EntitlementChecker_NodeNotRegistered();
+    error EntitlementChecker_InsufficientNumberOfNodes();
+    error EntitlementChecker_InvalidNodeOperator();
+    error EntitlementChecker_InvalidOperator();
+    error EntitlementChecker_OperatorNotActive();
+    error EntitlementChecker_NoPendingRequests();
+    error EntitlementChecker_InsufficientFunds();
+    error EntitlementChecker_NoRefundsAvailable();
+    error EntitlementChecker_InvalidValue();
+    error EntitlementChecker_DuplicateRequestId();
 }
 
 interface IEntitlementChecker is IEntitlementCheckerBase {

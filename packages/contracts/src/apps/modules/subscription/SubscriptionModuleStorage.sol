@@ -26,9 +26,6 @@ library SubscriptionModuleStorage {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
-    uint256 public constant KEEPER_INTERVAL = 5 minutes;
-    uint256 public constant MIN_RENEWAL_BUFFER = KEEPER_INTERVAL + 1 minutes; // Minimum buffer to prevent double renewals
-
     /// @custom:storage-location erc7201:towns.subscription.validation.module.storage
     struct Layout {
         EnumerableSetLib.AddressSet operators;
@@ -39,19 +36,22 @@ library SubscriptionModuleStorage {
         address spaceFactory;
     }
 
+    uint256 public constant KEEPER_INTERVAL = 5 minutes;
+    uint256 public constant MIN_RENEWAL_BUFFER = KEEPER_INTERVAL + 1 minutes; // Minimum buffer to prevent double renewals
+
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0xd241b3ceee256b40f80fe7a66fe789234ac389ed1408c472c4ee1cbb1deb8600;
-
-    function getLayout() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
 
     function getOperatorBuffer(address operator) internal view returns (uint256) {
         OperatorConfig storage config = getLayout().operatorConfig[operator];
         if (config.interval == 0 || config.buffer == 0) return MIN_RENEWAL_BUFFER;
         return config.buffer;
+    }
+
+    function getLayout() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
     }
 }

@@ -11,24 +11,6 @@ import {ERC721ABase} from "../ERC721ABase.sol";
 
 contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
     /// @inheritdoc IERC721AQueryable
-    function explicitOwnershipOf(
-        uint256 tokenId
-    ) public view override returns (TokenOwnership memory) {
-        TokenOwnership memory ownership;
-
-        if (tokenId < _startTokenId() || tokenId >= _nextTokenId()) {
-            return ownership;
-        }
-
-        ownership = _ownershipAt(tokenId);
-        if (ownership.burned) {
-            return ownership;
-        }
-
-        return _ownershipOf(tokenId);
-    }
-
-    /// @inheritdoc IERC721AQueryable
     function explicitOwnershipsOf(
         uint256[] calldata tokenIds
     ) external view override returns (TokenOwnership[] memory) {
@@ -130,5 +112,23 @@ contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
             }
             return tokenIds;
         }
+    }
+
+    /// @inheritdoc IERC721AQueryable
+    function explicitOwnershipOf(
+        uint256 tokenId
+    ) public view override returns (TokenOwnership memory) {
+        TokenOwnership memory ownership;
+
+        if (tokenId < _startTokenId() || tokenId >= _nextTokenId()) {
+            return ownership;
+        }
+
+        ownership = _ownershipAt(tokenId);
+        if (ownership.burned) {
+            return ownership;
+        }
+
+        return _ownershipOf(tokenId);
     }
 }

@@ -7,34 +7,6 @@ import {FeeCalculationMethod, FeeConfig} from "./FeeManagerStorage.sol";
 /// @notice Base interface with errors and events
 interface IFeeManagerBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Fee type is not configured or is disabled
-    error FeeManager__FeeNotConfigured();
-
-    /// @dev Invalid basis points (must be 1-10000)
-    error FeeManager__InvalidBps();
-
-    /// @dev Invalid fee recipient (zero address)
-    error FeeManager__InvalidRecipient();
-
-    /// @dev Hook execution failed
-    error FeeManager__HookFailed();
-
-    /// @dev Currency transfer failed
-    error FeeManager__TransferFailed();
-
-    /// @dev Invalid hook (zero address)
-    error FeeManager__InvalidHook();
-
-    /// @dev Invalid method
-    error FeeManager__InvalidMethod();
-
-    /// @dev Max fee exceeded
-    error FeeManager__ExceedsMaxFee();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -76,36 +48,42 @@ interface IFeeManagerBase {
         uint256 amount,
         address recipient
     );
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Fee type is not configured or is disabled
+    error FeeManager__FeeNotConfigured();
+
+    /// @dev Invalid basis points (must be 1-10000)
+    error FeeManager__InvalidBps();
+
+    /// @dev Invalid fee recipient (zero address)
+    error FeeManager__InvalidRecipient();
+
+    /// @dev Hook execution failed
+    error FeeManager__HookFailed();
+
+    /// @dev Currency transfer failed
+    error FeeManager__TransferFailed();
+
+    /// @dev Invalid hook (zero address)
+    error FeeManager__InvalidHook();
+
+    /// @dev Invalid method
+    error FeeManager__InvalidMethod();
+
+    /// @dev Max fee exceeded
+    error FeeManager__ExceedsMaxFee();
 }
 
 /// @title IFeeManager
 /// @notice Complete interface for the FeeManager facet
 interface IFeeManager is IFeeManagerBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   INITIALIZATION                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Initializes the FeeManager facet
-    /// @param protocolFeeRecipient Protocol fee recipient for all fees
-    function __FeeManagerFacet__init(address protocolFeeRecipient) external;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       FEE OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Calculates fee for estimation purposes (view function)
-    /// @dev Does not modify state, safe for UI/contract queries
-    /// @param feeType The type of fee to calculate
-    /// @param user The address that would be charged
-    /// @param amount The base amount for percentage calculations
-    /// @param extraData Additional data passed to hooks
-    /// @return finalFee The calculated fee amount
-    function calculateFee(
-        bytes32 feeType,
-        address user,
-        uint256 amount,
-        bytes calldata extraData
-    ) external view returns (uint256 finalFee);
 
     /// @notice Charges a fee and transfers it to the recipient
     /// @dev Modifies state, calls hook's onChargeFee, and transfers currency
@@ -124,6 +102,14 @@ interface IFeeManager is IFeeManagerBase {
         uint256 maxFee,
         bytes calldata extraData
     ) external payable returns (uint256 finalFee);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   INITIALIZATION                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Initializes the FeeManager facet
+    /// @param protocolFeeRecipient Protocol fee recipient for all fees
+    function __FeeManagerFacet__init(address protocolFeeRecipient) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   CONFIGURATION (OWNER)                    */
@@ -160,6 +146,20 @@ interface IFeeManager is IFeeManagerBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Calculates fee for estimation purposes (view function)
+    /// @dev Does not modify state, safe for UI/contract queries
+    /// @param feeType The type of fee to calculate
+    /// @param user The address that would be charged
+    /// @param amount The base amount for percentage calculations
+    /// @param extraData Additional data passed to hooks
+    /// @return finalFee The calculated fee amount
+    function calculateFee(
+        bytes32 feeType,
+        address user,
+        uint256 amount,
+        bytes calldata extraData
+    ) external view returns (uint256 finalFee);
 
     /// @notice Returns the fee configuration for a fee type
     /// @param feeType The fee type identifier

@@ -28,16 +28,16 @@ struct FeeConfig {
 /// @title FeeManagerStorage
 /// @notice Diamond storage for the FeeManager facet
 library FeeManagerStorage {
-    /// @dev Storage slot = keccak256(abi.encode(uint256(keccak256("factory.facets.fee.manager")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0xabafe0aee5292a745cc432476bbe9b496b2fe07074e3d7dcb579a3e420babf00;
-
     struct Layout {
         /// @notice Fee configurations by fee type
         mapping(bytes32 => FeeConfig) feeConfigs;
         /// @notice Protocol fee recipient
         address protocolFeeRecipient;
     }
+
+    /// @dev Storage slot = keccak256(abi.encode(uint256(keccak256("factory.facets.fee.manager")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xabafe0aee5292a745cc432476bbe9b496b2fe07074e3d7dcb579a3e420babf00;
 
     /// @notice Returns the diamond storage layout
     function getLayout() internal pure returns (Layout storage $) {

@@ -29,68 +29,6 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         __ERC721A_init_unchained(name_, symbol_);
     }
 
-    function __ERC721A_init_unchained(string memory name_, string memory symbol_) internal {
-        _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
-        _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
-        __ERC721ABase_init(name_, symbol_);
-    }
-
-    /**
-     * @dev Returns the total number of tokens in existence.
-     * Burned tokens will reduce the count.
-     * To get the total number of tokens minted, please see {_totalMinted}.
-     */
-    function totalSupply() public view virtual returns (uint256) {
-        return _totalSupply();
-    }
-
-    /**
-     * @dev Returns the number of tokens in `owner`'s account.
-     */
-    function balanceOf(address owner) public view virtual returns (uint256) {
-        return _balanceOf(owner);
-    }
-
-    // =============================================================
-    //                        IERC721Metadata
-    // =============================================================
-
-    /**
-     * @dev Returns the token collection name.
-     */
-    function name() public view virtual override returns (string memory) {
-        return ERC721AStorage.layout()._name;
-    }
-
-    /**
-     * @dev Returns the token collection symbol.
-     */
-    function symbol() public view virtual override returns (string memory) {
-        return ERC721AStorage.layout()._symbol;
-    }
-
-    /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
-     */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
-
-        string memory baseURI = _baseURI();
-        return
-            bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
-    }
-
-    /**
-     * @dev Returns the owner of the `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
-        return _ownerOf(tokenId);
-    }
-
     /**
      * @dev Gives permission to `to` to transfer `tokenId` token to another account. See
      * {ERC721A-_approve}.
@@ -101,45 +39,6 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
      */
     function approve(address to, uint256 tokenId) public payable virtual override {
         _approve(to, tokenId, true);
-    }
-
-    /**
-     * @dev Returns the account approved for `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function getApproved(uint256 tokenId) public view virtual override returns (address) {
-        return _getApproved(tokenId);
-    }
-
-    /**
-     * @dev Approve or remove `operator` as an operator for the caller.
-     * Operators can call {transferFrom} or {safeTransferFrom}
-     * for any token owned by the caller.
-     *
-     * Requirements:
-     *
-     * - The `operator` cannot be the caller.
-     *
-     * Emits an {ApprovalForAll} event.
-     */
-    function setApprovalForAll(address operator, bool approved) public virtual override {
-        ERC721AStorage.layout()._operatorApprovals[_msgSenderERC721A()][operator] = approved;
-        emit ApprovalForAll(_msgSenderERC721A(), operator, approved);
-    }
-
-    /**
-     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
-     *
-     * See {setApprovalForAll}.
-     */
-    function isApprovedForAll(
-        address owner,
-        address operator
-    ) public view virtual override returns (bool) {
-        return _isApprovedForAll(owner, operator);
     }
 
     /**
@@ -266,5 +165,106 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
                 revert TransferToNonERC721ReceiverImplementer();
             }
         }
+    }
+
+    /**
+     * @dev Approve or remove `operator` as an operator for the caller.
+     * Operators can call {transferFrom} or {safeTransferFrom}
+     * for any token owned by the caller.
+     *
+     * Requirements:
+     *
+     * - The `operator` cannot be the caller.
+     *
+     * Emits an {ApprovalForAll} event.
+     */
+    function setApprovalForAll(address operator, bool approved) public virtual override {
+        ERC721AStorage.layout()._operatorApprovals[_msgSenderERC721A()][operator] = approved;
+        emit ApprovalForAll(_msgSenderERC721A(), operator, approved);
+    }
+
+    /**
+     * @dev Returns the total number of tokens in existence.
+     * Burned tokens will reduce the count.
+     * To get the total number of tokens minted, please see {_totalMinted}.
+     */
+    function totalSupply() public view virtual returns (uint256) {
+        return _totalSupply();
+    }
+
+    /**
+     * @dev Returns the number of tokens in `owner`'s account.
+     */
+    function balanceOf(address owner) public view virtual returns (uint256) {
+        return _balanceOf(owner);
+    }
+
+    // =============================================================
+    //                        IERC721Metadata
+    // =============================================================
+
+    /**
+     * @dev Returns the token collection name.
+     */
+    function name() public view virtual override returns (string memory) {
+        return ERC721AStorage.layout()._name;
+    }
+
+    /**
+     * @dev Returns the token collection symbol.
+     */
+    function symbol() public view virtual override returns (string memory) {
+        return ERC721AStorage.layout()._symbol;
+    }
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        string memory baseURI = _baseURI();
+        return
+            bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
+    }
+
+    /**
+     * @dev Returns the owner of the `tokenId` token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+        return _ownerOf(tokenId);
+    }
+
+    /**
+     * @dev Returns the account approved for `tokenId` token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
+        return _getApproved(tokenId);
+    }
+
+    /**
+     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
+     *
+     * See {setApprovalForAll}.
+     */
+    function isApprovedForAll(
+        address owner,
+        address operator
+    ) public view virtual override returns (bool) {
+        return _isApprovedForAll(owner, operator);
+    }
+
+    function __ERC721A_init_unchained(string memory name_, string memory symbol_) internal {
+        _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
+        _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
+        __ERC721ABase_init(name_, symbol_);
     }
 }

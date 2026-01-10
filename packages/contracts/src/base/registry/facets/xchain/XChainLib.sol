@@ -9,11 +9,6 @@ import {IEntitlementChecker} from "../checker/IEntitlementChecker.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 library XChainLib {
-    // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0xf501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc00;
-
     struct Check {
         EnumerableSet.UintSet requestIds;
         mapping(uint256 requestId => EnumerableSet.AddressSet) nodes;
@@ -43,6 +38,11 @@ library XChainLib {
         mapping(bytes32 => Request) requests;
         mapping(bytes32 => Check) checks;
     }
+
+    // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xf501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc00;
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

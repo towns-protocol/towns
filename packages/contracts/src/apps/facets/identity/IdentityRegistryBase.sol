@@ -14,13 +14,13 @@ abstract contract IdentityRegistryBase is IIdentityRegistryBase {
         IdentityRegistryStorage.getLayout().agentUri[agentId] = agentUri;
     }
 
-    function _getAgentUri(uint256 agentId) internal view returns (string memory) {
-        return IdentityRegistryStorage.getLayout().agentUri[agentId];
-    }
-
     function _setMetadata(uint256 agentId, string memory metadataKey, bytes memory value) internal {
         IdentityRegistryStorage.getLayout().metadata[agentId][metadataKey] = value;
         emit MetadataSet(agentId, metadataKey, metadataKey, value);
+    }
+
+    function _getAgentUri(uint256 agentId) internal view returns (string memory) {
+        return IdentityRegistryStorage.getLayout().agentUri[agentId];
     }
 
     function _getMetadata(

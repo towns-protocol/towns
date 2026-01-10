@@ -57,6 +57,11 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     }
 
     /// @inheritdoc IWalletLink
+    function setDependency(bytes32 dependency, address dependencyAddress) external onlyOwner {
+        _setDependency(dependency, dependencyAddress);
+    }
+
+    /// @inheritdoc IWalletLink
     function getDefaultWallet(address rootWallet) external view returns (address) {
         return _getDefaultWallet(rootWallet);
     }
@@ -99,10 +104,5 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     /// @inheritdoc IWalletLink
     function getDependency(bytes32 dependency) external view returns (address) {
         return _getDependency(dependency);
-    }
-
-    /// @inheritdoc IWalletLink
-    function setDependency(bytes32 dependency, address dependencyAddress) external onlyOwner {
-        _setDependency(dependency, dependencyAddress);
     }
 }

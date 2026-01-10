@@ -15,12 +15,6 @@ library LibAppRegistry {
 
     uint48 internal constant MAX_DURATION = 365 days;
 
-    function validateDuration(uint48 accessDuration) internal pure returns (uint48 duration) {
-        if (accessDuration > MAX_DURATION)
-            IAppRegistryBase.AppRegistry__InvalidDuration.selector.revertWith();
-        duration = accessDuration == 0 ? MAX_DURATION : accessDuration;
-    }
-
     function validatePricing(
         IPlatformRequirements platformRequirements,
         uint256 price
@@ -29,5 +23,11 @@ library LibAppRegistry {
         if (price > 0 && price < minPlatformFee)
             IAppRegistryBase.AppRegistry__InvalidPrice.selector.revertWith();
         return price;
+    }
+
+    function validateDuration(uint48 accessDuration) internal pure returns (uint48 duration) {
+        if (accessDuration > MAX_DURATION)
+            IAppRegistryBase.AppRegistry__InvalidDuration.selector.revertWith();
+        duration = accessDuration == 0 ? MAX_DURATION : accessDuration;
     }
 }

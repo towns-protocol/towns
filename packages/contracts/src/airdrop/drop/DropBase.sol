@@ -107,22 +107,8 @@ abstract contract DropBase is IDropFacetBase {
     /*                            UTILS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _deductPenalty(
-        uint256 amount,
-        uint16 penaltyBps,
-        uint16 expectedPenaltyBps
-    ) internal pure returns (uint256) {
-        if (penaltyBps != expectedPenaltyBps) {
-            DropFacet__UnexpectedPenaltyBps.selector.revertWith();
-        }
-
-        if (penaltyBps > 0) {
-            unchecked {
-                uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
-                amount -= penaltyAmount;
-            }
-        }
-        return amount;
+    function _approveClaimToken(address token, uint256 amount) internal {
+        token.safeApprove(_getLayout().rewardsDistribution, amount);
     }
 
     function _verifyEnoughBalance(address token, uint256 amount) internal view {
@@ -131,17 +117,9 @@ abstract contract DropBase is IDropFacetBase {
         }
     }
 
-    function _approveClaimToken(address token, uint256 amount) internal {
-        token.safeApprove(_getLayout().rewardsDistribution, amount);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _getLayout() internal pure returns (DropStorage.Layout storage) {
-        return DropStorage.getLayout();
-    }
 
     function _getDropGroup(uint256 conditionId) internal view returns (DropGroup.Layout storage) {
         return _getLayout().groupById[conditionId];
@@ -206,5 +184,27 @@ abstract contract DropBase is IDropFacetBase {
         }
 
         DropFacet__NoActiveClaimCondition.selector.revertWith();
+    }
+
+    function _deductPenalty(
+        uint256 amount,
+        uint16 penaltyBps,
+        uint16 expectedPenaltyBps
+    ) internal pure returns (uint256) {
+        if (penaltyBps != expectedPenaltyBps) {
+            DropFacet__UnexpectedPenaltyBps.selector.revertWith();
+        }
+
+        if (penaltyBps > 0) {
+            unchecked {
+                uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+                amount -= penaltyAmount;
+            }
+        }
+        return amount;
+    }
+
+    function _getLayout() internal pure returns (DropStorage.Layout storage) {
+        return DropStorage.getLayout();
     }
 }

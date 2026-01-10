@@ -36,15 +36,6 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         __SimpleAccountFacet_init_unchained(entrypoint, coordinator);
     }
 
-    function __SimpleAccountFacet_init_unchained(address entrypoint, address coordinator) internal {
-        SimpleAccountStorage.Layout storage $ = SimpleAccountStorage.getLayout();
-        $.entryPoint = entrypoint;
-        $.coordinator = coordinator;
-        _addInterface(type(IAccount).interfaceId);
-        _addInterface(type(ISimpleAccount).interfaceId);
-        _addInterface(type(IERC7821).interfaceId);
-    }
-
     /// @inheritdoc ISimpleAccount
     function updateEntryPoint(address newEntryPoint) external onlyOwner {
         Validator.checkAddress(newEntryPoint);
@@ -63,6 +54,18 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         emit CoordinatorUpdated(oldCoordinator, newCoordinator);
     }
 
+    /// @inheritdoc IAccount
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    ) external virtual override returns (uint256 validationData) {
+        _requireFromEntryPoint();
+        validationData = _validateSignature(userOp, userOpHash);
+        _validateNonce(userOp.nonce);
+        _payPrefund(missingAccountFunds);
+    }
+
     /// @notice Return the account nonce.
     /// @dev This method returns the next sequential nonce.
     /// @dev For a nonce of a specific key, use `entrypoint.getNonce(account, key)`
@@ -76,28 +79,19 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         return IEntryPoint(SimpleAccountStorage.getLayout().entryPoint);
     }
 
-    /// @inheritdoc IAccount
-    function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) external virtual override returns (uint256 validationData) {
-        _requireFromEntryPoint();
-        validationData = _validateSignature(userOp, userOpHash);
-        _validateNonce(userOp.nonce);
-        _payPrefund(missingAccountFunds);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTERNAL FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function _getCoordinator() internal view returns (address) {
-        return SimpleAccountStorage.getLayout().coordinator;
+
+    function __SimpleAccountFacet_init_unchained(address entrypoint, address coordinator) internal {
+        SimpleAccountStorage.Layout storage $ = SimpleAccountStorage.getLayout();
+        $.entryPoint = entrypoint;
+        $.coordinator = coordinator;
+        _addInterface(type(IAccount).interfaceId);
+        _addInterface(type(ISimpleAccount).interfaceId);
+        _addInterface(type(IERC7821).interfaceId);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Overrides                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     /// @dev Override the 4-parameter execution to add custom authorization before the standard checks
     function _execute(
         bytes32,
@@ -111,6 +105,27 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         }
 
         SimpleAccount__OpDataNotSupported.selector.revertWith();
+    }
+
+    function _validateSignature(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256 validationData) {
+        address signer = ECDSA.recoverCalldata(userOpHash, userOp.signature);
+        address owner = _owner();
+
+        // Early return for owner
+        if (signer == owner) return SIG_VALIDATION_SUCCESS;
+
+        // Check client using LibBit for consistency
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        if (signer == $.client) return SIG_VALIDATION_SUCCESS;
+
+        return SIG_VALIDATION_FAILED;
+    }
+
+    function _getCoordinator() internal view returns (address) {
+        return SimpleAccountStorage.getLayout().coordinator;
     }
 
     /// @notice Override the _requireForExecute function to allow the owner, client, coordinator, entry point, and self-calls.
@@ -130,22 +145,5 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         ) return;
 
         SimpleAccount__NotFromTrustedCaller.selector.revertWith();
-    }
-
-    function _validateSignature(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal virtual override returns (uint256 validationData) {
-        address signer = ECDSA.recoverCalldata(userOpHash, userOp.signature);
-        address owner = _owner();
-
-        // Early return for owner
-        if (signer == owner) return SIG_VALIDATION_SUCCESS;
-
-        // Check client using LibBit for consistency
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        if (signer == $.client) return SIG_VALIDATION_SUCCESS;
-
-        return SIG_VALIDATION_FAILED;
     }
 }

@@ -36,26 +36,6 @@ contract RewardsDistribution is
         _addInterface(type(IRewardsDistribution).interfaceId);
     }
 
-    function getClaimableAmountForOperator(address operator) public view returns (uint256) {
-        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
-        return ds.distributionByOperator[operator];
-    }
-
-    function getClaimableAmountForDelegator(address delegator) public view returns (uint256) {
-        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
-        return ds.distributionByDelegator[delegator];
-    }
-
-    function getClaimableAmountForAuthorizedClaimer(address claimer) public view returns (uint256) {
-        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
-        address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(claimer);
-        uint256 totalClaimableAmount = 0;
-        for (uint256 i = 0; i < delegatorsForClaimer.length; i++) {
-            totalClaimableAmount += ds.distributionByDelegator[delegatorsForClaimer[i]];
-        }
-        return totalClaimableAmount;
-    }
-
     function operatorClaim() external {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
 
@@ -70,18 +50,6 @@ contract RewardsDistribution is
         }
 
         _transferRewards(amount, msg.sender);
-    }
-
-    function _transferRewards(uint256 amount, address recipient) internal {
-        if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
-
-        SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-        address riverToken = sd.riverToken;
-        if (IERC20(riverToken).balanceOf(address(this)) < amount) {
-            revert RewardsDistribution_InsufficientRewardBalance();
-        }
-
-        CurrencyTransfer.transferCurrency(riverToken, address(this), recipient, amount);
     }
 
     function operatorClaimByAddress(address operatorAddress) external {
@@ -171,28 +139,12 @@ contract RewardsDistribution is
         RewardsDistributionStorage.layout().periodDistributionAmount = amount;
     }
 
-    function getPeriodDistributionAmount() public view returns (uint256) {
-        return RewardsDistributionStorage.layout().periodDistributionAmount;
-    }
-
     function setActivePeriodLength(uint256 length) external onlyOwner {
         RewardsDistributionStorage.layout().activePeriodLength = length;
     }
 
-    function getActivePeriodLength() public view returns (uint256) {
-        return RewardsDistributionStorage.layout().activePeriodLength;
-    }
-
-    function getActiveOperators() public view returns (address[] memory) {
-        return _getActiveOperators();
-    }
-
     function setWithdrawalRecipient(address recipient) external onlyOwner {
         RewardsDistributionStorage.layout().withdrawalRecipient = recipient;
-    }
-
-    function getWithdrawalRecipient() public view returns (address) {
-        return RewardsDistributionStorage.layout().withdrawalRecipient;
     }
 
     function withdraw() external onlyOwner {
@@ -205,18 +157,56 @@ contract RewardsDistribution is
         );
     }
 
+    function getClaimableAmountForOperator(address operator) public view returns (uint256) {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        return ds.distributionByOperator[operator];
+    }
+
+    function getClaimableAmountForDelegator(address delegator) public view returns (uint256) {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        return ds.distributionByDelegator[delegator];
+    }
+
+    function getClaimableAmountForAuthorizedClaimer(address claimer) public view returns (uint256) {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(claimer);
+        uint256 totalClaimableAmount = 0;
+        for (uint256 i = 0; i < delegatorsForClaimer.length; i++) {
+            totalClaimableAmount += ds.distributionByDelegator[delegatorsForClaimer[i]];
+        }
+        return totalClaimableAmount;
+    }
+
+    function getPeriodDistributionAmount() public view returns (uint256) {
+        return RewardsDistributionStorage.layout().periodDistributionAmount;
+    }
+
+    function getActivePeriodLength() public view returns (uint256) {
+        return RewardsDistributionStorage.layout().activePeriodLength;
+    }
+
+    function getActiveOperators() public view returns (address[] memory) {
+        return _getActiveOperators();
+    }
+
+    function getWithdrawalRecipient() public view returns (address) {
+        return RewardsDistributionStorage.layout().withdrawalRecipient;
+    }
+
     // =============================================================
     //                           Internal
     // =============================================================
 
-    function _calculateOperatorDistribution(
-        address operator,
-        uint256 amountPerOperator
-    ) internal view returns (uint256) {
-        NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
-        uint256 commission = nos.commissionByOperator[operator];
-        uint256 operatorClaimAmount = (commission * amountPerOperator) / 10_000;
-        return operatorClaimAmount;
+    function _transferRewards(uint256 amount, address recipient) internal {
+        if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
+
+        SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+        address riverToken = sd.riverToken;
+        if (IERC20(riverToken).balanceOf(address(this)) < amount) {
+            revert RewardsDistribution_InsufficientRewardBalance();
+        }
+
+        CurrencyTransfer.transferCurrency(riverToken, address(this), recipient, amount);
     }
 
     function _distributeDelegatorsRewards(
@@ -341,6 +331,16 @@ contract RewardsDistribution is
             uint256 delegatorProRata = (amount * delegatorsClaimAmount) / totalDelegation;
             ds.distributionByDelegator[combinedDelegators[i]] += delegatorProRata;
         }
+    }
+
+    function _calculateOperatorDistribution(
+        address operator,
+        uint256 amountPerOperator
+    ) internal view returns (uint256) {
+        NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+        uint256 commission = nos.commissionByOperator[operator];
+        uint256 operatorClaimAmount = (commission * amountPerOperator) / 10_000;
+        return operatorClaimAmount;
     }
 
     function _getActiveOperators() internal view returns (address[] memory) {

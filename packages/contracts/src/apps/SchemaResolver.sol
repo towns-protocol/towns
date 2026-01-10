@@ -14,11 +14,6 @@ abstract contract SchemaResolver is ISchemaResolver {
     error InsufficientValue();
     error NotPayable();
 
-    function __SchemaResolver_init(address registry) internal {
-        SchemaResolverStorage.Layout storage l = SchemaResolverStorage.getLayout();
-        l.registry = registry;
-    }
-
     modifier onlyRegistry() {
         if (msg.sender != SchemaResolverStorage.getLayout().registry) {
             revert AccessDenied();
@@ -30,11 +25,6 @@ abstract contract SchemaResolver is ISchemaResolver {
         if (!isPayable()) {
             revert NotPayable();
         }
-    }
-
-    /// @inheritdoc ISchemaResolver
-    function isPayable() public pure virtual returns (bool) {
-        return false;
     }
 
     /// @inheritdoc ISchemaResolver
@@ -132,6 +122,16 @@ abstract contract SchemaResolver is ISchemaResolver {
         return true;
     }
 
+    /// @inheritdoc ISchemaResolver
+    function isPayable() public pure virtual returns (bool) {
+        return false;
+    }
+
+    function __SchemaResolver_init(address registry) internal {
+        SchemaResolverStorage.Layout storage l = SchemaResolverStorage.getLayout();
+        l.registry = registry;
+    }
+
     /// @notice Hook that is called before an attestation is created
     /// @param attestation The attestation data
     /// @param value The amount of ETH sent with the attestation
@@ -152,14 +152,14 @@ abstract contract SchemaResolver is ISchemaResolver {
 }
 
 library SchemaResolverStorage {
+    struct Layout {
+        address registry;
+    }
+
     // keccak256(abi.encode(uint256(keccak256("towns.schema.resolver.storage")) - 1)) &
     // ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0x3a14026143f063e5ed064cce80cc75f6ea25b68d1ad3a3261a9ae5e3f526fa00;
-
-    struct Layout {
-        address registry;
-    }
 
     function getLayout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

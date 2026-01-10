@@ -24,17 +24,6 @@ library L1ResolverMod {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("towns.domains.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
-        0xad5af01a9aec1f0fbc422f62e21406a58de498f1c0ee36ca202bc49bd857fd00;
-
-    // ENS protocol address
-    ENS internal constant ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
-
-    // ENS name wrapper node
-    bytes32 internal constant NAME_WRAPPER_NODE =
-        0xdee478ba2734e34d81c6adc77a32d75b29007895efa2fe60921f1c315e1ec7d9; // namewrapper.eth
-
     /// @notice L2 registry information
     /// @param chainId The chain ID of the L2 registry
     /// @param registryAddress The address of the L2 registry
@@ -55,14 +44,16 @@ library L1ResolverMod {
         mapping(bytes32 node => L2Registry l2Registry) registryByNode;
     }
 
-    /// @notice Returns the storage layout for the L1Resolver
-    /// @return $ The storage layout
-    /// @custom:storage-location erc7201:towns.domains.resolver.storage
-    function getStorage() internal pure returns (Layout storage $) {
-        assembly {
-            $.slot := STORAGE_SLOT
-        }
-    }
+    // keccak256(abi.encode(uint256(keccak256("towns.domains.resolver.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xad5af01a9aec1f0fbc422f62e21406a58de498f1c0ee36ca202bc49bd857fd00;
+
+    // ENS protocol address
+    ENS internal constant ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
+
+    // ENS name wrapper node
+    bytes32 internal constant NAME_WRAPPER_NODE =
+        0xdee478ba2734e34d81c6adc77a32d75b29007895efa2fe60921f1c315e1ec7d9; // namewrapper.eth
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -94,6 +85,7 @@ library L1ResolverMod {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function setGatewayURL(Layout storage $, string calldata gatewayUrl) internal {
         if (bytes(gatewayUrl).length == 0) L1Resolver__InvalidGatewayURL.selector.revertWith();
         $.gatewayUrl = gatewayUrl;
@@ -225,6 +217,15 @@ library L1ResolverMod {
         // Supports both EOA (ECDSA) and smart contract wallets (ERC-1271)
         if (!SignatureCheckerLib.isValidSignatureNow(signer, hash, sig)) {
             L1Resolver__InvalidSignature.selector.revertWith();
+        }
+    }
+
+    /// @notice Returns the storage layout for the L1Resolver
+    /// @return $ The storage layout
+    /// @custom:storage-location erc7201:towns.domains.resolver.storage
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
         }
     }
 

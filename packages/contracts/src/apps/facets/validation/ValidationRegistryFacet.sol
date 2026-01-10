@@ -19,10 +19,6 @@ contract ValidationRegistryFacet is IValidationRegistry, Facet, ValidationRegist
         __ValidationRegistryFacet_init_unchained();
     }
 
-    function __ValidationRegistryFacet_init_unchained() internal {
-        _addInterface(type(IValidationRegistry).interfaceId);
-    }
-
     /// @inheritdoc IValidationRegistry
     function validationRequest(
         address validatorAddress,
@@ -84,5 +80,13 @@ contract ValidationRegistryFacet is IValidationRegistry, Facet, ValidationRegist
         address validatorAddress
     ) external view returns (bytes32[] memory requestHashes) {
         return _getValidatorRequests(validatorAddress);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTERNAL FUNCTIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function __ValidationRegistryFacet_init_unchained() internal {
+        _addInterface(type(IValidationRegistry).interfaceId);
     }
 }
