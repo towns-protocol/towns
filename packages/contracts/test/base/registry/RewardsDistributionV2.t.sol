@@ -1107,10 +1107,6 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         );
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         SECURITY                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function test_stakeOnBehalf_revertIf_ownerIsSelf() public {
         vm.expectRevert(RewardsDistribution__InvalidOwner.selector);
         rewardsDistributionFacet.stakeOnBehalf(
