@@ -122,6 +122,7 @@ contract RewardsDistributionV2 is
         uint256,
         bytes calldata
     ) external returns (uint256 depositId) {
+        _revertIfInvalidOwner(owner);
         depositId = _stake(amount, delegatee, beneficiary, owner, false);
     }
 

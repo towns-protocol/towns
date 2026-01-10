@@ -40,6 +40,7 @@ interface IRewardsDistributionBase {
     error RewardsDistribution__InvalidSignature();
     error RewardsDistribution__CannotWithdrawFromSelf();
     error RewardsDistribution__NoPendingWithdrawal();
+    error RewardsDistribution__InvalidOwner();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

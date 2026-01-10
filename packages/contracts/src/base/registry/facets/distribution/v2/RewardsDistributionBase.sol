@@ -296,4 +296,8 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
             RewardsDistribution__InvalidSignature.selector.revertWith();
         }
     }
+
+    function _revertIfInvalidOwner(address owner) internal view {
+        if (owner == address(this)) RewardsDistribution__InvalidOwner.selector.revertWith();
+    }
 }
