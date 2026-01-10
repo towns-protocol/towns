@@ -2,10 +2,10 @@
 pragma solidity ^0.8.29;
 
 // interfaces
-import {IFeeHook, FeeHookResult} from "../../../factory/facets/fee/IFeeHook.sol";
+import {IFeeHook, FeeHookResult} from "../../factory/facets/fee/IFeeHook.sol";
 
 // libraries
-import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Ownable} from "solady/auth/Ownable.sol";
@@ -89,7 +89,7 @@ contract DomainFeeHook is IFeeHook, Ownable {
 
         result = _calculateFee(user, context);
         // Increment registration count (state change)
-        $.registrationCount[user]++;
+        ++$.registrationCount[user];
     }
 
     /// @notice Sets the fee manager address

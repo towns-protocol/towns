@@ -9,17 +9,15 @@ import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
 
 // libraries
 import {LibString} from "solady/utils/LibString.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
-import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
+import {ProtocolFeeLib} from "../../../spaces/facets/ProtocolFeeLib.sol";
 
 // contracts
 import {AddrResolverFacet} from "../l2/AddrResolverFacet.sol";
 
 library L2RegistrarMod {
     using CustomRevert for bytes4;
-    using SafeTransferLib for address;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          LAYOUT                            */
@@ -96,9 +94,6 @@ library L2RegistrarMod {
     /// @param subdomain The subdomain label to register (e.g., "alice")
     /// @param owner The address of the owner of the subdomain
     function register(Layout storage $, string calldata subdomain, address owner) internal {
-        // Encode owner address as bytes for resolver record storage
-        bytes memory addr = abi.encodePacked(owner);
-
         // Get registry interface to interact with domain management functions
         IL2Registry registry = IL2Registry($.registry);
 
@@ -108,11 +103,14 @@ library L2RegistrarMod {
         // Compute the subdomain namehash (e.g., namehash("alice.towns.eth"))
         bytes32 subdomainHash = registry.encodeSubdomain(domainHash, subdomain);
 
-        // Get address resolver facet to set address records for the subdomain
-        AddrResolverFacet addrResolver = AddrResolverFacet($.registry);
-
         // Register the name in the L2 registry
         registry.createSubdomain(domainHash, subdomain, owner, new bytes[](0), "");
+
+        // Encode owner address as bytes for resolver record storage
+        bytes memory addr = abi.encodePacked(owner);
+
+        // Get address resolver facet to set address records for the subdomain
+        AddrResolverFacet addrResolver = AddrResolverFacet($.registry);
 
         // Set the forward address for the current chain. This is needed for reverse resolution.
         // E.g. if this contract is deployed to Base, set an address for chainId 8453 which is
@@ -130,31 +128,24 @@ library L2RegistrarMod {
         if ($.spaceFactory == address(0)) return;
         if ($.currency == address(0)) return;
 
-        address spaceFactory = $.spaceFactory;
-        address currency = $.currency;
-
         bytes memory extraData = abi.encode(bytes(label).length);
 
-        uint256 expectedFee = IFeeManager(spaceFactory).calculateFee(
+        uint256 expectedFee = IFeeManager($.spaceFactory).calculateFee(
             FeeTypesLib.DOMAIN_REGISTRATION,
             msg.sender,
             0,
             extraData
         );
 
-        bool isNative = currency == CurrencyTransfer.NATIVE_TOKEN;
-        if (!isNative) currency.safeApproveWithRetry(spaceFactory, expectedFee);
-
-        IFeeManager(spaceFactory).chargeFee{value: isNative ? expectedFee : 0}(
+        ProtocolFeeLib.chargeAlways(
+            $.spaceFactory,
             FeeTypesLib.DOMAIN_REGISTRATION,
             msg.sender,
+            $.currency,
             expectedFee,
-            currency,
             expectedFee,
             extraData
         );
-
-        if (!isNative) currency.safeApprove(spaceFactory, 0);
     }
 
     /// @notice Validates caller is a Towns smart account (IModularAccount)

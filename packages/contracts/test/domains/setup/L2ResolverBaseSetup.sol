@@ -25,21 +25,15 @@ contract L2ResolverBaseSetup is BaseSetup {
     address internal l2Resolver;
 
     // Test accounts
-
-    address internal alice;
-    address internal bob;
-    address internal registrar;
+    address internal alice = makeAddr("alice");
+    address internal bob = makeAddr("bob");
+    address internal registrar = makeAddr("registrar");
 
     // Computed test data
     bytes32 internal rootNode;
 
     function setUp() public virtual override {
-        // Setup test accounts
         super.setUp();
-
-        alice = _randomAddress();
-        bob = _randomAddress();
-        registrar = _randomAddress();
 
         // Compute root node hash
         rootNode = _namehash(TEST_DOMAIN);

@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {IFeeHook, FeeHookResult} from "src/factory/facets/fee/IFeeHook.sol";
 
 // contracts
-import {DomainFeeHook} from "src/domains/facets/registrar/DomainFeeHook.sol";
+import {DomainFeeHook} from "src/domains/hooks/DomainFeeHook.sol";
 
 // test setup
 import {L2ResolverBaseSetup} from "./setup/L2ResolverBaseSetup.sol";

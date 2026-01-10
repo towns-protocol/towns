@@ -12,7 +12,7 @@ import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 
 // contracts
-import {DomainFeeHook} from "src/domains/facets/registrar/DomainFeeHook.sol";
+import {DomainFeeHook} from "src/domains/hooks/DomainFeeHook.sol";
 
 // facets
 import {L2RegistryFacet} from "src/domains/facets/l2/L2RegistryFacet.sol";
@@ -375,25 +375,25 @@ contract L2RegistrarTest is L2ResolverBaseSetup {
                             AVAILABILITY
     //////////////////////////////////////////////////////////////*/
 
-    function test_available_valid() external {
-        assertTrue(l2Registrar.available("alice"));
-        assertTrue(l2Registrar.available("bob123"));
-        assertTrue(l2Registrar.available("my-name"));
+    function test_isAvailable_valid() external {
+        assertTrue(l2Registrar.isAvailable("alice"));
+        assertTrue(l2Registrar.isAvailable("bob123"));
+        assertTrue(l2Registrar.isAvailable("my-name"));
     }
 
-    function test_available_invalidLabel() external {
-        assertFalse(l2Registrar.available("ab")); // too short
-        assertFalse(l2Registrar.available("-alice")); // hyphen at start
-        assertFalse(l2Registrar.available("ALICE")); // uppercase
+    function test_isAvailable_invalidLabel() external {
+        assertFalse(l2Registrar.isAvailable("ab")); // too short
+        assertFalse(l2Registrar.isAvailable("-alice")); // hyphen at start
+        assertFalse(l2Registrar.isAvailable("ALICE")); // uppercase
     }
 
-    function test_available_alreadyRegistered() external {
+    function test_isAvailable_alreadyRegistered() external {
         // Register alice
         vm.prank(address(smartAccount));
         l2Registrar.register("alice", alice);
 
         // Should no longer be available
-        assertFalse(l2Registrar.available("alice"));
+        assertFalse(l2Registrar.isAvailable("alice"));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -438,9 +438,9 @@ contract L2RegistrarTest is L2ResolverBaseSetup {
         l2Registrar.register("charlie", address(0x3));
 
         // Verify all subdomains exist
-        assertTrue(!l2Registrar.available("alice"));
-        assertTrue(!l2Registrar.available("bob"));
-        assertTrue(!l2Registrar.available("charlie"));
+        assertTrue(!l2Registrar.isAvailable("alice"));
+        assertTrue(!l2Registrar.isAvailable("bob"));
+        assertTrue(!l2Registrar.isAvailable("charlie"));
 
         // Verify correct owners
         assertEq(l2Registry.subdomainOwner(_subdomainHash("alice")), alice);

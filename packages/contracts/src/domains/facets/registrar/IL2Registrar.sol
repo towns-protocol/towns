@@ -30,7 +30,7 @@ interface IL2Registrar {
     /// @dev Returns false if label is invalid OR already registered
     /// @param label The subdomain label to check (e.g., "alice")
     /// @return True if the label can be registered, false otherwise
-    function available(string calldata label) external view returns (bool);
+    function isAvailable(string calldata label) external view returns (bool);
 
     /// @notice Returns the registry address this registrar points to
     /// @return The address of the L2Registry diamond contract

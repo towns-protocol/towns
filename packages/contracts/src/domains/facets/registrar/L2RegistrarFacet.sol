@@ -51,7 +51,10 @@ contract L2RegistrarFacet is IL2Registrar, OwnableBase, ReentrancyGuardTransient
         $.registry = registry;
         $.spaceFactory = spaceFactory;
         $.currency = currency;
-        $.coinType = 0x80000000 | block.chainid; // ENSIP-11:
+        // ENSIP-11: Maps EVM chainId to ENS coinType by setting MSB (bit 31).
+        // This avoids collisions with SLIP-44 native coin types and enables
+        // deterministic L2 address resolution. Formula: coinType = 0x80000000 | chainId
+        $.coinType = 0x80000000 | block.chainid;
     }
 
     /// @inheritdoc IL2Registrar
@@ -93,7 +96,7 @@ contract L2RegistrarFacet is IL2Registrar, OwnableBase, ReentrancyGuardTransient
     }
 
     /// @inheritdoc IL2Registrar
-    function available(string calldata label) external view returns (bool) {
+    function isAvailable(string calldata label) external view returns (bool) {
         return L2RegistrarMod.getStorage().available(label);
     }
 

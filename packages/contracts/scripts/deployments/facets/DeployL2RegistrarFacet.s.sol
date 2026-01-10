@@ -18,7 +18,7 @@ library DeployL2RegistrarFacet {
         DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
 
         arr.p(L2RegistrarFacet.register.selector);
-        arr.p(L2RegistrarFacet.available.selector);
+        arr.p(L2RegistrarFacet.isAvailable.selector);
         arr.p(L2RegistrarFacet.isValidLabel.selector);
         arr.p(L2RegistrarFacet.getRegistry.selector);
         arr.p(L2RegistrarFacet.getCoinType.selector);
