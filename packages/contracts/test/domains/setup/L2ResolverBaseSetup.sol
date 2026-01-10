@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {NameCoder} from "@ensdomains/ens-contracts/utils/NameCoder.sol";
 
 // contracts
-import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
+import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // facets
 import {L2RegistryFacet} from "src/domains/facets/l2/L2RegistryFacet.sol";
@@ -15,7 +15,7 @@ import {DeployL2Resolver} from "scripts/deployments/diamonds/DeployL2Resolver.s.
 
 /// @title L2ResolverBaseSetup
 /// @notice Base setup for L2Resolver tests
-contract L2ResolverBaseSetup is TestUtils {
+contract L2ResolverBaseSetup is BaseSetup {
     // Constants
     string internal constant TEST_DOMAIN = "towns.eth";
     uint256 internal constant COIN_TYPE_ETH = 60;
@@ -25,20 +25,15 @@ contract L2ResolverBaseSetup is TestUtils {
     address internal l2Resolver;
 
     // Test accounts
-    address internal deployer;
-    address internal alice;
-    address internal bob;
-    address internal registrar;
+    address internal alice = makeAddr("alice");
+    address internal bob = makeAddr("bob");
+    address internal registrar = makeAddr("registrar");
 
     // Computed test data
     bytes32 internal rootNode;
 
-    function setUp() public virtual {
-        // Setup test accounts
-        deployer = getDeployer();
-        alice = _randomAddress();
-        bob = _randomAddress();
-        registrar = _randomAddress();
+    function setUp() public virtual override {
+        super.setUp();
 
         // Compute root node hash
         rootNode = _namehash(TEST_DOMAIN);
