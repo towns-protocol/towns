@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import {
     createPublicClient,
     createWalletClient,
@@ -13,26 +13,26 @@ import {
 } from 'viem'
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts'
-import { entryPoint07Address, createBundlerClient } from 'viem/account-abstraction'
+import { createBundlerClient } from 'viem/account-abstraction'
 import { toModularSmartAccount } from '../src/create2/toModularSmartAccount'
 import { toTownsSmartAccount } from '../src/create2/toTownsSmartAccount'
-import { Instance, Server } from 'prool'
 import walletLinkAbi from '@towns-protocol/generated/v3/abis/WalletLink.abi'
 import { discoverAccount } from '../src/id/discoverAccount'
 
 // SpaceFactory address from local deployment
-const SPACE_FACTORY_ADDRESS = '0x4A679253410272dd5232B3Ff7cF5dbB88f295319' as Address
+const SPACE_FACTORY_ADDRESS = process.env.BASE_ADDRESSES_SPACE_FACTORY as Address
 
 // Anvil default funded account
 const ANVIL_PRIVATE_KEY =
     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as const
 
 const ANVIL_RPC_URL = process.env.ANVIL_RPC_URL || 'http://127.0.0.1:8545'
+const BUNDLER_RPC_URL = process.env.BUNDLER_RPC_URL || 'http://127.0.0.1:4337'
 
 describe('UserOp Integration Tests', () => {
-    // Tests that require external anvil instance
+    // Tests that require external anvil instance with Alto bundler
+    // Run "Start Local Dev" or "just anvils" (with USE_DOCKER_CHAINS=1) before running these tests
     describe('with Alto bundler', () => {
-        let altoServer: ReturnType<typeof Server.create>
         let bundlerClient: ReturnType<typeof createBundlerClient>
         let publicClient: PublicClient<Transport, Chain>
         let walletClient: WalletClient<Transport, Chain, PrivateKeyAccount>
@@ -49,27 +49,11 @@ describe('UserOp Integration Tests', () => {
                 account: privateKeyToAccount(ANVIL_PRIVATE_KEY),
             })
 
-            const altoPort = 4337 + Math.floor(Math.random() * 1000)
-            altoServer = Server.create({
-                instance: Instance.alto({
-                    entrypoints: [entryPoint07Address],
-                    rpcUrl: ANVIL_RPC_URL,
-                    executorPrivateKeys: [ANVIL_PRIVATE_KEY],
-                    utilityPrivateKey: ANVIL_PRIVATE_KEY,
-                    safeMode: false,
-                    balanceOverride: true,
-                }),
-                port: altoPort,
-            })
-            await altoServer.start()
+            // Use Alto bundler from Docker (started via "Start Local Dev" or "just anvils")
             bundlerClient = createBundlerClient({
                 client: publicClient,
-                transport: http(`http://127.0.0.1:${altoPort}/1`),
+                transport: http(BUNDLER_RPC_URL),
             })
-        })
-
-        afterAll(async () => {
-            await altoServer?.stop()
         })
 
         it('should create a modular smart account and send a userOp', async () => {
@@ -89,9 +73,15 @@ describe('UserOp Integration Tests', () => {
             })
             await publicClient.waitForTransactionReceipt({ hash: fundTx })
             const recipient = privateKeyToAccount(generatePrivateKey()).address
+            // Note: Explicit gas limits are required because Alto's gas estimation
+            // has a second validation pass that fails for modular accounts.
+            // This is a known Alto issue with Alchemy's ModularAccountFactory.
             const userOpHash = await bundlerClient.sendUserOperation({
                 account: smartAccount,
                 calls: [{ to: recipient, value: parseEther('0.1') }],
+                callGasLimit: 200000n,
+                verificationGasLimit: 500000n,
+                preVerificationGas: 100000n,
             })
             const receipt = await bundlerClient.waitForUserOperationReceipt({
                 hash: userOpHash,
@@ -119,12 +109,17 @@ describe('UserOp Integration Tests', () => {
             const recipient1 = privateKeyToAccount(generatePrivateKey()).address
             const recipient2 = privateKeyToAccount(generatePrivateKey()).address
 
+            // Note: Explicit gas limits are required because Alto's gas estimation
+            // has a second validation pass that fails for modular accounts.
             const userOpHash = await bundlerClient.sendUserOperation({
                 account: smartAccount,
                 calls: [
                     { to: recipient1, value: parseEther('0.1') },
                     { to: recipient2, value: parseEther('0.2') },
                 ],
+                callGasLimit: 300000n,
+                verificationGasLimit: 500000n,
+                preVerificationGas: 100000n,
             })
 
             const receipt = await bundlerClient.waitForUserOperationReceipt({
@@ -191,6 +186,7 @@ describe('UserOp Integration Tests', () => {
             })
 
             // Send userOp to link the smart account to the root key
+            // Note: Explicit gas limits required for Alto bundler with modular accounts
             const userOpHash = await bundlerClient.sendUserOperation({
                 account: smartAccount,
                 calls: [
@@ -208,6 +204,9 @@ describe('UserOp Integration Tests', () => {
                         ],
                     },
                 ],
+                callGasLimit: 300000n,
+                verificationGasLimit: 500000n,
+                preVerificationGas: 100000n,
             })
 
             const receipt = await bundlerClient.waitForUserOperationReceipt({

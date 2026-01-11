@@ -35,10 +35,8 @@
         "viem": "^2.29.3"
     },
     "devDependencies": {
-        "@pimlico/alto": "^0.0.19",
         "@towns-protocol/generated": "workspace:^",
         "permissionless": "^0.2.57",
-        "prool": "^0.2.1",
         "vitest": "^3.2.3",
         "typescript": "~5.8.3"
     }
