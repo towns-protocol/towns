@@ -1,0 +1,10 @@
+# @towns-protocol/react-sdk
+
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`d81db9a`](https://github.com/towns-protocol/towns/commit/d81db9ac0d730377aae114df682589975385ba8a), [`d81db9a`](https://github.com/towns-protocol/towns/commit/d81db9ac0d730377aae114df682589975385ba8a), [`d81db9a`](https://github.com/towns-protocol/towns/commit/d81db9ac0d730377aae114df682589975385ba8a)]:
+  - @towns-protocol/web3@1.0.1
+  - @towns-protocol/sdk@1.0.1
+  - @towns-protocol/proto@1.0.1
