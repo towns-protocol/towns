@@ -361,10 +361,17 @@ func selectCandidateNodes(
 
 	// Select remaining candidates pseudo-randomly
 	for candidatesFound < candidatesWanted {
+		// Check if we've exhausted all available nodes (can happen when uniqueOperators
+		// is true and all remaining nodes belong to already-selected operators)
+		remaining := len(nodes) - candidatesFound
+		if remaining <= 0 {
+			break
+		}
+
 		_, _ = h.Write(streamID[:])
 
 		// Pick a pseudo-random node from remaining nodes
-		index := candidatesFound + int(h.Sum64()%uint64(len(nodes)-candidatesFound))
+		index := candidatesFound + int(h.Sum64()%uint64(remaining))
 		selectedNode := nodes[index]
 
 		// Check unique operators constraint

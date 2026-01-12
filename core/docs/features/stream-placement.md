@@ -41,7 +41,7 @@ Required operators is an on-chain setting that specifies a list of operator addr
 
 Selection among required operator nodes uses weighted scoring:
 
-```
+```text
 score = hash_component + load_penalty
 ```
 
