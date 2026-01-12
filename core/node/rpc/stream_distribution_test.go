@@ -304,3 +304,202 @@ func ensureStreamDistributionIsEven(
 	// ensure that the min and max nodes don't have more than 10% difference in stream count
 	require.GreaterOrEqual((110*minStreams)/100, maxStreams, "streams not evenly distributed")
 }
+
+// TestRequiredOperators ensures that when required operators are configured,
+// at least one node from a required operator is included in each stream placement.
+func TestRequiredOperators(t *testing.T) {
+	tests := []struct {
+		name                     string
+		numRequiredOperators     int
+		expectRequiredConstraint bool
+	}{
+		{
+			name:                     "0 required operators",
+			numRequiredOperators:     0,
+			expectRequiredConstraint: false,
+		},
+		{
+			name:                     "1 required operator",
+			numRequiredOperators:     1,
+			expectRequiredConstraint: true,
+		},
+		{
+			name:                     "2 required operators",
+			numRequiredOperators:     2,
+			expectRequiredConstraint: true,
+		},
+		{
+			name:                     "3 required operators",
+			numRequiredOperators:     3,
+			expectRequiredConstraint: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newServiceTester(t, serviceTesterOpts{
+				numNodes:  20,
+				start:     true,
+				btcParams: &crypto.TestParams{NumOperators: 5, AutoMine: true},
+			})
+
+			cfg := tt.getConfig()
+			riverContract, err := registries.NewRiverRegistryContract(
+				tt.ctx,
+				tt.btc.DeployerBlockchain,
+				&cfg.RegistryContract,
+				&cfg.RiverRegistry,
+			)
+			tt.require.NoError(err)
+
+			blockNumber, err := tt.btc.DeployerBlockchain.GetBlockNumber(t.Context())
+			tt.require.NoError(err)
+
+			// Get all nodes to find their operators
+			allNodes, err := riverContract.GetAllNodes(tt.ctx, blockNumber)
+			tt.require.NoError(err)
+
+			// Build a map of operator to their nodes
+			operatorNodes := make(map[common.Address][]common.Address)
+			for _, node := range allNodes {
+				operatorNodes[node.Operator] = append(operatorNodes[node.Operator], node.NodeAddress)
+			}
+
+			// Pick the specified number of operators to be "required"
+			var requiredOperators []common.Address
+			for op := range operatorNodes {
+				if len(requiredOperators) >= tc.numRequiredOperators {
+					break
+				}
+				requiredOperators = append(requiredOperators, op)
+			}
+
+			// Build set of nodes belonging to required operators
+			requiredOperatorNodes := make(map[common.Address]struct{})
+			for _, op := range requiredOperators {
+				for _, node := range operatorNodes[op] {
+					requiredOperatorNodes[node] = struct{}{}
+				}
+			}
+
+			mockCfg := &mocks.MockOnChainCfg{
+				Settings: &crypto.OnChainSettings{
+					FromBlockNumber: blockNumber,
+					StreamDistribution: crypto.StreamDistribution{
+						ExtraCandidatesCount: 1,
+						RequiredOperators:    requiredOperators,
+					},
+				},
+			}
+
+			distributor, err := streamplacement.NewDistributor(
+				t.Context(),
+				mockCfg,
+				blockNumber,
+				tt.btc.DeployerBlockchain.ChainMonitor,
+				riverContract,
+			)
+			tt.require.NoError(err)
+
+			var (
+				distributorSim    = distributor.(streamplacement.DistributorSimulator)
+				streamID          StreamId
+				streamsToAllocate = 10_000
+				replFactor        = 3
+			)
+
+			for i := range streamsToAllocate {
+				b := sha256.Sum256(streamID[:])
+				b[0] = STREAM_CHANNEL_BIN
+				streamID, err = StreamIdFromBytes(b[:STREAM_ID_BYTES_LENGTH])
+				tt.require.NoError(err)
+
+				nodes, err := distributor.ChooseStreamNodes(tt.ctx, streamID, replFactor)
+				tt.require.NoError(err)
+
+				// Verify at least one node is from a required operator (when configured)
+				if tc.expectRequiredConstraint {
+					hasRequiredOperatorNode := false
+					for _, node := range nodes {
+						if _, isRequired := requiredOperatorNodes[node]; isRequired {
+							hasRequiredOperatorNode = true
+							break
+						}
+					}
+					tt.require.True(hasRequiredOperatorNode,
+						"stream %d placement must include at least one node from a required operator", i)
+				}
+
+				// simulate stream registration
+				for _, node := range nodes {
+					distributorSim.AssignStreamToNode(node)
+				}
+			}
+
+			// Verify streams are evenly distributed (only when no required operators)
+			// With required operators, distribution is intentionally skewed toward those nodes
+			if !tc.expectRequiredConstraint {
+				ensureStreamDistributionIsEven(t, tt.require, distributorSim.NodeStreamCount())
+			}
+		})
+	}
+}
+
+// TestRequiredOperatorsGracefulDegradation ensures that when required operators are configured
+// but none have operational nodes, stream placement proceeds normally without error.
+func TestRequiredOperatorsGracefulDegradation(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes:  10,
+		start:     true,
+		btcParams: &crypto.TestParams{NumOperators: 3, AutoMine: true},
+	})
+
+	cfg := tt.getConfig()
+	riverContract, err := registries.NewRiverRegistryContract(
+		tt.ctx,
+		tt.btc.DeployerBlockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	tt.require.NoError(err)
+
+	blockNumber, err := tt.btc.DeployerBlockchain.GetBlockNumber(t.Context())
+	tt.require.NoError(err)
+
+	// Configure a non-existent operator as required
+	nonExistentOperator := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	mockCfg := &mocks.MockOnChainCfg{
+		Settings: &crypto.OnChainSettings{
+			FromBlockNumber: blockNumber,
+			StreamDistribution: crypto.StreamDistribution{
+				ExtraCandidatesCount: 1,
+				RequiredOperators:    []common.Address{nonExistentOperator},
+			},
+		},
+	}
+
+	distributor, err := streamplacement.NewDistributor(
+		t.Context(),
+		mockCfg,
+		blockNumber,
+		tt.btc.DeployerBlockchain.ChainMonitor,
+		riverContract,
+	)
+	tt.require.NoError(err)
+
+	var (
+		streamID   StreamId
+		replFactor = 3
+	)
+
+	// Should succeed without error even though required operator has no nodes
+	b := sha256.Sum256(streamID[:])
+	b[0] = STREAM_CHANNEL_BIN
+	streamID, err = StreamIdFromBytes(b[:STREAM_ID_BYTES_LENGTH])
+	tt.require.NoError(err)
+
+	nodes, err := distributor.ChooseStreamNodes(tt.ctx, streamID, replFactor)
+	tt.require.NoError(err)
+	tt.require.Len(nodes, replFactor, "should still return replFactor nodes")
+}

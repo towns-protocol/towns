@@ -82,6 +82,27 @@ const (
 	// the best replication factor nodes are picked.
 	StreamDistributionExtraCandidatesCountCountKey = "stream.distribution.extracandidatescount"
 
+	// StreamDistributionRequiredOperatorsConfigKey is the key for a list of operator addresses.
+	// When placing a stream, at least one node from a required operator must be selected if any
+	// required operator has operational nodes available.
+	StreamDistributionRequiredOperatorsConfigKey = "stream.distribution.requiredoperators"
+
+	// StreamDistributionMinBalancingAdvantageConfigKey is the key for the minimum advantage (as a
+	// percentage expressed in basis points, e.g., 500 = 5%) that a less-loaded node has over more
+	// loaded nodes when selecting from required operator nodes.
+	StreamDistributionMinBalancingAdvantageConfigKey = "stream.distribution.minbalancingadvantage"
+
+	// StreamDistributionMaxBalancingAdvantageConfigKey is the key for the maximum advantage (as a
+	// percentage expressed in basis points, e.g., 750 = 7.5%) that a less-loaded node has over more
+	// loaded nodes when selecting from required operator nodes.
+	StreamDistributionMaxBalancingAdvantageConfigKey = "stream.distribution.maxbalancingadvantage"
+
+	// StreamDistributionMinBalancingAdvantageDefault is the default minimum balancing advantage (5%).
+	StreamDistributionMinBalancingAdvantageDefault = 500
+
+	// StreamDistributionMaxBalancingAdvantageDefault is the default maximum balancing advantage (7.5%).
+	StreamDistributionMaxBalancingAdvantageDefault = 750
+
 	// MaxEventsPerMiniblockDefault defines the default (also the maximum) number of events in a miniblock
 	// if not overwritten by StreamMaxEventsPerMiniblockKey.
 	MaxEventsPerMiniblockDefault = 15_000
@@ -283,6 +304,17 @@ type StreamDistribution struct {
 	// ExtraCandidatesCount is the number of extra candidate nodes to select when determining the
 	// nodes to place a stream on. From these candidates the best replication factor nodes are picked.
 	ExtraCandidatesCount uint64 `mapstructure:"stream.distribution.extracandidatescount"`
+	// RequiredOperators is a list of operator addresses. When placing a stream, at least one node
+	// from a required operator must be selected if any required operator has operational nodes.
+	RequiredOperators []common.Address `mapstructure:"stream.distribution.requiredoperators"`
+	// MinBalancingAdvantage is the minimum advantage (in basis points, e.g., 500 = 5%) that a
+	// less-loaded node has over more loaded nodes when selecting from required operator nodes.
+	// Defaults to 500 (5%) when not set.
+	MinBalancingAdvantage uint64 `mapstructure:"stream.distribution.minbalancingadvantage"`
+	// MaxBalancingAdvantage is the maximum advantage (in basis points, e.g., 750 = 7.5%) that a
+	// less-loaded node has over more loaded nodes when selecting from required operator nodes.
+	// Defaults to 750 (7.5%) when not set.
+	MaxBalancingAdvantage uint64 `mapstructure:"stream.distribution.maxbalancingadvantage"`
 }
 
 // StreamIdMiniblock represents a per-stream trim target configuration.

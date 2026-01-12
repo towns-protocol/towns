@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"sync/atomic"
 
@@ -173,72 +174,239 @@ func (d *streamsDistributor) ChooseStreamNodes(
 		extraCandidatesCount = defaultExtraCandidatesCount
 	}
 
-	// pick candidatesWanted nodes and select the best replFactor nodes from them.
-	// With best being defined as least number of streams assigned.
-	candidatesWanted := replFactor + extraCandidatesCount
-	candidatesWanted = min(len(impl.nodes), candidatesWanted)
-	uniqueOperators := candidatesWanted <= len(impl.operators)
+	// Select a node from required operators if configured
+	requiredNode := selectRequiredOperatorNode(
+		impl.nodes,
+		cfg.StreamDistribution.RequiredOperators,
+		cfg.StreamDistribution.MinBalancingAdvantage,
+		cfg.StreamDistribution.MaxBalancingAdvantage,
+		streamID,
+	)
 
-	if !uniqueOperators {
-		// if there are equal number of operators as replFactor but not enough to pick the
-		// desired candidates count ensure that the picked nodes are all from unique operators.
-		// This favors stream distribution over unique operators over balancing streams over nodes.
-		if replFactor <= len(impl.operators) {
-			candidatesWanted = replFactor
-			uniqueOperators = true
-		} else {
-			logging.FromCtx(ctx).Warnw("ChooseStreamNodes: replication factor is greater than number of unique operators",
-				"replFactor", replFactor,
-				"numOperators", len(impl.operators))
+	// Calculate candidates count and determine if unique operators should be enforced
+	candidatesWanted, uniqueOperators := calculateCandidatesCount(
+		ctx, replFactor, extraCandidatesCount, len(impl.nodes), len(impl.operators),
+	)
+
+	// Select candidate nodes using pseudo-random selection
+	candidates, candidatesFound := selectCandidateNodes(
+		impl.nodes, streamID, candidatesWanted, uniqueOperators, requiredNode,
+	)
+
+	// Sort candidates by stream count (the least loaded first)
+	slices.SortFunc(candidates[:candidatesFound], func(x, y *streamNode) int {
+		return cmp.Compare(x.streamCount.Load(), y.streamCount.Load())
+	})
+
+	// Build final node list, ensuring required operator node is included
+	return buildFinalNodeList(candidates[:candidatesFound], replFactor, requiredNode), nil
+}
+
+// selectRequiredOperatorNode selects a node from required operators using weighted scoring.
+// Returns nil if no required operators are configured or none have operational nodes.
+// minBalancingAdvantageBps and maxBalancingAdvantageBps are in basis points (e.g., 500 = 5%).
+func selectRequiredOperatorNode(
+	nodes []*streamNode,
+	requiredOperators []common.Address,
+	minBalancingAdvantageBps uint64,
+	maxBalancingAdvantageBps uint64,
+	streamID StreamId,
+) *streamNode {
+	if len(requiredOperators) == 0 {
+		return nil
+	}
+
+	// Build set of required operators for O(1) lookup
+	requiredOpSet := make(map[common.Address]struct{}, len(requiredOperators))
+	for _, op := range requiredOperators {
+		requiredOpSet[op] = struct{}{}
+	}
+
+	// Find all operational nodes belonging to required operators
+	var requiredNodes []*streamNode
+	for _, node := range nodes {
+		if _, isRequired := requiredOpSet[node.Operator]; isRequired {
+			requiredNodes = append(requiredNodes, node)
 		}
 	}
 
-	var (
-		nodes             = slices.Clone(impl.nodes)
-		candidatesFound   = 0
-		selectedOperators = make([]common.Address, 0, replFactor)
-		h                 = xxhash.New()
-	)
+	if len(requiredNodes) == 0 {
+		return nil // Graceful degradation: proceed with normal selection
+	}
 
-	// pick pseudo-random a node from the node list. If it is a valid candidate swap it with the
-	// first node in the node list and slice the canidate from the node list. If its not a valid
-	// candidate swap it with the last node in the node list and truncate the node list by slicing
-	// the last node off so it won't be picked again as a candidate.
+	// Apply defaults if not set
+	if minBalancingAdvantageBps == 0 {
+		minBalancingAdvantageBps = crypto.StreamDistributionMinBalancingAdvantageDefault
+	}
+	if maxBalancingAdvantageBps == 0 {
+		maxBalancingAdvantageBps = crypto.StreamDistributionMaxBalancingAdvantageDefault
+	}
+
+	// Convert basis points to float64 percentages
+	minAdvantage := float64(minBalancingAdvantageBps) / 10000.0
+	maxAdvantage := float64(maxBalancingAdvantageBps) / 10000.0
+
+	// Select using weighted scoring: score = hash_component + load_penalty
+	// Lower score wins, so nodes with lower stream counts have an advantage.
+	// The hash component provides pseudo-randomness based on (streamID, nodeAddress),
+	// while the load penalty gradually biases selection toward less loaded nodes.
+	//
+	// Hash Distribution Guarantee:
+	// The hash is computed from hash(streamID || nodeAddress). Although each node has a
+	// fixed address, the streamID changes for every stream. Because xxhash thoroughly mixes
+	// all input bits (avalanche effect), varying the streamID ensures each node's hash values
+	// are uniformly distributed in [0, 1) over many streams. This means no node address can
+	// cause a permanently skewed distribution - each node has equal base probability of winning
+	// before load penalties are applied.
+	//
+	// Using float64 arithmetic to avoid overflow while supporting billions of streams.
+	// Load penalty is calculated relative to the minimum stream count among required nodes,
+	// ensuring the advantage is always in the configured range when stream counts differ.
+
+	// Find minimum and maximum stream counts to calculate proportional penalties
+	minStreamCount := requiredNodes[0].streamCount.Load()
+	maxStreamCount := minStreamCount
+	for _, node := range requiredNodes[1:] {
+		count := node.streamCount.Load()
+		if count < minStreamCount {
+			minStreamCount = count
+		}
+		if count > maxStreamCount {
+			maxStreamCount = count
+		}
+	}
+	streamRange := maxStreamCount - minStreamCount
+
+	var bestScore float64
+	var selected *streamNode
+
+	for i, node := range requiredNodes {
+		h := xxhash.New()
+		_, _ = h.Write(streamID[:])
+		_, _ = h.Write(node.NodeAddress[:])
+
+		// Normalize hash to [0, 1) range for comparable scaling with load penalty
+		hashComponent := float64(h.Sum64()) / float64(math.MaxUint64)
+
+		// Calculate load penalty proportionally based on position in the range
+		// Node at min gets 0 penalty, node at max gets maxAdvantage penalty
+		// Nodes in between are scaled proportionally
+		streamDiff := node.streamCount.Load() - minStreamCount
+		var loadPenalty float64
+		if streamDiff > 0 && streamRange > 0 {
+			proportion := float64(streamDiff) / float64(streamRange)
+			loadPenalty = minAdvantage + (maxAdvantage-minAdvantage)*proportion
+		}
+
+		score := hashComponent + loadPenalty
+
+		if i == 0 || score < bestScore {
+			bestScore = score
+			selected = node
+		}
+	}
+
+	return selected
+}
+
+// calculateCandidatesCount determines how many candidates to select and whether
+// to enforce unique operators. It favors operator diversity over load balancing.
+func calculateCandidatesCount(
+	ctx context.Context,
+	replFactor, extraCandidatesCount, numNodes, numOperators int,
+) (candidatesWanted int, uniqueOperators bool) {
+	candidatesWanted = replFactor + extraCandidatesCount
+	candidatesWanted = min(numNodes, candidatesWanted)
+	uniqueOperators = candidatesWanted <= numOperators
+
+	if !uniqueOperators && replFactor <= numOperators {
+		// Ensure unique operators even if it means fewer extra candidates
+		candidatesWanted = replFactor
+		uniqueOperators = true
+	} else if !uniqueOperators {
+		logging.FromCtx(ctx).Warnw(
+			"ChooseStreamNodes: replication factor is greater than number of unique operators",
+			"replFactor", replFactor,
+			"numOperators", numOperators,
+		)
+	}
+
+	return candidatesWanted, uniqueOperators
+}
+
+// selectCandidateNodes selects candidate nodes using pseudo-random selection.
+// If requiredNode is provided, it is included as the first candidate.
+func selectCandidateNodes(
+	implNodes []*streamNode,
+	streamID StreamId,
+	candidatesWanted int,
+	uniqueOperators bool,
+	requiredNode *streamNode,
+) (nodes []*streamNode, candidatesFound int) {
+	nodes = slices.Clone(implNodes)
+	selectedOperators := make([]common.Address, 0, candidatesWanted)
+	h := xxhash.New()
+
+	// If we have a required operator node, add it as the first candidate
+	if requiredNode != nil {
+		for i, node := range nodes {
+			if node.NodeAddress == requiredNode.NodeAddress {
+				nodes[0], nodes[i] = nodes[i], nodes[0]
+				break
+			}
+		}
+		selectedOperators = append(selectedOperators, requiredNode.Operator)
+		candidatesFound = 1
+	}
+
+	// Select remaining candidates pseudo-randomly
 	for candidatesFound < candidatesWanted {
 		_, _ = h.Write(streamID[:])
 
-		// pick a pseudo-random node from the remaining nodes that haven't been picked before
+		// Pick a pseudo-random node from remaining nodes
 		index := candidatesFound + int(h.Sum64()%uint64(len(nodes)-candidatesFound))
 		selectedNode := nodes[index]
 
-		if uniqueOperators {
-			if slices.Contains(selectedOperators, selectedNode.Operator) {
-				// overwrite invalid candidate with last node of the list and truncate node list by
-				// one so it has an even chance to be picked again.
-				nodes[index] = nodes[len(nodes)-1]
-				nodes = nodes[:len(nodes)-1]
-				continue
-			}
+		// Check unique operators constraint
+		if uniqueOperators && slices.Contains(selectedOperators, selectedNode.Operator) {
+			// Swap invalid candidate with last node and truncate
+			nodes[index] = nodes[len(nodes)-1]
+			nodes = nodes[:len(nodes)-1]
+			continue
 		}
 
-		// selected node is a valid candidate, move it to the front of the node list
+		// Valid candidate: move to front of remaining nodes
 		nodes[candidatesFound], nodes[index] = selectedNode, nodes[candidatesFound]
 		selectedOperators = append(selectedOperators, selectedNode.Operator)
 		candidatesFound++
 	}
 
-	// select the candidates with the least number of streams assigned to them
-	slices.SortFunc(nodes[:candidatesFound], func(x, y *streamNode) int {
-		return cmp.Compare(x.streamCount.Load(), y.streamCount.Load())
-	})
+	return nodes, candidatesFound
+}
 
-	// and pick replFactor nodes from the candidates
+// buildFinalNodeList builds the final list of node addresses, ensuring the
+// required operator node is included even if load balancing would exclude it.
+func buildFinalNodeList(
+	candidates []*streamNode,
+	replFactor int,
+	requiredNode *streamNode,
+) []common.Address {
 	addrs := make([]common.Address, 0, replFactor)
-	for i := range replFactor {
-		addrs = append(addrs, nodes[i].NodeAddress)
+	requiredIncluded := requiredNode == nil
+
+	for i := 0; i < len(candidates) && len(addrs) < replFactor; i++ {
+		if requiredNode != nil && candidates[i].NodeAddress == requiredNode.NodeAddress {
+			requiredIncluded = true
+		}
+		addrs = append(addrs, candidates[i].NodeAddress)
 	}
 
-	return addrs, nil
+	// If required node was excluded by load balancing, replace highest-load node
+	if !requiredIncluded {
+		addrs[len(addrs)-1] = requiredNode.NodeAddress
+	}
+
+	return addrs
 }
 
 func (d *streamsDistributor) onHeader(ctx context.Context, header *types.Header) {
