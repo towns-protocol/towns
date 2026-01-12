@@ -15,23 +15,6 @@ set +a
 : ${BASE_RPC_URL:?}
 : ${BASE_ANVIL_RPC_URL:?}
 
-# Helper function to copy contract storage from mainnet to anvil
-# Queries first N storage slots directly (most contracts use only a few)
-copy_contract_storage() {
-    local address=$1
-    local name=$2
-    local max_slots=${3:-10}  # Default to checking first 10 slots
-    echo "Copying storage for $name ($address)..."
-
-    for slot in $(seq 0 $max_slots); do
-        local slot_hex="0x$(printf '%064x' $slot)"
-        local value=$(cast rpc eth_getStorageAt $address "$slot_hex" latest --rpc-url $BASE_RPC_URL 2>/dev/null | tr -d '"')
-        if [ -n "$value" ] && [ "$value" != "0x0000000000000000000000000000000000000000000000000000000000000000" ]; then
-            cast rpc anvil_setStorageAt $address "$slot_hex" "$value" --rpc-url $BASE_ANVIL_RPC_URL >/dev/null 2>&1 || true
-        fi
-    done
-}
-
 # Build if not called with nobuild
 if [ "${1-}" != "nobuild" ]; then
     forge build
@@ -51,7 +34,6 @@ cast rpc anvil_setCode $PERMIT2_ADDRESS $PERMIT2_BYTECODE --rpc-url $BASE_ANVIL_
 ENTRYPOINT_V07_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032
 ENTRYPOINT_V07_BYTECODE=$(cast code $ENTRYPOINT_V07_ADDRESS --rpc-url $BASE_RPC_URL)
 cast rpc anvil_setCode $ENTRYPOINT_V07_ADDRESS $ENTRYPOINT_V07_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
-copy_contract_storage $ENTRYPOINT_V07_ADDRESS "EntryPoint v0.7"
 
 # Deploy SenderCreator (REQUIRED - EntryPoint v0.7 helper contract for account creation)
 SENDER_CREATOR_ADDRESS=0xEFC2c1444eBCC4Db75e7613d20C6a62fF67A167C
@@ -87,7 +69,6 @@ cast rpc anvil_setCode $SIMPLE_ACCOUNT_FACTORY_ADDRESS $SIMPLE_ACCOUNT_FACTORY_B
 MODULAR_ACCOUNT_FACTORY_ADDRESS=0x00000000000017c61b5bEe81050EC8eFc9c6fecd
 MODULAR_ACCOUNT_FACTORY_BYTECODE=$(cast code $MODULAR_ACCOUNT_FACTORY_ADDRESS --rpc-url $BASE_RPC_URL)
 cast rpc anvil_setCode $MODULAR_ACCOUNT_FACTORY_ADDRESS $MODULAR_ACCOUNT_FACTORY_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
-copy_contract_storage $MODULAR_ACCOUNT_FACTORY_ADDRESS "ModularAccountFactory"
 
 # Deploy ModularAccount v2.0.0 implementation
 MODULAR_ACCOUNT_IMPL_ADDRESS=0x00000000000002377B26b1EdA7b0BC371C60DD4f
@@ -98,7 +79,6 @@ cast rpc anvil_setCode $MODULAR_ACCOUNT_IMPL_ADDRESS $MODULAR_ACCOUNT_IMPL_BYTEC
 SEMI_MODULAR_ACCOUNT_ADDRESS=0x000000000000c5A9089039570Dd36455b5C07383
 SEMI_MODULAR_ACCOUNT_BYTECODE=$(cast code $SEMI_MODULAR_ACCOUNT_ADDRESS --rpc-url $BASE_RPC_URL)
 cast rpc anvil_setCode $SEMI_MODULAR_ACCOUNT_ADDRESS $SEMI_MODULAR_ACCOUNT_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
-copy_contract_storage $SEMI_MODULAR_ACCOUNT_ADDRESS "SemiModularAccount"
 
 # Deploy SingleSignerValidationModule v2.0.0
 SINGLE_SIGNER_VALIDATION_ADDRESS=0x00000000000099DE0BF6fA90dEB851E2A2df7d83
