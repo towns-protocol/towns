@@ -29,6 +29,15 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
         );
 
         if (result == NodeVoteStatus.PASSED) {
+            // Re-validate supply cap before minting to prevent over-minting from
+            // concurrent crosschain join requests that were all accepted when under
+            // the cap but would exceed it if all finalized
+            uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
+            if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
+                _rejectMembership(transactionId, receiver);
+                return;
+            }
+
             PricingDetails memory joinDetails = _getPricingDetails();
 
             if (!joinDetails.shouldCharge) {
