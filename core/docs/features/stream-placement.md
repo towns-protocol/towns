@@ -67,14 +67,35 @@ If no required operator has operational nodes available, the algorithm proceeds 
 
 ## Implementation References
 
-- **Distributor interface**: `core/node/nodes/streamplacement/distribution.go:37` defines the `Distributor` interface with `ChooseStreamNodes` method.
-- **Main selection logic**: `core/node/nodes/streamplacement/distribution.go:161` implements `ChooseStreamNodes`, orchestrating candidate selection and final node list building.
-- **Required operator selection**: `core/node/nodes/streamplacement/distribution.go:208` implements weighted scoring for selecting among required operator nodes.
-- **Candidate count calculation**: `core/node/nodes/streamplacement/distribution.go:314` determines how many candidates to select and whether to enforce unique operators.
-- **Pseudo-random candidate selection**: `core/node/nodes/streamplacement/distribution.go:339` selects candidate nodes using deterministic pseudo-random selection based on stream ID.
-- **Final node list building**: `core/node/nodes/streamplacement/distribution.go:389` builds the final node list, ensuring required operator node is included.
-- **Configuration settings**: `core/node/crypto/config.go:303` defines `StreamDistribution` struct with `ExtraCandidatesCount`, `RequiredOperators`, `MinBalancingAdvantage`, and `MaxBalancingAdvantage` fields.
-- **Default values**: `core/node/crypto/config.go:100` defines default balancing advantage values (500 = 5%, 750 = 7.5% in basis points).
-- **Node registry updates**: `core/node/nodes/streamplacement/distribution.go:139` subscribes to node registry events to reload distributor state when nodes join/leave.
-- **Stream count tracking**: `core/node/nodes/streamplacement/distribution.go:437` updates node stream counts from `StreamUpdated` events.
-- **Test coverage**: `core/node/rpc/stream_distribution_test.go:310` tests required operators with 0, 1, 2, and 3 required operators. `core/node/rpc/stream_distribution_test.go:450` tests graceful degradation when required operators have no operational nodes.
+### Core Components
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `Distributor` interface | `streamplacement/distribution.go` | Defines `ChooseStreamNodes` method for stream placement |
+| `ChooseStreamNodes` | `streamplacement/distribution.go` | Main entry point orchestrating candidate selection |
+| `selectRequiredOperatorNode` | `streamplacement/distribution.go` | Weighted scoring for required operator node selection |
+| `calculateCandidatesCount` | `streamplacement/distribution.go` | Determines candidate count and operator diversity enforcement |
+| `selectCandidateNodes` | `streamplacement/distribution.go` | Pseudo-random candidate selection based on stream ID |
+| `buildFinalNodeList` | `streamplacement/distribution.go` | Builds final node list ensuring required operator inclusion |
+
+### Configuration
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `StreamDistribution` struct | `crypto/config.go` | Configuration fields for stream placement |
+| `StreamDistributionMinBalancingAdvantageDefault` | `crypto/config.go` | Default min advantage (500 = 5%) |
+| `StreamDistributionMaxBalancingAdvantageDefault` | `crypto/config.go` | Default max advantage (750 = 7.5%) |
+
+### Event Handling
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `onNodeRegistryChanged` | `streamplacement/distribution.go` | Reloads distributor state when nodes join/leave |
+| `onStreamUpdated` | `streamplacement/distribution.go` | Updates node stream counts from stream events |
+
+### Tests
+
+| Test | Location | Description |
+|------|----------|-------------|
+| `TestRequiredOperators` | `rpc/stream_distribution_test.go` | Tests 0, 1, 2, and 3 required operators |
+| `TestRequiredOperatorsGracefulDegradation` | `rpc/stream_distribution_test.go` | Tests fallback when required operators have no nodes |
