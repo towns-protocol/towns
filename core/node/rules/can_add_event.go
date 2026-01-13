@@ -1598,6 +1598,29 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 				initiatorAddress,
 			)
 		}
+		// If the joining user is a bot (has app_address), validate sponsor
+		if len(ru.membership.AppAddress) > 0 {
+			// Bot must have a sponsor address set
+			if len(ru.membership.AppSponsorAddress) == 0 {
+				return false, RiverError(
+					Err_PERMISSION_DENIED,
+					"bot joining GDM must have app_sponsor_address set",
+					"user",
+					userAddress,
+				)
+			}
+			// The sponsor must be the initiator (the member adding the bot)
+			if !bytes.Equal(ru.membership.AppSponsorAddress, initiatorAddress) {
+				return false, RiverError(
+					Err_PERMISSION_DENIED,
+					"bot sponsor must be the initiator",
+					"sponsor",
+					ru.membership.AppSponsorAddress,
+					"initiator",
+					initiatorAddress,
+				)
+			}
+		}
 		// user is either invited, or initiator is a member and the user did not just leave
 		return true, nil
 	case MembershipOp_SO_LEAVE:
