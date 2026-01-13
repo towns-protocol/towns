@@ -12,9 +12,10 @@ import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.s
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {RegistryModifiers} from "src/river/registry/libraries/RegistryStorage.sol";
 
-contract NodeRegistry is INodeRegistry, RegistryModifiers {
+contract NodeRegistry is INodeRegistry, RegistryModifiers, OwnableBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for string;
 
@@ -132,7 +133,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         return nodes;
     }
 
-    function backfillPermanentIndices() external {
+    function backfillPermanentIndices() external onlyOwner {
         // Can only be called once - after execution, lastNodeIndex > 0
         if (ds.lastNodeIndex > 0) {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
