@@ -6,6 +6,7 @@ import {ICriteria} from "./ICriteria.sol";
 
 // libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 library DMGatingMod {
@@ -42,6 +43,7 @@ library DMGatingMod {
         0x738f876e2a2e6d490330051e7611db72315baee9e3fef40f60abda772c241a00;
 
     uint8 constant MAX_CRITERIA = 8;
+    uint256 constant GAS_STIPEND = 100_000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -85,24 +87,14 @@ library DMGatingMod {
         address criteria,
         bytes calldata data
     ) internal {
-        if (criteria == address(0)) DMGating__InvalidCriteria.selector.revertWith();
-
-        // Ensure criteria is a contract, not an EOA
-        uint256 size;
-        assembly {
-            size := extcodesize(criteria)
-        }
-        if (size == 0) DMGating__NotAContract.selector.revertWith();
+        validateCriteria(criteria);
 
         EnumerableSetLib.AddressSet storage criteriaSet = $.criteria[account];
 
         if (criteriaSet.length() >= MAX_CRITERIA)
             DMGating__MaxCriteriaReached.selector.revertWith();
 
-        if (criteriaSet.contains(criteria))
-            DMGating__CriteriaAlreadyInstalled.selector.revertWith();
-
-        criteriaSet.add(criteria);
+        if (!criteriaSet.add(criteria)) DMGating__CriteriaAlreadyInstalled.selector.revertWith();
 
         // Call onInstall on the criteria contract
         ICriteria(criteria).onInstall(account, data);
@@ -119,15 +111,17 @@ library DMGatingMod {
 
         EnumerableSetLib.AddressSet storage criteriaSet = $.criteria[account];
 
-        if (!criteriaSet.contains(criteria)) DMGating__CriteriaNotInstalled.selector.revertWith();
-
-        criteriaSet.remove(criteria);
+        if (!criteriaSet.remove(criteria)) DMGating__CriteriaNotInstalled.selector.revertWith();
 
         // Call onUninstall with a gas cap to prevent full-tx OOG griefing
         // from malicious criteria contracts. Result is intentionally ignored.
-        uint256 UNINSTALL_GAS_LIMIT = 100_000;
-        // solhint-disable-next-line avoid-low-level-calls
-        criteria.call{gas: UNINSTALL_GAS_LIMIT}(abi.encodeCall(ICriteria.onUninstall, (account)));
+        LibCall.tryCall(
+            criteria,
+            0,
+            GAS_STIPEND,
+            0,
+            abi.encodeCall(ICriteria.onUninstall, (account))
+        );
 
         emit CriteriaUninstalled(account, criteria);
     }
@@ -141,31 +135,31 @@ library DMGatingMod {
         emit CombinationModeChanged(account, mode);
     }
 
-    /// @notice Check if a sender can DM the recipient
+    /// @notice Check if a sender is entitled to DM the recipient
     /// @param $ The storage layout
-    /// @param account The recipient account
     /// @param sender The sender address
+    /// @param receiver The recipient address
     /// @param extraData Additional context data
-    /// @return True if sender can DM the recipient
-    function canReceiveDMFrom(
+    /// @return True if sender is entitled to DM the recipient
+    function isEntitled(
         Layout storage $,
-        address account,
         address sender,
+        address receiver,
         bytes calldata extraData
     ) internal view returns (bool) {
-        address[] memory criteriaList = $.criteria[account].values();
+        address[] memory criteriaList = $.criteria[receiver].values();
         uint256 length = criteriaList.length;
 
         // No criteria = block all (default deny)
         if (length == 0) return false;
 
-        CombinationMode mode = $.combinationMode[account];
+        CombinationMode mode = $.combinationMode[receiver];
 
         for (uint256 i; i < length; ++i) {
             bool result;
             // Wrap in try/catch to treat reverts as "not allowed"
             // This prevents malicious criteria from DoS-ing the entire check
-            try ICriteria(criteriaList[i]).canDM(sender, account, extraData) returns (
+            try ICriteria(criteriaList[i]).canDM(sender, receiver, extraData) returns (
                 bool allowed
             ) {
                 result = allowed;
@@ -225,5 +219,15 @@ library DMGatingMod {
         assembly {
             $.slot := STORAGE_SLOT
         }
+    }
+
+    function validateCriteria(address criteria) internal view {
+        if (criteria == address(0)) DMGating__InvalidCriteria.selector.revertWith();
+
+        uint256 size;
+        assembly ("memory-safe") {
+            size := extcodesize(criteria)
+        }
+        if (size == 0) DMGating__NotAContract.selector.revertWith();
     }
 }

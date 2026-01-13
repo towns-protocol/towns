@@ -21,12 +21,14 @@ interface IDMGating {
     /// @param mode The combination mode (AND or OR)
     function setCombinationMode(DMGatingMod.CombinationMode mode) external;
 
-    /// @notice Check if a sender can DM the caller
+    /// @notice Check if a sender is entitled to DM the recipient
     /// @param sender The address attempting to send a DM
+    /// @param receiver The address receiving the DM
     /// @param extraData Additional context data for evaluation
-    /// @return True if sender is allowed to DM
-    function canReceiveDMFrom(
+    /// @return True if sender is entitled to DM the recipient
+    function isEntitled(
         address sender,
+        address receiver,
         bytes calldata extraData
     ) external view returns (bool);
 

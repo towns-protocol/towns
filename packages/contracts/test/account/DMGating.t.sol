@@ -3,7 +3,6 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IDMGating} from "src/account/facets/dm/IDMGating.sol";
-import {ICriteria} from "src/account/facets/dm/ICriteria.sol";
 
 // libraries
 import {DMGatingMod} from "src/account/facets/dm/DMGatingMod.sol";
@@ -35,15 +34,11 @@ contract DMGatingTest is ERC6900Setup {
     /*                  DEFAULT BEHAVIOR TESTS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_canReceiveDMFrom_returnsFalse_whenNoCriteria(
-        address user,
-        address sender
-    ) external {
+    function test_isEntitled_returnsFalse_whenNoCriteria(address user, address sender) external {
         vm.assume(user != sender);
         ModularAccount account = _createAccount(user);
 
-        vm.prank(address(account));
-        bool result = dmGating.canReceiveDMFrom(sender, "");
+        bool result = dmGating.isEntitled(sender, address(account), "");
 
         assertFalse(result, "Should block all DMs by default");
     }
@@ -179,10 +174,7 @@ contract DMGatingTest is ERC6900Setup {
     /*                    OR MODE TESTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_canReceiveDMFrom_ORMode_returnsTrue_whenAnyPass(
-        address user,
-        address sender
-    ) external {
+    function test_isEntitled_ORMode_returnsTrue_whenAnyPass(address user, address sender) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
         ModularAccount account = _createAccount(user);
@@ -203,13 +195,12 @@ contract DMGatingTest is ERC6900Setup {
         vm.prank(address(account));
         dmGating.setCombinationMode(DMGatingMod.CombinationMode.OR);
 
-        vm.prank(address(account));
-        bool result = dmGating.canReceiveDMFrom(sender, "");
+        bool result = dmGating.isEntitled(sender, address(account), "");
 
         assertTrue(result, "Should allow when any criteria passes in OR mode");
     }
 
-    function test_canReceiveDMFrom_ORMode_returnsFalse_whenNonePass(
+    function test_isEntitled_ORMode_returnsFalse_whenNonePass(
         address user,
         address sender
     ) external {
@@ -224,8 +215,7 @@ contract DMGatingTest is ERC6900Setup {
         vm.prank(address(account));
         dmGating.setCombinationMode(DMGatingMod.CombinationMode.OR);
 
-        vm.prank(address(account));
-        bool result = dmGating.canReceiveDMFrom(sender, "");
+        bool result = dmGating.isEntitled(sender, address(account), "");
 
         assertFalse(result, "Should block when no criteria passes in OR mode");
     }
@@ -234,7 +224,7 @@ contract DMGatingTest is ERC6900Setup {
     /*                    AND MODE TESTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_canReceiveDMFrom_ANDMode_returnsTrue_whenAllPass(
+    function test_isEntitled_ANDMode_returnsTrue_whenAllPass(
         address user,
         address sender
     ) external {
@@ -255,13 +245,12 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.installCriteria(address(secondAllowlist), abi.encode(allowed));
 
         // Default is AND mode
-        vm.prank(address(account));
-        bool result = dmGating.canReceiveDMFrom(sender, "");
+        bool result = dmGating.isEntitled(sender, address(account), "");
 
         assertTrue(result, "Should allow when all criteria pass in AND mode");
     }
 
-    function test_canReceiveDMFrom_ANDMode_returnsFalse_whenAnyFails(
+    function test_isEntitled_ANDMode_returnsFalse_whenAnyFails(
         address user,
         address sender
     ) external {
@@ -282,8 +271,7 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.installCriteria(address(emptyAllowlist), "");
 
         // Default is AND mode
-        vm.prank(address(account));
-        bool result = dmGating.canReceiveDMFrom(sender, "");
+        bool result = dmGating.isEntitled(sender, address(account), "");
 
         assertFalse(result, "Should block when any criteria fails in AND mode");
     }
@@ -306,8 +294,7 @@ contract DMGatingTest is ERC6900Setup {
         dmGating.setCombinationMode(DMGatingMod.CombinationMode.OR);
 
         // Initially should be blocked
-        vm.prank(address(account));
-        assertFalse(dmGating.canReceiveDMFrom(sender, ""));
+        assertFalse(dmGating.isEntitled(sender, address(account), ""));
 
         // Add sender to allowlist
         address[] memory toAdd = new address[](1);
@@ -316,15 +303,13 @@ contract DMGatingTest is ERC6900Setup {
         allowlistCriteria.addToAllowlist(toAdd);
 
         // Now should be allowed
-        vm.prank(address(account));
-        assertTrue(dmGating.canReceiveDMFrom(sender, ""));
+        assertTrue(dmGating.isEntitled(sender, address(account), ""));
 
         // Remove from allowlist
         vm.prank(address(account));
         allowlistCriteria.removeFromAllowlist(toAdd);
 
         // Should be blocked again
-        vm.prank(address(account));
-        assertFalse(dmGating.canReceiveDMFrom(sender, ""));
+        assertFalse(dmGating.isEntitled(sender, address(account), ""));
     }
 }

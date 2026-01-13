@@ -34,11 +34,12 @@ contract DMGatingFacet is IDMGating, ReentrancyGuardTransient, Facet {
     }
 
     /// @inheritdoc IDMGating
-    function canReceiveDMFrom(
+    function isEntitled(
         address sender,
+        address receiver,
         bytes calldata extraData
     ) external view returns (bool) {
-        return DMGatingMod.getStorage().canReceiveDMFrom(msg.sender, sender, extraData);
+        return DMGatingMod.getStorage().isEntitled(sender, receiver, extraData);
     }
 
     /// @inheritdoc IDMGating

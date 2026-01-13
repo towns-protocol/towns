@@ -17,7 +17,7 @@ library DeployDMGatingFacet {
         arr.p(DMGatingFacet.installCriteria.selector);
         arr.p(DMGatingFacet.uninstallCriteria.selector);
         arr.p(DMGatingFacet.setCombinationMode.selector);
-        arr.p(DMGatingFacet.canReceiveDMFrom.selector);
+        arr.p(DMGatingFacet.isEntitled.selector);
         arr.p(DMGatingFacet.getInstalledCriteria.selector);
         arr.p(DMGatingFacet.isCriteriaInstalled.selector);
         arr.p(DMGatingFacet.getCombinationMode.selector);
