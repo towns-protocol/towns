@@ -187,6 +187,9 @@ message MemberPayload {
             map<string, uint64> tips_sent_count = 11; // total tips sent by this user: map<currency, amount>
             map<string, uint64> tips_received_count = 12; // total tips received by this user: map<currency, amount>
             optional bytes app_address = 13;
+            // app_sponsor_address is the user who sponsored this bot's membership in a GDM.
+            // Used to check entitlements - the app must be installed on the sponsor's account.
+            optional bytes app_sponsor_address = 14;
         }
         
         repeated Member joined = 1;
@@ -207,6 +210,9 @@ message MemberPayload {
         // app_address is defined as the contract address of the app associated with this
         // userId. It applies, for example, if the user is an app client.
         optional bytes app_address = 6;
+        // app_sponsor_address is the user who sponsored this bot's membership in a GDM.
+        // Used to check entitlements - the app must be installed on the sponsor's account.
+        optional bytes app_sponsor_address = 7;
     }
     
     message KeySolicitation {
