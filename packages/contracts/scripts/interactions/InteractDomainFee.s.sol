@@ -47,10 +47,7 @@ contract InteractDomainFee is Interaction {
         // Set the domain fee hook
         console.log("\n=== Setting Domain Fee Hook ===");
         vm.broadcast(deployer);
-        IFeeManager(spaceFactory).setFeeHook(
-            FeeTypesLib.DOMAIN_REGISTRATION,
-            domainFeeHook
-        );
+        IFeeManager(spaceFactory).setFeeHook(FeeTypesLib.DOMAIN_REGISTRATION, domainFeeHook);
         console.log("Fee hook set for DOMAIN_REGISTRATION:", domainFeeHook);
 
         // Verify configuration
