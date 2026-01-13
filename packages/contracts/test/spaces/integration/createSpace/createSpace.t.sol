@@ -16,9 +16,11 @@ import {IRolesBase, IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {stdError} from "forge-std/StdError.sol";
+import {LibClone} from "solady/utils/LibClone.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {Validator} from "src/utils/libraries/Validator.sol";
+import {SpaceProxyInitializer} from "src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 
 // contracts
 import {Test} from "forge-std/Test.sol";
@@ -471,5 +473,26 @@ contract IntegrationCreateSpace is
         vm.prank(founder);
         address newSpace = createSpaceFacet.createSpace(Action.CreateBasic, data);
         assertTrue(newSpace != address(0));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     getProxyInitializer                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_getProxyInitializer() external {
+        // Get the proxy initializer address
+        address proxyInitializer = createSpaceFacet.getProxyInitializer();
+
+        // Verify against LibClone.predictDeterministicAddress
+        bytes32 initCodeHash = keccak256(type(SpaceProxyInitializer).creationCode);
+        address expected = LibClone.predictDeterministicAddress(
+            initCodeHash,
+            bytes32(0),
+            address(spaceFactory)
+        );
+        assertEq(proxyInitializer, expected);
+
+        // The initializer should be deployed
+        assertTrue(proxyInitializer.code.length > 0);
     }
 }

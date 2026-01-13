@@ -67,4 +67,9 @@ interface ICreateSpace is IArchitectBase, ICreateSpaceBase {
     function createSpaceWithPrepay(
         CreateSpaceOld calldata spaceInfo
     ) external payable returns (address);
+
+    /// @notice Returns the address of the SpaceProxyInitializer contract
+    /// @return The deterministic CREATE2 address of the SpaceProxyInitializer
+    /// @dev The initializer is deployed on first space creation if not already deployed
+    function getProxyInitializer() external view returns (address);
 }

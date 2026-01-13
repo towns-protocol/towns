@@ -6,7 +6,6 @@ import {IRuleEntitlement, IRuleEntitlementV2} from "../../../spaces/entitlements
 import {IUserEntitlement} from "../../../spaces/entitlements/user/IUserEntitlement.sol";
 import {IMembershipBase} from "../../../spaces/facets/membership/IMembership.sol";
 import {ISpaceOwner} from "../../../spaces/facets/owner/ISpaceOwner.sol";
-import {ISpaceProxyInitializer} from "../../../spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 interface IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -92,19 +91,14 @@ interface IArchitectBase {
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    error Architect__InvalidStringLength();
-    error Architect__InvalidNetworkId();
-    error Architect__InvalidAddress();
     error Architect__NotContract();
     error Architect__InvalidPricingModule();
     error Architect__UnexpectedETH();
-
-    event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 }
 
 interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Registry                         */
+    /*                           REGISTRY                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function getSpaceByTokenId(uint256 tokenId) external view returns (address space);
@@ -112,7 +106,7 @@ interface IArchitect is IArchitectBase {
     function getTokenIdBySpace(address space) external view returns (uint256);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Implementations                  */
+    /*                      IMPLEMENTATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setSpaceArchitectImplementations(
@@ -131,17 +125,4 @@ interface IArchitect is IArchitectBase {
             IRuleEntitlementV2 ruleEntitlementImplementation,
             IRuleEntitlement legacyRuleEntitlement
         );
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Proxy Initializer                */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Retrieves the current proxy initializer
-    /// @return The address of the current ISpaceProxyInitializer contract
-    function getProxyInitializer() external view returns (ISpaceProxyInitializer);
-
-    /// @notice Sets a new proxy initializer
-    /// @param proxyInitializer The address of the new ISpaceProxyInitializer contract to be set
-    /// @dev This function should only be callable by the contract owner or authorized roles
-    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external;
 }

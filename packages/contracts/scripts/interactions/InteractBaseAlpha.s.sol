@@ -37,20 +37,7 @@ contract InteractBaseAlpha is AlphaHelper {
 
         executeDiamondCutsWithLogging(deployer, space, "Space", deploySpace);
         executeDiamondCutsWithLogging(deployer, spaceOwner, "SpaceOwner", deploySpaceOwner);
-
-        deploySpaceFactory.diamondInitParams(deployer);
-        address spaceFactoryInit = deploySpaceFactory.spaceFactoryInit();
-        bytes memory initData = deploySpaceFactory.spaceFactoryInitData();
-        deploySpaceFactory.clearCuts();
-
-        executeDiamondCutsWithLogging(
-            deployer,
-            spaceFactory,
-            "SpaceFactory",
-            deploySpaceFactory,
-            spaceFactoryInit,
-            initData
-        );
+        executeDiamondCutsWithLogging(deployer, spaceFactory, "SpaceFactory", deploySpaceFactory);
 
         executeDiamondCutsWithLogging(deployer, baseRegistry, "BaseRegistry", deployBaseRegistry);
         executeDiamondCutsWithLogging(deployer, riverAirdrop, "RiverAirdrop", deployRiverAirdrop);

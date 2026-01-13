@@ -99,4 +99,9 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Create
         SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
         return _createSpaceWithPrepayFromLegacy(spaceInfo, spaceOptions);
     }
+
+    /// @inheritdoc ICreateSpace
+    function getProxyInitializer() external view returns (address) {
+        return _getProxyInitializer();
+    }
 }

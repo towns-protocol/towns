@@ -12,7 +12,7 @@ import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 
 library DeployCreateSpace {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](5);
+        _selectors = new bytes4[](6);
         // createSpace(SpaceInfo) - Basic space creation with SpaceInfo struct
         _selectors[0] = 0xf822028d;
         // createSpaceWithPrepay(CreateSpace) - Space creation with prepay (new format)
@@ -23,6 +23,7 @@ library DeployCreateSpace {
         _selectors[3] = CreateSpaceFacet.createSpaceV2.selector;
         // createSpace(Action, bytes) - Unified entry point with action dispatch
         _selectors[4] = bytes4(keccak256("createSpace(uint8,bytes)"));
+        _selectors[5] = CreateSpaceFacet.getProxyInitializer.selector;
     }
 
     function makeCut(
