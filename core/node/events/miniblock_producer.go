@@ -345,63 +345,41 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		return
 	}
 
-	// Only register miniblocks when it's time. If it's not time assume registration was successful.
-	// This is to reduce the number of transactions/calldata size.
-	var success []StreamId
-	var invalidProposals []StreamId
-	var failed []StreamId
-	var filteredProposals []*mbJob
-	freq := int64(p.streamCache.Params().ChainConfig.Get().StreamMiniblockRegistrationFrequency)
-	if freq <= 0 {
-		freq = 1
-	}
+	var (
+		success          []StreamId
+		invalidProposals []StreamId
+		failed           []StreamId
+		mbs              []river.SetMiniblock
+	)
 
 	for _, job := range proposals {
-		if job.replicated || len(job.reconcileNodes) > 0 || job.candidate.Ref.Num%freq == 0 ||
-			job.candidate.Ref.Num == 1 {
-			filteredProposals = append(filteredProposals, job)
-		} else {
-			success = append(success, job.stream.streamId)
-
-			log.Debugw("submitProposalBatch: skip miniblock registration",
-				"streamId", job.stream.streamId, "blocknum", job.candidate.Ref.Num)
-		}
+		mbs = append(
+			mbs,
+			river.SetMiniblock{
+				StreamId:          job.stream.streamId,
+				PrevMiniBlockHash: job.candidate.headerEvent.MiniblockRef.Hash,
+				LastMiniblockHash: job.candidate.headerEvent.Hash,
+				LastMiniblockNum:  uint64(job.candidate.Ref.Num),
+				IsSealed:          false,
+			},
+		)
 	}
 
-	if len(filteredProposals) > 0 {
-		var mbs []river.SetMiniblock
-		for _, job := range filteredProposals {
-			mbs = append(
-				mbs,
-				river.SetMiniblock{
-					StreamId:          job.stream.streamId,
-					PrevMiniBlockHash: job.candidate.headerEvent.MiniblockRef.Hash,
-					LastMiniblockHash: job.candidate.headerEvent.Hash,
-					LastMiniblockNum:  uint64(job.candidate.Ref.Num),
-					IsSealed:          false,
-				},
-			)
+	successRegistered, invalid, failed, err := p.streamCache.Params().Registry.SetStreamLastMiniblockBatch(ctx, mbs)
+	if err == nil {
+		success = append(success, successRegistered...)
+		invalidProposals = append(invalidProposals, invalid...)
+		if len(failed) > 0 {
+			log.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
 		}
-
-		var err error
-		successRegistered, invalid, failed, err := p.streamCache.Params().Registry.SetStreamLastMiniblockBatch(ctx, mbs)
-		if err == nil {
-			success = append(success, successRegistered...)
-			invalidProposals = append(invalidProposals, invalid...)
-			if len(failed) > 0 {
-				log.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
-			}
-		} else {
-			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "error", err)
-		}
+	} else {
+		log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "error", err)
 	}
 
 	log.Infow("processMiniblockProposalBatch: Submitted SetStreamLastMiniblockBatch",
 		"total", len(proposals),
-		"actualSubmitted", len(filteredProposals),
 		"success", len(success),
 		"failed", len(failed),
-		"mbFrequency", freq,
 	)
 
 	streamsNeedingReconciliation := make([]*mbJob, 0, len(invalidProposals))

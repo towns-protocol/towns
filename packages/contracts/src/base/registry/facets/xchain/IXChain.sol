@@ -2,20 +2,21 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
-// libraries
-
-// contracts
-
 /// @dev Struct to hold voting context and avoid stack too deep
+/// @param transactionId The unique identifier of the transaction
+/// @param caller The space contract that initiated the request
+/// @param value Amount escrowed (ETH or ERC20)
+/// @param completed Whether the transaction has been finalized
+/// @param currency Token address (NATIVE_TOKEN for ETH)
 struct VotingContext {
     bytes32 transactionId;
     address caller;
     uint256 value;
     bool completed;
+    address currency;
 }
 
 /// @dev Struct to hold vote counting results

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
-
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlementDataQueryableBase} from "src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
 
 /// @dev _onEntitlementCheckResultPosted is not implemented to avoid confusion
@@ -13,6 +13,9 @@ contract MockEntitlementGated is EntitlementGated {
     mapping(uint256 => IRuleEntitlement.RuleDataV2) ruleDatasV2ByRoleId;
 
     IRuleEntitlement.RuleData encodedRuleData;
+
+    /// @dev Allow contract to receive ETH (for refunds from entitlement checker)
+    receive() external payable {}
 
     constructor(IEntitlementChecker checker) {
         _setEntitlementChecker(checker);
@@ -137,30 +140,19 @@ contract MockEntitlementGated is EntitlementGated {
         bytes32 transactionId,
         uint256[] calldata roleIds
     ) internal {
-        bool paymentSent = false;
+        bool paymentSent;
 
-        // Only send payment with the first entitlement check
         for (uint256 i; i < roleIds.length; ++i) {
-            if (!paymentSent) {
-                _requestEntitlementCheckV2(
-                    receiver,
-                    sender,
-                    transactionId,
-                    IRuleEntitlement(address(this)),
-                    roleIds[i],
-                    msg.value
-                );
-                paymentSent = true;
-            } else {
-                _requestEntitlementCheckV2(
-                    receiver,
-                    sender,
-                    transactionId,
-                    IRuleEntitlement(address(this)),
-                    roleIds[i],
-                    0
-                );
-            }
+            _requestEntitlementCheck(
+                receiver,
+                sender,
+                transactionId,
+                IRuleEntitlement(address(this)),
+                roleIds[i],
+                CurrencyTransfer.NATIVE_TOKEN,
+                paymentSent ? 0 : msg.value
+            );
+            paymentSent = true;
         }
     }
 }

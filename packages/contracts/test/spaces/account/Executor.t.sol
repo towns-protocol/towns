@@ -7,16 +7,16 @@ import {DeployFacet} from "scripts/common/DeployFacet.s.sol";
 import {DeployDiamond} from "@towns-protocol/diamond/scripts/deployments/diamonds/DeployDiamond.s.sol";
 import {DeployExecutorFacet} from "scripts/deployments/facets/DeployExecutorFacet.s.sol";
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
-//libraries
+// libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 
-//contracts
+// contracts
 import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 

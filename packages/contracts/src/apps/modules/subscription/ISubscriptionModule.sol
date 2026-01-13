@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
-
 import {Subscription} from "./SubscriptionModuleStorage.sol";
 
 interface ISubscriptionModuleBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Structs                          */
+    /*                           STRUCTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Parameters for renewing a subscription
@@ -23,30 +17,25 @@ interface ISubscriptionModuleBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Errors                           */
+    /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error SubscriptionModule__InactiveSubscription();
     error SubscriptionModule__InvalidSpace();
-    error SubscriptionModule__RenewalNotDue();
-    error SubscriptionModule__RenewalFailed();
     error SubscriptionModule__InvalidSender();
     error SubscriptionModule__NotSupported();
     error SubscriptionModule__InvalidEntityId();
     error SubscriptionModule__InvalidCaller();
-    error SubscriptionModule__InvalidAddress();
     error SubscriptionModule__ExceedsMaxBatchSize();
     error SubscriptionModule__EmptyBatch();
     error SubscriptionModule__InvalidTokenOwner();
-    error SubscriptionModule__InsufficientBalance();
     error SubscriptionModule__ActiveSubscription();
     error SubscriptionModule__MembershipBanned();
     error SubscriptionModule__MembershipExpired();
     error SubscriptionModule__SubscriptionAlreadyInstalled();
-    error SubscriptionModule__SubscriptionNotInstalled();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Events                           */
+    /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event SubscriptionConfigured(
@@ -97,12 +86,44 @@ interface ISubscriptionModuleBase {
 
 interface ISubscriptionModule is ISubscriptionModuleBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Functions                          */
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Sets the space factory
+    /// @param spaceFactory The address of the space factory
+    function setSpaceFactory(address spaceFactory) external;
+
+    /// @notice Grants an operator access to call processRenewal
+    /// @param operator The address of the operator to grant
+    function grantOperator(address operator) external;
+
+    /// @notice Revokes an operator access to call processRenewal
+    /// @param operator The address of the operator to revoke
+    function revokeOperator(address operator) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  STATE-CHANGING FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Processes multiple Towns membership renewals in batch
     /// @param params The parameters for the renewals
     function batchProcessRenewals(RenewalParams[] calldata params) external;
+
+    /// @notice Activates a subscription
+    /// @param entityId The entity ID of the subscription to activate
+    function activateSubscription(uint32 entityId) external;
+
+    /// @notice Pauses a subscription
+    /// @param entityId The entity ID of the subscription to pause
+    function pauseSubscription(uint32 entityId) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Gets the space factory
+    /// @return The address of the space factory
+    function getSpaceFactory() external view returns (address);
 
     /// @notice Gets the subscription for an account and entity ID
     /// @param account The address of the account to get the subscription for
@@ -113,19 +134,6 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
         uint32 entityId
     ) external view returns (Subscription memory);
 
-    /// @notice Gets the renewal buffer for a membership duration
-    /// @param duration The membership duration to get the renewal buffer for
-    /// @return The renewal buffer for the duration
-    function getRenewalBuffer(uint256 duration) external pure returns (uint256);
-
-    /// @notice Activates a subscription
-    /// @param entityId The entity ID of the subscription to activate
-    function activateSubscription(uint32 entityId) external;
-
-    /// @notice Pauses a subscription
-    /// @param entityId The entity ID of the subscription to pause
-    function pauseSubscription(uint32 entityId) external;
-
     /// @notice Gets the entity IDs for an account
     /// @param account The address of the account to get the entity IDs for
     /// @return The entity IDs for the account
@@ -135,19 +143,8 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
     /// @param operator The address of the operator to check
     function isOperator(address operator) external view returns (bool);
 
-    /// @notice Grants an operator access to call processRenewal
-    /// @param operator The address of the operator to grant
-    function grantOperator(address operator) external;
-
-    /// @notice Revokes an operator access to call processRenewal
-    /// @param operator The address of the operator to revoke
-    function revokeOperator(address operator) external;
-
-    /// @notice Sets the space factory
-    /// @param spaceFactory The address of the space factory
-    function setSpaceFactory(address spaceFactory) external;
-
-    /// @notice Gets the space factory
-    /// @return The address of the space factory
-    function getSpaceFactory() external view returns (address);
+    /// @notice Gets the renewal buffer for a membership duration
+    /// @param duration The membership duration to get the renewal buffer for
+    /// @return The renewal buffer for the duration
+    function getRenewalBuffer(uint256 duration) external pure returns (uint256);
 }

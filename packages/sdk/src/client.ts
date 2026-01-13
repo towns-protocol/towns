@@ -496,6 +496,7 @@ export class Client
 
     async initializeUser(opts?: {
         spaceId?: Uint8Array | string
+        installedAppAddress?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
         appAddress?: Uint8Array | string
         skipSync?: boolean
@@ -511,9 +512,16 @@ export class Client
         }
         const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
 
+        if (opts?.installedAppAddress && !isEthereumAddress(opts.installedAppAddress)) {
+            throw Error('installedAppAddress must be an ethereum address')
+        }
         const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
+        const installedAppAddress = opts?.installedAppAddress
+            ? ethereumAddressAsBytes(opts.installedAppAddress)
+            : undefined
         const initUserMetadata = {
             spaceId,
+            installedAppAddress,
         }
 
         const initializeUserStartTime = performance.now()
@@ -561,7 +569,10 @@ export class Client
         this.streams.onNetworkStatusChanged(isOnline)
     }
 
-    private async initUserStream(metadata?: { spaceId?: Uint8Array }, appAddress?: Uint8Array) {
+    private async initUserStream(
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
+        appAddress?: Uint8Array,
+    ) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
@@ -575,6 +586,7 @@ export class Client
     private async initUserInboxStream(
         metadata?: {
             spaceId?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -591,6 +603,7 @@ export class Client
     private async initUserMetadataStream(
         metadata?: {
             spaceId?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -657,6 +670,7 @@ export class Client
     private async initUserSettingsStream(
         metadata?: {
             spaceId?: Uint8Array
+            installedAppAddress?: Uint8Array
         },
         appAddress?: Uint8Array,
     ) {
@@ -690,7 +704,7 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
@@ -713,7 +727,7 @@ export class Client
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
@@ -736,7 +750,7 @@ export class Client
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
@@ -759,7 +773,7 @@ export class Client
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; installedAppAddress?: Uint8Array },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
@@ -887,6 +901,7 @@ export class Client
 
     async createDMChannel(
         userId: string,
+        appAddress?: string,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string }> {
         const channelIdStr = makeDMStreamId(this.userId, userId)
@@ -898,6 +913,7 @@ export class Client
                 streamId: channelId,
                 firstPartyAddress: this.signerContext.creatorAddress,
                 secondPartyAddress: addressFromUserId(userId),
+                secondPartyAppAddress: appAddress ? bin_fromHexString(appAddress) : undefined,
                 settings: streamSettings,
             }),
         )
@@ -917,6 +933,7 @@ export class Client
                 userId: userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
+                appAddress,
             }),
         )
         return this.createStreamAndSync({

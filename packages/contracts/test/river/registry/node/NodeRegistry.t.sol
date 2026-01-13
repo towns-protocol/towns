@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {INodeRegistryBase} from "src/river/registry/facets/node/INodeRegistry.sol";
 
 // structs
@@ -15,7 +16,7 @@ import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.s
 // deployments
 import {RiverRegistryBaseSetup} from "test/river/registry/RiverRegistryBaseSetup.t.sol";
 
-contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
+contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnableBase {
     string url = "https://node.com";
 
     // =============================================================
@@ -254,8 +255,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         assertEq(nodeBefore1.permanentIndex, 0);
         assertEq(nodeBefore2.permanentIndex, 0);
 
-        // Call backfill
-        vm.prank(nodeOperator);
+        // Call backfill (only owner can call)
+        vm.prank(deployer);
         nodeRegistry.backfillPermanentIndices();
 
         // After backfill, lastNodeIndex should be 2
@@ -276,35 +277,32 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         givenNodeOperatorIsApproved(nodeOperator)
         givenNodeIsRegistered(nodeOperator, node, url)
     {
-        // Call backfill first time - should succeed
-        vm.prank(nodeOperator);
+        // Call backfill first time - should succeed (only owner can call)
+        vm.prank(deployer);
         nodeRegistry.backfillPermanentIndices();
 
         // Call backfill second time - should revert
-        vm.prank(nodeOperator);
+        vm.prank(deployer);
         vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
         nodeRegistry.backfillPermanentIndices();
     }
 
-    function test_backfillPermanentIndices_anyoneCanCall(
+    function test_revertWhen_backfillPermanentIndicesNotOwner(
         address nodeOperator,
         address node,
-        address caller
+        address notOwner
     )
         external
         givenNodeOperatorIsApproved(nodeOperator)
         givenNodeIsRegistered(nodeOperator, node, url)
     {
-        vm.assume(caller != address(0));
+        vm.assume(notOwner != deployer);
+        vm.assume(notOwner != address(0));
 
-        // Anyone can call backfill
-        vm.prank(caller);
+        // Non-owner cannot call backfill
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
         nodeRegistry.backfillPermanentIndices();
-
-        // Verify it worked
-        assertEq(nodeRegistry.getLastNodeIndex(), 1);
-        Node memory nodeData = nodeRegistry.getNode(node);
-        assertEq(nodeData.permanentIndex, 1);
     }
 
     function test_registerNodeAfterBackfill(
@@ -319,8 +317,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         vm.assume(node2 != address(0));
         vm.assume(node1 != node2);
 
-        // Call backfill
-        vm.prank(nodeOperator);
+        // Call backfill (only owner can call)
+        vm.prank(deployer);
         nodeRegistry.backfillPermanentIndices();
 
         // Register a new node after backfill

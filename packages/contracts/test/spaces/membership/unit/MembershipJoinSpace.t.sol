@@ -388,6 +388,63 @@ contract MembershipJoinSpaceTest is
         assertEq(membershipToken.balanceOf(bob), 0);
     }
 
+    /// @notice Test that supply cap is enforced when crosschain joins finalize
+    /// @dev Regression test: multiple users could request joins while under the cap,
+    /// but when finalized, all would mint even if cap was exceeded. The fix re-checks
+    /// the cap at finalization time.
+    function test_joinSpace_crosschainRespectsSupplyCap()
+        external
+        givenMembershipHasPrice
+        givenJoinspaceHasAdditionalCrosschainEntitlements
+    {
+        uint256 startingSupply = membershipToken.totalSupply();
+
+        // Set cap to allow only one more membership
+        vm.prank(founder);
+        membership.setMembershipLimit(startingSupply + 1);
+
+        uint256 price = membership.getMembershipPrice();
+
+        // Use two users who are NOT in the allowedUsers list (alice, charlie are allowed)
+        // so they will go through crosschain entitlement checks
+        address user1 = bob;
+        address user2 = _randomAddress();
+        vm.deal(user1, price);
+        vm.deal(user2, price);
+
+        // First join request (goes into async queue - bob is not in allowedUsers)
+        vm.recordLogs();
+        vm.prank(user1);
+        membership.joinSpace{value: price}(user1);
+        Vm.Log[] memory user1Logs = vm.getRecordedLogs();
+
+        // Second join request (also async, still under cap at request time)
+        vm.roll(block.number + 1);
+        vm.recordLogs();
+        vm.prank(user2);
+        membership.joinSpace{value: price}(user2);
+        Vm.Log[] memory user2Logs = vm.getRecordedLogs();
+
+        // Nothing minted yet - both pending
+        assertEq(membershipToken.totalSupply(), startingSupply);
+
+        // Get request data for both
+        EntitlementCheckRequestEvent[] memory user1Reqs = _getRequestV2Events(user1Logs);
+        EntitlementCheckRequestEvent[] memory user2Reqs = _getRequestV2Events(user2Logs);
+
+        // Finalize first user's join - should succeed and hit cap
+        _approveCrosschainRequest(user1Reqs[0]);
+        assertEq(membershipToken.balanceOf(user1), 1, "user1 should have token");
+        assertEq(membershipToken.totalSupply(), startingSupply + 1, "should hit cap");
+
+        // Finalize second user's join - should be rejected (cap reached)
+        uint256 user2BalanceBefore = user2.balance;
+        _approveCrosschainRequest(user2Reqs[0]);
+        assertEq(membershipToken.balanceOf(user2), 0, "user2 should not have token");
+        assertEq(membershipToken.totalSupply(), startingSupply + 1, "cap must not be exceeded");
+        assertEq(user2.balance, user2BalanceBefore + price, "user2 should be refunded");
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              PAYMENT OPTIMIZATION TESTS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -725,5 +782,20 @@ contract MembershipJoinSpaceTest is
     function _setupPaidMembership() internal {
         vm.prank(founder);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
+    }
+
+    /// @dev Helper to approve a crosschain entitlement check request
+    function _approveCrosschainRequest(EntitlementCheckRequestEvent memory req) internal {
+        IEntitlementGated entitlementGated = IEntitlementGated(req.resolverAddress);
+        uint256 needed = req.randomNodes.length / 2 + 1;
+
+        for (uint256 i; i < needed; ++i) {
+            vm.prank(req.randomNodes[i]);
+            entitlementGated.postEntitlementCheckResult(
+                req.transactionId,
+                req.requestId,
+                NodeVoteStatus.PASSED
+            );
+        }
     }
 }

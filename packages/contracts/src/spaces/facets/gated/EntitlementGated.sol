@@ -2,16 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlementChecker} from "../../../base/registry/facets/checker/IEntitlementChecker.sol";
+import {IRuleEntitlement} from "../../entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlementGated} from "./IEntitlementGated.sol";
-import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
-
-// libraries
 
 // contracts
-import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
+import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 
 abstract contract EntitlementGated is
     IEntitlementGated,
@@ -30,8 +28,7 @@ abstract contract EntitlementGated is
         _setEntitlementChecker(entitlementChecker);
     }
 
-    /// @notice Called by the xchain node to post the result of the entitlement check
-    /// @dev the internal function validates the transactionId and the result
+    /// @inheritdoc IEntitlementGated
     function postEntitlementCheckResult(
         bytes32 transactionId,
         uint256 roleId,
@@ -40,11 +37,7 @@ abstract contract EntitlementGated is
         _postEntitlementCheckResult(transactionId, roleId, result);
     }
 
-    /// @notice Post the result of the entitlement check for a specific role
-    /// @dev Only the entitlement checker can call this function
-    /// @param transactionId The unique identifier for the transaction
-    /// @param roleId The role ID for the entitlement check
-    /// @param result The result of the entitlement check (PASSED or FAILED)
+    /// @inheritdoc IEntitlementGated
     function postEntitlementCheckResultV2(
         bytes32 transactionId,
         uint256 roleId,
@@ -53,7 +46,7 @@ abstract contract EntitlementGated is
         _postEntitlementCheckResultV2(transactionId, roleId, result);
     }
 
-    /// @dev deprecated Use EntitlementDataQueryable.getCrossChainEntitlementData instead
+    /// @inheritdoc IEntitlementGated
     function getRuleData(
         bytes32 transactionId,
         uint256 roleId

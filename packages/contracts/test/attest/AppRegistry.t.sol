@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-//interfaces
+// interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 
-//libraries
+// libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 
 // types
 import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-//contracts
+// contracts
 import {AppRegistryBaseTest} from "./AppRegistryBase.t.sol";
 import {SimpleAppFacet} from "../../src/apps/simple/app/SimpleAppFacet.sol";
 import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
@@ -651,6 +651,9 @@ contract AppRegistryTest is AppRegistryBaseTest {
         address notAllowed
     ) external givenSimpleAppIsRegistered {
         vm.assume(notAllowed != founder);
+        vm.assume(notAllowed != address(0));
+        vm.assume(notAllowed != address(appAccount));
+
         vm.prank(notAllowed);
         vm.expectRevert(NotAllowed.selector);
         installer.updateApp(SimpleAppFacet(SIMPLE_APP), appAccount);

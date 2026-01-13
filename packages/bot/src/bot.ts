@@ -52,6 +52,7 @@ import {
     type CreateTownsClientParams,
     waitForRoleCreated,
     isDMChannelStreamId,
+    isGDMChannelStreamId,
     make_DMChannelPayload_Message,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
@@ -130,6 +131,7 @@ import {
     zeroAddress,
     parseEventLogs,
     formatUnits,
+    erc20Abi,
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -293,6 +295,8 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
             isMentioned: boolean
+            /** Convenience flag to check if it event triggered on a DM channel*/
+            isDm: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -379,20 +383,39 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
     ) => void | Promise<void>
 }
 
-export type BasePayload = {
-    /** The user ID of the user that triggered the event */
-    userId: Address
-    /** The space ID that the event was triggered in */
-    spaceId: string
-    /** channelId that the event was triggered in */
-    channelId: string
-    /** The ID of the event that triggered */
-    eventId: string
-    /** The creation time of the event */
-    createdAt: Date
-    /** The raw event payload */
-    event: StreamEvent
-}
+export type BasePayload =
+    | {
+          /** The user ID of the user that triggered the event */
+          userId: Address
+          /** The space ID that the event was triggered in */
+          spaceId: null
+          /** channelId that the event was triggered in */
+          channelId: string
+          /** The ID of the event that triggered */
+          eventId: string
+          /** The creation time of the event */
+          createdAt: Date
+          /** The raw event payload */
+          event: StreamEvent
+          /** Convenience flag to check if the event triggered on a DM channel*/
+          isDm: true
+      }
+    | {
+          /** The user ID of the user that triggered the event */
+          userId: Address
+          /** The space ID that the event was triggered in */
+          spaceId: string
+          /** channelId that the event was triggered in */
+          channelId: string
+          /** The ID of the event that triggered */
+          eventId: string
+          /** The creation time of the event */
+          createdAt: Date
+          /** The raw event payload */
+          event: StreamEvent
+          /** Convenience flag to check if the event triggered on a DM channel*/
+          isDm: false
+      }
 
 export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
@@ -580,13 +603,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     eventId: parsed.hashStr,
                 })
                 this.emitter.emit('streamEvent', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    eventId: parsed.hashStr,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     parsed: parsed,
-                    event: parsed.event,
-                    createdAt,
                 })
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
@@ -622,13 +646,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 refEventId,
                             })
                             this.emitter.emit('eventRevoke', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
+                                ...createBasePayload(
+                                    userIdFromAddress(parsed.event.creatorAddress),
+                                    streamId,
+                                    parsed.hashStr,
+                                    createdAt,
+                                    parsed.event,
+                                ),
                                 refEventId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                                event: parsed.event,
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -664,12 +689,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                             const decrypted = bin_fromBase64(decryptedBase64)
                             const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
-                                event: parsed.event,
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
-                                eventId: parsed.hashStr,
-                                createdAt,
+                                ...createBasePayload(
+                                    userIdFromAddress(parsed.event.creatorAddress),
+                                    streamId,
+                                    parsed.hashStr,
+                                    createdAt,
+                                    parsed.event,
+                                ),
                                 response: {
                                     recipient: payload.recipient,
                                     payload: response,
@@ -698,12 +724,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelJoin', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
+                                            ...createBasePayload(
+                                                userIdFromAddress(membership.userAddress),
+                                                streamId,
+                                                parsed.hashStr,
+                                                createdAt,
+                                                parsed.event,
+                                            ),
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
@@ -713,12 +740,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelLeave', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
+                                            ...createBasePayload(
+                                                userIdFromAddress(membership.userAddress),
+                                                streamId,
+                                                parsed.hashStr,
+                                                createdAt,
+                                                parsed.event,
+                                            ),
                                         })
                                     }
                                 }
@@ -767,12 +795,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                                 this.emitter.emit('tip', this.client, {
-                                                    event: parsed.event,
-                                                    userId: senderUserId,
-                                                    spaceId: spaceIdFromChannelId(streamId),
-                                                    channelId: streamId,
-                                                    eventId: parsed.hashStr,
-                                                    createdAt,
+                                                    ...createBasePayload(
+                                                        senderUserId,
+                                                        streamId,
+                                                        parsed.hashStr,
+                                                        createdAt,
+                                                        parsed.event,
+                                                    ),
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress,
@@ -836,13 +865,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
-                        event: parsed.event,
-                        userId,
-                        eventId: parsed.hashStr,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
+                        ...createBasePayload(
+                            userId,
+                            streamId,
+                            parsed.hashStr,
+                            createdAt,
+                            parsed.event,
+                        ),
                         message: payload.value.content.value.body,
-                        createdAt,
                         mentions,
                         isMentioned,
                         replyId,
@@ -877,12 +907,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                     const { typeUrl, value } = gmContent
 
                     this.emitter.emit('rawGmMessage', this.client, {
-                        event: parsed.event,
-                        userId,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        eventId: parsed.hashStr,
-                        createdAt,
+                        ...createBasePayload(
+                            userId,
+                            streamId,
+                            parsed.hashStr,
+                            createdAt,
+                            parsed.event,
+                        ),
                         typeUrl,
                         message: value ?? new Uint8Array(),
                     })
@@ -903,12 +934,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                             } else {
                                 debug('emit:gmMessage', { userId, channelId: streamId })
                                 void typedHandler.handler(this.client, {
-                                    event: parsed.event,
-                                    userId,
-                                    spaceId: spaceIdFromChannelId(streamId),
-                                    channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                    createdAt,
+                                    ...createBasePayload(
+                                        userId,
+                                        streamId,
+                                        parsed.hashStr,
+                                        createdAt,
+                                        parsed.event,
+                                    ),
                                     typeUrl,
                                     data: result.value,
                                 })
@@ -928,14 +960,15 @@ export class Bot<Commands extends BotCommand[] = []> {
                     messageId: payload.value.refEventId,
                 })
                 this.emitter.emit('reaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
-                    createdAt,
                 })
                 break
             }
@@ -952,16 +985,17 @@ export class Bot<Commands extends BotCommand[] = []> {
                     isMentioned,
                 })
                 this.emitter.emit('messageEdit', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
                     mentions,
                     isMentioned,
-                    createdAt,
                     replyId: payload.value.post?.replyId,
                     threadId: payload.value.post?.threadId,
                 })
@@ -974,13 +1008,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                     refEventId: payload.value.refEventId,
                 })
                 this.emitter.emit('redaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                    ...createBasePayload(
+                        userIdFromAddress(parsed.event.creatorAddress),
+                        streamId,
+                        parsed.hashStr,
+                        createdAt,
+                        parsed.event,
+                    ),
                     refEventId: payload.value.refEventId,
-                    createdAt,
                 })
                 break
             }
@@ -2594,66 +2629,132 @@ const buildBotActions = (
         const currency = params.currency ?? ETH_ADDRESS
         const isEth = currency === ETH_ADDRESS
         const { receiver, amount, messageId, channelId } = params
-        const spaceId = spaceIdFromChannelId(channelId)
-        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
-        if (!tokenId) {
-            throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
+        const isDm = isDMChannelStreamId(channelId)
+
+        const accountModulesAddress = client.config.base.chainConfig.addresses.accountModules
+        if (isDm && !accountModulesAddress) {
+            throw new Error('AccountModules address is not configured for DM tips')
         }
 
-        const recipientType = TipRecipientType.Member
+        let recipientType: TipRecipientType
+        let encodedData: `0x${string}`
+        let targetContract: Address
+        let tokenId: string | undefined
 
-        const metadataData = encodeAbiParameters(
-            [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
-            [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
-        )
+        if (isDm) {
+            // DM tips use AnyTipParams sent to AccountModules contract
+            recipientType = TipRecipientType.Any
+            const sender = appAddress // msg.sender when contract executes
 
-        // TODO: Get the modular account address for the receiver (towns app case)
-        const encodedData = encodeAbiParameters(
-            [
-                {
-                    type: 'tuple',
-                    components: [
-                        { name: 'receiver', type: 'address' },
-                        { name: 'tokenId', type: 'uint256' },
-                        { name: 'currency', type: 'address' },
-                        { name: 'amount', type: 'uint256' },
-                        {
-                            name: 'metadata',
-                            type: 'tuple',
-                            components: [
-                                { name: 'messageId', type: 'bytes32' },
-                                { name: 'channelId', type: 'bytes32' },
-                                { name: 'data', type: 'bytes' },
-                            ],
-                        },
-                    ],
-                },
-            ],
-            [
-                {
-                    receiver,
-                    amount,
-                    currency,
-                    tokenId: BigInt(tokenId),
-                    metadata: {
-                        messageId: `0x${messageId}`,
-                        channelId: `0x${channelId}`,
-                        data: metadataData,
+            const data = encodeAbiParameters(
+                [{ type: 'bytes32' }, { type: 'bytes32' }],
+                [`0x${messageId}`, `0x${channelId}`],
+            )
+
+            encodedData = encodeAbiParameters(
+                [
+                    {
+                        type: 'tuple',
+                        components: [
+                            { name: 'currency', type: 'address' },
+                            { name: 'sender', type: 'address' },
+                            { name: 'receiver', type: 'address' },
+                            { name: 'amount', type: 'uint256' },
+                            { name: 'data', type: 'bytes' },
+                        ],
                     },
-                },
-            ],
-        )
+                ],
+                [
+                    {
+                        currency,
+                        sender,
+                        receiver,
+                        amount,
+                        data,
+                    },
+                ],
+            )
+            targetContract = accountModulesAddress!
+            tokenId = undefined
+        } else {
+            // Member tips use MembershipTipParams sent to Space contract
+            recipientType = TipRecipientType.Member
+            const spaceId = spaceIdFromChannelId(channelId)
+            tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
+            if (!tokenId) {
+                throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
+            }
+
+            const metadataData = encodeAbiParameters(
+                [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
+                [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
+            )
+
+            encodedData = encodeAbiParameters(
+                [
+                    {
+                        type: 'tuple',
+                        components: [
+                            { name: 'receiver', type: 'address' },
+                            { name: 'tokenId', type: 'uint256' },
+                            { name: 'currency', type: 'address' },
+                            { name: 'amount', type: 'uint256' },
+                            {
+                                name: 'metadata',
+                                type: 'tuple',
+                                components: [
+                                    { name: 'messageId', type: 'bytes32' },
+                                    { name: 'channelId', type: 'bytes32' },
+                                    { name: 'data', type: 'bytes' },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                [
+                    {
+                        receiver,
+                        tokenId: BigInt(tokenId),
+                        currency,
+                        amount,
+                        metadata: {
+                            messageId: `0x${messageId}`,
+                            channelId: `0x${channelId}`,
+                            data: metadataData,
+                        },
+                    },
+                ],
+            )
+
+            targetContract = SpaceAddressFromSpaceId(spaceId)
+        }
+
         const hash = await execute(viem, {
             address: appAddress,
-            calls: [
-                {
-                    abi: tippingFacetAbi,
-                    to: SpaceAddressFromSpaceId(spaceId),
-                    functionName: 'sendTip',
-                    args: [recipientType, encodedData],
-                    value: isEth ? amount : undefined,
-                },
-            ],
+            calls: isEth
+                ? [
+                      {
+                          abi: tippingFacetAbi,
+                          to: targetContract,
+                          functionName: 'sendTip',
+                          args: [recipientType, encodedData],
+                          value: amount,
+                      },
+                  ]
+                : [
+                      {
+                          abi: erc20Abi,
+                          to: currency,
+                          functionName: 'approve',
+                          args: [targetContract, amount],
+                      },
+                      {
+                          abi: tippingFacetAbi,
+                          to: targetContract,
+                          functionName: 'sendTip',
+                          args: [recipientType, encodedData],
+                      },
+                  ],
         })
 
         const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
@@ -2673,7 +2774,7 @@ const buildBotActions = (
                 case: 'tip',
                 value: {
                     event: {
-                        tokenId: BigInt(tokenId),
+                        tokenId: tokenId ? BigInt(tokenId) : undefined,
                         currency: bin_fromHexString(tipEvent.args.currency),
                         sender: bin_fromHexString(tipEvent.args.sender),
                         receiver: bin_fromHexString(tipEvent.args.receiver),
@@ -2941,4 +3042,44 @@ const processMentions = (
             throw new Error(`Invalid mention type: ${JSON.stringify(mention)}`)
         }
     })
+}
+
+const getSpaceIdFromStreamId = (streamId: string): string | null => {
+    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+        return null
+    }
+    return spaceIdFromChannelId(streamId)
+}
+
+const createBasePayload = (
+    userId: Address,
+    streamId: string,
+    eventId: string,
+    createdAt: Date,
+    event: StreamEvent,
+): BasePayload => {
+    const isDm = isDMChannelStreamId(streamId)
+    const spaceId = getSpaceIdFromStreamId(streamId)
+
+    if (isDm) {
+        return {
+            userId,
+            spaceId: null,
+            channelId: streamId,
+            eventId,
+            createdAt,
+            event,
+            isDm: true,
+        }
+    } else {
+        return {
+            userId,
+            spaceId: spaceId as string,
+            channelId: streamId,
+            eventId,
+            createdAt,
+            event,
+            isDm: false,
+        }
+    }
 }

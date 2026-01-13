@@ -10,8 +10,6 @@ pragma solidity ^0.8.23;
 library RiverConfigValues {
     bytes32 public constant XCHAIN_BLOCKCHAINS = keccak256("xchain.blockchains");
     bytes32 public constant NODE_BLOCKLIST = keccak256("node.blocklist");
-    bytes32 public constant STREAM_MINIBLOCK_REGISTRATION_FREQUENCY =
-        keccak256("stream.miniblockregistrationfrequency");
     bytes32 public constant STREAM_REPLICATION_FACTOR = keccak256("stream.replicationfactor");
     bytes32 public constant MEDIA_CHUNK_SIZE = keccak256("stream.media.maxchunksize");
     bytes32 public constant MEDIA_CHUNK_COUNT = keccak256("stream.media.maxchunkcount");
@@ -25,4 +23,11 @@ library RiverConfigValues {
         keccak256("stream.historyminiblocks.10");
     bytes32 public constant STREAM_TRIM_ACTIVATION_FACTOR =
         keccak256("stream.trimactivationfactor");
+    bytes32 public constant STREAM_TRIM_BY_STREAM_ID = keccak256("stream.trimbystreamid");
+    bytes32 public constant STREAM_DISTRIBUTION_REQUIRED_OPERATORS =
+        keccak256("stream.distribution.requiredoperators");
+    bytes32 public constant STREAM_DISTRIBUTION_MIN_BALANCING_ADVANTAGE =
+        keccak256("stream.distribution.minbalancingadvantage");
+    bytes32 public constant STREAM_DISTRIBUTION_MAX_BALANCING_ADVANTAGE =
+        keccak256("stream.distribution.maxbalancingadvantage");
 }

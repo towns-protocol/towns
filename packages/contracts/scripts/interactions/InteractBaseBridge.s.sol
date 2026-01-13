@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
 import {IL1StandardBridge} from "./interfaces/IL1StandardBridge.sol";
 import {IL2StandardBridge} from "./interfaces/IL2StandardBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {Interaction} from "../common/Interaction.s.sol";
 
 contract InteractBaseBridge is Interaction {

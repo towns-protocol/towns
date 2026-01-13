@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 // utils
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {ReferralsFacetTest} from "test/spaces/referrals/Referrals.t.sol";
 
 contract ReferralsFacet_setMaxBpsFee is ReferralsFacetTest {

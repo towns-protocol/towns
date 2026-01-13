@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 // utils
 import {ReferralsFacetTest} from "test/spaces/referrals/Referrals.t.sol";
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 import {LibString} from "solady/utils/LibString.sol";
 
-//contracts
+// contracts
 
 contract ReferralsFacet_updateReferral is ReferralsFacetTest {
     using LibString for string;

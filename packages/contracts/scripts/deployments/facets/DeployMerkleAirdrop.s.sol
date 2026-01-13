@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
+// contracts
 import {MerkleAirdrop} from "src/utils/airdrop/merkle/MerkleAirdrop.sol";
 
 library DeployMerkleAirdrop {

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {AppFactoryFacet} from "src/apps/facets/factory/AppFactoryFacet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {TieredLogPricing} from "scripts/deployments/utils/pricing/TieredLogPricing.s.sol";
 import {TieredLogPricingOracleV2} from "src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV2.sol";
 

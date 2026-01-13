@@ -5,6 +5,7 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'swap',
     'tip',
     'join',
+    'renewal',
     'review',
 ])
 
@@ -37,8 +38,20 @@ export type TipEventData = {
 
 export type JoinEventData = {
     type: 'join'
-    recipient: string
-    tokenId: string
+    recipient?: string
+    tokenId?: string
+    currency?: string
+    price?: string
+    protocolFee?: string
+    totalAmount?: string
+}
+
+export type RenewalEventData = {
+    type: 'renewal'
+    currency?: string
+    price?: string
+    protocolFee?: string
+    totalAmount?: string
 }
 
 export type ReviewEventData = {
@@ -48,7 +61,12 @@ export type ReviewEventData = {
     comment: string
 }
 
-export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
+export type AnalyticsEventData =
+    | SwapEventData
+    | TipEventData
+    | JoinEventData
+    | RenewalEventData
+    | ReviewEventData
 
 export const space = onchainTable(
     'spaces',
@@ -65,9 +83,16 @@ export const space = onchainTable(
         paused: t.boolean().notNull(),
         totalAmountStaked: t.bigint().default(0n),
         swapVolume: t.bigint().default(0n),
+        // ETH-denominated volumes
         tipVolume: t.bigint().default(0n),
         botTipVolume: t.bigint().default(0n),
         joinVolume: t.bigint().default(0n),
+        // USDC-denominated volumes
+        tipUSDCVolume: t.bigint().default(0n),
+        botTipUSDCVolume: t.bigint().default(0n),
+        joinUSDCVolume: t.bigint().default(0n),
+        // Cached membership currency (ETH address = 0xeee...eee)
+        currency: t.hex().default('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'),
         memberCount: t.bigint().default(0n),
         reviewCount: t.bigint().default(0n),
     }),
@@ -101,6 +126,8 @@ export const analyticsEvent = onchainTable(
         blockTimestamp: t.bigint().notNull(),
         // ETH value for the event (calculated field for sorting/aggregation)
         ethAmount: t.bigint().default(0n),
+        // USDC value for the event (calculated field for sorting/aggregation)
+        usdcAmount: t.bigint().default(0n),
 
         // Event-specific data stored as typed JSON
         eventData: t.json().$type<AnalyticsEventData>().notNull(),
@@ -267,6 +294,7 @@ export const app = onchainTable('apps', (t) => ({
     currentVersionId: t.hex(),
     tipsCount: t.bigint().default(0n),
     tipsVolume: t.bigint().default(0n),
+    tipsVolumeUSDC: t.bigint().default(0n),
 }))
 
 // app installations - tracks which apps are installed in which spaces/accounts
@@ -356,6 +384,7 @@ export const subscription = onchainTable(
         entityId: t.integer().notNull(),
         space: t.hex().notNull(),
         tokenId: t.bigint().notNull(),
+        currency: t.hex(),
         totalSpent: t.bigint().default(0n),
         renewalAmount: t.bigint().default(0n),
         lastRenewalTime: t.bigint(),
@@ -458,12 +487,17 @@ export const tipLeaderboard = onchainTable(
     (t) => ({
         user: t.hex().notNull(),
         spaceId: t.hex().notNull(),
+        // ETH-denominated tip amounts
         totalSent: t.bigint().default(0n),
         tipsSentCount: t.integer().default(0),
         memberTipsSent: t.integer().default(0),
         memberTotalSent: t.bigint().default(0n),
         botTipsSent: t.integer().default(0),
         botTotalSent: t.bigint().default(0n),
+        // USDC-denominated tip amounts
+        totalSentUSDC: t.bigint().default(0n),
+        memberTotalSentUSDC: t.bigint().default(0n),
+        botTotalSentUSDC: t.bigint().default(0n),
         lastActivity: t.bigint().notNull(),
     }),
     (table) => ({

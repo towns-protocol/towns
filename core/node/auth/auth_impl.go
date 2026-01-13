@@ -88,20 +88,53 @@ func NewChainAuthArgsForApp(userId common.Address, appContractAddress common.Add
 	}
 }
 
-func NewChainAuthArgsForIsNotApp(userId common.Address) *ChainAuthArgs {
+// NewChainAuthArgsForIsAppOwner creates chain auth args to check if the principal (userId)
+// is the owner of the bot whose client address is botClientAddress.
+func NewChainAuthArgsForIsAppOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:      chainAuthKindIsNotApp,
-		principal: userId,
+		kind:             chainAuthKindIsAppOwner,
+		principal:        userId,
+		botClientAddress: botClientAddress,
 	}
 }
 
-// NewChainAuthArgsForIsBotOwner creates chain auth args to check if the principal (userId)
-// is the owner of the bot whose client address is botClientAddress.
-func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
+func NewChainAuthArgsForIsAppInstalled(userId common.Address, installedAppAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:             chainAuthKindIsBotOwner,
-		principal:        userId,
-		botClientAddress: botClientAddress,
+		kind:       chainAuthKindIsAppInstalled,
+		principal:  userId,
+		appAddress: installedAppAddress,
+	}
+}
+
+// NewChainAuthArgsForDmStreamCreation creates chain auth args for DM stream creation.
+// Validate app address using blockchain call and checks app installation on user.
+func NewChainAuthArgsForDmStreamCreation(
+	firstParty,
+	secondParty common.Address,
+	firstPartyAppAddress,
+	secondPartyAppAddress *common.Address,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:                  chainAuthKindDmCreation,
+		firstParty:            firstParty,
+		secondParty:           secondParty,
+		firstPartyAppAddress:  firstPartyAppAddress,
+		secondPartyAppAddress: secondPartyAppAddress,
+	}
+}
+
+// NewChainAuthArgsForDmEvent creates chain auth args for events on existing DM streams.
+// Checks if bot is installed, if applicable.
+func NewChainAuthArgsForDmEvent(
+	firstParty, secondParty common.Address,
+	firstPartyAppAddress, secondPartyAppAddress *common.Address,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:                  chainAuthKindDmEvent,
+		firstParty:            firstParty,
+		secondParty:           secondParty,
+		firstPartyAppAddress:  firstPartyAppAddress,
+		secondPartyAppAddress: secondPartyAppAddress,
 	}
 }
 
@@ -171,8 +204,10 @@ const (
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
 	chainAuthKindIsApp
-	chainAuthKindIsNotApp
-	chainAuthKindIsBotOwner
+	chainAuthKindIsAppOwner
+	chainAuthKindIsAppInstalled
+	chainAuthKindDmCreation
+	chainAuthKindDmEvent
 )
 
 type ChainAuthArgs struct {
@@ -196,6 +231,14 @@ type ChainAuthArgs struct {
 	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
 	// This is the address of the user stream that the bot owner is trying to write to.
 	botClientAddress common.Address
+
+	// firstParty and secondParty are the two parties in a DM for DM validation checks.
+	firstParty  common.Address
+	secondParty common.Address
+
+	// firstPartyAppAddress and secondPartyAppAddress are optional app contract addresses from the DM inception.
+	firstPartyAppAddress  *common.Address
+	secondPartyAppAddress *common.Address
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -203,8 +246,8 @@ func (args *ChainAuthArgs) Principal() common.Address {
 }
 
 func (args *ChainAuthArgs) String() string {
-	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s, botClientAddress: %s}",
+	base := fmt.Sprintf(
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s, botClientAddress: %s",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -215,6 +258,21 @@ func (args *ChainAuthArgs) String() string {
 		args.appAddress.Hex(),
 		args.botClientAddress.Hex(),
 	)
+
+	if args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
+		base += fmt.Sprintf(", firstParty: %s, secondParty: %s",
+			args.firstParty.Hex(),
+			args.secondParty.Hex(),
+		)
+		if args.firstPartyAppAddress != nil {
+			base += fmt.Sprintf(", firstPartyAppAddress: %s", args.firstPartyAppAddress.Hex())
+		}
+		if args.secondPartyAppAddress != nil {
+			base += fmt.Sprintf(", secondPartyAppAddress: %s", args.secondPartyAppAddress.Hex())
+		}
+	}
+
+	return base + "}"
 }
 
 func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *ChainAuthArgs {
@@ -295,12 +353,15 @@ type chainAuth struct {
 	spaceContract           SpaceContract
 	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
+	userAccountContract     UserAccountContract
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
 	entitlementCache        *entitlementCache
 	membershipCache         *entitlementCache
 	entitlementManagerCache *entitlementCache
 	linkedWalletCache       *entitlementCache
+	appInstalledCache       *entitlementCache
+	userIsAppCache          *entitlementCache
 
 	isEntitledToChannelCacheHit  prometheus.Counter
 	isEntitledToChannelCacheMiss prometheus.Counter
@@ -347,6 +408,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	userAccountContract, err := NewUserAccountContract(blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
 	entitlementCache, err := newEntitlementCache(ctx, blockchain.Config)
 	if err != nil {
 		return nil, err
@@ -368,6 +434,16 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	appInstalledCache, err := newAppInstalledCache(ctx, blockchain.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	userIsAppCache, err := newUserIsAppCache(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if linkedWalletsLimit <= 0 {
 		linkedWalletsLimit = DEFAULT_MAX_WALLETS
 	}
@@ -384,12 +460,15 @@ func NewChainAuth(
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
 		appRegistryContract:     appRegistryContract,
+		userAccountContract:     userAccountContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
 		membershipCache:         membershipCache,
 		entitlementManagerCache: entitlementManagerCache,
 		linkedWalletCache:       linkedWalletCache,
+		appInstalledCache:       appInstalledCache,
+		userIsAppCache:          userIsAppCache,
 
 		isEntitledToChannelCacheHit:  counter.WithLabelValues("isEntitledToChannel", "hit"),
 		isEntitledToChannelCacheMiss: counter.WithLabelValues("isEntitledToChannel", "miss"),
@@ -1178,24 +1257,24 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsAppOwner || args.kind == chainAuthKindIsAppInstalled || args.kind == chainAuthKindDmCreation || args.kind == chainAuthKindDmEvent {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
-// checkIsApp checks to see if the user is an app and returns a cache result if the auth check was related
+// checkNonEntitlementRelatedChainAuth checks things like if the user is an app and returns a cache result if the auth
+// check was related
 // to whether or not a user is an app. Otherwise it will return a valid boolean, and the contract address of
 // the app if it is registered, or an error if the method encounters one.
-// TODO: it may be valuable to cache this in the future.
-func (ca *chainAuth) checkIsApp(
+func (ca *chainAuth) checkNonEntitlementRelatedChainAuth(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	if args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
-		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	if args.kind == chainAuthKindIsApp {
+		isApp, appAddress, err := ca.getUserIsAppCached(ctx, args.principal)
 		if err != nil {
 			return nil, err
 		}
@@ -1212,26 +1291,18 @@ func (ca *chainAuth) checkIsApp(
 				"isApp", isApp,
 			)
 
-		if args.kind == chainAuthKindIsApp {
-			if isApp {
-				if appAddress == args.appAddress {
-					return boolCacheResult{true, EntitlementResultReason_NONE}, nil
-				} else {
-					return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
-				}
+		if isApp {
+			if appAddress == args.appAddress {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 			} else {
-				return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
+				return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
 			}
 		} else {
-			if isApp {
-				return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
-			} else {
-				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
-			}
+			return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
 		}
 	}
 
-	if args.kind == chainAuthKindIsBotOwner {
+	if args.kind == chainAuthKindIsAppOwner {
 		log := logging.FromCtx(ctx)
 
 		appOwner, err := ca.appRegistryContract.GetAppOwnerByClient(ctx, args.botClientAddress)
@@ -1241,7 +1312,7 @@ func (ca *chainAuth) checkIsApp(
 
 		zeroAddress := common.Address{}
 		if appOwner == zeroAddress {
-			return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
+			return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP_OWNER}, nil
 		}
 
 		wallets, err := ca.getLinkedWallets(ctx, cfg, args)
@@ -1263,10 +1334,252 @@ func (ca *chainAuth) checkIsApp(
 			}
 		}
 
-		return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
+		return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP_OWNER}, nil
+	}
+
+	if args.kind == chainAuthKindDmCreation {
+		return ca.checkDmCreation(ctx, cfg, args)
+	}
+
+	if args.kind == chainAuthKindDmEvent {
+		return ca.checkDmEvent(ctx, cfg, args)
+	}
+
+	if args.kind == chainAuthKindIsAppInstalled {
+		return ca.checkAppInstalledOnUser(ctx, cfg, args.principal, args.appAddress, false)
 	}
 
 	return nil, nil
+}
+
+func (ca *chainAuth) checkDmCreation(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	firstPartyIsApp, firstPartyAppContract, err := ca.getUserIsAppCached(ctx, args.firstParty)
+	if err != nil {
+		return nil, err
+	}
+
+	secondPartyIsApp, secondPartyAppContract, err := ca.getUserIsAppCached(ctx, args.secondParty)
+	if err != nil {
+		return nil, err
+	}
+
+	// If any party is a bot, they must provide their app address.
+	if args.firstPartyAppAddress == nil && firstPartyIsApp {
+		log.Warnw("checkDmCreation: first party claimed not bot but is registered",
+			"firstParty", args.firstParty)
+		return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
+	}
+
+	if args.secondPartyAppAddress == nil && secondPartyIsApp {
+		log.Warnw("checkDmCreation: second party claimed not bot but is registered",
+			"firstParty", args.firstParty)
+		return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
+	}
+
+	if args.firstPartyAppAddress != nil {
+		if !firstPartyIsApp || *args.firstPartyAppAddress != firstPartyAppContract {
+			log.Warnw("checkDmCreation: first party app address mismatch",
+				"firstParty", args.firstParty,
+				"claimed", args.firstPartyAppAddress,
+				"actual", firstPartyAppContract)
+			return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+		}
+	}
+
+	if args.secondPartyAppAddress != nil {
+		if !secondPartyIsApp || *args.secondPartyAppAddress != secondPartyAppContract {
+			log.Warnw("checkDmCreation: second party app address mismatch",
+				"secondParty", args.secondParty,
+				"claimed", args.secondPartyAppAddress,
+				"actual", secondPartyAppContract)
+			return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+		}
+	}
+
+	// User-to-user: neither party is a bot
+	if !firstPartyIsApp && !secondPartyIsApp {
+		log.Debugw("checkDmCreation: user-to-user DM allowed",
+			"firstParty", args.firstParty,
+			"secondParty", args.secondParty)
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+
+	// At least one party is a bot. Check if bot's app is installed on the user.
+	// if both parties are bots, let the initiator be the "installer" of the second party
+	var userAddress common.Address
+	var appContract common.Address
+	if secondPartyIsApp {
+		userAddress = args.firstParty
+		appContract = secondPartyAppContract
+	} else {
+		userAddress = args.secondParty
+		appContract = firstPartyAppContract
+	}
+
+	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, appContract, true)
+}
+
+// Check if app is installed on user for events on existing DM streams.
+func (ca *chainAuth) checkDmEvent(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	firstPartyIsApp := args.firstPartyAppAddress != nil
+	secondPartyIsApp := args.secondPartyAppAddress != nil
+
+	// User-to-user: neither party is an app - always allowed
+	if !firstPartyIsApp && !secondPartyIsApp {
+		log.Debugw("checkDmEvent: user-to-user DM allowed",
+			"firstParty", args.firstParty,
+			"secondParty", args.secondParty)
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+
+	// At least one party is an app. Check if app is installed on user.
+	var userAddress common.Address
+	var appAddress common.Address
+	if secondPartyIsApp {
+		userAddress = args.firstParty
+		appAddress = *args.secondPartyAppAddress
+	} else {
+		userAddress = args.secondParty
+		appAddress = *args.firstPartyAppAddress
+	}
+
+	return ca.checkAppInstalledOnUser(ctx, cfg, userAddress, appAddress, false)
+}
+
+// checkAppInstalledOnUserUncached checks if an app is installed on a single wallet and not expired.
+// args.principal = wallet address, args.appAddress = app contract address
+func (ca *chainAuth) checkAppInstalledOnUserUncached(
+	ctx context.Context,
+	_ *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, args.principal, args.appAddress)
+	if err != nil {
+		return nil, err
+	}
+	if !isInstalled {
+		return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+	}
+
+	// Check if the app installation has expired
+	expiration, err := ca.userAccountContract.GetAppExpiration(ctx, args.principal, args.appAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// expiration == 0 means no expiration (perpetual install)
+	// expiration > 0 && expiration < now means expired
+	now := big.NewInt(time.Now().Unix())
+	if expiration.Cmp(big.NewInt(0)) > 0 && expiration.Cmp(now) < 0 {
+		return boolCacheResult{false, EntitlementResultReason_APP_EXPIRED}, nil
+	}
+
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+}
+
+func (ca *chainAuth) checkAppInstalledOnUser(
+	ctx context.Context,
+	cfg *config.Config,
+	userAddress common.Address,
+	appContractAddress common.Address,
+	bustCache bool,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	userArgs := &ChainAuthArgs{principal: userAddress}
+	wallets, err := ca.getLinkedWallets(ctx, cfg, userArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	var lastErr error
+	for _, wallet := range wallets {
+		cacheArgs := &ChainAuthArgs{
+			principal:  wallet,
+			appAddress: appContractAddress,
+		}
+		// Bust cache on DM stream creation to ensure fresh app installation status.
+		if bustCache {
+			ca.appInstalledCache.bust(cacheArgs)
+		}
+		result, _, err := ca.appInstalledCache.executeUsingCache(
+			ctx,
+			cfg,
+			cacheArgs,
+			ca.checkAppInstalledOnUserUncached,
+		)
+		if err != nil {
+			log.Debugw(
+				"checkAppInstalledOnUser: IsAppInstalled check failed, trying next wallet",
+				"wallet", wallet,
+				"error", err,
+			)
+			lastErr = err
+			continue
+		}
+		if result.IsAllowed() {
+			log.Debugw(
+				"checkAppInstalledOnUser: app installed",
+				"userAddress", userAddress,
+				"appContract", appContractAddress,
+				"installedOnWallet", wallet,
+			)
+			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+		}
+	}
+
+	if lastErr != nil {
+		return nil, AsRiverError(lastErr).
+			Tag("method", "checkAppInstalledOnUser").
+			Tag("userAddress", userAddress.Hex()).
+			Tag("appContract", appContractAddress.Hex())
+	}
+
+	log.Debugw(
+		"checkAppInstalledOnUser: app not installed on any linked wallet",
+		"userAddress", userAddress,
+		"appContract", appContractAddress,
+		"walletsChecked", len(wallets),
+	)
+	return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+}
+
+func (ca *chainAuth) getUserIsAppCached(
+	ctx context.Context,
+	userId common.Address,
+) (isApp bool, appAddress common.Address, err error) {
+	cacheArgs := &ChainAuthArgs{principal: userId}
+
+	result, _, err := ca.userIsAppCache.executeUsingCache(
+		ctx,
+		nil, // cfg not needed
+		cacheArgs,
+		func(ctx context.Context, _ *config.Config, args *ChainAuthArgs) (CacheResult, error) {
+			isApp, appAddr, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+			if err != nil {
+				return nil, err
+			}
+			return &userIsAppCacheResult{isApp: isApp, appAddress: appAddr}, nil
+		},
+	)
+	if err != nil {
+		return false, common.Address{}, err
+	}
+
+	userResult := result.(*timestampedCacheValue).result.(*userIsAppCacheResult)
+	return userResult.isApp, userResult.appAddress, nil
 }
 
 // checkAppMembership validates that the app is a member of the space. If the app
@@ -1334,7 +1647,7 @@ func (ca *chainAuth) linkWallets(
 			}
 		}
 		// If the user is an app, their app address is considered linked to them.
-		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+		isApp, appAddress, err := ca.getUserIsAppCached(ctx, args.principal)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1502,7 +1815,7 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult{false, reason}, nil
 	}
 
-	isAppResult, err := ca.checkIsApp(ctx, cfg, args)
+	isAppResult, err := ca.checkNonEntitlementRelatedChainAuth(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	} else if isAppResult != nil {

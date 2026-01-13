@@ -1,0 +1,362 @@
+---
+description: Core Solidity development rules for Towns Protocol contracts. Apply to all .sol file edits.
+globs: *.sol
+alwaysApply: false
+---
+
+# Towns Protocol Solidity Guide
+
+## Facet Pattern (2-File Structure)
+
+Use the **Mod + Facet** pattern. See canonical example: `src/account/facets/hub/`
+
+```
+feature/
+├── IFeature.sol      # Interface (external API)
+├── FeatureMod.sol    # Storage + Events + Errors + Internal Logic
+└── FeatureFacet.sol  # Thin facet: external functions delegating to Mod
+```
+
+### Module Library (`FeatureMod.sol`)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.29;
+
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
+
+library FeatureMod {
+    using CustomRevert for bytes4;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         EVENTS                              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Emitted when X happens
+    event FeatureUpdated(address indexed user, uint256 value);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         ERRORS                              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Reverted when the caller is unauthorized
+    error Feature__Unauthorized(address caller);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         STORAGE                             */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // keccak256(abi.encode(uint256(keccak256("towns.feature.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT = 0x...;
+
+    /// @custom:storage-location erc7201:towns.feature.storage
+    struct Layout {
+        mapping(address => uint256) values;
+    }
+
+    function getStorage() internal pure returns (Layout storage $) {
+        assembly {
+            $.slot := STORAGE_SLOT
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        FUNCTIONS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function setValue(Layout storage $, address user, uint256 value) internal {
+        Validator.checkAddress(user);
+        $.values[user] = value;
+        emit FeatureUpdated(user, value);
+    }
+}
+```
+
+### Facet Contract (`FeatureFacet.sol`)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.29;
+
+// interfaces
+import { IFeature } from "./IFeature.sol";
+
+// libraries
+import { FeatureMod } from "./FeatureMod.sol";
+
+// contracts
+import { Facet } from "@towns-protocol/diamond/src/facets/Facet.sol";
+import { OwnableBase } from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+
+contract FeatureFacet is IFeature, OwnableBase, Facet {
+  using FeatureMod for FeatureMod.Layout;
+
+  function __FeatureFacet_init() external onlyInitializing {
+    _addInterface(type(IFeature).interfaceId);
+  }
+
+  /// @inheritdoc IFeature
+  function setValue(address user, uint256 value) external onlyOwner {
+    FeatureMod.getStorage().setValue(user, value);
+  }
+}
+```
+
+## Legacy Pattern (3-File Structure)
+
+> **⚠️ DO NOT REFACTOR**: Many existing facets use this pattern. When fixing bugs or making changes to legacy facets, **preserve the existing pattern**. Only use the new Mod pattern for **new** facets.
+
+Legacy facets use a 3-file structure. Example: `src/diamond/facets/governance/votes/`
+
+```
+feature/
+├── IFeature.sol        # Interface
+├── FeatureStorage.sol  # Storage only
+├── FeatureBase.sol     # Internal logic (abstract contract)
+└── FeatureFacet.sol    # External functions inheriting Base
+```
+
+### Storage Library (`FeatureStorage.sol`)
+
+```solidity
+library FeatureStorage {
+  bytes32 internal constant STORAGE_SLOT =
+    keccak256("diamond.facets.feature.storage");
+
+  struct Layout {
+    mapping(address => uint256) values;
+  }
+
+  function layout() internal pure returns (Layout storage db) {
+    assembly {
+      db.slot := STORAGE_SLOT
+    }
+  }
+}
+```
+
+### Base Contract (`FeatureBase.sol`)
+
+```solidity
+abstract contract FeatureBase is IFeatureBase {
+  using FeatureStorage for FeatureStorage.Layout;
+
+  function _getValue(address user) internal view returns (uint256) {
+    return FeatureStorage.layout().values[user];
+  }
+
+  function _setValue(address user, uint256 value) internal {
+    FeatureStorage.layout().values[user] = value;
+  }
+}
+```
+
+### Facet Contract (`FeatureFacet.sol`)
+
+```solidity
+contract FeatureFacet is IFeature, FeatureBase, Facet {
+  function getValue(address user) external view returns (uint256) {
+    return _getValue(user);
+  }
+
+  function setValue(address user, uint256 value) external {
+    _setValue(user, value);
+  }
+}
+```
+
+### Key Differences: Legacy vs New
+
+| Aspect           | Legacy (3-file)                   | New (2-file Mod)          |
+| ---------------- | --------------------------------- | ------------------------- |
+| Storage access   | `FeatureStorage.layout()`         | `FeatureMod.getStorage()` |
+| Storage variable | `db` or `ds`                      | `$`                       |
+| Logic location   | `FeatureBase` (abstract contract) | `FeatureMod` (library)    |
+| Errors/Events    | In interface or facet             | In Mod library            |
+| Slot calculation | `keccak256("...")`                | ERC-7201 format           |
+
+---
+
+## Code Style
+
+### Layout Order
+
+**File level:**
+
+1. Pragma → 2. Imports → 3. Events → 4. Errors → 5. Interfaces → 6. Libraries → 7. Contracts
+
+**Contract level:**
+
+1. Type declarations → 2. State variables → 3. Events → 4. Errors → 5. Modifiers → 6. Functions
+
+**Function order:**
+
+1. Constructor → 2. Receive → 3. Fallback → 4. External → 5. Public → 6. Internal → 7. Private
+   (Within each group: view/pure functions last)
+
+### Import Organization
+
+```solidity
+// interfaces
+import { IFeature } from "./IFeature.sol";
+
+// libraries
+import { CustomRevert } from "../utils/libraries/CustomRevert.sol";
+
+// contracts
+import { Facet } from "@towns-protocol/diamond/src/facets/Facet.sol";
+```
+
+### Naming
+
+| Element              | Convention           | Example                 |
+| -------------------- | -------------------- | ----------------------- |
+| Contracts/Interfaces | `PascalCase`         | `AccountHubFacet`       |
+| Libraries            | `PascalCase`         | `FeatureMod`            |
+| Structs              | `PascalCase`         | `Layout`                |
+| Events               | `PascalCase`         | `FeatureUpdated`        |
+| Enums                | `PascalCase`         | `TokenStatus`           |
+| Enum members         | `UPPER_CASE`         | `PENDING`, `ACTIVE`     |
+| Functions            | `camelCase`          | `setValue`              |
+| Function args        | `camelCase`          | `initialSupply`         |
+| Variables            | `camelCase`          | `totalSupply`           |
+| Constants            | `UPPER_CASE`         | `STORAGE_SLOT`          |
+| Modifiers            | `camelCase`          | `onlyOwner`             |
+| Internal/Private     | `_leadingUnderscore` | `_validateUser`         |
+| Errors               | `Contract__Error`    | `Feature__Unauthorized` |
+| Storage variable     | `$`                  | `Layout storage $`      |
+
+**Visibility & Underscores:**
+
+- `_leadingUnderscore` for private/internal functions and state variables in **contracts**
+- **NO underscore** for internal functions in **libraries** (only private gets underscore)
+- Public/external functions should **never** have leading underscore
+- Use `trailingUnderscore_` for reserved word collisions (e.g., `class_`)
+
+**Filenames:**
+
+- Contract/library name should match filename: `AccountHubFacet.sol` contains `AccountHubFacet`
+- Avoid multiple unrelated contracts in one file
+
+**Names to Avoid:**
+
+- Never use `l` (lowercase L), `O` (uppercase o), or `I` (uppercase i) alone — easily confused with `1` and `0`
+
+### Formatting
+
+- 4 spaces indentation (no tabs)
+- 120 char max line length
+- Single blank line between functions
+- Two blank lines between top-level declarations
+- UTF-8 or ASCII encoding
+
+### Line Wrapping
+
+For long lines (>120 chars), wrap with each argument on its own line:
+
+```solidity
+// ✅ Good
+function createSpace(
+  string calldata name,
+  address[] calldata members,
+  bytes32[] calldata permissions
+) external returns (address);
+
+// ❌ Bad - first arg attached to parenthesis
+function createSpace(
+  string calldata name,
+  address[] calldata members,
+  bytes32[] calldata permissions
+) external returns (address);
+```
+
+### Whitespace
+
+- No whitespace inside parentheses/brackets/braces: `foo(a, b)` not `foo( a, b )`
+- No whitespace before commas/semicolons
+- Single space around operators: `x = 1;` not `x=1;`
+- Higher priority operators can omit spaces: `x = 2**3 + 5`
+- No extra spaces to align: don't pad `=` signs vertically
+
+### Control Structures
+
+```solidity
+// ✅ Good - brace on same line, space after keyword
+if (condition) {
+    doSomething();
+} else {
+    doOther();
+}
+
+for (uint256 i; i < length; ++i) {
+    process(i);
+}
+
+// ❌ Bad - brace on new line
+if (condition)
+{
+    doSomething();
+}
+```
+
+## Patterns & Best Practices
+
+### Error Handling
+
+```solidity
+// Use CustomRevert for gas-efficient reverts
+using CustomRevert for bytes4;
+
+if (caller != owner) Feature__Unauthorized.selector.revertWith(caller);
+```
+
+### Validation
+
+```solidity
+// Use Validator library for common checks
+Validator.checkAddress(user);     // reverts if zero address
+Validator.checkNonZero(amount);   // reverts if zero
+```
+
+### Storage Access
+
+```solidity
+// Always use getStorage() pattern
+FeatureMod.Layout storage $ = FeatureMod.getStorage();
+$.values[user] = value;
+```
+
+### Gas Optimization
+
+- Use `calldata` for external function arrays/strings
+- Cache storage reads in memory
+- Use `unchecked` blocks where overflow is impossible
+- Use `++i` in loops: `for (uint256 i; i < length; ++i)`
+- Pack storage variables (smaller types together)
+
+### Security
+
+- Follow CEI: Checks → Effects → Interactions
+- Use reentrancy guards for external calls (`ReentrancyGuardTransient`)
+- Validate all inputs at entry points
+- Use `onlyOwner`, `onlyInitializing` modifiers appropriately
+
+### NatSpec
+
+```solidity
+/// @notice Brief description of what the function does
+/// @dev Implementation details if non-obvious
+/// @param user The address to update
+/// @return success Whether the operation succeeded
+function doSomething(address user) external returns (bool success);
+```
+
+## Commands
+
+```bash
+forge build              # Build contracts
+forge test --ffi         # Run tests
+forge test -vvvv         # Verbose test output
+forge fmt                # Format code
+```

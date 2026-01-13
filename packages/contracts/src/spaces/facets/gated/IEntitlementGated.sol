@@ -42,12 +42,32 @@ interface IEntitlementGatedBase {
 }
 
 interface IEntitlementGated is IEntitlementGatedBase {
+    /// @notice Called by the xchain node to post the result of the entitlement check
+    /// @param transactionId The unique identifier for the transaction
+    /// @param roleId The role ID for the entitlement check
+    /// @param result The result of the entitlement check (PASSED or FAILED)
     function postEntitlementCheckResult(
         bytes32 transactionId,
         uint256 roleId,
         NodeVoteStatus result
     ) external;
 
+    /// @notice Post the result of the entitlement check for a specific role
+    /// @dev Only the entitlement checker can call this function
+    /// @param transactionId The unique identifier for the transaction
+    /// @param roleId The role ID for the entitlement check
+    /// @param result The result of the entitlement check (PASSED or FAILED)
+    function postEntitlementCheckResultV2(
+        bytes32 transactionId,
+        uint256 roleId,
+        NodeVoteStatus result
+    ) external payable;
+
+    /// @notice Get the rule data for a specific transaction and role
+    /// @dev Deprecated: Use EntitlementDataQueryable.getCrossChainEntitlementData instead
+    /// @param transactionId The unique identifier for the transaction
+    /// @param roleId The role ID for the entitlement check
+    /// @return The rule data for the transaction and role
     function getRuleData(
         bytes32 transactionId,
         uint256 roleId

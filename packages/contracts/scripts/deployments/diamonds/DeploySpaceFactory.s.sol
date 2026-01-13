@@ -145,10 +145,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("PricingModulesFacet");
         facetHelper.add("ImplementationRegistryFacet");
         facetHelper.add("SCL_EIP6565");
-
-        // Deploy the second batch of facets
-        facetHelper.deployBatch(deployer);
-
         facetHelper.add("WalletLink");
         facetHelper.add("EIP712Facet");
         facetHelper.add("PartnerRegistry");
@@ -162,7 +158,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             facetHelper.add("MockLegacyArchitect");
         }
 
-        // Deploy the third batch of facets
+        // Deploy all facets
         facetHelper.deployBatch(deployer);
 
         if (isAnvil()) {

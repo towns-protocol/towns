@@ -110,7 +110,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
             // Check if the lastMiniblockNum is the next expected miniblock and
             // the prevMiniblockHash is correct
-            if (stream.lastMiniblockNum >= miniblock.lastMiniblockNum) {
+            if (
+                stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
+                stream.lastMiniblockHash != miniblock.prevMiniBlockHash
+            ) {
                 emit StreamLastMiniblockUpdateFailed(
                     miniblock.streamId,
                     miniblock.lastMiniblockHash,

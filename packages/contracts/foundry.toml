@@ -1,7 +1,7 @@
 [profile.default]
 # Compiler settings
 auto_detect_solc = false # Foundry will automatically try to resolve appropriate Solidity compiler versions
-solc_version = "0.8.29" # Uses a single Solidity compiler version for the project
+solc_version = "0.8.33" # Uses a single Solidity compiler version for the project
 evm_version = "cancun" # The EVM version to use during tests.
 via_ir = false # Whether to use the Solidity intermediate representation.
 optimizer = true # Whether to enable the Solidity optimizer.
@@ -15,6 +15,7 @@ src = "src" # The path to the contract sources relative to the root of the proje
 test = "test" # The path to the test contract sources relative to the root of the project.
 extra_output = ["abi", "bin"]
 extra_output_files = ["abi", "bin"]
+ignored_error_codes = [1878, 2424, 4591, 8429]
 
 # Test settings
 fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.

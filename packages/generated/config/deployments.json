@@ -6,6 +6,8 @@
         "accountModules": "0xFF45988E721b5B9b24811f94a7b082aC1aCEea6E",
         "appRegistry": "0x23a9f5AbBcC82d1E2B5C0781b1F05F2B623E2c69",
         "baseRegistry": "0x0230a9d28bc48a90d6f5e5112b24319ec1b14c52",
+        "l2Registrar": "0x97d5D54922a61fe503848a0f109041BBa2F33884",
+        "l2Resolver": "0x0E75B6fFeD832DF2d3011b34d76cF4E1612E9372",
         "riverAirdrop": "0x5cb1B2a6d413879a7A4A89f46e0621db04aa6430",
         "simpleAppBeacon": "0x52B1418e49fD2a920B428398b165f3f048A7826A",
         "space": "0x8DdfAD0259803FA140e076C636E726573df77905",
@@ -16,6 +18,12 @@
         "utils": {
           "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
         }
+      }
+    },
+    "mainnet": {
+      "chainId": 1,
+      "addresses": {
+        "l1Resolver": "0x635Ed13702316b0f861C178e80263277CC5aE33b"
       }
     },
     "river": {
@@ -29,6 +37,7 @@
     "base": {
       "chainId": 84532,
       "addresses": {
+        "accountModules": "0x305BE7d7254991fd7d0aBB6B5f4607FeAE159869",
         "appRegistry": "0x9c72b18Ed4134e9a4A7162C7A4db03372d222EB5",
         "baseRegistry": "0x0d7eC5826626070b6a250C9878940D070128A265",
         "riverAirdrop": "0x5390D20Feb3dd84a08FE3E6C60D382233FeD0da6",
@@ -121,6 +130,7 @@
     "base": {
       "chainId": 8453,
       "addresses": {
+        "accountModules": "0xaCa88D31A28ef622ad70027ab65a864b08049ebE",
         "appRegistry": "0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE",
         "baseRegistry": "0x7c0422b31401C936172C897802CF0373B35B7698",
         "entryPoint": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",

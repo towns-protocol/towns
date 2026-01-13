@@ -2,15 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlementGatedBase} from "../../../../spaces/facets/gated/IEntitlementGated.sol";
+import {VoteResults, VotingContext} from "./IXChain.sol";
 
 // libraries
-
-// contracts
-import {XChainLib} from "./XChainLib.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {VoteResults, VotingContext} from "./IXChain.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {XChainLib} from "./XChainLib.sol";
 
 library XChainCheckLib {
     using CustomRevert for bytes4;
@@ -50,6 +49,9 @@ library XChainCheckLib {
         context.caller = request.caller;
         context.value = request.value;
         context.completed = request.completed;
+        // normalize address(0) to NATIVE_TOKEN for pre-upgrade requests
+        address currency = request.currency;
+        context.currency = currency == address(0) ? CurrencyTransfer.NATIVE_TOKEN : currency;
     }
 
     function processNodeVote(

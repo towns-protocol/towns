@@ -22,7 +22,7 @@ function useCreateDm(
     isPending: boolean;
     isSuccess: boolean;
     isError: boolean;
-    createDM: (userId: string, streamSettings?: {
+    createDM: (userId: string, appAddress?: string | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
         lightStream: boolean;
     } | undefined) => Promise<{
@@ -55,7 +55,7 @@ An object containing the `createDM` action and the rest of the action result.
     isPending: boolean;
     isSuccess: boolean;
     isError: boolean;
-    createDM: (userId: string, streamSettings?: {
+    createDM: (userId: string, appAddress?: string | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
         lightStream: boolean;
     } | undefined) => Promise<{

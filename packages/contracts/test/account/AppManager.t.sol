@@ -12,7 +12,7 @@ import {ISimpleApp} from "src/apps/simple/app/ISimpleApp.sol";
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 // libraries
-import "src/account/facets/app/AppManagerMod.sol" as AppManager;
+import {AppManagerMod} from "../../src/account/facets/app/AppManagerMod.sol";
 
 // contracts
 import {ERC6900Setup} from "./ERC6900Setup.sol";
@@ -87,7 +87,7 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
         // Try to install again via installer - should revert
         uint256 totalPrice = registry.getAppPrice(address(appContract));
         hoax(account, totalPrice);
-        vm.expectRevert(AppManager.AppManager__AppAlreadyInstalled.selector);
+        vm.expectRevert(AppManagerMod.AppManager__AppAlreadyInstalled.selector);
         installer.installApp{value: totalPrice}(appContract, IAppAccount(account), "");
     }
 
@@ -238,7 +238,7 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
         ITownsApp appContract = ITownsApp(address(SIMPLE_APP));
 
         // Try to update without installing first
-        vm.expectRevert(AppManager.AppManager__AppNotInstalled.selector);
+        vm.expectRevert(AppManagerMod.AppManager__AppNotInstalled.selector);
         vm.prank(account);
         installer.updateApp(appContract, IAppAccount(account));
     }
@@ -350,7 +350,7 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
         IAppAccount appAccount = IAppAccount(account);
 
         // Try to enable without installing first
-        vm.expectRevert(AppManager.AppManager__AppNotInstalled.selector);
+        vm.expectRevert(AppManagerMod.AppManager__AppNotInstalled.selector);
         vm.prank(account);
         appAccount.enableApp(address(appContract));
     }
@@ -364,7 +364,7 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
         IAppAccount appAccount = IAppAccount(account);
 
         // Try to disable without installing first
-        vm.expectRevert(AppManager.AppManager__AppNotInstalled.selector);
+        vm.expectRevert(AppManagerMod.AppManager__AppNotInstalled.selector);
         vm.prank(account);
         appAccount.disableApp(address(appContract));
     }

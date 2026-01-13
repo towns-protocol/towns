@@ -4,16 +4,16 @@ pragma solidity ^0.8.19;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 
 import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IArchitect, IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
 
-//libraries
+// libraries
 import {DeploySpaceOwnerFacet} from "scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
-//contracts
+// contracts
 import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
 
 import {DeployArchitect} from "scripts/deployments/facets/DeployArchitect.s.sol";

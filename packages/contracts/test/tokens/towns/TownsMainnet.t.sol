@@ -4,17 +4,17 @@ pragma solidity ^0.8.19;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {ITownsBase} from "src/tokens/towns/mainnet/ITowns.sol";
 
-//libraries
+// libraries
 
 import {TokenInflationLib} from "src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 
-//contracts
+// contracts
 
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {DeployTownsMainnet} from "scripts/deployments/utils/DeployTownsMainnet.s.sol";

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 import {MerkleTree} from "test/utils/MerkleTree.sol";
 
-//contracts
+// contracts
 import {Deployer} from "scripts/common/Deployer.s.sol";
 import {Member} from "src/tokens/Member.sol";
 

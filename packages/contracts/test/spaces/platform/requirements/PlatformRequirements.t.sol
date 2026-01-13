@@ -3,14 +3,14 @@ pragma solidity ^0.8.23;
 
 // utils
 
-//interfaces
+// interfaces
 
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPlatformRequirementsBase} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 
 import {PlatformRequirementsFacet} from "src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";

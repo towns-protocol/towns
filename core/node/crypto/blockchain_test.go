@@ -269,7 +269,7 @@ func TestBlockchainMultiMonitor(t *testing.T) {
 		chain1          = tc.GetBlockchain(ctx, 2)
 		collectedEvents = make(chan types.Log, 10)
 		nodeAddedTopic  = abi.Events["NodeAdded"].ID
-		bindLogCallback = func(ctx context.Context, log types.Log) { collectedEvents <- log }
+		bindLogCallback = func(ctx context.Context, log *types.Log) { collectedEvents <- *log }
 	)
 
 	tc.Commit(ctx)

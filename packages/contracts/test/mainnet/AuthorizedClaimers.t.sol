@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IAuthorizedClaimersBase} from "src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
-//contracts
+// contracts
 import {AuthorizedClaimers} from "src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 

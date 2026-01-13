@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
-//contracts
+// contracts
 
 contract MembershipPricingModulesTest is MembershipBaseSetup {
     function test_setPricingModule() public {

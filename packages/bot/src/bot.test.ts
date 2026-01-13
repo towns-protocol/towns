@@ -50,6 +50,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceDapp,
     TestERC721,
+    TestERC20,
     type Address,
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
@@ -1007,6 +1008,44 @@ describe('Bot', { sequential: true }, () => {
         expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore)
     })
 
+    it('bot can use sendTip() to send ERC-20 tips using app balance', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const tokenName = 'TestTipToken'
+        const tokenAddress = await TestERC20.getContractAddress(tokenName)
+        const tipAmount = 1000n
+        await TestERC20.publicMint(tokenName, bot.appAddress, Number(tipAmount))
+
+        const botBalanceBefore = await TestERC20.balanceOf(tokenName, bot.appAddress)
+        expect(botBalanceBefore).toBeGreaterThanOrEqual(Number(tipAmount))
+
+        const receivedMessages: OnMessageType[] = []
+        subscriptions.push(
+            bot.onMessage(async (handler, event) => {
+                const result = await handler.sendTip({
+                    userId: bob.userId,
+                    amount: tipAmount,
+                    messageId: event.eventId,
+                    channelId: event.channelId,
+                    currency: tokenAddress,
+                })
+                expect(result.txHash).toBeDefined()
+                expect(result.eventId).toBeDefined()
+                receivedMessages.push(event)
+            }),
+        )
+
+        const bobTokenBalanceBefore = await TestERC20.balanceOf(tokenName, bob.userId)
+
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me ERC-20!')
+        await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
+
+        const bobTokenBalanceAfter = await TestERC20.balanceOf(tokenName, bob.userId)
+        expect(bobTokenBalanceAfter).toBeGreaterThan(bobTokenBalanceBefore)
+
+        const botBalanceAfter = await TestERC20.balanceOf(tokenName, bot.appAddress)
+        expect(botBalanceAfter).toBeLessThan(botBalanceBefore)
+    })
+
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
@@ -1239,7 +1278,7 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const testData = createTestPNG(200, 150)
-        const blob = new Blob([testData as unknown as ArrayBuffer], { type: 'image/png' })
+        const blob = new Blob([testData], { type: 'image/png' })
 
         const { eventId } = await bot.sendMessage(channelId, 'Blob test', {
             attachments: [

@@ -2,21 +2,20 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlementGated} from "../../../../spaces/facets/gated/IEntitlementGated.sol";
 import {IXChain, VotingContext, VoteResults} from "./IXChain.sol";
-import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
-import {XChainLib} from "./XChainLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 import {XChainCheckLib} from "./XChainCheckLib.sol";
+import {XChainLib} from "./XChainLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -39,11 +38,13 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
 
     /// @inheritdoc IXChain
     function provideXChainRefund(address senderAddress, bytes32 transactionId) external onlyOwner {
-        if (!XChainLib.layout().requestsBySender[senderAddress].remove(transactionId)) {
+        XChainLib.Layout storage layout = XChainLib.layout();
+
+        if (!layout.requestsBySender[senderAddress].remove(transactionId)) {
             EntitlementGated_TransactionCheckAlreadyCompleted.selector.revertWith();
         }
 
-        XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
+        XChainLib.Request storage request = layout.requests[transactionId];
 
         if (request.completed) {
             EntitlementGated_TransactionCheckAlreadyCompleted.selector.revertWith();
@@ -55,23 +56,19 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
 
         request.completed = true;
 
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Check storage check = layout.checks[transactionId];
 
         // clean up checks if any
-        uint256 requestIdsLength = check.requestIds.length();
-        if (requestIdsLength > 0) {
-            for (uint256 i; i < requestIdsLength; ++i) {
-                uint256 requestId = check.requestIds.at(i);
-                check.voteCompleted[requestId] = true;
-            }
+        uint256[] memory requestIds = check.requestIds.values();
+        for (uint256 i; i < requestIds.length; ++i) {
+            check.voteCompleted[requestIds[i]] = true;
         }
 
-        CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN,
-            address(this),
-            senderAddress,
-            request.value
-        );
+        // normalize address(0) to NATIVE_TOKEN for pre-upgrade requests
+        address currency = request.currency;
+        currency = currency == address(0) ? CurrencyTransfer.NATIVE_TOKEN : currency;
+        // refund escrowed amount
+        CurrencyTransfer.transferCurrency(currency, address(this), senderAddress, request.value);
     }
 
     /// @inheritdoc IXChain
@@ -80,8 +77,9 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         uint256 requestId,
         NodeVoteStatus result
     ) external nonReentrant {
-        XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Layout storage layout = XChainLib.layout();
+        XChainLib.Request storage request = layout.requests[transactionId];
+        XChainLib.Check storage check = layout.checks[transactionId];
 
         VotingContext memory context = check.validateVotingEligibility(
             request,
@@ -129,11 +127,18 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         NodeVoteStatus finalStatus
     ) internal {
         // Mark transaction as completed and clean up
-        XChainLib.layout().requests[context.transactionId].completed = true;
-        XChainLib.layout().requestsBySender[context.caller].remove(context.transactionId);
+        XChainLib.Layout storage layout = XChainLib.layout();
+        layout.requests[context.transactionId].completed = true;
+        layout.requestsBySender[context.caller].remove(context.transactionId);
 
-        // Call back to the original caller with the result
-        EntitlementGated(context.caller).postEntitlementCheckResultV2{value: context.value}(
+        // return escrowed funds to Space, then callback
+        CurrencyTransfer.transferCurrency(
+            context.currency,
+            address(this),
+            context.caller,
+            context.value
+        );
+        IEntitlementGated(context.caller).postEntitlementCheckResultV2(
             context.transactionId,
             0,
             finalStatus

@@ -4,13 +4,13 @@ pragma solidity ^0.8.23;
 // utils
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {EntitlementChecker} from "src/base/registry/facets/checker/EntitlementChecker.sol";
 
 contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
