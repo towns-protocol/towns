@@ -33,8 +33,7 @@
         "changeset:version": "changeset version && bun update",
         "changeset:version:full": "bun run changeset:version && bun run --filter @towns-protocol/react-sdk gen && ./packages/generated/scripts/copy-addresses.sh",
         "changeset:version:no-docgen": "bun run changeset:version && ./packages/generated/scripts/copy-addresses.sh",
-        "changeset:publish": "bun run changeset:publish:packages && changeset tag",
-        "changeset:publish:packages": "for dir in packages/*/; do (cd \"$dir\" && [ -f package.json ] && [ \"$(bun pm pkg get private)\" = \"{}\" ] && bun publish || true); done"
+        "changeset:publish": "./scripts/publish-packages.sh && changeset tag"
     },
     "dependencies": {
         "pino-pretty": "^13.0.0"
