@@ -144,10 +144,11 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         for (uint256 i; i < nodeAddresses.length; ++i) {
             Node storage node = ds.nodeByAddress[nodeAddresses[i]];
 
-            // Only assign index to nodes that don't have one (permanentIndex == 0)
-            if (node.permanentIndex == 0) {
-                node.permanentIndex = ++currentIndex;
+            if (node.permanentIndex != 0) {
+                RiverRegistryErrors.BAD_ARG.revertWith();
             }
+
+            node.permanentIndex = ++currentIndex;
         }
 
         ds.lastNodeIndex = currentIndex;
