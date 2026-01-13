@@ -516,7 +516,8 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			return aeBuilder().
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransitionForGDM).
-				check(ru.validMembershipLimit)
+				check(ru.validMembershipLimit).
+				requireChainAuth(ru.gdmBotSponsorEntitlements)
 		} else {
 			return aeBuilder().
 				fail(RiverError(Err_INVALID_ARGUMENT, "invalid stream id for membership payload", "streamId", ru.params.streamView.StreamId()))
@@ -1601,7 +1602,7 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 		// If the joining user is a bot (has app_address), validate sponsor
 		if len(ru.membership.AppAddress) > 0 {
 			// Bot must have a sponsor address set
-			if len(ru.membership.AppSponsorAddress) == 0 {
+			if len(ru.membership.GetAppSponsorAddress()) == 0 {
 				return false, RiverError(
 					Err_PERMISSION_DENIED,
 					"bot joining GDM must have app_sponsor_address set",
@@ -1610,12 +1611,12 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 				)
 			}
 			// The sponsor must be the initiator (the member adding the bot)
-			if !bytes.Equal(ru.membership.AppSponsorAddress, initiatorAddress) {
+			if !bytes.Equal(ru.membership.GetAppSponsorAddress(), initiatorAddress) {
 				return false, RiverError(
 					Err_PERMISSION_DENIED,
 					"bot sponsor must be the initiator",
 					"sponsor",
-					ru.membership.AppSponsorAddress,
+					ru.membership.GetAppSponsorAddress(),
 					"initiator",
 					initiatorAddress,
 				)
@@ -1855,6 +1856,14 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 	}
 	appAddress := common.BytesToAddress(lastSnap.Inception.AppAddress)
 
+	// For GDM streams, if the user is a bot (appAddress != zero), set the app sponsor address
+	// to the initiator address. This allows entitlement checks to verify the app is installed
+	// on the sponsor's account.
+	var appSponsorAddress common.Address
+	if shared.ValidGDMChannelStreamId(&toStreamId) && appAddress != (common.Address{}) {
+		appSponsorAddress = common.BytesToAddress(initiatorAddress)
+	}
+
 	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
 			userMembership.Op,
@@ -1862,6 +1871,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 			initiatorAddress,
 			userMembership.Reason,
 			appAddress,
+			appSponsorAddress,
 		),
 		StreamId: toStreamId,
 	}, nil
@@ -2007,6 +2017,22 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	)
 
 	return chainAuthArgs, nil
+}
+
+// gdmBotSponsorEntitlements checks if a bot joining a GDM has its app installed on the sponsor's account.
+// For non-bot joins, this returns nil (no chain auth required).
+// For bot joins, it verifies the app is installed on the sponsor's smart contract account.
+func (ru *aeMembershipRules) gdmBotSponsorEntitlements() (*auth.ChainAuthArgs, error) {
+	// Only check entitlements for bot joins (when AppAddress is set)
+	if ru.membership.Op != MembershipOp_SO_JOIN || len(ru.membership.AppAddress) == 0 {
+		return nil, nil
+	}
+
+	// Verify the app is installed on the sponsor's account
+	sponsorAddress := common.BytesToAddress(ru.membership.GetAppSponsorAddress())
+	appAddress := common.BytesToAddress(ru.membership.AppAddress)
+
+	return auth.NewChainAuthArgsForIsAppInstalled(sponsorAddress, appAddress), nil
 }
 
 // return function that can be used to check if a user has a permission for a space

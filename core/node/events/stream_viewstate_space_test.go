@@ -56,6 +56,7 @@ func makeTestSpaceStream(
 			userAddess,
 			nil,
 			common.Address{},
+			common.Address{},
 		),
 		nil,
 	)
