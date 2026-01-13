@@ -24,4 +24,10 @@ library RiverConfigValues {
     bytes32 public constant STREAM_TRIM_ACTIVATION_FACTOR =
         keccak256("stream.trimactivationfactor");
     bytes32 public constant STREAM_TRIM_BY_STREAM_ID = keccak256("stream.trimbystreamid");
+    bytes32 public constant STREAM_DISTRIBUTION_REQUIRED_OPERATORS =
+        keccak256("stream.distribution.requiredoperators");
+    bytes32 public constant STREAM_DISTRIBUTION_MIN_BALANCING_ADVANTAGE =
+        keccak256("stream.distribution.minbalancingadvantage");
+    bytes32 public constant STREAM_DISTRIBUTION_MAX_BALANCING_ADVANTAGE =
+        keccak256("stream.distribution.maxbalancingadvantage");
 }
