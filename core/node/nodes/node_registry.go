@@ -46,11 +46,10 @@ type nodeRegistryImpl struct {
 	httpClientWithCert *http.Client
 	connectOpts        []connect.ClientOption
 
-	mu                       sync.RWMutex
-	nodesLocked              map[common.Address]*NodeRecord
-	nodesByIndexLocked       map[int32]*NodeRecord
-	appliedBlockNumLocked    blockchain.BlockNumber
-	nextPermanentIndexLocked int
+	mu                    sync.RWMutex
+	nodesLocked           map[common.Address]*NodeRecord
+	nodesByIndexLocked    map[int32]*NodeRecord
+	appliedBlockNumLocked blockchain.BlockNumber
 
 	// All fields below are recalculated from nodesLocked by resetLocked()
 	// All fields are immutable, i.e. copy under RWLock can be returned to the caller
