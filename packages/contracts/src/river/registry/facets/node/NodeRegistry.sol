@@ -142,7 +142,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         uint256 nodeCount = ds.nodes.length();
         uint32 currentIndex = 0;
 
-        for (uint256 i = 0; i < nodeCount; ++i) {
+        for (uint256 i; i < nodeCount; ++i) {
             address nodeAddress = ds.nodes.at(i);
             Node storage node = ds.nodeByAddress[nodeAddress];
 
