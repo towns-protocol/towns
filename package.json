@@ -30,7 +30,7 @@
         "test:build": "turbo test:build",
         "test:unit": "turbo test:unit",
         "changeset": "changeset",
-        "changeset:version": "changeset version && bun update",
+        "changeset:version": "changeset version && bun install",
         "changeset:version:full": "bun run changeset:version && bun run --filter @towns-protocol/react-sdk gen && ./packages/generated/scripts/copy-addresses.sh",
         "changeset:version:no-docgen": "bun run changeset:version && ./packages/generated/scripts/copy-addresses.sh",
         "changeset:publish": "./scripts/publish-packages.sh && changeset tag"
