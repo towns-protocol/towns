@@ -2362,7 +2362,7 @@ bun  dev
 ## Common Gotchas for AI Agents
 
 1. **User IDs are addresses**: Always in format `0x...`, not usernames
-2. **No DM/GDM support yet**: Not supported yet
+2. **No GDM support yet**: Group DMs are not supported yet 
 3. **Slash commands are exclusive**: They never trigger `onMessage`
 4. **Thread/Reply IDs only**: You never get the original message content
 5. **Forwarding settings matter**: Bot may not receive all messages. Bot developer must set the forwarding setting correctly. `ALL_MESSAGES` or `MENTIONS_REPLIES_REACTIONS`

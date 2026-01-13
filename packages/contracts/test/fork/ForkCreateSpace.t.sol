@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 
 import {IPricingModulesBase} from "src/factory/facets/architect/pricing/IPricingModules.sol";
@@ -13,9 +13,9 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {ILegacyArchitect, ILegacyArchitectBase} from "test/mocks/legacy/IMockLegacyArchitect.sol";
 
-//libraries
+// libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-//contracts
+// contracts
 
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 import {PricingModulesFacet} from "src/factory/facets/architect/pricing/PricingModulesFacet.sol";

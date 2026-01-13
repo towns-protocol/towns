@@ -10,7 +10,7 @@ import {IExecutionHookModule} from "@erc6900/reference-implementation/interfaces
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 
 // libraries
-import "./AccountHubMod.sol" as AccountHub;
+import {AccountHubMod} from "./AccountHubMod.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 
@@ -31,6 +31,7 @@ contract AccountHubFacet is
     Facet
 {
     using CustomRevert for bytes4;
+    using AccountHubMod for AccountHubMod.Layout;
 
     /// @notice Initializes the facet when added to a Diamond
     function __AccountHubFacet_init(
@@ -47,36 +48,36 @@ contract AccountHubFacet is
     function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
         Validator.checkAddress(spaceFactory);
         Validator.checkAddress(appRegistry);
-        AccountHub.Layout storage $ = AccountHub.getStorage();
+        AccountHubMod.Layout storage $ = AccountHubMod.getStorage();
         ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
     }
 
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
-        AccountHub.installAccount(account);
+        AccountHubMod.getStorage().installAccount(account);
     }
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
-        AccountHub.uninstallAccount(account);
+        AccountHubMod.getStorage().uninstallAccount(account);
     }
 
     function setSpaceFactory(address spaceFactory) external onlyOwner {
-        AccountHub.setSpaceFactory(spaceFactory);
+        AccountHubMod.getStorage().setSpaceFactory(spaceFactory);
     }
 
     function setAppRegistry(address appRegistry) external onlyOwner {
-        AccountHub.setAppRegistry(appRegistry);
+        AccountHubMod.getStorage().setAppRegistry(appRegistry);
     }
 
     function getSpaceFactory() external view returns (address) {
-        return AccountHub.getStorage().spaceFactory;
+        return AccountHubMod.getStorage().spaceFactory;
     }
 
     function getAppRegistry() external view returns (address) {
-        return AccountHub.getStorage().appRegistry;
+        return AccountHubMod.getStorage().appRegistry;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -201,11 +202,11 @@ contract AccountHubFacet is
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        ACCOUNT MODULE                         */
+    /*                        ACCOUNT MODULE                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function isInstalled(address account) external view returns (bool) {
-        return AccountHub.isInstalled(account);
+        return AccountHubMod.getStorage().isInstalled(account);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -218,7 +219,7 @@ contract AccountHubFacet is
         uint256,
         bytes calldata
     ) external view returns (bytes memory) {
-        AccountHub.onlyRegistry(sender);
+        AccountHubMod.getStorage().onlyRegistry(sender);
         return "";
     }
 

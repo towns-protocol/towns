@@ -2,20 +2,22 @@
 pragma solidity ^0.8.29;
 
 // interfaces
-import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IModularAccount, Call} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IMembership} from "../../../spaces/facets/membership/IMembership.sol";
 import {IBanning} from "../../../spaces/facets/banning/IBanning.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ISubscriptionModule, ISubscriptionModuleBase} from "./ISubscriptionModule.sol";
 
 // libraries
-import {LibCall} from "solady/utils/LibCall.sol";
 import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLocatorLib.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
-import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 /// @title Subscription Module Base
 /// @notice Base contract with internal logic for subscription management
@@ -34,7 +36,8 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         NOT_OWNER,
         RENEWAL_PRICE_CHANGED,
         INSUFFICIENT_BALANCE,
-        DURATION_CHANGED
+        DURATION_CHANGED,
+        CURRENCY_CHANGED
     }
 
     uint256 public constant GRACE_PERIOD = 3 days;
@@ -72,6 +75,7 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         sub.lastKnownRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
         sub.lastKnownExpiresAt = expiresAt;
         sub.duration = duration;
+        sub.lastKnownCurrency = membershipFacet.getMembershipCurrency();
         sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
     }
 
@@ -84,19 +88,33 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         IMembership membershipFacet,
         uint256 actualRenewalPrice
     ) internal {
+        address currency = membershipFacet.getMembershipCurrency();
         // Construct the renewal call to space contract
         bytes memory renewalCall = abi.encodeCall(IMembership.renewMembership, (sub.tokenId));
 
         // Create the data parameter for executeWithRuntimeValidation
-        // This should be an execute() call to the space contract
-        bytes memory executeData = abi.encodeCall(
-            IModularAccount.execute,
-            (
-                sub.space, // target
-                actualRenewalPrice, // value
-                renewalCall // data
-            )
-        );
+        bytes memory executeData;
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+            // ETH path: single execute with value
+            executeData = abi.encodeCall(
+                IModularAccount.execute,
+                (
+                    sub.space, // target
+                    actualRenewalPrice, // value
+                    renewalCall // data
+                )
+            );
+        } else {
+            // ERC20 path: batch execute (approve + renewMembership)
+            Call[] memory calls = new Call[](2);
+            calls[0] = Call({
+                target: currency,
+                value: 0,
+                data: abi.encodeCall(IERC20.approve, (sub.space, actualRenewalPrice))
+            });
+            calls[1] = Call({target: sub.space, value: 0, data: renewalCall});
+            executeData = abi.encodeCall(IModularAccount.executeBatch, (calls));
+        }
 
         // Use the proper pack function from ValidationLocatorLib
         bytes memory authorization = ValidationLocatorLib.packSignature(
@@ -228,8 +246,14 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
             return (true, true, SkipReason.RENEWAL_PRICE_CHANGED);
         }
 
-        // Check if account has sufficient balance
-        if (account.balance < actualRenewalPrice) {
+        // Check if currency changed
+        address actualCurrency = IMembership(sub.space).getMembershipCurrency();
+        if (sub.lastKnownCurrency != actualCurrency) {
+            return (true, true, SkipReason.CURRENCY_CHANGED);
+        }
+
+        // Check if account has sufficient balance (ETH or ERC20)
+        if (CurrencyTransfer.balanceOf(actualCurrency, account) < actualRenewalPrice) {
             return (true, true, SkipReason.INSUFFICIENT_BALANCE);
         }
 
@@ -253,6 +277,7 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
         if (reason == SkipReason.RENEWAL_PRICE_CHANGED) return "RENEWAL_PRICE_CHANGED";
         if (reason == SkipReason.INSUFFICIENT_BALANCE) return "INSUFFICIENT_BALANCE";
         if (reason == SkipReason.DURATION_CHANGED) return "DURATION_CHANGED";
+        if (reason == SkipReason.CURRENCY_CHANGED) return "CURRENCY_CHANGED";
         return "";
     }
 

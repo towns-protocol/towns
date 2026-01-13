@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // utils
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
 import {IAppFactoryBase} from "../../src/apps/facets/factory/IAppFactory.sol";
 import {IAppAccountBase} from "../../src/spaces/facets/account/IAppAccount.sol";
@@ -14,12 +14,12 @@ import {ISimpleApp} from "../../src/apps/simple/app/ISimpleApp.sol";
 import {IIdentityRegistryBase} from "../../src/apps/facets/identity/IIdentityRegistry.sol";
 import {IValidationRegistry} from "../../src/apps/facets/validation/IValidationRegistry.sol";
 
-//libraries
+// libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
-//contracts
+// contracts
 import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
 import {AppInstallerFacet} from "../../src/apps/facets/installer/AppInstallerFacet.sol";
 import {AppFactoryFacet} from "../../src/apps/facets/factory/AppFactoryFacet.sol";

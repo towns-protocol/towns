@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 import {Deployer} from "scripts/common/Deployer.s.sol";
 import {MockMessenger} from "test/mocks/MockMessenger.sol";
 

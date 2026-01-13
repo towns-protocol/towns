@@ -88,16 +88,13 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("NodeOperatorFacet");
         facetHelper.add("MetadataFacet");
         facetHelper.add("EntitlementChecker");
-
-        facetHelper.deployBatch(deployer);
-
         facetHelper.add("RewardsDistributionV2");
         facetHelper.add("SpaceDelegationFacet");
         facetHelper.add("MainnetDelegation");
         facetHelper.add("EIP712Facet");
         facetHelper.add("XChain");
 
-        // Deploy all facets in a single batch transaction
+        // Deploy all facets
         facetHelper.deployBatch(deployer);
 
         // Deploy or retrieve the towns token

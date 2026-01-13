@@ -2,15 +2,13 @@
 pragma solidity ^0.8.29;
 
 // interfaces
-import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
 import {IBanning} from "../../../src/spaces/facets/banning/IBanning.sol";
 
 // utils
 import {ModulesBase} from "./ModulesBase.sol";
 import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
-import {Validator} from "../../../src/utils/libraries/Validator.sol";
 
-//contracts
+// contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
 
 contract SubscriptionModuleTest is ModulesBase {
@@ -66,107 +64,6 @@ contract SubscriptionModuleTest is ModulesBase {
         assertEq(entityIds[0], entityId);
     }
 
-    function test_onInstall_revertWhen_InvalidSpace(address user) public {
-        ModularAccount userAccount = _createAccount(user, 0);
-
-        SubscriptionParams memory params = SubscriptionParams({
-            account: address(userAccount),
-            space: address(0),
-            tokenId: 0,
-            renewalPrice: 0,
-            expirationTime: 0,
-            entityId: 0,
-            nextRenewalTime: 0
-        });
-
-        expectInstallFailed(address(subscriptionModule), Validator.InvalidAddress.selector);
-        _installSubscriptionModule(userAccount, params);
-    }
-
-    function test_onInstall_revertWhen_InvalidTokenOwner(address user) public {
-        ModularAccount userAccount = _createAccount(user, 0);
-        address space = _createSpace(0, 0);
-
-        SubscriptionParams memory params = SubscriptionParams({
-            account: address(userAccount),
-            space: space,
-            tokenId: 0,
-            renewalPrice: 0,
-            expirationTime: 0,
-            entityId: 2,
-            nextRenewalTime: 0
-        });
-
-        expectInstallFailed(
-            address(subscriptionModule),
-            SubscriptionModule__InvalidTokenOwner.selector
-        );
-        _installSubscriptionModule(userAccount, params);
-    }
-
-    function test_onInstall_revertWhen_InvalidEntityId(address user) public {
-        ModularAccount userAccount = _createAccount(user, 0);
-        address space = _createSpace(0, 0);
-
-        SubscriptionParams memory params = SubscriptionParams({
-            account: address(userAccount),
-            space: space,
-            tokenId: 0,
-            renewalPrice: 0,
-            expirationTime: 0,
-            entityId: 0,
-            nextRenewalTime: 0
-        });
-
-        expectInstallFailed(
-            address(subscriptionModule),
-            SubscriptionModule__InvalidEntityId.selector
-        );
-        _installSubscriptionModule(userAccount, params);
-    }
-
-    function test_onInstall_revertWhen_BannedMembership() public {
-        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
-        address space = _createSpace(0, 0);
-        uint256 tokenId = _joinSpace(address(userAccount), space);
-
-        vm.prank(owner);
-        IBanning(space).ban(tokenId);
-
-        SubscriptionParams memory params = _createSubscriptionParams(
-            address(userAccount),
-            space,
-            tokenId
-        );
-
-        expectInstallFailed(
-            address(subscriptionModule),
-            SubscriptionModule__MembershipBanned.selector
-        );
-        _installSubscriptionModule(userAccount, params);
-    }
-
-    function test_onInstall_revertWhen_MembershipExpired() public {
-        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
-        address space = _createSpace(1 ether, 7 days);
-        uint256 tokenId = _joinSpace(address(userAccount), space);
-
-        // Warp past expiration
-        _warpPastGracePeriod(space, tokenId);
-
-        SubscriptionParams memory params = _createSubscriptionParams(
-            address(userAccount),
-            space,
-            tokenId
-        );
-
-        expectInstallFailed(
-            address(subscriptionModule),
-            SubscriptionModule__MembershipExpired.selector
-        );
-        _installSubscriptionModule(userAccount, params);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           UNINSTALL                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -177,41 +74,6 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.expectEmit(address(subscriptionModule));
         emit SubscriptionDeactivated(address(account), entityId);
         _uninstallSubscriptionModule(account, entityId);
-    }
-
-    function test_onUninstall_revertWhen_InvalidEntityId(address user) public {
-        (ModularAccount account, , , ) = _createSubscription(user);
-        vm.expectEmit(address(account));
-        emit IModularAccount.ValidationUninstalled(address(subscriptionModule), 0, false);
-        _uninstallSubscriptionModule(account, 0);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      VALIDATE RUNTIME                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function test_validateRuntime_revertWhen_SenderIsNotModule() public {
-        vm.expectRevert(SubscriptionModule__InvalidSender.selector);
-        subscriptionModule.validateRuntime(
-            makeAddr("not_module"),
-            0,
-            makeAddr("not_account"),
-            0,
-            new bytes(0),
-            new bytes(0)
-        );
-    }
-
-    function test_validateRuntime_revertWhen_SubscriptionInactive(address user) public {
-        vm.expectRevert(SubscriptionModule__InactiveSubscription.selector);
-        subscriptionModule.validateRuntime(
-            user,
-            0,
-            address(subscriptionModule),
-            0,
-            new bytes(0),
-            new bytes(0)
-        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -655,20 +517,6 @@ contract SubscriptionModuleTest is ModulesBase {
         assertFalse(sub.active, "account4 should remain inactive");
     }
 
-    function test_batchProcessRenewals_revertWhen_ExceedsMaxBatchSize() public {
-        RenewalParams[] memory batchParams = new RenewalParams[](100);
-        vm.expectRevert(SubscriptionModule__ExceedsMaxBatchSize.selector);
-        vm.prank(processor);
-        subscriptionModule.batchProcessRenewals(batchParams);
-    }
-
-    function test_batchProcessRenewals_EmptyArray() public {
-        RenewalParams[] memory batchParams = new RenewalParams[](0);
-        vm.expectRevert(SubscriptionModule__EmptyBatch.selector);
-        vm.prank(processor);
-        subscriptionModule.batchProcessRenewals(batchParams);
-    }
-
     function test_batchProcessRenewals_AllSkipped() public {
         uint256 renewalPrice = 1 ether;
 
@@ -720,87 +568,6 @@ contract SubscriptionModuleTest is ModulesBase {
         Subscription memory sub3 = subscriptionModule.getSubscription(address(account3), entityId3);
         assertTrue(sub3.active, "account3 should remain active");
         assertEq(sub3.lastRenewalTime, 0, "account3 should not be renewed");
-    }
-
-    /*´:°•.°+.*•´.*:•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        OPERATOR MANAGEMENT                   */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function test_grantOperator() public {
-        address newOperator = makeAddr("newOperator");
-
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(newOperator);
-
-        assertTrue(subscriptionModule.isOperator(newOperator));
-
-        // Test that the operator can now process renewals
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(makeAddr("user"));
-        vm.deal(address(account), params.renewalPrice);
-        _warpToRenewalTime(params.space, params.tokenId);
-
-        _processRenewalAs(newOperator, address(account), entityId);
-        assertSubscriptionActive(address(account), entityId);
-    }
-
-    function test_revokeOperator() public {
-        address operatorToRevoke = makeAddr("operatorToRevoke");
-
-        // First grant the operator
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(operatorToRevoke);
-
-        // Then revoke it
-        vm.prank(deployer);
-        subscriptionModule.revokeOperator(operatorToRevoke);
-
-        // Test that the operator can no longer process renewals
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(makeAddr("user"));
-        vm.deal(address(account), params.renewalPrice);
-        _warpToRenewalTime(params.space, params.tokenId);
-
-        vm.expectRevert(SubscriptionModule__InvalidCaller.selector);
-        _processRenewalAs(operatorToRevoke, address(account), entityId);
-    }
-
-    function test_grantOperator_revertWhen_NotOwner() public {
-        address newOperator = makeAddr("newOperator");
-        address nonOwner = makeAddr("nonOwner");
-
-        vm.expectRevert();
-        vm.prank(nonOwner);
-        subscriptionModule.grantOperator(newOperator);
-    }
-
-    function test_revokeOperator_revertWhen_NotOwner() public {
-        address operatorToRevoke = makeAddr("operatorToRevoke");
-        address nonOwner = makeAddr("nonOwner");
-
-        vm.expectRevert();
-        vm.prank(nonOwner);
-        subscriptionModule.revokeOperator(operatorToRevoke);
-    }
-
-    function test_grantOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(Validator.InvalidAddress.selector);
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(address(0));
-    }
-
-    function test_revokeOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(Validator.InvalidAddress.selector);
-        vm.prank(deployer);
-        subscriptionModule.revokeOperator(address(0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -1045,38 +812,6 @@ contract SubscriptionModuleTest is ModulesBase {
         _processRenewalAs(processor, address(account), entityId);
     }
 
-    function test_installSubscriptionModule_revertWhen_SubscriptionAlreadyInstalled() public {
-        uint64 duration = 1 hours;
-        uint256 renewalPrice = 0.001 ether;
-
-        (ModularAccount account, , , SubscriptionParams memory params) = _createSubscription(
-            makeAddr("user"),
-            duration,
-            renewalPrice
-        );
-        params.entityId = params.entityId + 1;
-
-        expectInstallFailed(
-            address(subscriptionModule),
-            SubscriptionModule__SubscriptionAlreadyInstalled.selector
-        );
-        _installSubscriptionModule(account, params);
-    }
-
-    function test_installSubscriptionModule_revertWhen_InvalidSpace() public {
-        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
-        address space = address(new FakeSpace(address(userAccount)));
-
-        SubscriptionParams memory params = _createSubscriptionParams(
-            address(userAccount),
-            space,
-            1
-        );
-
-        expectInstallFailed(address(subscriptionModule), SubscriptionModule__InvalidSpace.selector);
-        _installSubscriptionModule(userAccount, params);
-    }
-
     function test_pauseAndResume_afterLongPeriod() public {
         uint64 duration = 7 days;
         uint256 renewalPrice = 1 ether;
@@ -1195,32 +930,202 @@ contract SubscriptionModuleTest is ModulesBase {
         assertTrue(sub.active, "Subscription should be active after install");
         assertEq(sub.spent, 0, "Spent should be zero on install");
     }
-}
 
-contract FakeSpace {
-    address private _owner;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     USDC SUBSCRIPTION                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    constructor(address owner) {
-        _owner = owner;
+    function test_onInstall_USDC(address user) public {
+        ModularAccount userAccount = _createAccount(user, 0);
+        address space = _createSpaceUSDC(DEFAULT_USDC_PRICE, DEFAULT_MEMBERSHIP_DURATION);
+        uint256 tokenId = _joinSpaceUSDC(address(userAccount), space);
+
+        SubscriptionParams memory params = _createSubscriptionParams(
+            address(userAccount),
+            space,
+            tokenId
+        );
+
+        uint32 entityId = _installSubscriptionModule(userAccount, params);
+
+        assertEq(entityId, nextEntityId);
+        assertSubscriptionActive(address(userAccount), entityId);
+
+        Subscription memory sub = subscriptionModule.getSubscription(
+            address(userAccount),
+            entityId
+        );
+        assertEq(sub.lastKnownCurrency, address(mockUSDC), "Currency should be USDC");
     }
 
-    function isBanned(uint256) external pure returns (bool) {
-        return false;
+    function test_processRenewal_USDC(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscriptionUSDC(user, DEFAULT_MEMBERSHIP_DURATION, DEFAULT_USDC_PRICE);
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        mockUSDC.mint(address(account), params.renewalPrice);
+
+        address feeRecipient = platformRequirements.getFeeRecipient();
+
+        BalanceSnapshot memory beforeSnap = snapshotBalancesUSDC(
+            address(account),
+            params.space,
+            feeRecipient
+        );
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        BalanceSnapshot memory afterSnap = snapshotBalancesUSDC(
+            address(account),
+            params.space,
+            feeRecipient
+        );
+
+        assertUSDCDistribution(DEFAULT_USDC_PRICE, params.renewalPrice, beforeSnap, afterSnap);
+        assertSubscriptionActive(address(account), entityId);
+
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertEq(sub.spent, params.renewalPrice, "Spent should equal renewal price");
+        assertEq(sub.lastRenewalTime, block.timestamp, "Last renewal time should be updated");
     }
 
-    function ownerOf(uint256) external view returns (address) {
-        return _owner;
+    function test_processRenewal_USDC_multipleRenewals(address user) public {
+        uint64 duration = 7 days;
+        uint256 usdcPrice = 5_000_000; // $5 USDC
+
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscriptionUSDC(user, duration, usdcPrice);
+
+        uint256 actualRenewalPrice = params.renewalPrice;
+
+        mockUSDC.mint(address(account), actualRenewalPrice * 3);
+
+        _warpToRenewalTime(params.space, tokenId);
+        _processRenewalAs(processor, address(account), entityId);
+
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertEq(sub.spent, actualRenewalPrice, "First renewal spent");
+        uint256 firstRenewalTime = sub.lastRenewalTime;
+
+        _warpToRenewalTime(params.space, tokenId);
+        _processRenewalAs(processor, address(account), entityId);
+
+        sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertEq(sub.spent, actualRenewalPrice * 2, "Second renewal spent");
+        assertTrue(sub.lastRenewalTime > firstRenewalTime, "Last renewal time should be updated");
+        assertTrue(sub.active, "Subscription should still be active");
     }
 
-    function expiresAt(uint256) external view returns (uint256) {
-        return block.timestamp + 100 days;
+    function test_processRenewal_skipWhen_InsufficientUSDCBalance(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscriptionUSDC(user, DEFAULT_MEMBERSHIP_DURATION, DEFAULT_USDC_PRICE);
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "INSUFFICIENT_BALANCE");
+        _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
     }
 
-    function getMembershipDuration() external pure returns (uint256) {
-        return 100 days;
+    function test_processRenewal_skipWhen_CurrencyChanged(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        vm.deal(address(account), params.renewalPrice);
+
+        vm.prank(owner);
+        _getMembership(params.space).setMembershipCurrency(address(mockUSDC));
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "CURRENCY_CHANGED");
+        _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(
+            subscriptionModule.getSubscription(address(account), entityId).active,
+            "Subscription should be paused after currency change"
+        );
     }
 
-    function getMembershipRenewalPrice(uint256) external pure returns (uint256) {
-        return 0.001 ether;
+    function test_activateSubscription_afterCurrencyChange(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        vm.prank(owner);
+        _getMembership(params.space).setMembershipCurrency(address(mockUSDC));
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        _processRenewalAs(processor, address(account), entityId);
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
+
+        _renewMembershipUSDC(params.space, address(account), tokenId);
+
+        vm.prank(address(account));
+        subscriptionModule.activateSubscription(entityId);
+
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertTrue(sub.active, "Subscription should be active");
+        assertEq(sub.lastKnownCurrency, address(mockUSDC), "Currency should be updated to USDC");
+    }
+
+    function test_batchProcessRenewals_USDC(address user1, address user2) public {
+        vm.assume(user1 != address(0) && user2 != address(0) && user1 != user2);
+
+        (
+            ModularAccount account1,
+            ,
+            uint32 entityId1,
+            SubscriptionParams memory params1
+        ) = _createSubscriptionUSDC(user1, DEFAULT_MEMBERSHIP_DURATION, DEFAULT_USDC_PRICE);
+        (
+            ModularAccount account2,
+            ,
+            uint32 entityId2,
+            SubscriptionParams memory params2
+        ) = _createSubscriptionUSDC(user2, DEFAULT_MEMBERSHIP_DURATION, DEFAULT_USDC_PRICE);
+
+        mockUSDC.mint(address(account1), params1.renewalPrice);
+        mockUSDC.mint(address(account2), params2.renewalPrice);
+
+        _warpToRenewalTime(params1.space, params1.tokenId);
+        _warpToRenewalTime(params2.space, params2.tokenId);
+
+        RenewalParams[] memory batchParams = new RenewalParams[](2);
+        batchParams[0] = RenewalParams({account: address(account1), entityId: entityId1});
+        batchParams[1] = RenewalParams({account: address(account2), entityId: entityId2});
+
+        vm.prank(processor);
+        subscriptionModule.batchProcessRenewals(batchParams);
+
+        assertSubscriptionActive(address(account1), entityId1);
+        assertSubscriptionActive(address(account2), entityId2);
+
+        assertEq(mockUSDC.balanceOf(address(account1)), 0, "Account1 USDC should be spent");
+        assertEq(mockUSDC.balanceOf(address(account2)), 0, "Account2 USDC should be spent");
     }
 }

@@ -26,6 +26,9 @@ library FeeTypesLib {
     /// @notice Fee for bot actions
     bytes32 internal constant BOT_ACTION = keccak256("FEE_TYPE.BOT_ACTION");
 
+    /// @notice Fee for domain registration
+    bytes32 internal constant DOMAIN_REGISTRATION = keccak256("FEE_TYPE.DOMAIN_REGISTRATION");
+
     /// @notice Generates fee type for membership based on currency
     /// @param currency The payment currency address
     /// @return The fee type identifier for the given currency

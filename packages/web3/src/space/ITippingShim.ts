@@ -12,7 +12,7 @@ export type TipEventObject = GeneratedTipEventObject
 export enum TipRecipientType {
     Member = 0,
     Bot = 1,
-    Pool = 2,
+    Any = 2,
 }
 
 export type TipSentEventObject = {
@@ -80,7 +80,7 @@ export class ITippingShim extends BaseContractShim<typeof connect> {
                         channelId = decoded[1] as string
                         tokenId = decoded[2] as BigNumber
                     } else {
-                        // Bot/Pool tips: data = abi.encode(messageId, channelId)
+                        // Bot/Any tips: data = abi.encode(messageId, channelId)
                         const decoded = ethers.utils.defaultAbiCoder.decode(
                             ['bytes32', 'bytes32'],
                             data,

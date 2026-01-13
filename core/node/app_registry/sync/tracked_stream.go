@@ -170,14 +170,16 @@ func NewTrackedStreamForAppRegistryService(
 func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
 	streamId := view.StreamId()
 
+	streamType := streamId.Type()
+
 	// Persist cookies for user inbox streams to avoid reprocessing session keys on restart.
 	// Note: only user inbox streams of registered bots are tracked (see TrackStream in streams_tracker.go)
-	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
+	if streamType == shared.STREAM_USER_INBOX_BIN {
 		return true
 	}
 
-	// Only persist cookies for channel streams with bot members
-	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+	// Only persist cookies for channel/DM streams with bot members
+	if streamType != shared.STREAM_CHANNEL_BIN && streamType != shared.STREAM_DM_CHANNEL_BIN {
 		return false
 	}
 

@@ -26,6 +26,10 @@
         "editor.renderWhitespace": "all"
     },
     "go.formatTool": "custom",
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "golang.go"
+    },
     "go.testFlags": ["-v", "-tags", "integration"],
     "go.buildTags": "integration",
     "typescript.tsdk": "node_modules/typescript/lib",

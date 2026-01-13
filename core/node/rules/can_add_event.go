@@ -264,11 +264,37 @@ func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPay
 			fail(invalidContentType(content))
 	case *DmChannelPayload_Message:
 		return aeBuilder().
-			check(params.creatorIsMember)
+			check(params.creatorIsMember).
+			requireChainAuth(params.dmValidationChainAuth)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
 	}
+}
+
+func (params *aeParams) dmValidationChainAuth() (*auth.ChainAuthArgs, error) {
+	inception, err := params.streamView.GetDMChannelInception()
+	if err != nil {
+		return nil, err
+	}
+
+	firstPartyAddr := common.BytesToAddress(inception.FirstPartyAddress)
+	secondPartyAddr := common.BytesToAddress(inception.SecondPartyAddress)
+
+	var firstPartyAppAddr, secondPartyAppAddr *common.Address
+	if len(inception.FirstPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(inception.FirstPartyAppAddress)
+		firstPartyAppAddr = &addr
+	}
+	if len(inception.SecondPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(inception.SecondPartyAppAddress)
+		secondPartyAppAddr = &addr
+	}
+	if firstPartyAppAddr == nil && secondPartyAppAddr == nil {
+		return nil, nil
+	}
+
+	return auth.NewChainAuthArgsForDmEvent(firstPartyAddr, secondPartyAddr, firstPartyAppAddr, secondPartyAppAddr), nil
 }
 
 func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilderAE {
@@ -395,7 +421,7 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 			check(params.creatorIsMember)
 	case *UserMetadataPayload_ProfileImage:
 		return aeBuilder().
-			requireChainAuth(params.creatorIsMemberOrBotOwner)
+			requireChainAuth(params.creatorIsMemberOrAppOwner)
 	case *UserMetadataPayload_Bio:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -638,10 +664,10 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
-// creatorIsMemberOrBotOwner returns nil if the creator is a member (no chain auth needed),
+// creatorIsMemberOrAppOwner returns nil if the creator is a member (no chain auth needed),
 // or returns chain auth args for bot owner verification if the creator is not a member
 // but the stream belongs to a bot user.
-func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error) {
+func (params *aeParams) creatorIsMemberOrAppOwner() (*auth.ChainAuthArgs, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	isMember, err := params.streamView.IsMember(creatorAddress)
 	if err != nil {
@@ -666,7 +692,7 @@ func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error)
 		)
 	}
 	// this is a bot user stream, return chain auth to verify bot ownership
-	return params.botOwnerChainAuth()
+	return params.appOwnerChainAuth()
 }
 
 func (params *aeParams) creatorIsApp() (bool, error) {
@@ -678,10 +704,10 @@ func (params *aeParams) creatorIsApp() (bool, error) {
 	return true, nil
 }
 
-// botOwnerChainAuth returns chain auth args to check if the event creator is the owner
+// appOwnerChainAuth returns chain auth args to check if the event creator is the owner
 // of the bot whose user metadata stream this is. This is used to allow bot owners to
 // update their bot's profile image.
-func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
+func (params *aeParams) appOwnerChainAuth() (*auth.ChainAuthArgs, error) {
 	// Get the user address from the stream ID (the bot's client address)
 	botClientAddress, err := shared.GetUserAddressFromStreamId(*params.streamView.StreamId())
 	if err != nil {
@@ -692,7 +718,7 @@ func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
 	creatorAddress := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 
 	// Create chain auth args to check if creator is the bot owner
-	return auth.NewChainAuthArgsForIsBotOwner(creatorAddress, botClientAddress), nil
+	return auth.NewChainAuthArgsForIsAppOwner(creatorAddress, botClientAddress), nil
 }
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {

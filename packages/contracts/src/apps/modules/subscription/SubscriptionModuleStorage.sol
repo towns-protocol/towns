@@ -14,6 +14,7 @@ struct Subscription {
     uint64 duration; // 8 bytes
     uint256 lastKnownRenewalPrice; // 32 bytes
     uint256 lastKnownExpiresAt; // 32 bytes
+    address lastKnownCurrency; // 20 bytes - currency at install/sync time
 }
 
 struct OperatorConfig {
@@ -39,7 +40,7 @@ library SubscriptionModuleStorage {
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant STORAGE_SLOT =
+    bytes32 internal constant STORAGE_SLOT =
         0xd241b3ceee256b40f80fe7a66fe789234ac389ed1408c472c4ee1cbb1deb8600;
 
     function getLayout() internal pure returns (Layout storage $) {

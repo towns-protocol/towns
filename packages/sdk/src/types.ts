@@ -46,7 +46,7 @@ import {
     InteractionResponse,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@towns-protocol/utils'
+import { bin_fromHexString, bin_toHexString } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId } from './id'
@@ -569,6 +569,7 @@ type DeprecatedMembership = {
     userId: string
     op: MembershipOp
     initiatorId: string
+    appAddress?: string
 }
 
 export const make_MemberPayload_Membership2 = (
@@ -579,6 +580,7 @@ export const make_MemberPayload_Membership2 = (
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
         reason: MembershipReason.MR_NONE,
+        appAddress: value.appAddress ? bin_fromHexString(value.appAddress) : undefined,
     })
 }
 

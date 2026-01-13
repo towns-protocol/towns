@@ -3,13 +3,13 @@ pragma solidity ^0.8.19;
 
 // utils
 
-//interfaces
+// interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
 
-//libraries
+// libraries
 import {CheckIn} from "src/airdrop/points/CheckIn.sol";
 
 // contracts

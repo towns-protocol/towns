@@ -7,6 +7,7 @@ import { ICreateSpaceShim } from './ICreateSpaceShim'
 import { Space } from '../space/Space'
 import { ethers } from 'ethers'
 import { LRUCache } from 'lru-cache'
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 
 /**
  * A class to manage the creation of space stubs
@@ -20,8 +21,13 @@ export class SpaceRegistrar {
     private readonly legacySpaceArchitect: ILegacySpaceArchitectShim
     private readonly createSpace: ICreateSpaceShim
     private readonly spaces: LRUCache<string, Space>
+    private readonly createStorageFn: SpaceDappCreateStorageFn | undefined
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+    constructor(
+        config: BaseChainConfig,
+        provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
+    ) {
         this.spaces = new LRUCache<string, Space>({
             max: 100,
         })
@@ -33,6 +39,7 @@ export class SpaceRegistrar {
             provider,
         )
         this.createSpace = new ICreateSpaceShim(config.addresses.spaceFactory, provider)
+        this.createStorageFn = createStorageFn
     }
 
     public get CreateSpace(): ICreateSpaceShim {
@@ -57,7 +64,13 @@ export class SpaceRegistrar {
             if (!spaceAddress || spaceAddress === ethers.constants.AddressZero) {
                 return undefined
             }
-            const space = new Space(spaceAddress, spaceId, this.config, this.provider)
+            const space = new Space(
+                spaceAddress,
+                spaceId,
+                this.config,
+                this.provider,
+                this.createStorageFn,
+            )
             this.spaces.set(spaceId, space)
             return space
         }

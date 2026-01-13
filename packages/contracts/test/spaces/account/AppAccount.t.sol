@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // utils
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-//interfaces
+// interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
@@ -18,7 +18,7 @@ import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contract
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
-//contracts
+// contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {AppInstallerFacet} from "src/apps/facets/installer/AppInstallerFacet.sol";

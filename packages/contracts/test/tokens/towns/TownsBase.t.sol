@@ -4,16 +4,16 @@ pragma solidity ^0.8.19;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
-//interfaces
+// interfaces
 import {ILockBase} from "src/tokens/lock/ILock.sol";
 
-//libraries
+// libraries
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 
 import {LockStorage} from "src/tokens/lock/LockStorage.sol";
 import {TownsLib} from "src/tokens/towns/base/TownsLib.sol";
 
-//contracts
+// contracts
 import {DeployTownsBase} from "scripts/deployments/utils/DeployTownsBase.s.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {TownsV2} from "src/tokens/towns/base/versions/TownsV2.sol";

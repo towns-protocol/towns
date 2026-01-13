@@ -39,6 +39,7 @@ import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
 import { dlogger } from '@towns-protocol/utils'
 import { IAppAccountShim } from './IAppAccountShim'
+import { SpaceDappCreateStorageFn } from '../space-dapp/SpaceDapp'
 const log = dlogger('csb:Space')
 
 interface AddressToEntitlement {
@@ -71,6 +72,7 @@ export class Space {
         spaceId: string,
         config: BaseChainConfig,
         provider: ethers.providers.Provider,
+        createStorageFn: SpaceDappCreateStorageFn | undefined,
     ) {
         this.address = address
         this.spaceId = spaceId
@@ -79,9 +81,9 @@ export class Space {
         // If you add a new contract shim, make sure to add it in getAllShims()
         //
         this.channel = new IChannelShim(address, provider)
-        this.entitlements = new IEntitlementsShim(address, provider)
+        this.entitlements = new IEntitlementsShim(address, provider, createStorageFn)
         this.multicall = new IMulticallShim(address, provider)
-        this.ownable = new OwnableFacetShim(address, provider)
+        this.ownable = new OwnableFacetShim(address, provider, createStorageFn)
         this.pausable = new TokenPausableFacetShim(address, provider)
         this.roles = new IRolesShim(address, provider)
         this.membership = new IMembershipShim(address, provider)

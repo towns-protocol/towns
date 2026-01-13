@@ -290,9 +290,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkDMInceptionPayload,
 			).
 			requireUserAddr(ru.inception.SecondPartyAddress).
-			// TODO: re-enable this check when app registry contract behavior is validated
-			// on test environments.
-			// requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
+			requireChainAuth(ru.dmStreamCreationChainAuth).
 			requireDerivedEvents(ru.derivedDMMembershipEvents)
 
 	case *GdmChannelPayload_Inception:
@@ -307,9 +305,6 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkGDMPayloads,
 			).
 			requireUserAddr(ru.getGDMUserAddresses()[1:]...).
-			// TODO: re-enable this check when app registry contract behavior is validated
-			// on test environments.
-			// requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
 			requireDerivedEvents(ru.derivedGDMMembershipEvents)
 
 	case *UserPayload_Inception:
@@ -479,12 +474,6 @@ func (ru *csParams) metadataShardIsInRange() error {
 		ru.cfg.MetadataShardMask,
 	)
 }
-
-// TODO: re-enable usage of this check when the app registry contract is verified and deployed
-// on all production environments.
-// func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
-// 	return auth.NewChainAuthArgsForIsNotApp(ru.creatorAddress), nil
-// }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
 	const joinEventIndex = 1
@@ -689,6 +678,22 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Check for installedAppAddress in metadata - this allows users to create their user stream
+	// when they want to DM a bot. The dmPartner must be a bot and the bot module must be installed.
+	if installedAppAddressBytes, ok := ru.requestMetadata["installedAppAddress"]; ok {
+		if len(installedAppAddressBytes) != 20 {
+			return nil, RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid installedAppAddress length",
+				"length", len(installedAppAddressBytes),
+				"expectedLength", 20,
+			)
+		}
+		installedAppAddress := common.BytesToAddress(installedAppAddressBytes)
+		return auth.NewChainAuthArgsForIsAppInstalled(userAddress, installedAppAddress), nil
+	}
+
 	// we don't have a good way to check to see if they have on chain assets yet,
 	// so require a space id to be passed in the metadata and check that the user has read permissions there
 	if spaceIdBytes, ok := ru.requestMetadata["spaceId"]; ok {
@@ -702,7 +707,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 			ru.creatorAppAddress,
 		), nil
 	} else {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true or a dmPartnerAddress for a bot must be provided in metadata for user stream")
 	}
 }
 
@@ -759,6 +764,27 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id for dm channel")
 	}
 	return nil
+}
+
+func (ru *csDmChannelRules) dmStreamCreationChainAuth() (*auth.ChainAuthArgs, error) {
+	secondPartyAddr := common.BytesToAddress(ru.inception.SecondPartyAddress)
+
+	var firstPartyAppAddr, secondPartyAppAddr *common.Address
+	if len(ru.inception.FirstPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(ru.inception.FirstPartyAppAddress)
+		firstPartyAppAddr = &addr
+	}
+	if len(ru.inception.SecondPartyAppAddress) == 20 {
+		addr := common.BytesToAddress(ru.inception.SecondPartyAppAddress)
+		secondPartyAppAddr = &addr
+	}
+
+	return auth.NewChainAuthArgsForDmStreamCreation(
+		ru.params.creatorAddress,
+		secondPartyAddr,
+		firstPartyAppAddr,
+		secondPartyAppAddr,
+	), nil
 }
 
 func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error) {

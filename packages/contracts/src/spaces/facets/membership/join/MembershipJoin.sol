@@ -16,6 +16,7 @@ import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../MembershipStorage.sol";
 import {Permissions} from "../../Permissions.sol";
+import {ProtocolFeeLib} from "../../ProtocolFeeLib.sol";
 
 // contracts
 import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
@@ -67,6 +68,7 @@ abstract contract MembershipJoin is
 
     struct PricingDetails {
         uint256 basePrice;
+        uint256 protocolFee;
         uint256 amountDue;
         bool shouldCharge;
     }
@@ -100,8 +102,12 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
-        (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
+        (uint256 totalRequired, uint256 protocolFee) = _getTotalMembershipPayment(membershipPrice);
+        (joinDetails.protocolFee, joinDetails.amountDue, joinDetails.shouldCharge) = (
+            protocolFee,
+            totalRequired,
+            true
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -150,7 +156,7 @@ abstract contract MembershipJoin is
     /// @notice Handles the process of joining a space with a referral
     /// @param receiver The address that will receive the membership token
     /// @param referral The referral information
-    function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
+    function _joinSpaceWithReferral(address receiver, ReferralTypes calldata referral) internal {
         _validateJoinSpace(receiver);
 
         PricingDetails memory joinDetails = _getPricingDetails();
@@ -229,7 +235,10 @@ abstract contract MembershipJoin is
         return amountRequired;
     }
 
-    function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
+    function _validateUserReferral(
+        address receiver,
+        ReferralTypes calldata referral
+    ) internal view {
         if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
             Membership__InvalidAddress.selector.revertWith();
         }
@@ -289,13 +298,8 @@ abstract contract MembershipJoin is
         return false;
     }
 
-    /// @notice Handles crosschain entitlement checks with proper payment distribution
-    /// @param receiver The address to check entitlements for
-    /// @param sender The address sending the transaction
-    /// @param transactionId The transaction identifier
-    /// @param requiredAmount The required payment amount
-    /// @return isEntitled Whether user is entitled (always false for crosschain)
-    /// @return isCrosschainPending Whether crosschain checks are pending
+    /// @dev Checks all crosschain entitlements across roles. User passes if any check succeeds.
+    /// Payment is escrowed only once (on first check) and returned when any check completes.
     function _checkCrosschainEntitlements(
         IRolesBase.Role[] memory roles,
         address receiver,
@@ -303,7 +307,7 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         uint256 requiredAmount
     ) internal returns (bool isEntitled, bool isCrosschainPending) {
-        bool paymentSent = false;
+        bool paymentSent;
 
         for (uint256 i; i < roles.length; ++i) {
             if (roles[i].disabled) continue;
@@ -312,28 +316,16 @@ abstract contract MembershipJoin is
                 IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
 
                 if (entitlement.isCrosschain()) {
-                    if (!paymentSent) {
-                        // Send only the required amount to crosschain check
-                        // Excess will be handled by existing refund mechanisms
-                        _requestEntitlementCheckV2(
-                            receiver,
-                            sender,
-                            transactionId,
-                            IRuleEntitlement(address(entitlement)),
-                            roles[i].id,
-                            requiredAmount
-                        );
-                        paymentSent = true;
-                    } else {
-                        _requestEntitlementCheckV2(
-                            receiver,
-                            sender,
-                            transactionId,
-                            IRuleEntitlement(address(entitlement)),
-                            roles[i].id,
-                            0
-                        );
-                    }
+                    _requestEntitlementCheck(
+                        receiver,
+                        sender,
+                        transactionId,
+                        IRuleEntitlement(address(entitlement)),
+                        roles[i].id,
+                        _getMembershipCurrency(),
+                        paymentSent ? 0 : requiredAmount
+                    );
+                    paymentSent = true;
                     isCrosschainPending = true;
                 }
             }
@@ -358,7 +350,10 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        _payProtocolFee(_getMembershipCurrency(), joinDetails.basePrice);
+        address currency = _getMembershipCurrency();
+        _payProtocolFee(currency, joinDetails.basePrice, joinDetails.protocolFee);
+
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -382,7 +377,7 @@ abstract contract MembershipJoin is
         ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
 
         address currency = _getMembershipCurrency();
-        _payProtocolFee(currency, joinDetails.basePrice);
+        _payProtocolFee(currency, joinDetails.basePrice, joinDetails.protocolFee);
         _payPartnerFee(currency, referral.partner, joinDetails.basePrice);
         _payReferralFee(
             currency,
@@ -391,6 +386,8 @@ abstract contract MembershipJoin is
             referral.referralCode,
             joinDetails.basePrice
         );
+
+        emit MembershipPaid(currency, joinDetails.basePrice, joinDetails.protocolFee);
 
         _afterChargeForJoinSpace(transactionId, receiver, joinDetails.amountDue);
     }
@@ -427,7 +424,6 @@ abstract contract MembershipJoin is
         // set expiration of membership
         _renewSubscription(tokenId, _getMembershipDuration());
 
-        // emit event
         emit MembershipTokenIssued(receiver, tokenId);
     }
 
@@ -464,21 +460,18 @@ abstract contract MembershipJoin is
     /*                      FEE DISTRIBUTION                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Pays the protocol fee to the platform fee recipient
+    /// @notice Pays the protocol fee via FeeManager
     /// @param currency The currency to pay in
-    /// @param membershipPrice The price of the membership
-    /// @return protocolFee The amount of protocol fee paid
-    function _payProtocolFee(
-        address currency,
-        uint256 membershipPrice
-    ) internal returns (uint256 protocolFee) {
-        protocolFee = _getProtocolFee(membershipPrice);
-
-        CurrencyTransfer.transferCurrency(
+    /// @param basePrice The base price of the membership (for fee calculation)
+    /// @param expectedFee The pre-calculated protocol fee
+    function _payProtocolFee(address currency, uint256 basePrice, uint256 expectedFee) internal {
+        ProtocolFeeLib.charge(
+            _getSpaceFactory(),
+            _getMembershipFeeType(currency),
+            msg.sender,
             currency,
-            address(this),
-            _getPlatformRequirements().getFeeRecipient(),
-            protocolFee
+            basePrice,
+            expectedFee
         );
     }
 
@@ -559,13 +552,13 @@ abstract contract MembershipJoin is
             return;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
+        (uint256 totalRequired, uint256 protocolFee) = _getTotalMembershipPayment(basePrice);
 
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
             // ETH payment: validate msg.value
             if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-            _payProtocolFee(currency, basePrice);
+            _payProtocolFee(currency, basePrice, protocolFee);
 
             // Handle excess payment
             uint256 excess = msg.value - totalRequired;
@@ -579,9 +572,10 @@ abstract contract MembershipJoin is
             // Transfer ERC20 from payer to contract
             _transferIn(currency, payer, totalRequired);
 
-            _payProtocolFee(currency, basePrice);
+            _payProtocolFee(currency, basePrice, protocolFee);
         }
 
+        emit MembershipPaid(currency, basePrice, protocolFee);
         _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }

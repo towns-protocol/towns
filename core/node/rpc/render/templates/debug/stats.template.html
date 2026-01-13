@@ -43,7 +43,7 @@
         <strong>Number of Live Objects:</strong> {{.NumLiveObjs}}<br />
         <strong>Number of Goroutines:</strong> {{.NumGoroutines}}<br />
       </div>
-      <form onsubmit="return triggerGC()">
+      <form onsubmit="return triggerGC();">
         <button type="submit">Trigger GC</button>
       </form>
       <div id="loading">Performing garbage collection...</div>

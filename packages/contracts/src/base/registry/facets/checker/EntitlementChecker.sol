@@ -2,41 +2,40 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlementGatedBase} from "../../../../spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementChecker} from "./IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
-
-import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {XChainLib} from "src/base/registry/facets/xchain/XChainLib.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "../operator/NodeOperatorStorage.sol";
+import {XChainLib} from "../xchain/XChainLib.sol";
+import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract EntitlementChecker is IEntitlementChecker, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.UintSet;
     using CustomRevert for bytes4;
-
-    // =============================================================
-    //                           Initializer
-    // =============================================================
+    using SafeTransferLib for address;
 
     function __EntitlementChecker_init() external onlyInitializing {
         _addInterface(type(IEntitlementChecker).interfaceId);
     }
 
-    // =============================================================
-    //                           Modifiers
-    // =============================================================
-    modifier onlyNodeOperator(address node, address operator) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        MODIFIERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-        if (layout.operatorByNode[node] != operator) {
+    modifier onlyNodeOperator(address node) {
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
+
+        if (msg.sender != $.operatorByNode[node]) {
             EntitlementChecker_InvalidNodeOperator.selector.revertWith();
         }
         _;
@@ -48,63 +47,160 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         if (!nodeOperatorLayout.operators.contains(msg.sender)) {
             EntitlementChecker_InvalidOperator.selector.revertWith();
         }
-        _;
-
         if (nodeOperatorLayout.statusByOperator[msg.sender] != NodeOperatorStatus.Approved) {
             EntitlementChecker_OperatorNotActive.selector.revertWith();
         }
+        _;
     }
 
-    // =============================================================
-    //                           External
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IEntitlementChecker
     function registerNode(address node) external onlyRegisteredApprovedOperator {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        if (layout.nodes.contains(node)) {
+        if ($.nodes.contains(node)) {
             EntitlementChecker_NodeAlreadyRegistered.selector.revertWith();
         }
 
-        layout.nodes.add(node);
-        layout.operatorByNode[node] = msg.sender;
+        $.nodes.add(node);
+        $.operatorByNode[node] = msg.sender;
 
         emit NodeRegistered(node);
     }
 
     /// @inheritdoc IEntitlementChecker
-    function unregisterNode(address node) external onlyNodeOperator(node, msg.sender) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+    function unregisterNode(address node) external onlyNodeOperator(node) {
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        if (!layout.nodes.contains(node)) {
+        if (!$.nodes.contains(node)) {
             EntitlementChecker_NodeNotRegistered.selector.revertWith();
         }
 
-        layout.nodes.remove(node);
-        delete layout.operatorByNode[node];
+        $.nodes.remove(node);
+        delete $.operatorByNode[node];
 
         emit NodeUnregistered(node);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         ENTITLEMENT                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IEntitlementChecker
+    function requestEntitlementCheck(
+        address receiver,
+        bytes32 transactionId,
+        uint256 roleId,
+        address[] memory nodes
+    ) external {
+        emit EntitlementCheckRequested(receiver, msg.sender, transactionId, roleId, nodes);
+    }
+
+    /// @inheritdoc IEntitlementChecker
+    function requestEntitlementCheckV2(
+        address receiver,
+        bytes32 transactionId,
+        uint256 requestId,
+        bytes memory extraData
+    ) external payable {
+        address sender = abi.decode(extraData, (address));
+        _requestEntitlementCheck(
+            receiver,
+            transactionId,
+            requestId,
+            CurrencyTransfer.NATIVE_TOKEN,
+            msg.value,
+            sender
+        );
+    }
+
+    /// @inheritdoc IEntitlementChecker
+    function requestEntitlementCheck(CheckType checkType, bytes calldata data) external payable {
+        if (checkType == CheckType.V1) {
+            if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
+            // equivalent: abi.decode(data, (address, bytes32, uint256, address[]))
+            address receiver;
+            bytes32 transactionId;
+            uint256 roleId;
+            address[] calldata nodes;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                roleId := calldataload(add(data.offset, 0x40))
+                // nodes is dynamic: offset at 0x60, array starts at data.offset + offset
+                let nodesPtr := add(data.offset, calldataload(add(data.offset, 0x60)))
+                nodes.length := calldataload(nodesPtr)
+                nodes.offset := add(nodesPtr, 0x20)
+            }
+            emit EntitlementCheckRequested(receiver, msg.sender, transactionId, roleId, nodes);
+        } else if (checkType == CheckType.V2) {
+            // equivalent: abi.decode(data, (address, bytes32, uint256, bytes))
+            // extraData contains: (address sender)
+            address receiver;
+            bytes32 transactionId;
+            uint256 requestId;
+            address sender;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                requestId := calldataload(add(data.offset, 0x40))
+                // extraData offset at 0x60, sender is first word after length
+                let extraDataPtr := add(data.offset, calldataload(add(data.offset, 0x60)))
+                sender := shr(96, shl(96, calldataload(add(extraDataPtr, 0x20))))
+            }
+            _requestEntitlementCheck(
+                receiver,
+                transactionId,
+                requestId,
+                CurrencyTransfer.NATIVE_TOKEN,
+                msg.value,
+                sender
+            );
+        } else if (checkType == CheckType.V3) {
+            // equivalent: abi.decode(data, (address, bytes32, uint256, address, uint256, address))
+            address receiver;
+            bytes32 transactionId;
+            uint256 requestId;
+            address currency;
+            uint256 amount;
+            address sender;
+            assembly {
+                receiver := shr(96, shl(96, calldataload(data.offset)))
+                transactionId := calldataload(add(data.offset, 0x20))
+                requestId := calldataload(add(data.offset, 0x40))
+                currency := shr(96, shl(96, calldataload(add(data.offset, 0x60))))
+                amount := calldataload(add(data.offset, 0x80))
+                sender := shr(96, shl(96, calldataload(add(data.offset, 0xa0))))
+            }
+            _requestEntitlementCheck(receiver, transactionId, requestId, currency, amount, sender);
+        } else {
+            EntitlementChecker_InvalidCheckType.selector.revertWith();
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @inheritdoc IEntitlementChecker
     function isValidNode(address node) external view returns (bool) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        return layout.nodes.contains(node);
+        return EntitlementCheckerStorage.layout().nodes.contains(node);
     }
 
     /// @inheritdoc IEntitlementChecker
     function getNodeCount() external view returns (uint256) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        return layout.nodes.length();
+        return EntitlementCheckerStorage.layout().nodes.length();
     }
 
     /// @inheritdoc IEntitlementChecker
     function getNodeAtIndex(uint256 index) external view returns (address) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        require(index < layout.nodes.length(), "Index out of bounds");
-        return layout.nodes.at(index);
+        require(index < $.nodes.length(), "Index out of bounds");
+        return $.nodes.at(index);
     }
 
     /// @inheritdoc IEntitlementChecker
@@ -113,51 +209,74 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function requestEntitlementCheck(
-        address walletAddress,
-        bytes32 transactionId,
-        uint256 roleId,
-        address[] memory nodes
-    ) external {
-        emit EntitlementCheckRequested(walletAddress, msg.sender, transactionId, roleId, nodes);
+    function getNodesByOperator(address operator) external view returns (address[] memory nodes) {
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
+        address[] memory allNodes = $.nodes.values();
+        uint256 totalNodeCount = allNodes.length;
+        nodes = new address[](totalNodeCount);
+        uint256 nodeCount;
+        for (uint256 i; i < totalNodeCount; ++i) {
+            address node = allNodes[i];
+            if ($.operatorByNode[node] == operator) {
+                unchecked {
+                    nodes[nodeCount++] = node;
+                }
+            }
+        }
+        assembly ("memory-safe") {
+            mstore(nodes, nodeCount)
+        }
     }
 
-    /// @inheritdoc IEntitlementChecker
-    function requestEntitlementCheckV2(
-        address walletAddress,
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _requestEntitlementCheck(
+        address receiver,
         bytes32 transactionId,
         uint256 requestId,
-        bytes memory extraData
-    ) external payable {
+        address currency,
+        uint256 amount,
+        address sender
+    ) internal {
         address space = msg.sender;
-        address senderAddress = abi.decode(extraData, (address));
 
         XChainLib.Layout storage layout = XChainLib.layout();
 
-        layout.requestsBySender[senderAddress].add(transactionId);
+        layout.requestsBySender[sender].add(transactionId);
 
         // Only create the request if it doesn't exist yet
         XChainLib.Request storage request = layout.requests[transactionId];
         if (request.caller == address(0)) {
-            // First time creating this request
-            layout.requests[transactionId] = XChainLib.Request({
-                caller: space,
-                blockNumber: block.number,
-                value: msg.value,
-                completed: false,
-                receiver: walletAddress
-            });
-        } else {
-            if (msg.value != 0) {
-                EntitlementChecker_InvalidValue.selector.revertWith();
+            request.caller = space;
+            request.blockNumber = block.number;
+            request.value = amount;
+            request.receiver = receiver;
+            request.currency = currency;
+
+            if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+                if (amount != msg.value) EntitlementChecker_InvalidValue.selector.revertWith();
+            } else {
+                // ERC20: reject any ETH sent
+                if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
+                // ERC20: pull tokens from Space
+                if (amount != 0) currency.safeTransferFrom(space, address(this), amount);
             }
+        } else {
+            // Request already exists from a previous requestId on this transactionId.
+            // Escrow was established on the first request - reject any additional ETH
+            // to prevent funds being sent but not tracked.
+            if (msg.value != 0) EntitlementChecker_InvalidValue.selector.revertWith();
         }
 
         address[] memory randomNodes = _getRandomNodes(5);
 
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Check storage check = layout.checks[transactionId];
 
-        check.requestIds.add(requestId);
+        if (!check.requestIds.add(requestId)) {
+            EntitlementChecker_DuplicateRequestId.selector.revertWith();
+        }
 
         for (uint256 i; i < randomNodes.length; ++i) {
             check.nodes[requestId].add(randomNodes[i]);
@@ -170,7 +289,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         }
 
         emit EntitlementCheckRequestedV2(
-            walletAddress,
+            receiver,
             space,
             address(this),
             transactionId,
@@ -179,36 +298,12 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         );
     }
 
-    /// @inheritdoc IEntitlementChecker
-    function getNodesByOperator(address operator) external view returns (address[] memory nodes) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        uint256 totalNodeCount = layout.nodes.length();
-        nodes = new address[](totalNodeCount);
-        uint256 nodeCount;
-        for (uint256 i; i < totalNodeCount; ++i) {
-            address node = layout.nodes.at(i);
-            if (layout.operatorByNode[node] == operator) {
-                unchecked {
-                    nodes[nodeCount++] = node;
-                }
-            }
-        }
-        assembly ("memory-safe") {
-            mstore(nodes, nodeCount) // Update the length of the array
-        }
-    }
-
-    // =============================================================
-    //                           Internal
-    // =============================================================
     function _getRandomNodes(uint256 count) internal view returns (address[] memory randomNodes) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        uint256 nodeCount = layout.nodes.length();
+        uint256 nodeCount = $.nodes.length();
 
-        if (count > nodeCount) {
-            EntitlementChecker_InsufficientNumberOfNodes.selector.revertWith();
-        }
+        if (count > nodeCount) EntitlementChecker_InsufficientNumberOfNodes.selector.revertWith();
 
         randomNodes = new address[](count);
         uint256[] memory indices = new uint256[](nodeCount);
@@ -221,7 +316,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
             for (uint256 i; i < count; ++i) {
                 // Adjust random function to generate within range 0 to n-1
                 uint256 rand = _pseudoRandom(i, nodeCount);
-                randomNodes[i] = layout.nodes.at(indices[rand]);
+                randomNodes[i] = $.nodes.at(indices[rand]);
                 // Move the last element to the used slot and reduce the pool size
                 indices[rand] = indices[--nodeCount];
             }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
+// contracts
 import {MetadataFacet} from "src/diamond/facets/metadata/MetadataFacet.sol";
 
 library DeployMetadata {

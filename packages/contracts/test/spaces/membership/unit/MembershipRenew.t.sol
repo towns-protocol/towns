@@ -5,16 +5,16 @@ pragma solidity ^0.8.19;
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 
-//interfaces
+// interfaces
 import {IERC5643Base} from "src/diamond/facets/token/ERC5643/IERC5643.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//libraries
+// libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
-//contracts
+// contracts
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     uint256 private constant EXTRA_ETHER = 1 ether;

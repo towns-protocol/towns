@@ -3,12 +3,12 @@ pragma solidity ^0.8.19;
 
 // utils
 
-//interfaces
+// interfaces
 import {IImplementationRegistryBase} from "src/factory/facets/registry/IImplementationRegistry.sol";
 
-//libraries
+// libraries
 
-//contracts
+// contracts
 
 import {MetadataFacet} from "src/diamond/facets/metadata/MetadataFacet.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";

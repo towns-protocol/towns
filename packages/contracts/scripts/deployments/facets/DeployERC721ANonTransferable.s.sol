@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 
-//libraries
+// libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
+// contracts
 import {ERC721A} from "src/diamond/facets/token/ERC721A/ERC721A.sol";
 
 library DeployERC721ANonTransferable {

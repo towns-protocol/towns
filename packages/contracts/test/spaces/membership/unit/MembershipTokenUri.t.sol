@@ -8,7 +8,7 @@ import {IMembershipMetadata} from "src/spaces/facets/membership/metadata/IMember
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-//contracts
+// contracts
 import {ERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
 
 contract MembershipTokenUriTest is MembershipBaseSetup {

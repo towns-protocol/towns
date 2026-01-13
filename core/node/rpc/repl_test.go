@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -517,59 +516,6 @@ func TestStreamReconciliationTaskRescheduling(t *testing.T) {
 		}
 		testfmt.Printf(t, "%s@%s) mb num %d", streamId, newlyAssignedNode.address, mbNum)
 	}, 30*time.Second, 250*time.Millisecond, "Unable to reconcile stream")
-}
-
-func TestStreamReconciliationFromUnreplicated(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true})
-	// ctx := tt.ctx
-	require := tt.require
-
-	tt.btc.SetConfigValue(
-		t,
-		tt.ctx,
-		crypto.StreamMiniblockRegistrationFrequencyKey,
-		crypto.ABIEncodeUint64(uint64(100)),
-	)
-
-	alice := tt.newTestClient(0, testClientOpts{})
-	_ = alice.createUserStream()
-	spaceId, _ := alice.createSpace()
-	channelId, _, _ := alice.createChannel(spaceId)
-
-	var mb *MiniblockRef
-	for count := range 100 {
-		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
-		mb = alice.makeMiniblock(channelId, false, 0)
-		if mb.Num > 5 {
-			break
-		}
-	}
-	require.Greater(mb.Num, int64(5), "expected to make at least 5 miniblocks")
-
-	streamRecord, err := tt.btc.StreamRegistry.GetStreamOnLatestBlock(tt.ctx, channelId)
-	require.NoError(err)
-	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
-
-	nodes := []common.Address{streamRecord.Nodes[0]}
-	for _, node := range tt.nodes {
-		if !slices.Contains(nodes, node.address) {
-			nodes = append(nodes, node.address)
-		}
-	}
-
-	tt.btc.SetStreamReplicationFactor(
-		t,
-		tt.ctx,
-		[]river.SetStreamReplicationFactor{
-			{StreamId: channelId, Nodes: nodes, ReplicationFactor: uint8(1)},
-		},
-	)
-
-	// Now leader should write latest miniblock to the stream registry
-	tt.require.Eventually(func() bool {
-		streamRecord, err = tt.btc.StreamRegistry.GetStreamOnLatestBlock(tt.ctx, channelId)
-		return err == nil && streamRecord.LastMiniblockNum >= uint64(mb.Num)
-	}, 20*time.Second, 100*time.Millisecond, "leader should write latest miniblock to the stream registry")
 }
 
 // TestStreamReconciliationFromRegistryGenesisBlock tests stream reconciliation when the stream

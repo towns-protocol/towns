@@ -832,9 +832,9 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		startBlockNumInclusive,
 		c.Address,
 		[][]common.Hash{{c.StreamUpdatedEventTopic}},
-		func(ctx context.Context, log types.Log) {
+		func(ctx context.Context, log *types.Log) {
 			if len(log.Topics) > 0 && log.Topics[0] == c.StreamUpdatedEventTopic {
-				event, err := river.StreamRegistry.UnpackStreamUpdatedEvent(&log)
+				event, err := river.StreamRegistry.UnpackStreamUpdatedEvent(log)
 				if err != nil {
 					logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "error", err, "log", log)
 					return

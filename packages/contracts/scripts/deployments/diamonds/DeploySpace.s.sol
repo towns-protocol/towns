@@ -103,20 +103,12 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MembershipFacet");
         facetHelper.add("MembershipMetadata");
         facetHelper.add("EntitlementDataQueryable");
-
-        // Deploy the first batch of facets
-        facetHelper.deployBatch(deployer);
-
         facetHelper.add("EntitlementsManager");
         facetHelper.add("Roles");
         facetHelper.add("Channels");
         facetHelper.add("TokenPausableFacet");
         facetHelper.add("ReferralsFacet");
         facetHelper.add("ReviewFacet");
-
-        // Deploy the second batch of facets
-        facetHelper.deployBatch(deployer);
-
         facetHelper.add("SpaceEntitlementGated");
         facetHelper.add("SwapFacet");
         facetHelper.add("TippingFacet");
@@ -128,7 +120,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
             facetHelper.add("MockLegacyMembership");
         }
 
-        // Deploy the third batch of facets
+        // Deploy all facets
         facetHelper.deployBatch(deployer);
 
         // deploy and add facets one by one to avoid stack too deep

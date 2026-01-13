@@ -3,13 +3,13 @@ pragma solidity ^0.8.23;
 
 // utils
 
-//interfaces
+// interfaces
 import {IChannel, IChannelBase} from "src/spaces/facets/channels/IChannel.sol";
 
-//libraries
+// libraries
 import {IChannelBase} from "src/spaces/facets/channels/IChannel.sol";
 
-//contracts
+// contracts
 
 import {BaseSetup} from "../BaseSetup.sol";
 import {Multicallable} from "solady/utils/Multicallable.sol";

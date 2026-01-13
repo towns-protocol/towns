@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
