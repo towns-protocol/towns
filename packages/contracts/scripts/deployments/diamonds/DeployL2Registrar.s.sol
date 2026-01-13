@@ -159,8 +159,6 @@ contract DeployL2Registrar is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function __deploy(address deployer) internal override returns (address) {
-        require(REGISTRY != address(0), "DeployL2Registrar: registry not set");
-
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
