@@ -31,9 +31,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     /// @inheritdoc IStreamRegistry
     function allocateStream(
         bytes32 streamId,
-        address[] calldata nodes,
+        address[] memory nodes,
         bytes32 genesisMiniblockHash,
-        bytes calldata genesisMiniblock
+        bytes memory genesisMiniblock
     ) external onlyNode(msg.sender) onlyStreamNotExists(streamId) onlyRegisteredNodes(nodes) {
         // Add the stream to the registry
         Stream storage stream = ds.streamById[streamId];
