@@ -12,9 +12,10 @@ import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.s
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {RegistryModifiers} from "src/river/registry/libraries/RegistryStorage.sol";
 
-contract NodeRegistry is INodeRegistry, RegistryModifiers {
+contract NodeRegistry is INodeRegistry, RegistryModifiers, OwnableBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for string;
 
@@ -32,16 +33,25 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
         }
 
+        // Assign permanent index if backfill has been called (lastNodeIndex > 0)
+        uint32 permanentIndex = 0;
+        if (ds.lastNodeIndex > 0) {
+            permanentIndex = ++ds.lastNodeIndex;
+        }
+
         Node memory newNode = Node({
             nodeAddress: nodeAddress,
             url: url,
             status: status,
-            operator: msg.sender
+            operator: msg.sender,
+            permanentIndex: permanentIndex,
+            cometBftPubKey: bytes32(0)
         });
 
         ds.nodes.add(nodeAddress); // TODO: remove this line
         ds.nodeByAddress[nodeAddress] = newNode;
 
+        // TODO: Consider adding permanentIndex to the event
         emit NodeAdded(nodeAddress, msg.sender, url, status);
     }
 
@@ -121,6 +131,47 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         }
 
         return nodes;
+    }
+
+    function backfillPermanentIndices() external onlyOwner {
+        // Can only be called once - after execution, lastNodeIndex > 0
+        if (ds.lastNodeIndex > 0) {
+            RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+        }
+
+        address[] memory nodeAddresses = ds.nodes.values();
+        uint32 currentIndex;
+
+        for (uint256 i; i < nodeAddresses.length; ++i) {
+            Node storage node = ds.nodeByAddress[nodeAddresses[i]];
+
+            if (node.permanentIndex != 0) {
+                RiverRegistryErrors.BAD_ARG.revertWith();
+            }
+
+            node.permanentIndex = ++currentIndex;
+        }
+
+        ds.lastNodeIndex = currentIndex;
+    }
+
+    function setNodeCometBftPubKey(
+        address nodeAddress,
+        bytes32 cometBftPubKey
+    ) external onlyNode(nodeAddress) {
+        // Only the node itself can set its CometBFT public key
+        if (msg.sender != nodeAddress) {
+            RiverRegistryErrors.BAD_AUTH.revertWith();
+        }
+
+        Node storage node = ds.nodeByAddress[nodeAddress];
+        node.cometBftPubKey = cometBftPubKey;
+
+        emit NodeCometBftPubKeyUpdated(nodeAddress, cometBftPubKey);
+    }
+
+    function getLastNodeIndex() external view returns (uint32) {
+        return ds.lastNodeIndex;
     }
 
     function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {

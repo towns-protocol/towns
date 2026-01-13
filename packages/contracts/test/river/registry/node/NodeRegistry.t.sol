@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {INodeRegistryBase} from "src/river/registry/facets/node/INodeRegistry.sol";
 
 // structs
@@ -15,7 +16,7 @@ import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.s
 // deployments
 import {RiverRegistryBaseSetup} from "test/river/registry/RiverRegistryBaseSetup.t.sol";
 
-contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
+contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnableBase {
     string url = "https://node.com";
 
     // =============================================================
@@ -224,5 +225,202 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         vm.prank(nodeOperator);
         vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
         nodeRegistry.updateNodeUrl(node, url);
+    }
+
+    // =============================================================
+    //                   backfillPermanentIndices
+    // =============================================================
+
+    function test_backfillPermanentIndices(
+        address nodeOperator,
+        address node1,
+        address node2
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node1, url)
+    {
+        vm.assume(node2 != address(0));
+        vm.assume(node1 != node2);
+
+        // Register second node
+        vm.prank(nodeOperator);
+        nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.NotInitialized);
+        // Before backfill, lastNodeIndex should be 0
+        assertEq(nodeRegistry.getLastNodeIndex(), 0);
+
+        // Nodes should have permanentIndex = 0 before backfill
+        Node memory nodeBefore1 = nodeRegistry.getNode(node1);
+        Node memory nodeBefore2 = nodeRegistry.getNode(node2);
+        assertEq(nodeBefore1.permanentIndex, 0);
+        assertEq(nodeBefore2.permanentIndex, 0);
+
+        // Call backfill (only owner can call)
+        vm.prank(deployer);
+        nodeRegistry.backfillPermanentIndices();
+
+        // After backfill, lastNodeIndex should be 2
+        assertEq(nodeRegistry.getLastNodeIndex(), 2);
+
+        // Nodes should have sequential permanent indices
+        Node memory nodeAfter1 = nodeRegistry.getNode(node1);
+        Node memory nodeAfter2 = nodeRegistry.getNode(node2);
+        assertEq(nodeAfter1.permanentIndex, 1);
+        assertEq(nodeAfter2.permanentIndex, 2);
+    }
+
+    function test_revertWhen_backfillPermanentIndicesCalledTwice(
+        address nodeOperator,
+        address node
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        // Call backfill first time - should succeed (only owner can call)
+        vm.prank(deployer);
+        nodeRegistry.backfillPermanentIndices();
+
+        // Call backfill second time - should revert
+        vm.prank(deployer);
+        vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
+        nodeRegistry.backfillPermanentIndices();
+    }
+
+    function test_revertWhen_backfillPermanentIndicesNotOwner(
+        address nodeOperator,
+        address node,
+        address notOwner
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        vm.assume(notOwner != deployer);
+        vm.assume(notOwner != address(0));
+
+        // Non-owner cannot call backfill
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
+        nodeRegistry.backfillPermanentIndices();
+    }
+
+    function test_registerNodeAfterBackfill(
+        address nodeOperator,
+        address node1,
+        address node2
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node1, url)
+    {
+        vm.assume(node2 != address(0));
+        vm.assume(node1 != node2);
+
+        // Call backfill (only owner can call)
+        vm.prank(deployer);
+        nodeRegistry.backfillPermanentIndices();
+
+        // Register a new node after backfill
+        vm.prank(nodeOperator);
+        nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.Operational);
+
+        // New node should have permanent index = 2
+        Node memory nodeData = nodeRegistry.getNode(node2);
+        assertEq(nodeData.permanentIndex, 2);
+
+        // lastNodeIndex should be updated
+        assertEq(nodeRegistry.getLastNodeIndex(), 2);
+    }
+
+    function test_registerNodeBeforeBackfill(
+        address nodeOperator,
+        address node
+    ) external givenNodeOperatorIsApproved(nodeOperator) {
+        vm.assume(node != address(0));
+
+        // Register a node before backfill
+        vm.prank(nodeOperator);
+        nodeRegistry.registerNode(node, url, NodeStatus.Operational);
+
+        // Node should have permanentIndex = 0 (not assigned yet)
+        Node memory nodeData = nodeRegistry.getNode(node);
+        assertEq(nodeData.permanentIndex, 0);
+    }
+
+    // =============================================================
+    //                     setNodeCometBftPubKey
+    // =============================================================
+
+    function test_setNodeCometBftPubKey(
+        address nodeOperator,
+        address node,
+        bytes32 pubKey
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        // Set CometBFT public key (must be called by the node itself)
+        vm.prank(node);
+        vm.expectEmit(diamond);
+        emit NodeCometBftPubKeyUpdated(node, pubKey);
+        nodeRegistry.setNodeCometBftPubKey(node, pubKey);
+
+        // Verify the key was set
+        Node memory nodeData = nodeRegistry.getNode(node);
+        assertEq(nodeData.cometBftPubKey, pubKey);
+    }
+
+    function test_setNodeCometBftPubKey_update(
+        address nodeOperator,
+        address node,
+        bytes32 pubKey1,
+        bytes32 pubKey2
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        // Set initial key
+        vm.prank(node);
+        nodeRegistry.setNodeCometBftPubKey(node, pubKey1);
+
+        // Update to a new key
+        vm.prank(node);
+        nodeRegistry.setNodeCometBftPubKey(node, pubKey2);
+
+        // Verify the key was updated
+        Node memory nodeData = nodeRegistry.getNode(node);
+        assertEq(nodeData.cometBftPubKey, pubKey2);
+    }
+
+    function test_revertWhen_setNodeCometBftPubKeyNotNode(
+        address nodeOperator,
+        address node,
+        address notNode,
+        bytes32 pubKey
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        vm.assume(notNode != node);
+        vm.assume(notNode != address(0));
+
+        vm.prank(notNode);
+        vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
+        nodeRegistry.setNodeCometBftPubKey(node, pubKey);
+    }
+
+    function test_revertWhen_setNodeCometBftPubKeyNodeNotFound(
+        address node,
+        bytes32 pubKey
+    ) external {
+        vm.assume(node != address(0));
+
+        vm.prank(node);
+        vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
+        nodeRegistry.setNodeCometBftPubKey(node, pubKey);
     }
 }
