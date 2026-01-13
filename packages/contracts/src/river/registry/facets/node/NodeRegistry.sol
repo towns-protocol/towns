@@ -35,8 +35,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         // Assign permanent index if backfill has been called (lastNodeIndex > 0)
         uint32 permanentIndex = 0;
         if (ds.lastNodeIndex > 0) {
-            ds.lastNodeIndex++;
-            permanentIndex = ds.lastNodeIndex;
+            permanentIndex = ++ds.lastNodeIndex;
         }
 
         Node memory newNode = Node({
