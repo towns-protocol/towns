@@ -138,17 +138,15 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
         }
 
-        uint256 nodeCount = ds.nodes.length();
-        uint32 currentIndex = 0;
+        address[] memory nodeAddresses = ds.nodes.values();
+        uint32 currentIndex;
 
-        for (uint256 i; i < nodeCount; ++i) {
-            address nodeAddress = ds.nodes.at(i);
-            Node storage node = ds.nodeByAddress[nodeAddress];
+        for (uint256 i; i < nodeAddresses.length; ++i) {
+            Node storage node = ds.nodeByAddress[nodeAddresses[i]];
 
             // Only assign index to nodes that don't have one (permanentIndex == 0)
             if (node.permanentIndex == 0) {
-                currentIndex++;
-                node.permanentIndex = currentIndex;
+                node.permanentIndex = ++currentIndex;
             }
         }
 
