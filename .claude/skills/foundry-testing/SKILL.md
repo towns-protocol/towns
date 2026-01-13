@@ -1,6 +1,6 @@
 ---
 name: foundry-testing
-description: Write and review Foundry smart contract tests. Use when writing Solidity tests, creating test files, or reviewing test coverage.
+description: ALWAYS load before writing or modifying Foundry test files (.t.sol). Covers fuzz testing, gas benchmarks, naming conventions, and test patterns.
 ---
 
 # Foundry Testing Best Practices
@@ -91,6 +91,30 @@ function test_storageSlot() public pure {
 | `test_functionName_gas()`              | Gas benchmark with fixed inputs         |
 | `test_functionName_revertIf_Condition` | Revert condition tests                  |
 | `test_functionName_EdgeCase`           | Specific edge case tests                |
+
+## Gas Benchmarking Workflow
+
+To compare gas usage before/after code changes:
+
+```bash
+# 1. Stash source changes (keep test changes)
+git stash push -m "optimization" -- src/path/to/Changed.sol
+
+# 2. Run baseline snapshot (--mt gas filters to _gas suffix tests)
+forge snapshot --mc TestContract --mt gas
+
+# 3. Pop stash to restore changes
+git stash pop
+
+# 4. Run diff against baseline
+forge snapshot --mc TestContract --mt gas --diff
+```
+
+This workflow:
+
+- Keeps new `_gas` test functions while measuring the old implementation
+- Shows gas delta for each test with percentage change
+- Reports overall gas change summary
 
 ## Reference Examples
 

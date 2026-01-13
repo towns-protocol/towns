@@ -5,15 +5,15 @@ pragma solidity ^0.8.23;
 import {ITippingBase} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
-import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
-import {TippingStorage} from "./TippingStorage.sol";
 import {ProtocolFeeLib} from "../ProtocolFeeLib.sol";
+import {TippingStorage} from "./TippingStorage.sol";
 
 // contracts
 import {PointsBase} from "../points/PointsBase.sol";
@@ -26,129 +26,43 @@ abstract contract TippingBase is ITippingBase, PointsBase {
     /*                      Internal Functions                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Processes sendTip based on recipient type
-    function _sendTip(TipRecipientType recipientType, bytes calldata data) internal {
-        if (recipientType == TipRecipientType.Member) {
-            _sendMemberTip(data);
-        } else if (recipientType == TipRecipientType.Bot) {
-            _sendBotTip(data);
-        } else {
-            InvalidRecipientType.selector.revertWith();
-        }
+    /// @dev Handles member tips: validate, transfer, fee, process, emit events
+    function _sendMemberTip(
+        address receiver,
+        uint256 tokenId,
+        address currency,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId,
+        bytes memory eventData
+    ) internal {
+        _validateTipRequest(msg.sender, receiver, currency, amount);
+        _validateAndTransferPayment(currency, amount);
+
+        uint256 protocolFee = _handleProtocolFee(currency, amount);
+        uint256 tipAmount = amount - protocolFee;
+
+        _processTip(receiver, tokenId, TipRecipientType.Member, currency, tipAmount);
+
+        // legacy event uses raw amount for backwards compatibility
+        emit Tip(tokenId, currency, msg.sender, receiver, amount, messageId, channelId);
+
+        emit TipSent(msg.sender, receiver, TipRecipientType.Member, currency, tipAmount, eventData);
     }
 
-    /// @dev Processes legacy tip function
-    function _tip(TipRequest calldata tipRequest) internal {
-        _validateTipRequest(
-            msg.sender,
-            tipRequest.receiver,
-            tipRequest.currency,
-            tipRequest.amount
-        );
+    /// @dev Handles bot tips (no protocol fees charged)
+    function _sendBotTip(
+        address receiver,
+        address currency,
+        uint256 amount,
+        bytes calldata eventData
+    ) internal {
+        _validateTipRequest(msg.sender, receiver, currency, amount);
+        _validateAndTransferPayment(currency, amount);
 
-        // Validate payment and transfer tokens to space
-        _validateAndTransferPayment(tipRequest.currency, tipRequest.amount);
+        _processTip(receiver, 0, TipRecipientType.Bot, currency, amount);
 
-        // Charge protocol fee and calculate net tip amount
-        uint256 protocolFee = _handleProtocolFee(tipRequest.currency, tipRequest.amount);
-        uint256 tipAmount = tipRequest.amount - protocolFee;
-
-        // Process tip
-        _processTip(
-            tipRequest.receiver,
-            tipRequest.tokenId,
-            TipRecipientType.Member,
-            tipRequest.currency,
-            tipAmount
-        );
-
-        // Emit legacy event (with original amount for backwards compatibility)
-        emit Tip(
-            tipRequest.tokenId,
-            tipRequest.currency,
-            msg.sender,
-            tipRequest.receiver,
-            tipRequest.amount,
-            tipRequest.messageId,
-            tipRequest.channelId
-        );
-
-        // Emit new event (with actual tip amount after fees)
-        emit TipSent(
-            msg.sender,
-            tipRequest.receiver,
-            TipRecipientType.Member,
-            tipRequest.currency,
-            tipAmount,
-            abi.encode(tipRequest.tokenId)
-        );
-    }
-
-    /// @dev Handles member tips
-    function _sendMemberTip(bytes calldata data) internal {
-        MembershipTipParams memory params = abi.decode(data, (MembershipTipParams));
-        _validateTipRequest(msg.sender, params.receiver, params.currency, params.amount);
-
-        // Validate payment and transfer tokens to space
-        _validateAndTransferPayment(params.currency, params.amount);
-
-        // Charge protocol fee and calculate net tip amount
-        uint256 protocolFee = _handleProtocolFee(params.currency, params.amount);
-        uint256 tipAmount = params.amount - protocolFee;
-
-        // Process tip
-        _processTip(
-            params.receiver,
-            params.tokenId,
-            TipRecipientType.Member,
-            params.currency,
-            tipAmount
-        );
-
-        // Emit events
-        emit TipSent(
-            msg.sender,
-            params.receiver,
-            TipRecipientType.Member,
-            params.currency,
-            tipAmount,
-            params.metadata.data
-        );
-
-        emit Tip(
-            params.tokenId,
-            params.currency,
-            msg.sender,
-            params.receiver,
-            tipAmount,
-            params.metadata.messageId,
-            params.metadata.channelId
-        );
-    }
-
-    /// @dev Handles bot tips
-    function _sendBotTip(bytes calldata data) internal {
-        BotTipParams memory params = abi.decode(data, (BotTipParams));
-        _validateTipRequest(msg.sender, params.receiver, params.currency, params.amount);
-        _validateAndTransferPayment(params.currency, params.amount);
-
-        // Process tip (tokenId = 0 for bot tips)
-        _processTip(
-            params.receiver,
-            0, // No tokenId for bot tips
-            TipRecipientType.Bot,
-            params.currency,
-            params.amount
-        );
-
-        emit TipSent(
-            msg.sender,
-            params.receiver,
-            TipRecipientType.Bot,
-            params.currency,
-            params.amount,
-            params.metadata.data
-        );
+        emit TipSent(msg.sender, receiver, TipRecipientType.Bot, currency, amount, eventData);
     }
 
     /// @dev Core tip processing logic
@@ -161,7 +75,6 @@ abstract contract TippingBase is ITippingBase, PointsBase {
     ) internal {
         TippingStorage.Layout storage $ = TippingStorage.layout();
 
-        // Add currency to set
         $.currencies.add(currency);
 
         // Update stats by currency
@@ -170,15 +83,15 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         stats.totalTips += 1;
 
         // Update wallet-based tracking (all tips)
-        $.tippingStatsByCurrencyByWallet[receiver][currency].tipAmount += amount;
-        $.tippingStatsByCurrencyByWallet[receiver][currency].totalTips += 1;
+        TippingStorage.TippingStats storage walletStats = _getWalletStats(receiver, currency);
+        walletStats.tipAmount += amount;
+        walletStats.totalTips += 1;
 
         // Update tokenId-based tracking (backwards compatibility, only for Member tips)
         if (recipientType == TipRecipientType.Member) {
             $.tipsByCurrencyByTokenId[tokenId][currency] += amount;
         }
 
-        // Transfer currency
         CurrencyTransfer.transferCurrency(currency, address(this), receiver, amount);
     }
 
@@ -250,15 +163,22 @@ abstract contract TippingBase is ITippingBase, PointsBase {
     /*                      Internal View Functions               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    function _getWalletStats(
+        address wallet,
+        address currency
+    ) internal view returns (TippingStorage.TippingStats storage) {
+        return TippingStorage.layout().tippingStatsByCurrencyByWallet[wallet][currency];
+    }
+
     function _getTipsByWallet(address wallet, address currency) internal view returns (uint256) {
-        return TippingStorage.layout().tippingStatsByCurrencyByWallet[wallet][currency].tipAmount;
+        return _getWalletStats(wallet, currency).tipAmount;
     }
 
     function _getTipCountByWallet(
         address wallet,
         address currency
     ) internal view returns (uint256) {
-        return TippingStorage.layout().tippingStatsByCurrencyByWallet[wallet][currency].totalTips;
+        return _getWalletStats(wallet, currency).totalTips;
     }
 
     function _getTipsByTokenId(uint256 tokenId, address currency) internal view returns (uint256) {

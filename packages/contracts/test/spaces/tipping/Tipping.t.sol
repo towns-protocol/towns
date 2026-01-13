@@ -111,7 +111,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
             messageId,
             channelId
         );
-        vm.startSnapshotGas("tipEth");
         tipping.tip{value: amount}(
             TipRequest({
                 receiver: receiver,
@@ -123,7 +122,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
             })
         );
 
-        assertLt(vm.stopSnapshotGas(), 400_000);
         assertEq(receiver.balance - initialBalance, tipAmount, "receiver balance");
         assertEq(platformRecipient.balance, protocolFee, "protocol fee");
         assertEq(sender.balance, 0, "sender balance");
@@ -169,7 +167,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         mockERC20.approve(address(tipping), amount);
         vm.expectEmit(address(tipping));
         emit Tip(tokenId, address(mockERC20), sender, receiver, amount, messageId, channelId);
-        vm.startSnapshotGas("tipERC20");
         tipping.tip(
             TipRequest({
                 receiver: receiver,
@@ -180,7 +177,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
                 channelId: channelId
             })
         );
-        assertLt(vm.stopSnapshotGas(), 500_000);
         vm.stopPrank();
 
         assertEq(mockERC20.balanceOf(sender), 0, "sender balance");
@@ -335,7 +331,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         uint256 tipAmount = amount - protocolFee;
 
         hoax(sender, amount);
-        vm.startSnapshotGas("sendTip_member_eth");
         tipping.sendTip{value: amount}(
             TipRecipientType.Member,
             abi.encode(
@@ -348,7 +343,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
                 })
             )
         );
-        assertLt(vm.stopSnapshotGas(), 400_000);
 
         assertEq(receiver.balance - initialBalance, tipAmount, "receiver balance");
         assertEq(platformRecipient.balance, protocolFee, "protocol fee");
@@ -382,7 +376,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         uint256 initialBalance = botAddress.balance;
 
         hoax(sender, amount);
-        vm.startSnapshotGas("sendTip_bot_eth");
         tipping.sendTip{value: amount}(
             TipRecipientType.Bot,
             abi.encode(
@@ -395,7 +388,6 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
                 })
             )
         );
-        assertLt(vm.stopSnapshotGas(), 300_000);
 
         assertEq(botAddress.balance - initialBalance, amount, "bot balance");
         assertEq(sender.balance, 0, "sender balance");
@@ -429,6 +421,88 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         hoax(sender, amount);
         vm.expectRevert(InvalidRecipientType.selector);
         tipping.sendTip{value: amount}(TipRecipientType.Any, abi.encode(params));
+    }
+
+    function test_sendTip_revertWhen_shortInputData() external {
+        // Member: Empty data
+        hoax(address(1), 1 ether);
+        vm.expectRevert(InvalidTipData.selector);
+        tipping.sendTip{value: 1 ether}(TipRecipientType.Member, "");
+
+        // Member: Data shorter than 320 bytes minimum
+        hoax(address(1), 1 ether);
+        vm.expectRevert(InvalidTipData.selector);
+        tipping.sendTip{value: 1 ether}(TipRecipientType.Member, new bytes(319));
+
+        // Bot: Empty data
+        hoax(address(1), 1 ether);
+        vm.expectRevert(InvalidTipData.selector);
+        tipping.sendTip{value: 1 ether}(TipRecipientType.Bot, "");
+
+        // Bot: Data shorter than 320 bytes minimum
+        hoax(address(1), 1 ether);
+        vm.expectRevert(InvalidTipData.selector);
+        tipping.sendTip{value: 1 ether}(TipRecipientType.Bot, new bytes(319));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              Calldata Decoding Tests                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function decodeMemberParams_assembly(
+        bytes calldata data
+    ) external pure returns (MembershipTipParams memory result) {
+        MembershipTipParams calldata params;
+        assembly {
+            params := add(data.offset, calldataload(data.offset))
+        }
+        result = MembershipTipParams({
+            receiver: params.receiver,
+            tokenId: params.tokenId,
+            currency: params.currency,
+            amount: params.amount,
+            metadata: params.metadata
+        });
+    }
+
+    function decodeBotParams_assembly(
+        bytes calldata data
+    ) external pure returns (BotTipParams memory result) {
+        BotTipParams calldata params;
+        assembly {
+            params := add(data.offset, calldataload(data.offset))
+        }
+        result = BotTipParams({
+            receiver: params.receiver,
+            currency: params.currency,
+            appId: params.appId,
+            amount: params.amount,
+            metadata: params.metadata
+        });
+    }
+
+    function test_memberParamsDecoding_equivalence(MembershipTipParams memory params) external {
+        MembershipTipParams memory decoded = this.decodeMemberParams_assembly(abi.encode(params));
+
+        assertEq(decoded.receiver, params.receiver);
+        assertEq(decoded.tokenId, params.tokenId);
+        assertEq(decoded.currency, params.currency);
+        assertEq(decoded.amount, params.amount);
+        assertEq(decoded.metadata.messageId, params.metadata.messageId);
+        assertEq(decoded.metadata.channelId, params.metadata.channelId);
+        assertEq(decoded.metadata.data, params.metadata.data);
+    }
+
+    function test_botParamsDecoding_equivalence(BotTipParams memory params) external {
+        BotTipParams memory decoded = this.decodeBotParams_assembly(abi.encode(params));
+
+        assertEq(decoded.receiver, params.receiver);
+        assertEq(decoded.currency, params.currency);
+        assertEq(decoded.appId, params.appId);
+        assertEq(decoded.amount, params.amount);
+        assertEq(decoded.metadata.messageId, params.metadata.messageId);
+        assertEq(decoded.metadata.channelId, params.metadata.channelId);
+        assertEq(decoded.metadata.data, params.metadata.data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -526,6 +600,24 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
         //     tipAmount
         // );
         // assertEq(tipping.tipCountByWalletAndCurrency(receiver, CurrencyTransfer.NATIVE_TOKEN), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Gas Benchmarks                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_tipEth_gas() external {
+        this.test_tipEth(
+            address(0x1111),
+            address(0x2222),
+            1 ether,
+            DEFAULT_MESSAGE_ID,
+            DEFAULT_CHANNEL_ID
+        );
+    }
+
+    function test_sendTip_memberWithEth_gas() external {
+        this.test_sendTip_memberWithEth(address(0x1111), address(0x2222), 1 ether);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
