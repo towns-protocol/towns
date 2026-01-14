@@ -101,6 +101,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Add CodeRabbit ignore to PR description
               if: steps.changesets.outputs.pullRequestNumber
