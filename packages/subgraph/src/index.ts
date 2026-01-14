@@ -1459,7 +1459,9 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                     }),
                 ...(senderType === 'Member' &&
                     currencyIsUSDC && {
-                        memberTotalSentUSDC: (existingLeaderboard.memberTotalSentUSDC ?? 0n) + usdcAmount,
+                        memberTipsSent: (existingLeaderboard.memberTipsSent ?? 0) + 1,
+                        memberTotalSentUSDC:
+                            (existingLeaderboard.memberTotalSentUSDC ?? 0n) + usdcAmount,
                     }),
                 lastActivity: blockTimestamp,
             })
