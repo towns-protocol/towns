@@ -135,5 +135,15 @@ contract FeeManagerFacet is
             0.0005 ether,
             true
         );
+
+        // domain registration fee
+        _setFeeConfig(
+            FeeTypesLib.DOMAIN_REGISTRATION,
+            protocolRecipient,
+            FeeCalculationMethod.FIXED,
+            0,
+            0,
+            true
+        );
     }
 }
