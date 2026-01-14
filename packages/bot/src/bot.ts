@@ -3046,7 +3046,7 @@ const processMentions = (
 
 const getSpaceIdFromStreamId = (streamId: string): string | undefined => {
     if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-        return
+        return undefined
     }
     return spaceIdFromChannelId(streamId)
 }
