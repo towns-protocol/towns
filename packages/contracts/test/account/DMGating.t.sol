@@ -36,6 +36,8 @@ contract DMGatingTest is ERC6900Setup {
 
     function test_isEntitled_returnsFalse_whenNoCriteria(address user, address sender) external {
         vm.assume(user != sender);
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         bool result = dmGating.isEntitled(sender, address(account), "");
@@ -44,6 +46,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_getInstalledCriteria_returnsEmpty_initially(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -53,6 +56,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_getCombinationMode_returnsAND_initially(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -66,6 +70,7 @@ contract DMGatingTest is ERC6900Setup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_installCriteria_success(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -83,6 +88,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_installCriteria_revertWhen_invalidCriteria(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -91,6 +97,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_installCriteria_revertWhen_alreadyInstalled(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -102,6 +109,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_installCriteria_revertWhen_maxCriteriaReached(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install 8 criteria (max)
@@ -123,6 +131,7 @@ contract DMGatingTest is ERC6900Setup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_uninstallCriteria_success(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -138,6 +147,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_uninstallCriteria_revertWhen_notInstalled(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -146,6 +156,7 @@ contract DMGatingTest is ERC6900Setup {
     }
 
     function test_uninstallCriteria_revertWhen_invalidCriteria(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -158,6 +169,7 @@ contract DMGatingTest is ERC6900Setup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_setCombinationMode_success(address user) external {
+        vm.assume(user != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         vm.prank(address(account));
@@ -177,6 +189,8 @@ contract DMGatingTest is ERC6900Setup {
     function test_isEntitled_ORMode_returnsTrue_whenAnyPass(address user, address sender) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install criteria with sender in allowlist
@@ -205,6 +219,8 @@ contract DMGatingTest is ERC6900Setup {
         address sender
     ) external {
         vm.assume(user != sender);
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install criteria with empty allowlist
@@ -230,6 +246,8 @@ contract DMGatingTest is ERC6900Setup {
     ) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install criteria with sender in allowlist
@@ -256,6 +274,8 @@ contract DMGatingTest is ERC6900Setup {
     ) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install criteria with sender in allowlist
@@ -283,6 +303,8 @@ contract DMGatingTest is ERC6900Setup {
     function test_allowlistCriteria_addAndRemove(address user, address sender) external {
         vm.assume(user != sender);
         vm.assume(sender != address(0));
+        vm.assume(user != ZERO_SENTINEL);
+        vm.assume(sender != ZERO_SENTINEL);
         ModularAccount account = _createAccount(user);
 
         // Install empty allowlist
