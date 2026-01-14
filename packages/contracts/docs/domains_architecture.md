@@ -1,8 +1,8 @@
-# Domains Diamond Architecture
+# Global Usernames
 
 ## Overview
 
-The Towns Protocol domains diamond implements an ENS-compatible cross-chain domain registry system that enables **Global Usernames** - portable usernames (e.g., `ben.towns.eth`) that work across all Towns spaces, channels, chats, and DMs. Instead of showing wallet addresses, users see `@ben` with their profile.
+The Towns Protocol Global Usernames system implements an ENS-compatible cross-chain domain registry system that enables **Global Usernames** - portable usernames (e.g., `ben.towns.eth`) that work across all Towns spaces, channels, chats, GDMS, and DMs. Instead of showing wallet addresses, users see `@ben` with their profile.
 
 ### Key Features
 
