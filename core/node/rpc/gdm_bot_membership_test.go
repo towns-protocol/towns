@@ -99,7 +99,14 @@ func TestGDMBotMembership_BotJoinWithSponsor(t *testing.T) {
 	botCookie := createBotUser(ctx, require, botWallet, appAddress, client)
 
 	gdmStreamId := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
-	_, _, err := createGDMChannel(ctx, aliceWallet, []*crypto.Wallet{bobWallet, carolWallet}, client, gdmStreamId, nil)
+	_, _, err := createGDMChannel(
+		ctx,
+		aliceWallet,
+		[]*crypto.Wallet{bobWallet, carolWallet},
+		client,
+		gdmStreamId,
+		nil,
+	)
 	require.NoError(err)
 
 	// Bot joins GDM - bot signs event, bob listed as inviter
@@ -131,7 +138,14 @@ func TestGDMBotMembership_RegularUserCannotSelfJoin(t *testing.T) {
 	require.NoError(err)
 
 	gdmStreamId := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
-	_, _, err = createGDMChannel(ctx, aliceWallet, []*crypto.Wallet{bobWallet, carolWallet}, client, gdmStreamId, nil)
+	_, _, err = createGDMChannel(
+		ctx,
+		aliceWallet,
+		[]*crypto.Wallet{bobWallet, carolWallet},
+		client,
+		gdmStreamId,
+		nil,
+	)
 	require.NoError(err)
 
 	// Dave (non-member) tries to self-join - should fail
@@ -163,7 +177,14 @@ func TestGDMBotMembership_RegularUserCannotJoinEvenWithMemberInviter(t *testing.
 	require.NoError(err)
 
 	gdmStreamId := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
-	_, _, err = createGDMChannel(ctx, aliceWallet, []*crypto.Wallet{bobWallet, carolWallet}, client, gdmStreamId, nil)
+	_, _, err = createGDMChannel(
+		ctx,
+		aliceWallet,
+		[]*crypto.Wallet{bobWallet, carolWallet},
+		client,
+		gdmStreamId,
+		nil,
+	)
 	require.NoError(err)
 
 	// Dave signs event with bob as inviter - but since dave signs (not a node),
@@ -195,7 +216,14 @@ func TestGDMBotMembership_BotJoinWithoutSponsor(t *testing.T) {
 	createBotUser(ctx, require, botWallet, appAddress, client)
 
 	gdmStreamId := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
-	gdmCookie, _, err := createGDMChannel(ctx, aliceWallet, []*crypto.Wallet{bobWallet, carolWallet}, client, gdmStreamId, nil)
+	gdmCookie, _, err := createGDMChannel(
+		ctx,
+		aliceWallet,
+		[]*crypto.Wallet{bobWallet, carolWallet},
+		client,
+		gdmStreamId,
+		nil,
+	)
 	require.NoError(err)
 
 	// Try to add membership event directly to GDM stream without sponsor.
