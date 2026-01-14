@@ -1603,7 +1603,8 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 		appAddress := common.BytesToAddress(ru.membership.AppAddress)
 		if appAddress != (common.Address{}) {
 			// Bot must have a sponsor address set
-			if len(ru.membership.GetAppSponsorAddress()) == 0 {
+			sponsorAddress := common.BytesToAddress(ru.membership.GetAppSponsorAddress())
+			if sponsorAddress == (common.Address{}) {
 				return false, RiverError(
 					Err_PERMISSION_DENIED,
 					"bot joining GDM must have app_sponsor_address set",
@@ -1612,12 +1613,12 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 				)
 			}
 			// The sponsor must be the initiator (the member adding the bot)
-			if !bytes.Equal(ru.membership.GetAppSponsorAddress(), initiatorAddress) {
+			if !bytes.Equal(sponsorAddress.Bytes(), initiatorAddress) {
 				return false, RiverError(
 					Err_PERMISSION_DENIED,
 					"bot sponsor must be the initiator",
 					"sponsor",
-					ru.membership.GetAppSponsorAddress(),
+					sponsorAddress,
 					"initiator",
 					initiatorAddress,
 				)
