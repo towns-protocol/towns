@@ -1599,8 +1599,9 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 				initiatorAddress,
 			)
 		}
-		// If the joining user is a bot (has app_address), validate sponsor
-		if len(ru.membership.AppAddress) > 0 {
+		// If the joining user is a bot (has non-zero app_address), validate sponsor
+		appAddress := common.BytesToAddress(ru.membership.AppAddress)
+		if appAddress != (common.Address{}) {
 			// Bot must have a sponsor address set
 			if len(ru.membership.GetAppSponsorAddress()) == 0 {
 				return false, RiverError(
@@ -2023,14 +2024,14 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 // For non-bot joins, this returns nil (no chain auth required).
 // For bot joins, it verifies the app is installed on the sponsor's smart contract account.
 func (ru *aeMembershipRules) gdmBotSponsorEntitlements() (*auth.ChainAuthArgs, error) {
-	// Only check entitlements for bot joins (when AppAddress is set)
-	if ru.membership.Op != MembershipOp_SO_JOIN || len(ru.membership.AppAddress) == 0 {
+	// Only check entitlements for bot joins (when AppAddress is non-zero)
+	appAddress := common.BytesToAddress(ru.membership.AppAddress)
+	if ru.membership.Op != MembershipOp_SO_JOIN || appAddress == (common.Address{}) {
 		return nil, nil
 	}
 
 	// Verify the app is installed on the sponsor's account
 	sponsorAddress := common.BytesToAddress(ru.membership.GetAppSponsorAddress())
-	appAddress := common.BytesToAddress(ru.membership.AppAddress)
 
 	return auth.NewChainAuthArgsForIsAppInstalled(sponsorAddress, appAddress), nil
 }
