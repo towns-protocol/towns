@@ -1436,32 +1436,34 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             }))
         }
 
-        // Update tip leaderboard for sender - use update-then-insert pattern
-        // Note: onConflictDoUpdate was causing RecordNotFoundError when no existing record
-        const leaderboardRow = await context.db
-            .update(schema.tipLeaderboard, { user: sender, spaceId })
-            .set((existing: typeof schema.tipLeaderboard.$inferSelect) => ({
-                tipsSentCount: (existing.tipsSentCount ?? 0) + 1,
-                // Route amounts to correct currency columns
+        // Update tip leaderboard for sender - use find-then-update-or-insert pattern
+        // Note: callback-based .set() throws RecordNotFoundError when no existing record
+        const existingLeaderboard = await context.db.find(schema.tipLeaderboard, {
+            user: sender,
+            spaceId,
+        })
+
+        if (existingLeaderboard) {
+            await context.db.update(schema.tipLeaderboard, { user: sender, spaceId }).set({
+                tipsSentCount: (existingLeaderboard.tipsSentCount ?? 0) + 1,
                 ...(currencyIsETH && {
-                    totalSent: (existing.totalSent ?? 0n) + ethAmount,
+                    totalSent: (existingLeaderboard.totalSent ?? 0n) + ethAmount,
                 }),
                 ...(currencyIsUSDC && {
-                    totalSentUSDC: (existing.totalSentUSDC ?? 0n) + usdcAmount,
+                    totalSentUSDC: (existingLeaderboard.totalSentUSDC ?? 0n) + usdcAmount,
                 }),
                 ...(senderType === 'Member' &&
                     currencyIsETH && {
-                        memberTipsSent: (existing.memberTipsSent ?? 0) + 1,
-                        memberTotalSent: (existing.memberTotalSent ?? 0n) + ethAmount,
+                        memberTipsSent: (existingLeaderboard.memberTipsSent ?? 0) + 1,
+                        memberTotalSent: (existingLeaderboard.memberTotalSent ?? 0n) + ethAmount,
                     }),
                 ...(senderType === 'Member' &&
                     currencyIsUSDC && {
-                        memberTotalSentUSDC: (existing.memberTotalSentUSDC ?? 0n) + usdcAmount,
+                        memberTotalSentUSDC: (existingLeaderboard.memberTotalSentUSDC ?? 0n) + usdcAmount,
                     }),
                 lastActivity: blockTimestamp,
-            }))
-
-        if (!leaderboardRow) {
+            })
+        } else {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
@@ -1576,24 +1578,28 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
                 }))
         }
 
-        // Update tip leaderboard for sender (bot tips) - route to correct columns
-        const leaderboardRow = await context.db
-            .update(schema.tipLeaderboard, { user: sender, spaceId })
-            .set((existing: typeof schema.tipLeaderboard.$inferSelect) => ({
-                tipsSentCount: (existing.tipsSentCount ?? 0) + 1,
-                botTipsSent: (existing.botTipsSent ?? 0) + 1,
+        // Update tip leaderboard for sender (bot tips) - use find-then-update-or-insert pattern
+        // Note: callback-based .set() throws RecordNotFoundError when no existing record
+        const existingLeaderboard = await context.db.find(schema.tipLeaderboard, {
+            user: sender,
+            spaceId,
+        })
+
+        if (existingLeaderboard) {
+            await context.db.update(schema.tipLeaderboard, { user: sender, spaceId }).set({
+                tipsSentCount: (existingLeaderboard.tipsSentCount ?? 0) + 1,
+                botTipsSent: (existingLeaderboard.botTipsSent ?? 0) + 1,
                 ...(currencyIsETH && {
-                    totalSent: (existing.totalSent ?? 0n) + ethAmount,
-                    botTotalSent: (existing.botTotalSent ?? 0n) + ethAmount,
+                    totalSent: (existingLeaderboard.totalSent ?? 0n) + ethAmount,
+                    botTotalSent: (existingLeaderboard.botTotalSent ?? 0n) + ethAmount,
                 }),
                 ...(currencyIsUSDC && {
-                    totalSentUSDC: (existing.totalSentUSDC ?? 0n) + usdcAmount,
-                    botTotalSentUSDC: (existing.botTotalSentUSDC ?? 0n) + usdcAmount,
+                    totalSentUSDC: (existingLeaderboard.totalSentUSDC ?? 0n) + usdcAmount,
+                    botTotalSentUSDC: (existingLeaderboard.botTotalSentUSDC ?? 0n) + usdcAmount,
                 }),
                 lastActivity: blockTimestamp,
-            }))
-
-        if (!leaderboardRow) {
+            })
+        } else {
             await context.db.insert(schema.tipLeaderboard).values({
                 user: sender,
                 spaceId: spaceId,
