@@ -94,9 +94,14 @@ func (tracker *AppRegistryStreamsTracker) coldStreamsEnabled() bool {
 func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, isInit bool) bool {
 	streamType := streamId.Type()
 
-	// Track channel streams, but skip on init when cold streams is enabled.
+	// Track:
+	// - space channels
+	// - dms
+	// - gdms
+	// Skip on init when cold streams is enabled.
 	// They will be loaded on-demand when new messages arrive via OnStreamLastMiniblockUpdated.
-	if streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_DM_CHANNEL_BIN {
+	if streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_DM_CHANNEL_BIN ||
+		streamType == shared.STREAM_GDM_CHANNEL_BIN {
 		return !(isInit && tracker.coldStreamsEnabled())
 	}
 
