@@ -642,7 +642,15 @@ func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
 		return 0
 	}
 
-	historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
+	cfg := sr.cache.params.ChainConfig.Get()
+	for _, entry := range cfg.StreamTrimByStreamId {
+		if entry.StreamId == sr.stream.streamId {
+			start := max(entry.MiniblockNum, int64(0))
+			return storage.FindClosestSnapshotMiniblock(sr.presentRanges, start)
+		}
+	}
+
+	historyWindow := cfg.StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
 	if historyWindow == 0 {
 		return 0
 	}

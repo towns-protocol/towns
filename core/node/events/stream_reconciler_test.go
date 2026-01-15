@@ -13,6 +13,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -613,7 +614,7 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 		remotes[0],
 		&GetStreamRequest{
 			StreamId:                    streamId[:],
-			NumberOfPrecedingMiniblocks: 5,
+			NumberOfPrecedingMiniblocks: 0,
 		},
 	)
 	require.NoError(err)
@@ -632,6 +633,101 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 
 	require.True(reconciler.stats.backfillCalled)
 	require.Equal(expectedStart, reconciler.localStartMbInclusive)
+}
+
+// Backfill prefers per-stream trim targets over per-type history windows.
+func TestReconciler_BackfillUsesStreamTrimTarget(t *testing.T) {
+	cfg := config.GetDefaultConfig()
+	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+	cfg.StreamReconciliation.GetMiniblocksPageSize = 8
+
+	const (
+		historyWindow   uint64 = 12
+		perStreamTarget int64  = 17
+	)
+
+	ctx, tc := makeCacheTestContext(
+		t,
+		testParams{
+			config:                           cfg,
+			replFactor:                       3,
+			numInstances:                     3,
+			disableStreamCacheCallbacks:      true,
+			recencyConstraintsGenerations:    5,
+			backwardsReconciliationThreshold: ptrUint64(20),
+			streamHistoryMiniblocks: map[byte]uint64{
+				STREAM_USER_SETTINGS_BIN: historyWindow,
+			},
+		},
+	)
+	require := tc.require
+
+	tc.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	tc.initCache(1, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+
+	streamId, streamNodes, prevMb := tc.allocateStream()
+	nodesWithStream := streamNodes[0:2]
+
+	for range 45 {
+		tc.addReplEvent(streamId, prevMb, nodesWithStream)
+		prevMb = tc.makeMiniblockNoCallbacks(nodesWithStream, streamId, false)
+	}
+	tc.addReplEvent(streamId, prevMb, nodesWithStream)
+
+	tc.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.StreamTrimByStreamIdConfigKey,
+		crypto.ABIEncodeStreamIdMiniblockArray([]crypto.StreamIdMiniblock{
+			{StreamId: streamId, MiniblockNum: perStreamTarget},
+		}),
+	)
+
+	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	inst := tc.instances[2]
+
+	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
+	require.NoError(err)
+
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
+
+	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
+
+	remotes, _ := stream.GetRemotesAndIsLocal()
+	require.GreaterOrEqual(len(remotes), 1)
+
+	resp, err := inst.cache.params.RemoteMiniblockProvider.GetStream(
+		ctx,
+		remotes[0],
+		&GetStreamRequest{
+			StreamId:                    streamId[:],
+			NumberOfPrecedingMiniblocks: 5,
+		},
+	)
+	require.NoError(err)
+
+	err = stream.reinitialize(ctx, resp.GetStream(), false)
+	require.NoError(err)
+
+	reconciler := newStreamReconciler(inst.cache, stream, record)
+	err = reconciler.reconcile()
+	require.NoError(err)
+
+	require.True(reconciler.stats.backfillCalled)
+	require.NotEmpty(reconciler.presentRanges)
+
+	expectedStart := storage.FindClosestSnapshotMiniblock(reconciler.presentRanges, perStreamTarget)
+	require.Equal(expectedStart, reconciler.localStartMbInclusive)
+
+	historyStart := record.LastMbNum() - int64(historyWindow)
+	if historyStart < 0 {
+		historyStart = 0
+	}
+	require.NotEqual(historyStart, reconciler.localStartMbInclusive)
 }
 
 func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
