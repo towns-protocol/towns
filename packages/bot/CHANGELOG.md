@@ -1,5 +1,20 @@
 # @towns-protocol/bot
 
+## 1.0.3
+
+### Patch Changes
+
+- [#4869](https://github.com/towns-protocol/towns/pull/4869) [`6790ed3`](https://github.com/towns-protocol/towns/commit/6790ed34ecada1eae3c29adb7d03dcd6b7ceda76) Thanks [@miguel-nascimento](https://github.com/miguel-nascimento)! - Use `undefined` instead of `null` to represent `spaceId` in DM context
+
+- Updated dependencies []:
+  - @towns-protocol/encryption@1.0.3
+  - @towns-protocol/generated@1.0.3
+  - @towns-protocol/proto@1.0.3
+  - @towns-protocol/sdk@1.0.3
+  - @towns-protocol/sdk-crypto@1.0.3
+  - @towns-protocol/utils@1.0.3
+  - @towns-protocol/web3@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
