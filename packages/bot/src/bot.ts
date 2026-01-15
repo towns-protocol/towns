@@ -54,6 +54,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     make_DMChannelPayload_Message,
+    make_GDMChannelPayload_Message,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
 import { logger } from 'hono/logger'
@@ -2146,6 +2147,8 @@ const buildBotActions = (
             eventPayload = make_ChannelPayload_Message(message)
         } else if (isDMChannelStreamId(streamId)) {
             eventPayload = make_DMChannelPayload_Message(message)
+        } else if (isGDMChannelStreamId(streamId)) {
+            eventPayload = make_GDMChannelPayload_Message(message)
         } else {
             throw new Error(
                 `Invalid stream ID type: ${streamId} - only channel and DM streams are supported`,
@@ -2629,7 +2632,7 @@ const buildBotActions = (
         const currency = params.currency ?? ETH_ADDRESS
         const isEth = currency === ETH_ADDRESS
         const { receiver, amount, messageId, channelId } = params
-        const isDm = isDMChannelStreamId(channelId)
+        const isDm = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 
         const accountModulesAddress = client.config.base.chainConfig.addresses.accountModules
         if (isDm && !accountModulesAddress) {
@@ -3058,7 +3061,7 @@ const createBasePayload = (
     createdAt: Date,
     event: StreamEvent,
 ): BasePayload => {
-    const isDm = isDMChannelStreamId(streamId)
+    const isDm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
     const spaceId = getSpaceIdFromStreamId(streamId)
 
     if (isDm) {
