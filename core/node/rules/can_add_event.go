@@ -1733,6 +1733,12 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 		), nil
 	}
 
+	// GDM streams don't have ownership hierarchy. Authorization for bot membership
+	// is handled by gdmBotSponsorEntitlements() on the GDM stream side.
+	if streamId.Type() == shared.STREAM_GDM_CHANNEL_BIN {
+		return nil, nil
+	}
+
 	return nil, RiverError(
 		Err_BAD_STREAM_ID,
 		"Invalid stream type for determining ownership",
@@ -1742,7 +1748,8 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 
 // validUserMembershipStream confirms that, if the user stream belongs to an app, the app is
 // being added to acceptible stream types. At this time the protocol does not support app membership
-// in DM and GDM channels. At this time, non-app users are allowed to join streams of all types.
+// in DM channels (DMs use a special inception-based flow for bots). GDM channels support app
+// membership via joinUser(). Non-app users are allowed to join streams of all types.
 func (ru *aeUserMembershipRules) validUserMembershipStream() (bool, error) {
 	isAppUser, err := ru.params.streamView.IsAppUser()
 	if err != nil {
@@ -1758,7 +1765,7 @@ func (ru *aeUserMembershipRules) validUserMembershipStream() (bool, error) {
 		return false, err
 	}
 
-	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN && streamId.Type() != shared.STREAM_GDM_CHANNEL_BIN, nil
+	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN, nil
 }
 
 func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
@@ -1887,9 +1894,9 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 // - by a node, specifically in the case of membership loss due to scrubbing.
 // - by the app itself, specifically in the case of creating a new channel and adding itself
 // Thus, for the very specific case when users are bot users, and the membership change is not a node-initiated
-// bounce, we want to verify that the initiator of the membership change has space ownership permissions.
-// NOTE that at this time, bots cannot be members of DMs or GDMs, so there will always be a space involved
-// in bot membership events.
+// bounce, we want to verify that the initiator of the membership change has appropriate permissions.
+// NOTE: DMs use a special inception-based flow for bots. GDMs don't have ownership hierarchy, so bot
+// authorization is handled by gdmBotSponsorEntitlements() on the GDM stream side instead of here.
 func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthArgs, error) {
 	appAddress, err := ru.params.streamView.GetAppAddress()
 	if err != nil {
