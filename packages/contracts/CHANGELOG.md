@@ -1,5 +1,7 @@
 # @towns-protocol/contracts
 
+## 1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
