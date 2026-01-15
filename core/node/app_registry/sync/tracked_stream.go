@@ -178,8 +178,12 @@ func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, 
 		return true
 	}
 
-	// Only persist cookies for channel/DM streams with bot members
-	if streamType != shared.STREAM_CHANNEL_BIN && streamType != shared.STREAM_DM_CHANNEL_BIN {
+	// Only persist cookies for streams with bot members:
+	// - space channels
+	// - dms
+	// - gdms
+	if streamType != shared.STREAM_CHANNEL_BIN && streamType != shared.STREAM_DM_CHANNEL_BIN &&
+		streamType != shared.STREAM_GDM_CHANNEL_BIN {
 		return false
 	}
 
