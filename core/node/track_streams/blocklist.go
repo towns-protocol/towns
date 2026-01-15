@@ -14,6 +14,7 @@ var blocklistedStreams []StreamId
 
 func init() {
 	for _, streamIDRaw := range []string{
+		// Omega env streams
 		"10467d980b4ffa6f6e5cc903cf3111e0ab74cf755c0000000000000000000000",
 		"2079dce10c5b0980a08856f4e495ac8e02f1b33a100000000000000000000000",
 		"a8433b8b99f8a7fc7b3140ec9c3c5db31dbb22640f0000000000000000000000",
@@ -37,6 +38,8 @@ func init() {
 		"a1f23b2de45bdf8d76123ecf34e91c9d624ef2112b0000000000000000000000",
 		"a1e6fc675092ac1c41536346f9a0032dd8495504260000000000000000000000",
 		"a8658153546110639dc58e32c22b89d176c8defe1f0000000000000000000000",
+		// Alpha env streams
+		"203302888df51bb11ee9babfad0d6e6d8e282ff4ca86497ef04bad9014f867a6",
 	} {
 		streamID, err := StreamIdFromString(streamIDRaw)
 		if err != nil {
