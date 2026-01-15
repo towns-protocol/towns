@@ -388,7 +388,7 @@ export type BasePayload =
           /** The user ID of the user that triggered the event */
           userId: Address
           /** The space ID that the event was triggered in */
-          spaceId: null
+          spaceId: undefined
           /** channelId that the event was triggered in */
           channelId: string
           /** The ID of the event that triggered */
@@ -3044,9 +3044,9 @@ const processMentions = (
     })
 }
 
-const getSpaceIdFromStreamId = (streamId: string): string | null => {
+const getSpaceIdFromStreamId = (streamId: string): string | undefined => {
     if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-        return null
+        return undefined
     }
     return spaceIdFromChannelId(streamId)
 }
@@ -3064,7 +3064,7 @@ const createBasePayload = (
     if (isDm) {
         return {
             userId,
-            spaceId: null,
+            spaceId: undefined,
             channelId: streamId,
             eventId,
             createdAt,
