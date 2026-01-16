@@ -8,6 +8,7 @@ import (
 	"math"
 	"slices"
 	"sync/atomic"
+	"time"
 
 	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -472,6 +473,10 @@ func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log *types.Log)
 			// load old stream record and decrease the node stream counters for all previous
 			// nodes and increase the stream records counters for nodes in the new set.
 			blockNumber := blockchain.BlockNumber(log.BlockNumber - 1)
+
+			// Timeout to avoid blocking this callback; if this call fails, stream counts can drift
+			// but will eventually converge over time after a restart or a node registry change.
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			if oldStream, err := rr.StreamRegistry.GetStreamOnBlock(ctx, newStream.GetStreamId(), blockNumber); err == nil {
 				for _, nodeAddr := range oldStream.Nodes {
 					if node, found := impl.nodesMap[nodeAddr]; found {
@@ -484,6 +489,7 @@ func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log *types.Log)
 					}
 				}
 			}
+			cancel()
 		}
 	}
 }
