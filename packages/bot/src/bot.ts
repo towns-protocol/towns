@@ -55,6 +55,7 @@ import {
     isGDMChannelStreamId,
     make_DMChannelPayload_Message,
     make_GDMChannelPayload_Message,
+    type Prettify,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
 import { logger } from 'hono/logger'
@@ -296,8 +297,6 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
             isMentioned: boolean
-            /** Convenience flag to check if it event triggered on a DM channel*/
-            isDm: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -384,39 +383,42 @@ export type BotEvents<Commands extends BotCommand[] = []> = {
     ) => void | Promise<void>
 }
 
-export type BasePayload =
-    | {
-          /** The user ID of the user that triggered the event */
-          userId: Address
-          /** The space ID that the event was triggered in */
-          spaceId: undefined
-          /** channelId that the event was triggered in */
-          channelId: string
-          /** The ID of the event that triggered */
-          eventId: string
-          /** The creation time of the event */
-          createdAt: Date
-          /** The raw event payload */
-          event: StreamEvent
-          /** Convenience flag to check if the event triggered on a DM channel*/
-          isDm: true
-      }
-    | {
-          /** The user ID of the user that triggered the event */
-          userId: Address
-          /** The space ID that the event was triggered in */
+type BaseStreamPayload = {
+    /** The user ID of the user that triggered the event */
+    userId: Address
+    /** The space ID that the event was triggered in */
+    channelId: string
+    /** The ID of the event that triggered */
+    eventId: string
+    /** The creation time of the event */
+    createdAt: Date
+    /** The raw event payload */
+    event: StreamEvent
+}
+
+export type BasePayload = Prettify<
+    | (BaseStreamPayload & {
           spaceId: string
-          /** channelId that the event was triggered in */
-          channelId: string
-          /** The ID of the event that triggered */
-          eventId: string
-          /** The creation time of the event */
-          createdAt: Date
-          /** The raw event payload */
-          event: StreamEvent
-          /** Convenience flag to check if the event triggered on a DM channel*/
+          /** Convenience flag to check if the event triggered on a DM channel */
           isDm: false
-      }
+          /** Convenience flag to check if the event triggered on a GDM channel */
+          isGdm: false
+      })
+    | (BaseStreamPayload & {
+          spaceId: undefined
+          /** Convenience flag to check if the event triggered on a DM channel */
+          isDm: true
+          /** Convenience flag to check if the event triggered on a GDM channel */
+          isGdm: false
+      })
+    | (BaseStreamPayload & {
+          spaceId: undefined
+          /** Convenience flag to check if the event triggered on a DM channel */
+          isDm: false
+          /** Convenience flag to check if the event triggered on a GDM channel */
+          isGdm: true
+      })
+>
 
 export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
@@ -3047,13 +3049,6 @@ const processMentions = (
     })
 }
 
-const getSpaceIdFromStreamId = (streamId: string): string | undefined => {
-    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-        return undefined
-    }
-    return spaceIdFromChannelId(streamId)
-}
-
 const createBasePayload = (
     userId: Address,
     streamId: string,
@@ -3061,10 +3056,7 @@ const createBasePayload = (
     createdAt: Date,
     event: StreamEvent,
 ): BasePayload => {
-    const isDm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
-    const spaceId = getSpaceIdFromStreamId(streamId)
-
-    if (isDm) {
+    if (isDMChannelStreamId(streamId)) {
         return {
             userId,
             spaceId: undefined,
@@ -3073,16 +3065,29 @@ const createBasePayload = (
             createdAt,
             event,
             isDm: true,
+            isGdm: false,
         }
-    } else {
+    } else if (isGDMChannelStreamId(streamId)) {
         return {
             userId,
-            spaceId: spaceId as string,
+            spaceId: undefined,
             channelId: streamId,
             eventId,
             createdAt,
             event,
             isDm: false,
+            isGdm: true,
+        }
+    } else {
+        return {
+            userId,
+            spaceId: spaceIdFromChannelId(streamId),
+            channelId: streamId,
+            eventId,
+            createdAt,
+            event,
+            isDm: false,
+            isGdm: false,
         }
     }
 }
