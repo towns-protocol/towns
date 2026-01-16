@@ -13,19 +13,10 @@ This file provides guidance to AI agents for building Towns Protocol bots.
 
 ## Base Payload
 
-All events use a discriminated union based on `isDm`:
+All events use a discriminated union based on `isDm` and `isGdm`:
 
 ```typescript
 type BasePayload =
-  | {
-      userId: string      // Hex address (0x...)
-      spaceId: undefined  // Always undefined for DM/GDM channels
-      channelId: string
-      eventId: string     // Unique event ID (use as threadId/replyId when responding)
-      createdAt: Date
-      event: StreamEvent
-      isDm: true          // Discriminator: true for DMs AND GDMs (no space context)
-    }
   | {
       userId: string      // Hex address (0x...)
       spaceId: string     // Always a string for space channels
@@ -33,26 +24,34 @@ type BasePayload =
       eventId: string     // Unique event ID (use as threadId/replyId when responding)
       createdAt: Date
       event: StreamEvent
-      isDm: false         // Discriminator: when false, spaceId is string
+      isDm: false         // Not a DM
+      isGdm: false        // Not a GDM
+    }
+  | {
+      userId: string      // Hex address (0x...)
+      spaceId: undefined  // Always undefined for DM channels
+      channelId: string
+      eventId: string
+      createdAt: Date
+      event: StreamEvent
+      isDm: true          // Is a DM (1:1 direct message)
+      isGdm: false        // Not a GDM
+    }
+  | {
+      userId: string      // Hex address (0x...)
+      spaceId: undefined  // Always undefined for GDM channels
+      channelId: string
+      eventId: string
+      createdAt: Date
+      event: StreamEvent
+      isDm: false         // Not a DM
+      isGdm: true         // Is a GDM (group direct message)
     }
 ```
 
-**Type Safety:** TypeScript automatically narrows the type based on `isDm`. When `isDm` is `true`, `spaceId` is guaranteed to be `undefined`. When `isDm` is `false`, `spaceId` is guaranteed to be a `string`.
+**Type Safety:** TypeScript automatically narrows the type based on `isDm` and `isGdm`. When either is `true`, `spaceId` is guaranteed to be `undefined`. When both are `false`, `spaceId` is guaranteed to be a `string`.
 
-**Note:** `isDm: true` applies to both DMs and GDMs since neither have a space context. To distinguish between them:
-```typescript
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
-
-bot.onMessage(async (handler, event) => {
-  if (isDMChannelStreamId(event.channelId)) {
-    console.log('This is a DM')
-  } else if (isGDMChannelStreamId(event.channelId)) {
-    console.log('This is a GDM')
-  } else {
-    console.log(`Space channel in: ${event.spaceId}`)
-  }
-})
-```
+**Channel Type Detection:** Check `event.isDm` for 1:1 DMs, `event.isGdm` for group DMs, or combine with `event.isDm || event.isGdm` for any private message.
 
 ## Event Handlers
 
@@ -338,6 +337,7 @@ bot.hasAdminPermission(...) | bot.checkPermission(...) | bot.ban(...) | bot.unba
 1. **User IDs are addresses** - `0x...`, not usernames
 2. **Always use `<@{userId}>` for mentions AND add mentions in sendMessage options** - Not `@username`
 3. **Slash commands exclusive** - Never trigger `onMessage`
-5. **Stateless** - Store context externally
-6. **Fund gas wallet for on-chain ops** - `bot.viem.account`
-7. Use `getSmartAccountFromUserId` to get user's wallet address
+4. **Stateless** - Store context externally
+5. **Fund gas wallet for on-chain ops** - `bot.viem.account`
+6. Use `getSmartAccountFromUserId` to get user's wallet address
+7. **DM vs GDM** - Use `isDm` for 1:1 DMs, `isGdm` for group DMs; `spaceId` is `undefined` for both
