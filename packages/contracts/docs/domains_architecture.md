@@ -15,6 +15,15 @@ The Towns Protocol Global Usernames system implements an ENS-compatible cross-ch
 | **Multi-coin Addresses**   | Support ETH (coinType 60) and chain-specific addresses (ENSIP-11) |
 | **Tiered Pricing**         | First registration free, subsequent charged via FeeManager        |
 
+## Deployed Addresses
+
+### L2 Registrar
+
+| Network       | Address                                      | Status    |
+| ------------- | -------------------------------------------- | --------- |
+| Base Sepolia  | `0xCfF032706DE34B65F49d51be68E1eb34F3ffb560` | Deployed  |
+| Base (Mainnet)| TBD                                          | Pending   |
+
 ## Architecture
 
 The system consists of three main components deployed across two chains:
