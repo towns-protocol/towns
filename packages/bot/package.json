@@ -26,6 +26,7 @@
         "@towns-protocol/sdk-crypto": "workspace:^",
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
+        "@towns-protocol/smart-account": "workspace:^",
         "ethers": "^5.8.0",
         "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
