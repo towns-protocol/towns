@@ -51,6 +51,13 @@ interface ITippingBase {
         bytes32 channelId;
     }
 
+    /// @notice Emitted when a tip is sent to any recipient type
+    /// @param sender The address that sent the tip
+    /// @param receiver The address that received the tip
+    /// @param recipientType The type of recipient (Member, Bot, Any)
+    /// @param currency The currency address (NATIVE_TOKEN or ERC20)
+    /// @param amount The tip amount after protocol fees
+    /// @param data Additional metadata (tokenId for members, appId for bots, etc.)
     event TipSent(
         address indexed sender,
         address indexed receiver,
@@ -60,7 +67,14 @@ interface ITippingBase {
         bytes data
     );
 
-    // Maintain legacy event for backwards compatibility
+    /// @notice Legacy event for member tips, maintained for backwards compatibility
+    /// @param tokenId The membership token ID of the receiver
+    /// @param currency The currency address (NATIVE_TOKEN or ERC20)
+    /// @param sender The address that sent the tip
+    /// @param receiver The address that received the tip
+    /// @param amount The raw tip amount before protocol fees
+    /// @param messageId The message ID associated with the tip
+    /// @param channelId The channel ID where the tip was sent
     event Tip(
         uint256 indexed tokenId,
         address indexed currency,
@@ -73,8 +87,6 @@ interface ITippingBase {
 
     error InvalidRecipientType();
     error InvalidTipData();
-    error TokenDoesNotExist();
-    error ReceiverIsNotMember();
     error CannotTipSelf();
     error AmountIsZero();
     error CurrencyIsZero();
