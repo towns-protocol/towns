@@ -1269,12 +1269,12 @@ describe('Bot', { sequential: true }, () => {
             }),
         )
 
-        const bobBalanceBefore = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        const bobBalanceBefore = (await ethersProvider.getBalance(bobSmartAccountAddress)).toBigInt()
         // Bob sends a message asking for a tip
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me please!')
         await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
         // Verify bob's balance increased
-        const bobBalanceAfter = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        const bobBalanceAfter = (await ethersProvider.getBalance(bobSmartAccountAddress)).toBigInt()
         expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore)
     })
 
@@ -1304,12 +1304,12 @@ describe('Bot', { sequential: true }, () => {
             }),
         )
 
-        const bobTokenBalanceBefore = await TestERC20.balanceOf(tokenName, bob.userId)
+        const bobTokenBalanceBefore = await TestERC20.balanceOf(tokenName, bobSmartAccountAddress)
 
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me ERC-20!')
         await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
 
-        const bobTokenBalanceAfter = await TestERC20.balanceOf(tokenName, bob.userId)
+        const bobTokenBalanceAfter = await TestERC20.balanceOf(tokenName, bobSmartAccountAddress)
         expect(bobTokenBalanceAfter).toBeGreaterThan(bobTokenBalanceBefore)
 
         const botBalanceAfter = await TestERC20.balanceOf(tokenName, bot.appAddress)
