@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"math"
+	"runtime/pprof"
 	"slices"
 	"time"
 
@@ -83,7 +84,15 @@ func newStreamReconciler(
 
 // reconcileAndTrim runs stream reconciliation and trimming processes.
 func (sr *streamReconciler) reconcileAndTrim() error {
-	err := sr.reconcile()
+	var err error
+	pprof.Do(
+		sr.cache.params.ServerCtx,
+		pprof.Labels("STREAM_ID", sr.stream.streamId.String(), "START_TIME", time.Now().UTC().Format(time.RFC3339)),
+		func(context.Context) {
+			err = sr.reconcile()
+		},
+	)
+
 	if err != nil {
 		return err
 	}
