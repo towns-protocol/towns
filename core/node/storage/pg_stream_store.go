@@ -1046,6 +1046,14 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			)
 		}
 
+		if len(miniblocks) == 0 {
+			return nil, nil, RiverError(
+				Err_NOT_FOUND,
+				"Stream has no miniblocks",
+				"streamId", streamId,
+			)
+		}
+
 		if !(miniblocks[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
 			return nil, nil, RiverError(
 				Err_INTERNAL,
