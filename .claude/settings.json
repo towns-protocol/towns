@@ -1,0 +1,9 @@
+{
+    "enabledPlugins": {
+        "audit-context-building@trailofbits": true,
+        "differential-review@trailofbits": true,
+        "entry-point-analyzer@trailofbits": true,
+        "property-based-testing@trailofbits": true,
+        "building-secure-contracts@trailofbits": true
+    }
+}
