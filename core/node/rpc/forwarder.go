@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
 	"time"
@@ -81,6 +82,7 @@ func executeConnectHandler[Req, Res any](
 		_ = err.LogWarn(log)
 		return nil, err.AsConnectError()
 	}
+
 	log.Debugw("Handler LEAVE", "method", methodName, "response", resp.Msg, "elapsed", elapsed)
 	return resp, nil
 }
@@ -107,7 +109,32 @@ func (s *Service) GetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	return executeConnectHandler(ctx, req, s, s.getStreamImpl, "GetStream")
+	resp, err := executeConnectHandler(ctx, req, s, s.getStreamImpl, "GetStream")
+
+	miniblocksCount := -1
+	eventsCount := -1
+	hasSnapshot := false
+	snapshotIndex := int64(-1)
+
+	if resp != nil && resp.Msg != nil && resp.Msg.GetStream() != nil {
+		miniblocksCount = len(resp.Msg.GetStream().GetMiniblocks())
+		eventsCount = len(resp.Msg.GetStream().GetEvents())
+		hasSnapshot = resp.Msg.GetStream().GetSnapshot() != nil
+		snapshotIndex = resp.Msg.GetStream().GetSnapshotMiniblockIndex()
+	}
+
+	_, log := utils.CtxAndLogForRequest(ctx, req)
+	log.Infow("cRPC",
+		"method", "GetStream",
+		"streamId", fmt.Sprintf("%x", req.Msg.GetStreamId()),
+		"miniblocks", miniblocksCount,
+		"eventsCount", eventsCount,
+		"remoteAddr", req.Peer().Addr,
+		"hasSnapshot", hasSnapshot,
+		"snapshotIndex", snapshotIndex,
+		"err", err)
+
+	return resp, err
 }
 
 func (s *Service) GetStreamEx(
@@ -297,7 +324,22 @@ func (s *Service) GetMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
-	return executeConnectHandler(ctx, req, s, s.getMiniblocksImpl, "GetMiniblocks")
+	resp, err := executeConnectHandler(ctx, req, s, s.getMiniblocksImpl, "GetMiniblocks")
+
+	miniblocksCount := -1
+	if resp != nil && resp.Msg != nil {
+		miniblocksCount = len(resp.Msg.GetMiniblocks())
+	}
+
+	_, log := utils.CtxAndLogForRequest(ctx, req)
+	log.Infow("cRPC",
+		"method", "GetMiniblocks",
+		"streamId", fmt.Sprintf("%x", req.Msg.GetStreamId()),
+		"miniblocks", miniblocksCount,
+		"remoteAddr", req.Peer().Addr,
+		"err", err)
+
+	return resp, err
 }
 
 func (s *Service) getMiniblocksImpl(
