@@ -2599,7 +2599,68 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
 		return nil, err
 	}
 
+	if lockStreamResult.MiniblocksStoredInDB() {
+		legacySnapshotSeqNums, err := s.getLegacySnapshotSeqNumsTx(ctx, tx, streamId)
+		if err != nil {
+			return nil, err
+		}
+		if len(legacySnapshotSeqNums) > 0 {
+			augmentRangesWithLegacySnapshots(ranges, legacySnapshotSeqNums)
+		}
+	}
+
 	return ranges, nil
+}
+
+func (s *PostgresStreamStore) getLegacySnapshotSeqNumsTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) ([]int64, error) {
+	query := s.sqlForStream(
+		"SELECT seq_num, blockdata FROM {{miniblocks}} WHERE stream_id = $1 AND snapshot IS NULL ORDER BY seq_num",
+		streamId,
+	)
+	rows, err := tx.Query(ctx, query, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	var legacySeqNums []int64
+	var seqNum int64
+	var blockData []byte
+	if _, err := pgx.ForEachRow(rows, []any{&seqNum, &blockData}, func() error {
+		if parseAndCheckHasLegacySnapshot(blockData) {
+			legacySeqNums = append(legacySeqNums, seqNum)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return legacySeqNums, nil
+}
+
+func augmentRangesWithLegacySnapshots(ranges []MiniblockRange, legacySeqNums []int64) {
+	for _, seqNum := range legacySeqNums {
+		for i := range ranges {
+			if seqNum < ranges[i].StartInclusive || seqNum > ranges[i].EndInclusive {
+				continue
+			}
+
+			pos, found := slices.BinarySearch(ranges[i].SnapshotSeqNums, seqNum)
+			if found {
+				break
+			}
+
+			seqs := ranges[i].SnapshotSeqNums
+			seqs = append(seqs, 0)
+			copy(seqs[pos+1:], seqs[pos:])
+			seqs[pos] = seqNum
+			ranges[i].SnapshotSeqNums = seqs
+			break
+		}
+	}
 }
 
 func (s *PostgresStreamStore) TrimStream(
