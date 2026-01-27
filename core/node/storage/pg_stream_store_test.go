@@ -13,6 +13,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -1172,6 +1173,29 @@ func (m *dataMaker) events(n int) [][]byte {
 	return ret
 }
 
+func makeLegacySnapshotDescriptor(t *testing.T, number int64) *MiniblockDescriptor {
+	t.Helper()
+	streamEvent := &StreamEvent{
+		Payload: &StreamEvent_MiniblockHeader{
+			MiniblockHeader: &MiniblockHeader{
+				MiniblockNum: number,
+				Snapshot:     &Snapshot{},
+			},
+		},
+	}
+	eventBytes, err := proto.Marshal(streamEvent)
+	require.NoError(t, err)
+	miniblock := &Miniblock{Header: &Envelope{Event: eventBytes}}
+	data, err := proto.Marshal(miniblock)
+	require.NoError(t, err)
+	return &MiniblockDescriptor{
+		Number:            number,
+		Data:              data,
+		Hash:              common.BytesToHash(data),
+		HasLegacySnapshot: true,
+	}
+}
+
 func requireSnapshotResult(
 	t *testing.T,
 	result *ReadStreamFromLastSnapshotResult,
@@ -1779,6 +1803,33 @@ func TestReadMiniblocks(t *testing.T) {
 		require.False(t, terminus)
 		require.Equal(t, int64(3), result[0].Number)
 		require.Equal(t, int64(4), result[1].Number)
+	})
+
+	t.Run("reports legacy snapshots inside ranges", func(t *testing.T) {
+		data := newDataMaker()
+		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+		genesis := makeLegacySnapshotDescriptor(t, 0)
+		require.NoError(t, store.CreateStreamStorage(ctx, streamId, genesis))
+
+		block1 := data.mb(1, false)
+		block2 := data.mb(2, false)
+		miniblocks := []*MiniblockDescriptor{
+			block1,
+			block2,
+			data.mb(3, false),
+			makeLegacySnapshotDescriptor(t, 4),
+		}
+		require.NoError(t, store.WriteMiniblocks(ctx, streamId, miniblocks, 5, [][]byte{}, 1, 0))
+
+		require.NoError(t, store.TrimStream(ctx, streamId, 3, nil))
+
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
+		require.NoError(t, err)
+		require.Len(t, ranges, 1)
+		require.Equal(t, int64(3), ranges[0].StartInclusive)
+		require.Equal(t, int64(4), ranges[0].EndInclusive)
+		require.Equal(t, []int64{4}, ranges[0].SnapshotSeqNums)
 	})
 
 	t.Run("reads miniblocks from stream with gaps", func(t *testing.T) {
