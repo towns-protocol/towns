@@ -1059,6 +1059,243 @@ func TestGetMiniblocksTerminusForwardingToRemotes(t *testing.T) {
 	require.Equal(int64(0), resp.Msg.FromInclusive)
 }
 
+// TestGetMiniblocksWithMissingGenesisBlock reproduces a scenario where:
+// - A stream has miniblocks starting from 1 (miniblock 0 is missing)
+// - GetMiniblocks request from 0 to 50 should handle this gracefully
+func TestGetMiniblocksWithMissingGenesisBlock(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes:          1,
+		replicationFactor: 1,
+		start:             true,
+		nodeStartOpts: &startOpts{
+			configUpdater: func(cfg *config.Config) {
+				// Disable stream reconciliation so it doesn't recover deleted miniblocks
+				cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+				cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+			},
+		},
+	})
+	require := tt.require
+	ctx := tt.ctx
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	spaceId, spaceLastMb := alice.createSpace()
+
+	// Create 41 miniblocks with snapshots at every 10th block
+	for i := range 100 {
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+					},
+				},
+			}},
+			spaceLastMb,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+
+		// Force snapshot every 10 miniblocks to create 4 snapshots (at 10, 20, 30, 40)
+		forceSnapshot := i%10 == 9
+		newSpaceLastMb, err := alice.tryMakeMiniblock(spaceId, forceSnapshot, spaceLastMb.Num)
+		if err != nil || newSpaceLastMb == nil {
+			continue
+		}
+		spaceLastMb = newSpaceLastMb
+		if spaceLastMb.Num >= 40 {
+			break
+		}
+	}
+	require.GreaterOrEqual(spaceLastMb.Num, int64(40), "Should have at least 41 miniblocks (0-40)")
+	testfmt.Logf(t, "Created miniblocks, last miniblock num: %d", spaceLastMb.Num)
+
+	// Verify we can read all miniblocks before any manipulation
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   50,
+	}
+	resp, err := alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num+1))
+	testfmt.Logf(t, "Total miniblocks before manipulation: %d", len(resp.Msg.Miniblocks))
+
+	// Flush cache to ensure subsequent operations hit the database
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+
+	// Delete miniblock 0 to simulate the legacy/corrupted state
+	err = tt.nodes[0].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 0, 1)
+	require.NoError(err)
+	testfmt.Logf(t, "Deleted miniblock 0")
+
+	// Flush cache again to pick up the changes
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+
+	// Test Case 1: Request from 0 to 50 with no-forward header
+	// When miniblock 0 is missing, the system should return miniblocks starting from 1 with terminus=true
+	getMbReqNoFwd := connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   50,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err, "GetMiniblocks should succeed when miniblock 0 is missing")
+
+	// Verify the response shows the stream is trimmed
+	require.True(resp.Msg.Terminus, "Terminus should be true when stream is trimmed")
+	require.Equal(int64(1), resp.Msg.FromInclusive, "FromInclusive should be 1 (first available miniblock)")
+	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num), "Should have all miniblocks from 1 onwards")
+
+	// Test Case 2: Request exactly from 1 to 50 (within available range)
+	getMbReqFrom1 := connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 1,
+		ToExclusive:   50,
+	})
+	getMbReqFrom1.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqFrom1)
+	require.NoError(err, "GetMiniblocks from 1 should succeed")
+
+	// FromInclusive 1 should return terminus=true because miniblock 0 doesn't exist
+	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from first available miniblock")
+	require.Equal(int64(1), resp.Msg.FromInclusive, "FromInclusive should be 1")
+	require.Len(resp.Msg.Miniblocks, int(spaceLastMb.Num), "Should have all miniblocks from 1 onwards")
+}
+
+// TestGetMiniblocksWithLegacySnapshotPointer reproduces a production scenario where:
+// - Stream has miniblocks starting from 1 (miniblock 0 is missing)
+// - The miniblocks have legacy snapshots (embedded in header, not separate column)
+// - Only 4 miniblocks exist (1-4) but last_snapshot_miniblock_num might point elsewhere
+//
+// This simulates the production bug where:
+//   - Latest Snapshot Miniblock Num: 36
+//   - Miniblocks Ranges: From 1 To 4
+//   - GetMiniblocks request from 0 to 50 fails
+func TestGetMiniblocksWithLegacySnapshotPointer(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes:          1,
+		replicationFactor: 1,
+		start:             true,
+		nodeStartOpts: &startOpts{
+			configUpdater: func(cfg *config.Config) {
+				// Disable stream reconciliation so it doesn't recover miniblocks
+				cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+				cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+			},
+		},
+	})
+	require := tt.require
+	ctx := tt.ctx
+
+	// Create a real space stream that's registered on-chain
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	// Create a space for testing
+	spaceId, spaceLastMb := alice.createSpace()
+	testfmt.Logf(t, "Testing with space stream ID: %x", spaceId)
+
+	// Add some events to create more miniblocks with snapshots
+	// We need miniblocks with snapshots so that after deleting miniblock 0,
+	// the system can still find snapshots in the remaining range
+	for i := 0; i < 15; i++ {
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+					},
+				},
+			}},
+			spaceLastMb,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+		// Force snapshot at miniblock 10 to ensure there's a snapshot after miniblock 0
+		forceSnapshot := i == 9
+		newLastMb, err := alice.tryMakeMiniblock(spaceId, forceSnapshot, spaceLastMb.Num)
+		if err != nil || newLastMb == nil {
+			continue
+		}
+		spaceLastMb = newLastMb
+	}
+
+	// Get the current state
+	lastMbNum, err := tt.nodes[0].service.storage.GetLastMiniblockNumber(ctx, spaceId)
+	require.NoError(err)
+	testfmt.Logf(t, "Created miniblocks up to %d", lastMbNum)
+
+	// Verify we can read all miniblocks before manipulation
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   50,
+	}
+	resp, err := alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	testfmt.Logf(t, "Total miniblocks before manipulation: %d", len(resp.Msg.Miniblocks))
+
+	// Flush cache to ensure subsequent operations hit the database
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+
+	// Delete miniblock 0 to simulate the legacy/corrupted state
+	// where the genesis block is missing
+	err = tt.nodes[0].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 0, 1)
+	require.NoError(err)
+	testfmt.Logf(t, "Deleted miniblock 0")
+
+	// Verify the stream state using debug
+	ranges, err := tt.nodes[0].service.storage.GetMiniblockNumberRanges(ctx, spaceId)
+	require.NoError(err)
+	testfmt.Logf(t, "Miniblock ranges after deletion: %+v", ranges)
+	require.Len(ranges, 1)
+	require.Equal(int64(1), ranges[0].StartInclusive, "First miniblock should be 1 after deleting 0")
+
+	// Flush cache again to pick up the changes
+	tt.nodes[0].service.cache.ForceFlushAll(ctx)
+
+	// Test Case 1: Request from 0 to 50 with no-forward header
+	// When miniblock 0 is missing and no snapshots exist in the remaining range,
+	// the system should still return available miniblocks gracefully
+	getMbReqNoFwd := connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   50,
+	})
+	getMbReqNoFwd.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqNoFwd)
+	require.NoError(err, "GetMiniblocks should succeed when miniblock 0 is missing (no snapshots in range)")
+
+	// Verify the response shows the stream is trimmed
+	require.True(resp.Msg.Terminus, "Terminus should be true when stream is trimmed")
+	require.Equal(int64(1), resp.Msg.FromInclusive, "FromInclusive should be 1 (first available miniblock)")
+	expectedCount := int(lastMbNum) // lastMbNum miniblocks (1 to lastMbNum)
+	require.Equal(expectedCount, len(resp.Msg.Miniblocks), "Should have all miniblocks from 1 onwards")
+
+	// Test Case 2: Request exactly from 1 to 50 (within available range)
+	getMbReqFrom1 := connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 1,
+		ToExclusive:   50,
+	})
+	getMbReqFrom1.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+
+	resp, err = alice.client.GetMiniblocks(ctx, getMbReqFrom1)
+	require.NoError(err, "GetMiniblocks from 1 should succeed")
+
+	// FromInclusive 1 should return terminus=true because miniblock 0 doesn't exist
+	require.True(resp.Msg.Terminus, "Terminus should be true when requesting from first available miniblock")
+	require.Equal(int64(1), resp.Msg.FromInclusive, "FromInclusive should be 1")
+	require.Equal(expectedCount, len(resp.Msg.Miniblocks), "Should have all miniblocks from 1 onwards")
+}
+
 func TestGetMiniblocksTerminusValues(t *testing.T) {
 	// This test verifies terminus values in various scenarios
 

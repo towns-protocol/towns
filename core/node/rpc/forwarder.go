@@ -439,8 +439,8 @@ func (s *Service) isTrimmedRangeAcceptable(
 		start -= int64(historyWindow)
 	}
 	if start < 0 {
-		// If the history window is larger than the stream, we can consider it as no trimming
-		return false, nil
+		// If the history window is larger than the stream, we can consider it as no trimming which is acceptable
+		return true, nil
 	}
 
 	// Find the closest snapshot miniblock to trim to
