@@ -1,5 +1,18 @@
 # @towns-protocol/sdk
 
+## 1.0.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @towns-protocol/encryption@1.0.4
+  - @towns-protocol/generated@1.0.4
+  - @towns-protocol/proto@1.0.4
+  - @towns-protocol/rpc-connector@1.0.4
+  - @towns-protocol/sdk-crypto@1.0.4
+  - @towns-protocol/utils@1.0.4
+  - @towns-protocol/web3@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

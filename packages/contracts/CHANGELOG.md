@@ -1,5 +1,11 @@
 # @towns-protocol/contracts
 
+## 1.0.4
+
+### Patch Changes
+
+- [#4864](https://github.com/towns-protocol/towns/pull/4864) [`9b7ae6f`](https://github.com/towns-protocol/towns/commit/9b7ae6f61c8b13c33dfb2cbcb5833401c3578ff0) Thanks [@shuhuiluo](https://github.com/shuhuiluo)! - Optimize TippingBase with assembly calldata decoding, add bounds check, and fuzz tests for decode equivalence.
+
 ## 1.0.3
 
 ## 1.0.2
