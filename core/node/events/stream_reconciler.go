@@ -268,7 +268,22 @@ func (sr *streamReconciler) reconcile() error {
 		return sr.reconcileForward()
 	}
 
-	if (sr.expectedLastMbInclusive - sr.localLastMbInclusive) <= int64(backwardThreshold) {
+	// Constraint for forward reconciliation:
+	// stream doesn't exist in local storage (can't resume) && genesis miniblock on at least 1 remote must be available
+	genesisAvailable := sr.genesisAvailable()
+	canReconcileForwards := sr.notFound && genesisAvailable
+
+	// Constraint to always backward reconcile:
+	// stream doesn't exist in local storage (can't resume) && genesis miniblock isn't available on remotes
+	forceBackwardsReconciliation := sr.notFound && !genesisAvailable
+
+	if !canReconcileForwards {
+		forceBackwardsReconciliation = sr.notFound && !genesisAvailable &&
+			sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.StreamId().Type()) > 0
+	}
+
+	if !forceBackwardsReconciliation &&
+		(canReconcileForwards || (sr.expectedLastMbInclusive-sr.localLastMbInclusive) <= int64(backwardThreshold)) {
 		err = sr.reconcileForward()
 	} else {
 		err = sr.reconcileBackward()
@@ -677,4 +692,23 @@ func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
 	}
 
 	return storage.FindClosestSnapshotMiniblock(sr.presentRanges, start)
+}
+
+// genesisAvailable returns an indication if the genesis miniblock for the stream exists.
+// if it can't be determined if genesis is available false is returned.
+func (sr *streamReconciler) genesisAvailable() (exists bool) {
+	_ = sr.remotes.execute(func(remote common.Address) error {
+		reqCtx, cancel := context.WithTimeout(sr.ctx, 30*time.Second)
+		defer cancel()
+
+		mbs, _ := sr.cache.params.RemoteMiniblockProvider.GetMbs(reqCtx, remote, sr.stream.streamId, 0, 1)
+		if len(mbs) == 1 && mbs[0].Ref.Num == 0 {
+			exists = true
+			return nil
+		}
+
+		return RiverError(Err_NOT_FOUND, "Genesis miniblock could not be retrieved") // force next remote
+	})
+
+	return exists
 }

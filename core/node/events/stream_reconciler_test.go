@@ -86,10 +86,10 @@ func TestReconciler(t *testing.T) {
 	require.NoError(err)
 	testfmt.Logf(t, "Reconciler stats: %+v", reconciler.stats)
 	require.True(reconciler.notFound)
-	require.False(reconciler.stats.forwardCalled)
-	require.True(reconciler.stats.backwardCalled)
+	require.True(reconciler.stats.forwardCalled)
+	require.False(reconciler.stats.backwardCalled)
 	require.True(reconciler.stats.backfillCalled)
-	require.Greater(reconciler.stats.backfillPagesSucceeded, 1)
+	require.Greater(reconciler.stats.forwardPagesSucceeded, 0)
 	require.Equal(reconciler.stats.backfillPagesAttempted, reconciler.stats.backfillPagesSucceeded)
 	require.Equal(reconciler.stats.forwardPagesAttempted, reconciler.stats.forwardPagesSucceeded)
 	require.Equal(reconciler.stats.reinitializeAttempted, reconciler.stats.reinitializeSucceeded)
@@ -730,7 +730,7 @@ func TestReconciler_BackfillUsesStreamTrimTarget(t *testing.T) {
 	require.NotEqual(historyStart, reconciler.localStartMbInclusive)
 }
 
-func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
+func TestReconciler_ForwardUsesHistoryWindowForRanges(t *testing.T) {
 	cfg := config.GetDefaultConfig()
 	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
 	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
@@ -791,7 +791,7 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 	err = reconciler.reconcile()
 	require.NoError(err)
 
-	require.True(reconciler.stats.backwardCalled)
+	require.True(reconciler.stats.forwardCalled)
 
 	desiredStart := int64(record.LastMbNum()) - int64(historyWindow)
 	if desiredStart < 0 {
@@ -966,17 +966,22 @@ func TestReconciler_TrimHistoryAlignment(t *testing.T) {
 	env := newTrimTestEnv(t, 10, 1, 45, false)
 	require := env.tc.require
 
+	// Get ranges after reconcile to compute the expected snapshot-aligned start.
+	rangesBeforeTrim, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+
+	rawStart := int64(env.producedBlocks) - int64(env.historyWindow)
+	if rawStart < 0 {
+		rawStart = 0
+	}
+	expectedStart := storage.FindClosestSnapshotMiniblock(rangesBeforeTrim, rawStart)
+	expectedLast := int64(env.producedBlocks)
+
 	require.NoError(env.reconciler.trim())
 
 	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
 	require.Len(ranges, 1)
-
-	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
-	if expectedStart < 0 {
-		expectedStart = 0
-	}
-	expectedLast := int64(env.producedBlocks)
 
 	latestRange := ranges[0]
 	require.Equal(expectedStart, latestRange.StartInclusive)
@@ -989,7 +994,7 @@ func TestReconciler_TrimHistoryAlignment(t *testing.T) {
 	assert.LessOrEqual(t, lastSnapshot, expectedLast)
 
 	seqs := flattenMiniblockSeqs(ranges)
-	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	expectedSeqs := make([]int64, 0, expectedLast-expectedStart+1)
 	for seq := expectedStart; seq <= expectedLast; seq++ {
 		expectedSeqs = append(expectedSeqs, seq)
 	}
@@ -1014,17 +1019,22 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 	env := newTrimTestEnv(t, 5, 1, 32, false)
 	require := env.tc.require
 
+	// Get ranges after initial reconcile (done in newTrimTestEnv) to compute snapshot-aligned start.
+	rangesAfterReconcile, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+
+	rawStart := int64(env.producedBlocks) - int64(env.historyWindow)
+	if rawStart < 0 {
+		rawStart = 0
+	}
+	expectedStart := storage.FindClosestSnapshotMiniblock(rangesAfterReconcile, rawStart)
+	expectedLast := int64(env.producedBlocks)
+
 	require.NoError(env.reconciler.reconcileAndTrim())
 
 	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
 	require.Len(ranges, 1)
-
-	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
-	if expectedStart < 0 {
-		expectedStart = 0
-	}
-	expectedLast := int64(env.producedBlocks)
 
 	keptRange := ranges[0]
 	require.Equal(expectedStart, keptRange.StartInclusive)
@@ -1037,7 +1047,7 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 	assert.LessOrEqual(t, lastSnapshot, expectedLast)
 
 	seqs := flattenMiniblockSeqs(ranges)
-	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	expectedSeqs := make([]int64, 0, expectedLast-expectedStart+1)
 	for seq := expectedStart; seq <= expectedLast; seq++ {
 		expectedSeqs = append(expectedSeqs, seq)
 	}
