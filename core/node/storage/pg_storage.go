@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/exaring/otelpgx"
@@ -134,14 +135,9 @@ func (s *PostgresEventStore) txRunner(
 					continue
 				}
 				level := zapcore.WarnLevel
-				if opts != nil {
-					for _, code := range opts.expectedPgErrorCodes {
-						if pgErr.Code == code {
-							level = zapcore.DebugLevel
-							pass = true
-							break
-						}
-					}
+				if opts != nil && slices.Contains(opts.expectedPgErrorCodes, pgErr.Code) {
+					level = zapcore.DebugLevel
+					pass = true
 				}
 				log.Logw(level, "pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
