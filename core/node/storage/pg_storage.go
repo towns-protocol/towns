@@ -48,6 +48,7 @@ type PostgresEventStore struct {
 
 type txRunnerOpts struct {
 	skipLoggingNotFound    bool
+	expectedPgErrorCodes   []string
 	overrideIsolationLevel *pgx.TxIsoLevel // Optional custom isolation level
 }
 
@@ -132,7 +133,17 @@ func (s *PostgresEventStore) txRunner(
 					s.txCounter.WithLabelValues(name, "retry").Inc()
 					continue
 				}
-				log.Warnw("pg.txRunner: transaction failed", "pgErr", pgErr)
+				level := zapcore.WarnLevel
+				if opts != nil {
+					for _, code := range opts.expectedPgErrorCodes {
+						if pgErr.Code == code {
+							level = zapcore.DebugLevel
+							pass = true
+							break
+						}
+					}
+				}
+				log.Logw(level, "pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
 				level := zapcore.DebugLevel
 				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
