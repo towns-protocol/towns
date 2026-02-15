@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {INodeRegistryBase} from "src/river/registry/facets/node/INodeRegistry.sol";
+import {INodeRegistry, INodeRegistryBase} from "src/river/registry/facets/node/INodeRegistry.sol";
 
 // structs
 import {Node, NodeStatus} from "src/river/registry/libraries/RegistryStorage.sol";
@@ -422,5 +422,226 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         vm.prank(node);
         vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
         nodeRegistry.setNodeCometBftPubKey(node, pubKey);
+    }
+
+    // =============================================================
+    //                 updateNodesStatusConfigManager
+    // =============================================================
+
+    modifier givenConfigurationManagerIsApproved(address configManager) {
+        vm.assume(configManager != address(0));
+        vm.assume(riverConfig.isConfigurationManager(configManager) == false);
+
+        vm.prank(deployer);
+        riverConfig.approveConfigurationManager(configManager);
+        _;
+    }
+
+    function test_updateNodesStatusConfigManager(
+        address nodeOperator,
+        address configManager,
+        address node1,
+        address node2
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenConfigurationManagerIsApproved(configManager)
+        givenNodeIsRegistered(nodeOperator, node1, url)
+    {
+        vm.assume(node2 != address(0));
+        vm.assume(node1 != node2);
+
+        // Register second node
+        vm.prank(nodeOperator);
+        nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.NotInitialized);
+
+        // Create update requests
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
+        updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node1,
+            nodeStatus: NodeStatus.Operational
+        });
+        updates[1] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node2,
+            nodeStatus: NodeStatus.RemoteOnly
+        });
+
+        // Update statuses via config manager
+        vm.prank(configManager);
+        vm.expectEmit(diamond);
+        emit NodeStatusUpdated(node1, NodeStatus.Operational);
+        vm.expectEmit(diamond);
+        emit NodeStatusUpdated(node2, NodeStatus.RemoteOnly);
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+
+        // Verify statuses were updated
+        Node memory nodeData1 = nodeRegistry.getNode(node1);
+        Node memory nodeData2 = nodeRegistry.getNode(node2);
+        assertEq(uint256(nodeData1.status), uint256(NodeStatus.Operational));
+        assertEq(uint256(nodeData2.status), uint256(NodeStatus.RemoteOnly));
+    }
+
+    function test_updateNodesStatusConfigManager_singleNode(
+        address nodeOperator,
+        address configManager,
+        address node
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenConfigurationManagerIsApproved(configManager)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node,
+            nodeStatus: NodeStatus.Operational
+        });
+
+        vm.prank(configManager);
+        vm.expectEmit(diamond);
+        emit NodeStatusUpdated(node, NodeStatus.Operational);
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+
+        Node memory nodeData = nodeRegistry.getNode(node);
+        assertEq(uint256(nodeData.status), uint256(NodeStatus.Operational));
+    }
+
+    function test_updateNodesStatusConfigManager_emptyArray(
+        address configManager
+    ) external givenConfigurationManagerIsApproved(configManager) {
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](0);
+
+        vm.prank(configManager);
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+    }
+
+    function test_revertWhen_updateNodesStatusConfigManagerNotConfigManager(
+        address nodeOperator,
+        address notConfigManager,
+        address node
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        vm.assume(notConfigManager != address(0));
+        vm.assume(riverConfig.isConfigurationManager(notConfigManager) == false);
+
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node,
+            nodeStatus: NodeStatus.Operational
+        });
+
+        vm.prank(notConfigManager);
+        vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+    }
+
+    function test_revertWhen_updateNodesStatusConfigManagerNodeNotFound(
+        address configManager,
+        address nonExistentNode
+    ) external givenConfigurationManagerIsApproved(configManager) {
+        vm.assume(nonExistentNode != address(0));
+
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: nonExistentNode,
+            nodeStatus: NodeStatus.Operational
+        });
+
+        vm.prank(configManager);
+        vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+    }
+
+    function test_revertWhen_updateNodesStatusConfigManagerInvalidStatusTransition(
+        address nodeOperator,
+        address configManager,
+        address node
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenConfigurationManagerIsApproved(configManager)
+        givenNodeIsRegistered(nodeOperator, node, url)
+    {
+        // Node starts as NotInitialized, transition to Operational
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates1 =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        updates1[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node,
+            nodeStatus: NodeStatus.Operational
+        });
+
+        vm.prank(configManager);
+        nodeRegistry.updateNodesStatusConfigManager(updates1);
+
+        // Try invalid transition: Operational -> RemoteOnly (not allowed)
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates2 =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        updates2[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node,
+            nodeStatus: NodeStatus.RemoteOnly
+        });
+
+        vm.prank(configManager);
+        vm.expectRevert(bytes(RiverRegistryErrors.NODE_STATE_NOT_ALLOWED));
+        nodeRegistry.updateNodesStatusConfigManager(updates2);
+    }
+
+    function test_revertWhen_updateNodesStatusConfigManagerPartialFailure(
+        address nodeOperator,
+        address configManager,
+        address node1,
+        address node2
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+        givenConfigurationManagerIsApproved(configManager)
+        givenNodeIsRegistered(nodeOperator, node1, url)
+    {
+        vm.assume(node2 != address(0));
+        vm.assume(node1 != node2);
+
+        // Register second node and set it to Operational
+        vm.prank(nodeOperator);
+        nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.NotInitialized);
+
+        // Set node2 to Operational first
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory setupUpdates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        setupUpdates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node2,
+            nodeStatus: NodeStatus.Operational
+        });
+        vm.prank(configManager);
+        nodeRegistry.updateNodesStatusConfigManager(setupUpdates);
+
+        // Try to update both nodes - node1 valid (NotInitialized -> Operational),
+        // node2 invalid (Operational -> RemoteOnly)
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
+            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
+        updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node1,
+            nodeStatus: NodeStatus.Operational
+        });
+        updates[1] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
+            nodeAddress: node2,
+            nodeStatus: NodeStatus.RemoteOnly // Invalid transition from Operational
+        });
+
+        // Entire batch should revert
+        vm.prank(configManager);
+        vm.expectRevert(bytes(RiverRegistryErrors.NODE_STATE_NOT_ALLOWED));
+        nodeRegistry.updateNodesStatusConfigManager(updates);
+
+        // Verify node1 status was NOT updated (transaction reverted)
+        Node memory nodeData1 = nodeRegistry.getNode(node1);
+        assertEq(uint256(nodeData1.status), uint256(NodeStatus.NotInitialized));
     }
 }

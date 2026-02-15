@@ -79,12 +79,25 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers, OwnableBase {
         onlyOperator(msg.sender)
         onlyNodeOperator(nodeAddress, msg.sender)
     {
+        _updateNodeStatus(nodeAddress, status);
+    }
+
+    function updateNodesStatusConfigManager(
+        UpdateNodeStatusConfigManagerRequest[] calldata updates
+    ) external onlyConfigurationManager(msg.sender) {
+        for (uint256 i = 0; i < updates.length; ++i) {
+            _updateNodeStatus(updates[i].nodeAddress, updates[i].nodeStatus);
+        }
+    }
+
+    function _updateNodeStatus(address nodeAddress, NodeStatus status) internal {
         Node storage node = ds.nodeByAddress[nodeAddress];
-
+        if (node.nodeAddress == address(0)) {
+            RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+        }
         _checkNodeStatusTransionAllowed(node.status, status);
-
         node.status = status;
-        emit NodeStatusUpdated(node.nodeAddress, status);
+        emit NodeStatusUpdated(nodeAddress, status);
     }
 
     function updateNodeUrl(
