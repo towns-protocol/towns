@@ -456,8 +456,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.NotInitialized);
 
         // Create update requests
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
         updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node1,
             nodeStatus: NodeStatus.Operational
@@ -492,8 +492,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         givenConfigurationManagerIsApproved(configManager)
         givenNodeIsRegistered(nodeOperator, node, url)
     {
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node,
             nodeStatus: NodeStatus.Operational
@@ -511,8 +511,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
     function test_updateNodesStatusConfigManager_emptyArray(
         address configManager
     ) external givenConfigurationManagerIsApproved(configManager) {
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](0);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](0);
 
         vm.prank(configManager);
         nodeRegistry.updateNodesStatusConfigManager(updates);
@@ -530,8 +530,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         vm.assume(notConfigManager != address(0));
         vm.assume(riverConfig.isConfigurationManager(notConfigManager) == false);
 
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node,
             nodeStatus: NodeStatus.Operational
@@ -548,8 +548,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
     ) external givenConfigurationManagerIsApproved(configManager) {
         vm.assume(nonExistentNode != address(0));
 
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: nonExistentNode,
             nodeStatus: NodeStatus.Operational
@@ -571,8 +571,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         givenNodeIsRegistered(nodeOperator, node, url)
     {
         // Node starts as NotInitialized, transition to Operational
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates1 =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates1 = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         updates1[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node,
             nodeStatus: NodeStatus.Operational
@@ -582,8 +582,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         nodeRegistry.updateNodesStatusConfigManager(updates1);
 
         // Try invalid transition: Operational -> RemoteOnly (not allowed)
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates2 =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates2 = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         updates2[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node,
             nodeStatus: NodeStatus.RemoteOnly
@@ -613,8 +613,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
         nodeRegistry.registerNode(node2, "https://node2.com", NodeStatus.NotInitialized);
 
         // Set node2 to Operational first
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory setupUpdates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory setupUpdates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](1);
         setupUpdates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node2,
             nodeStatus: NodeStatus.Operational
@@ -624,8 +624,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase, IOwnable
 
         // Try to update both nodes - node1 valid (NotInitialized -> Operational),
         // node2 invalid (Operational -> RemoteOnly)
-        INodeRegistry.UpdateNodeStatusConfigManagerRequest[] memory updates =
-            new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
+        INodeRegistry.UpdateNodeStatusConfigManagerRequest[]
+            memory updates = new INodeRegistry.UpdateNodeStatusConfigManagerRequest[](2);
         updates[0] = INodeRegistry.UpdateNodeStatusConfigManagerRequest({
             nodeAddress: node1,
             nodeStatus: NodeStatus.Operational
