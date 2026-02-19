@@ -161,34 +161,3 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-
-    deploy:
-        if: success() && github.event_name != 'workflow_dispatch'
-        needs: [generate-tags, merge-manifest]
-        uses: ./.github/workflows/Subgraph_service_continuous_deployment.yml
-        with:
-            environment_name: beta
-            docker_image_tag: ${{ needs.generate-tags.outputs.release_image_tag }}
-        secrets:
-            SLACK_CD_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-            ARGOCD_GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_PAT }}
-
-    notify_deploy_failure:
-        if: failure() && github.event_name != 'workflow_dispatch'
-        needs: deploy
-        runs-on: ubuntu-latest
-        steps:
-            - name: Slack notification
-              uses: slackapi/slack-github-action@v1.24.0
-              env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-              with:
-                  payload: |
-                      {
-                          "step": "Subgraph Docker Deploy",
-                          "environment": "beta",
-                          "branch": "${{ github.ref }}",
-                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                          "commit": "${{ github.sha }}",
-                          "actor": "${{ github.actor }}"
-                      }
