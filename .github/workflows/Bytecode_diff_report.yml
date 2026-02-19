@@ -28,8 +28,6 @@ on:
                 type: choice
                 options:
                     - 'alpha'
-                    - 'beta'
-                    - 'gamma'
                     - 'omega'
                 default: 'alpha'
             target_environment:
@@ -38,10 +36,8 @@ on:
                 type: choice
                 options:
                     - 'alpha'
-                    - 'beta'
-                    - 'gamma'
                     - 'omega'
-                default: 'gamma'
+                default: 'omega'
 
     workflow_call:
         inputs:
@@ -64,9 +60,7 @@ on:
                 required: true
             BLOCKSCOUT_BASE_API_KEY:
                 required: true
-            BETA_BASE_SEPOLIA_DEPLOYER_PK:
-                required: false
-            GAMMA_BASE_SEPOLIA_DEPLOYER_PK:
+            ALPHA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
             OMEGA_BASE_DEPLOYER_PK:
                 required: true
@@ -84,14 +78,10 @@ jobs:
         steps:
             - name: Set environment-specific private key
               run: |
-                  if [ "${{ inputs.target_environment }}" = "beta" ]; then
-                    echo "TESTNET_PRIVATE_KEY=${{ secrets.BETA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
-                  elif [ "${{ inputs.target_environment }}" = "gamma" ]; then
-                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
-                  elif [ "${{ inputs.target_environment }}" = "omega" ]; then
+                  if [ "${{ inputs.target_environment }}" = "omega" ]; then
                     echo "TESTNET_PRIVATE_KEY=${{ secrets.OMEGA_BASE_DEPLOYER_PK }}" >> $GITHUB_ENV
                   else
-                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
                   fi
 
             - name: Checkout code
