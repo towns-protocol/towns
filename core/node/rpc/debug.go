@@ -1,10 +1,8 @@
 package rpc
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -112,7 +110,9 @@ func (s *Service) registerDebugHandlersOnMux(mux httpMux, enableDebugEndpoints b
 	}
 }
 
-func (s *Service) registerDebugHandlersOnPrivateAddress(cfg config.DebugEndpointsConfig) {
+func (s *Service) registerDebugHandlersOnPrivateAddress() {
+	cfg := s.config.DebugEndpoints
+
 	if cfg.PrivateDebugServerAddress == "" {
 		return
 	}
@@ -121,35 +121,30 @@ func (s *Service) registerDebugHandlersOnPrivateAddress(cfg config.DebugEndpoint
 
 	s.registerDebugHandlersOnMux(debugMux, true, cfg)
 
-	debugServer := &http.Server{
-		Addr:    cfg.PrivateDebugServerAddress,
-		Handler: debugMux,
-		BaseContext: func(l net.Listener) context.Context {
-			return s.serverCtx
-		},
+	debugListener, err := s.createListener(cfg.PrivateDebugServerAddress)
+	if err != nil {
+		s.defaultLogger.Errorw("Failed to create debug listener", "error", err, "addr", cfg.PrivateDebugServerAddress)
+		return
 	}
 
-	go func() {
-		s.defaultLogger.Infow("Starting debug HTTP server", "addr", debugServer.Addr)
-		if err := debugServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			s.defaultLogger.Errorw("Debug HTTP server failed", "error", err)
-		}
-	}()
+	debugServer, err := s.createHttpServer(debugListener, debugMux)
+	if err != nil {
+		s.defaultLogger.Errorw("Failed to create debug server", "error", err, "addr", cfg.PrivateDebugServerAddress)
+		return
+	}
 
-	s.onClose(func() {
-		shutdownCtx, cancel := context.WithTimeout(s.serverCtx, time.Second)
-		defer cancel()
-
-		s.defaultLogger.Infow("Shutting down debug HTTP server")
-		if err := debugServer.Shutdown(shutdownCtx); err != nil {
-			s.defaultLogger.Errorw("Failed to gracefully shutdown debug HTTP server", "error", err)
-		}
-	})
+	s.onClose(debugServer.Close)
 }
 
 func (s *Service) registerDebugHandlers() {
-	s.registerDebugHandlersOnMux(s.mux, s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
-	s.registerDebugHandlersOnPrivateAddress(s.config.DebugEndpoints)
+	if !s.config.DebugEndpoints.DisableOnPublicPort {
+		s.registerDebugHandlersOnMux(s.mux, s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	} else {
+		// Only register /debug/multi and /debug/multi/json on the public port
+		s.mux.HandleFunc("/debug/multi", s.handleDebugMulti)
+		s.mux.HandleFunc("/debug/multi/json", s.handleDebugMultiJson)
+	}
+	s.registerDebugHandlersOnPrivateAddress()
 	s.startMemProfile(s.config.DebugEndpoints)
 }
 

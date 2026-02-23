@@ -510,6 +510,67 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 	return cfg, nil
 }
 
+func (s *Service) createListener(addr string) (net.Listener, error) {
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+
+	if !s.config.DisableHttps {
+		tlsConfig, err := s.loadTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+		listener = tls.NewListener(listener, tlsConfig)
+	}
+
+	if !s.config.Log.Simplify {
+		s.defaultLogger.Infow("Listening", "addr", addr)
+	}
+
+	s.onClose(listener.Close)
+
+	return listener, nil
+}
+
+func (s *Service) createHttpServer(listener net.Listener, handler http.Handler) (*http.Server, error) {
+	// TODO: set http2 settings here
+	http2Server := &http2.Server{}
+
+	if s.config.DisableHttps {
+		handler = h2c.NewHandler(handler, http2Server)
+		s.defaultLogger.Warnw("Starting H2C server without TLS")
+	}
+
+	httpServer := &http.Server{
+		Addr:    listener.Addr().String(),
+		Handler: handler,
+		BaseContext: func(listener net.Listener) context.Context {
+			return s.serverCtx
+		},
+		ErrorLog: utils.NewHttpLogger(s.serverCtx),
+	}
+	// ensure that x/http2 is used
+	// https://github.com/golang/go/issues/42534
+	err := http2.ConfigureServer(httpServer, http2Server)
+	if err != nil {
+		return nil, err
+	}
+
+	go s.serve(httpServer, listener)
+
+	return httpServer, nil
+}
+
+func (s *Service) serve(httpServer *http.Server, listener net.Listener) {
+	err := httpServer.Serve(listener)
+	if err != nil && err != http.ErrServerClosed {
+		s.defaultLogger.Errorw("Serve failed", "error", err, "addr", listener.Addr().String())
+	} else {
+		s.defaultLogger.Infow("Serve stopped", "addr", listener.Addr().String())
+	}
+}
+
 func (s *Service) runHttpServer() error {
 	ctx := s.serverCtx
 	log := logging.FromCtx(ctx)
@@ -523,28 +584,18 @@ func (s *Service) runHttpServer() error {
 		}
 
 		address = fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-		s.listener, err = net.Listen("tcp", address)
+
+		s.listener, err = s.createListener(address)
 		if err != nil {
 			return err
-		}
-
-		if !cfg.DisableHttps {
-			tlsConfig, err := s.loadTLSConfig()
-			if err != nil {
-				return err
-			}
-			s.listener = tls.NewListener(s.listener, tlsConfig)
-		}
-
-		if !cfg.Log.Simplify {
-			log.Infow("Listening", "addr", address)
 		}
 	} else {
 		if cfg.Port != 0 {
 			log.Warnw("Port is ignored when listener is provided")
 		}
+
+		s.onClose(s.listener.Close)
 	}
-	s.onClose(s.listener.Close)
 
 	mux := http.NewServeMux()
 	s.mux = mux
@@ -587,42 +638,13 @@ func (s *Service) runHttpServer() error {
 
 	handler := corsMiddleware.Handler(mux)
 
-	// TODO: set http2 settings here
-	http2Server := &http2.Server{}
-
-	if cfg.DisableHttps {
-		handler = h2c.NewHandler(handler, http2Server)
-		log.Warnw("Starting H2C server without TLS")
-	}
-
-	s.httpServer = &http.Server{
-		Addr:    address,
-		Handler: handler,
-		BaseContext: func(listener net.Listener) context.Context {
-			return ctx
-		},
-		ErrorLog: utils.NewHttpLogger(ctx),
-	}
-	// ensure that x/http2 is used
-	// https://github.com/golang/go/issues/42534
-	err = http2.ConfigureServer(s.httpServer, http2Server)
+	s.httpServer, err = s.createHttpServer(s.listener, handler)
 	if err != nil {
 		return err
 	}
 
-	go s.serve()
-
 	s.onClose(s.httpServerClose)
 	return nil
-}
-
-func (s *Service) serve() {
-	err := s.httpServer.Serve(s.listener)
-	if err != nil && err != http.ErrServerClosed {
-		s.defaultLogger.Errorw("Serve failed", "error", err)
-	} else {
-		s.defaultLogger.Infow("Serve stopped")
-	}
 }
 
 func (s *Service) initEntitlements() error {

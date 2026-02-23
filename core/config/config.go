@@ -744,8 +744,9 @@ type DebugEndpointsConfig struct {
 	// PrivateDebugServerAddress is the address to start the debug server on, such as "127.0.0.1:8080" or ":8080" to
 	// listen on all interfaces.
 	// If not set, the debug server will not be started.
-	// There is no TLS and no authentication, all debug endpoints, including pprof, are exposed.
+	// There is no authentication, all debug endpoints, including pprof, are exposed.
 	// This is highly privileged endpoint and should not be exposed to the public internet.
+	// This is a TLS endpoint and it uses same certificate as the public port.
 	PrivateDebugServerAddress string
 
 	// MemProfileDir is the directory to write the memory profile to.
@@ -757,6 +758,10 @@ type DebugEndpointsConfig struct {
 	// MemProfileInterval is the interval to write memory profiles with, like "5m".
 	// First profile is written at MemProfileInterval / 2 after start.
 	MemProfileInterval time.Duration
+
+	// DisableOnPublicPort is a flag to disable all debug endpoints except /debug/multi on the public port.
+	// This is convenience setting to disable all settings at once instead of setting each one to false.
+	DisableOnPublicPort bool
 }
 
 type RiverRegistryConfig struct {
