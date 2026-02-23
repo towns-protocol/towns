@@ -3,61 +3,60 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
+import {IEntitlement} from "../../entitlements/IEntitlement.sol";
 
 // libraries
-
-import {EntitlementsManagerStorage} from "./EntitlementsManagerStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {EntitlementsManagerStorage} from "./EntitlementsManagerStorage.sol";
 
 // contracts
-error EntitlementsService__InvalidEntitlementAddress();
-error EntitlementsService__InvalidEntitlementInterface();
-
-error EntitlementsService__ImmutableEntitlement();
-error EntitlementsService__EntitlementDoesNotExist();
-error EntitlementsService__EntitlementAlreadyExists();
 
 library EntitlementsManagerService {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EntitlementsManagerStorage for EntitlementsManagerStorage.Layout;
+    using CustomRevert for bytes4;
+
+    error InvalidEntitlementAddress();
+    error InvalidEntitlementInterface();
+    error ImmutableEntitlement();
+    error EntitlementDoesNotExist();
+    error EntitlementAlreadyExists();
 
     string internal constant IN_TOWN = "";
 
     function checkEntitlement(address entitlement) internal view {
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
-        if (!ds.entitlements.contains(entitlement)) {
-            revert EntitlementsService__EntitlementDoesNotExist();
-        }
+        if (!ds.entitlements.contains(entitlement)) EntitlementDoesNotExist.selector.revertWith();
     }
 
     // TODO define what isImmutable means
     function addEntitlement(address entitlement, bool isImmutable) internal {
-        IEntitlement ie = IEntitlement(entitlement);
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
         if (ds.entitlements.contains(entitlement)) {
-            revert EntitlementsService__EntitlementAlreadyExists();
+            EntitlementAlreadyExists.selector.revertWith();
         }
 
+        bool isCrosschain = IEntitlement(entitlement).isCrosschain();
+
         ds.entitlements.add(entitlement);
-        ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage.Entitlement({
-            entitlement: IEntitlement(entitlement),
-            isImmutable: isImmutable,
-            isCrosschain: ie.isCrosschain()
-        });
+        EntitlementsManagerStorage.Entitlement storage entitlementData = ds.entitlementByAddress[
+            entitlement
+        ];
+        entitlementData.entitlement = IEntitlement(entitlement);
+        entitlementData.isImmutable = isImmutable;
+        entitlementData.isCrosschain = isCrosschain;
     }
 
     function removeEntitlement(address entitlement) internal {
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
-        if (!ds.entitlements.contains(entitlement)) {
-            revert EntitlementsService__EntitlementDoesNotExist();
-        }
+        if (!ds.entitlements.contains(entitlement)) EntitlementDoesNotExist.selector.revertWith();
 
         if (ds.entitlementByAddress[entitlement].isImmutable) {
-            revert EntitlementsService__ImmutableEntitlement();
+            ImmutableEntitlement.selector.revertWith();
         }
 
         ds.entitlements.remove(entitlement);
@@ -78,46 +77,42 @@ library EntitlementsManagerService {
     {
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
-        if (!ds.entitlements.contains(entitlement)) {
-            revert EntitlementsService__EntitlementDoesNotExist();
-        }
+        if (!ds.entitlements.contains(entitlement)) EntitlementDoesNotExist.selector.revertWith();
 
-        IEntitlement ie = IEntitlement(entitlement);
-        string memory temp1 = ie.name();
-        address temp2 = address(ds.entitlementByAddress[entitlement].entitlement);
-        string memory temp3 = ie.moduleType();
-        bool temp4 = ds.entitlementByAddress[entitlement].isImmutable;
+        EntitlementsManagerStorage.Entitlement storage entitlementData = ds.entitlementByAddress[
+            entitlement
+        ];
 
-        return (temp1, temp2, temp3, temp4);
+        name = IEntitlement(entitlement).name();
+        moduleType = IEntitlement(entitlement).moduleType();
+        moduleAddress = address(entitlementData.entitlement);
+        isImmutable = entitlementData.isImmutable;
     }
 
-    function getEntitlements() internal view returns (address[] memory entitlements) {
+    function getEntitlements() internal view returns (address[] memory) {
         return EntitlementsManagerStorage.layout().entitlements.values();
     }
 
-    // =============================================================
-    //                           Validation
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         VALIDATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function validateEntitlement(address entitlement) internal view {
-        if (entitlement == address(0)) {
-            revert EntitlementsService__InvalidEntitlementAddress();
-        }
+        if (entitlement == address(0)) InvalidEntitlementAddress.selector.revertWith();
 
         try IERC165(entitlement).supportsInterface(type(IEntitlement).interfaceId) returns (
             bool supported
         ) {
-            if (!supported) {
-                revert EntitlementsService__InvalidEntitlementInterface();
-            }
+            if (!supported) InvalidEntitlementInterface.selector.revertWith();
         } catch {
-            revert EntitlementsService__InvalidEntitlementInterface();
+            InvalidEntitlementInterface.selector.revertWith();
         }
     }
 
-    // =============================================================
-    //                        Proxy Methods
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       PROXY METHODS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function proxyGetEntitlementDataByRole(
         address entitlement,
         uint256 role
