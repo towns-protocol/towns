@@ -1521,7 +1521,7 @@ func TestQueryPlan(t *testing.T) {
 	requireActualRows(require, plan, 11, "PLAN: %s", plan)
 }
 
-// TestEmptyMiniblockRecordCorruptionFix checks that code recovers from the corruption that occured
+// TestEmptyMiniblockRecordCorruptionFix checks that code recovers from the corruption that occurred
 // when empty genesis miniblocks occasionally were inserted into production database.
 // Such records were not parsible on load leading to errors.
 // Code is modified to return Err_NOT_FOUND in case of such records in GetStreamFromLastSnapshot.
