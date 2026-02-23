@@ -209,6 +209,7 @@ func TestSetOnChain(t *testing.T) {
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, ABIEncodeUint64(3))
 	btc.SetConfigValue(t, ctx, StreamMediaMaxChunkCountConfigKey, ABIEncodeUint64(1000))
+	btc.SetConfigValue(t, ctx, StreamMediaMaxSizeBytesConfigKey, ABIEncodeUint64(1000))
 	btc.SetConfigValue(t, ctx, StreamCacheExpirationMsConfigKey, ABIEncodeUint64(3000))
 	btc.SetConfigValue(t, ctx, StreamRecencyConstraintsAgeSecConfigKey, ABIEncodeUint64(5))
 	btc.SetConfigValue(t, ctx, "unknown key is fine", ABIEncodeUint64(5))
@@ -222,6 +223,7 @@ func TestSetOnChain(t *testing.T) {
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(3, s.ReplicationFactor)
 	assert.EqualValues(1000, s.MediaMaxChunkCount)
+	assert.EqualValues(1000, s.MediaMaxSizeBytes)
 	assert.Equal(3*time.Second, s.StreamCacheExpiration)
 	assert.Equal(5*time.Second, s.RecencyConstraintsAge)
 	assert.EqualValues(5, s.MembershipLimits.DM)

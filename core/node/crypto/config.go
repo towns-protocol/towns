@@ -32,7 +32,11 @@ const (
 	StreamMediaMaxChunkCountConfigKey = "stream.media.maxChunkCount"
 	// StreamMediaMaxChunkSizeConfigKey defines the maximum size of a data chunk that is allowed to be added to a media
 	// stream in a single event.
-	StreamMediaMaxChunkSizeConfigKey             = "stream.media.maxChunkSize"
+	StreamMediaMaxChunkSizeConfigKey = "stream.media.maxChunkSize"
+	// StreamMediaMaxSizeBytesConfigKey defines the maximum total size of a media stream in bytes.
+	// (e.g. all chunks combined).
+	// It replaces StreamMediaMaxChunkCountConfigKey and StreamMediaMaxChunkSizeConfigKey
+	StreamMediaMaxSizeBytesConfigKey             = "stream.media.maxStreamSizeBytes"
 	StreamRecencyConstraintsAgeSecConfigKey      = "stream.recencyConstraints.ageSeconds"
 	StreamRecencyConstraintsGenerationsConfigKey = "stream.recencyConstraints.generations"
 	// StreamReplicationFactorConfigKey is the key for how often a stream is replicated over nodes
@@ -157,6 +161,9 @@ type OnChainSettings struct {
 
 	MediaMaxChunkCount uint64 `mapstructure:"stream.media.maxChunkCount"`
 	MediaMaxChunkSize  uint64 `mapstructure:"stream.media.maxChunkSize"`
+	// MediaMaxSizeBytes is the maximum allowed total size in bytes of all chunks combined in a media stream.
+	// It replaces MediaMaxChunkCount and MediaMaxChunkSize.
+	MediaMaxSizeBytes uint64 `mapstructure:"stream.media.maxStreamSizeBytes"`
 
 	RecencyConstraintsAge time.Duration `mapstructure:"stream.recencyConstraints.ageSeconds"`
 	RecencyConstraintsGen uint64        `mapstructure:"stream.recencyConstraints.generations"`
@@ -332,6 +339,7 @@ func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 21,
 		MediaMaxChunkSize:  1200000,
+		MediaMaxSizeBytes:  25 * 1024 * 1024, // 25MiB
 
 		RecencyConstraintsAge: 11 * time.Second,
 		RecencyConstraintsGen: 5,
