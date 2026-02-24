@@ -18,9 +18,9 @@ env:
     RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_REGION: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_REGION }}
 
 on:
-    schedule:
-        # Run every hour
-        - cron: '0 * * * *'
+    # schedule:
+    #     # Run every hour
+    #     - cron: '0 * * * *'
     pull_request:
     merge_group:
     workflow_dispatch: # Allow manual trigger in GitHub UI
