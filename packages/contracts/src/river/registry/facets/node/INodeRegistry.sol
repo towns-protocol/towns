@@ -23,6 +23,11 @@ interface INodeRegistryBase {
 }
 
 interface INodeRegistry is INodeRegistryBase {
+    struct UpdateNodeStatusConfigManagerRequest {
+        address nodeAddress;
+        NodeStatus nodeStatus;
+    }
+
     // =============================================================
     //                           Nodes
     // =============================================================
@@ -33,6 +38,10 @@ interface INodeRegistry is INodeRegistryBase {
     function removeNode(address nodeAddress) external;
 
     function updateNodeStatus(address nodeAddress, NodeStatus status) external;
+
+    function updateNodesStatusConfigManager(
+        UpdateNodeStatusConfigManagerRequest[] calldata updates
+    ) external;
 
     function updateNodeUrl(address nodeAddress, string memory url) external;
 
