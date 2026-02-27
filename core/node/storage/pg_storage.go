@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/exaring/otelpgx"
@@ -48,6 +49,7 @@ type PostgresEventStore struct {
 
 type txRunnerOpts struct {
 	skipLoggingNotFound    bool
+	expectedPgErrorCodes   []string
 	overrideIsolationLevel *pgx.TxIsoLevel // Optional custom isolation level
 }
 
@@ -132,7 +134,12 @@ func (s *PostgresEventStore) txRunner(
 					s.txCounter.WithLabelValues(name, "retry").Inc()
 					continue
 				}
-				log.Warnw("pg.txRunner: transaction failed", "pgErr", pgErr)
+				level := zapcore.WarnLevel
+				if opts != nil && slices.Contains(opts.expectedPgErrorCodes, pgErr.Code) {
+					level = zapcore.DebugLevel
+					pass = true
+				}
+				log.Logw(level, "pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
 				level := zapcore.DebugLevel
 				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
