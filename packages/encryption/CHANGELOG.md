@@ -1,5 +1,14 @@
 # @towns-protocol/encryption
 
+## 1.0.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @towns-protocol/proto@1.0.4
+  - @towns-protocol/utils@1.0.4
+  - @towns-protocol/web3@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

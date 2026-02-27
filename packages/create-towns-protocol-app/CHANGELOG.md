@@ -1,5 +1,7 @@
 # create-towns-protocol-app
 
+## 1.0.4
+
 ## 1.0.3
 
 ## 1.0.2
