@@ -58,6 +58,7 @@ _get-docker-build-hash:
         git ls-tree HEAD ../packages/contracts/scripts 2>/dev/null
         git ls-tree HEAD ../packages/contracts/src 2>/dev/null
         git ls-tree HEAD ../scripts/deploy-contracts.sh 2>/dev/null
+        git ls-tree HEAD ../scripts/deploy-base-contracts.sh 2>/dev/null
         git ls-tree HEAD ../scripts/start-local-basechain.sh 2>/dev/null
         git ls-tree HEAD ../scripts/start-local-riverchain.sh 2>/dev/null
         git ls-tree HEAD ../core/justfile 2>/dev/null
@@ -109,14 +110,27 @@ _anvil-start $NAME $PORT $CHAIN_ID:
             echo "Starting Docker ${NAME} chain on port ${PORT}"
             IMAGE=$(just _get-docker-image)
 
+            # Expose Alto bundler port (4337) for base chain
+            ALTO_PORT_ARG=""
+            if [ "${NAME}" = "base" ]; then
+                ALTO_PORT_ARG="-p 4337:4337"
+            fi
+
             docker run -d \
                 --name towns-${NAME}-chain \
                 -p ${PORT}:${PORT} \
+                ${ALTO_PORT_ARG} \
                 -e CHAIN=${NAME} \
                 -e RIVER_BLOCK_TIME \
                 $IMAGE
 
             ../scripts/wait-for-port.sh ${PORT} "Docker_anvil_${NAME}"
+
+            # Wait for Alto bundler if base chain
+            if [ "${NAME}" = "base" ]; then
+                echo "Waiting for Alto bundler on port 4337..."
+                ../scripts/wait-for-port.sh 4337 "Docker_alto"
+            fi
         else
             echo "Starting ${NAME} on port ${PORT}"
             mkdir -p ./run_files/anvil
@@ -134,9 +148,70 @@ _anvil-start $NAME $PORT $CHAIN_ID:
         fi
     fi
 
+# Alto bundler for ERC-4337 account abstraction
+_alto-start:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if nc -z localhost 4337 > /dev/null 2>&1; then
+        echo "Alto bundler already running on port 4337"
+    else
+        echo "Starting Alto bundler on port 4337..."
+        mkdir -p ./run_files/anvil
+        ANVIL_PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+        ENTRYPOINT_V06="0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+        ENTRYPOINT_V07="0x0000000071727De22E5E9d8BAf0edAc6f37da032"
+        ( nohup bunx @pimlico/alto@0.0.20 \
+            --entrypoints "${ENTRYPOINT_V06},${ENTRYPOINT_V07}" \
+            --rpc-url "http://127.0.0.1:8545" \
+            --executor-private-keys "${ANVIL_PRIVATE_KEY}" \
+            --utility-private-key "${ANVIL_PRIVATE_KEY}" \
+            --min-balance "0" \
+            --safe-mode false \
+            --deploy-simulations-contract \
+            --port 4337 \
+            </dev/null > ./run_files/anvil/alto.log 2>&1 & )
+        ../scripts/wait-for-port.sh 4337 alto_bundler
+    fi
+
+_alto-stop:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    ../scripts/kill-on-port.sh 4337 alto_bundler
+
+# Run Alto bundler in foreground (for VSCode task)
+alto-run:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if nc -z localhost 4337 > /dev/null 2>&1; then
+        echo "Alto bundler already running on port 4337"
+        exit 0
+    fi
+    echo "Starting Alto bundler on port 4337..."
+    ANVIL_PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    ENTRYPOINT_V06="0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+    ENTRYPOINT_V07="0x0000000071727De22E5E9d8BAf0edAc6f37da032"
+    bunx @pimlico/alto@0.0.20 \
+        --entrypoints "${ENTRYPOINT_V06},${ENTRYPOINT_V07}" \
+        --rpc-url "http://127.0.0.1:8545" \
+        --executor-private-keys "${ANVIL_PRIVATE_KEY}" \
+        --utility-private-key "${ANVIL_PRIVATE_KEY}" \
+        --min-balance "0" \
+        --safe-mode false \
+        --deploy-simulations-contract \
+        --port 4337
+
 anvil-base:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     just _anvil-start "base" "8545" "31337"
+
+# Start base anvil chain with Alto bundler (native mode - runs in foreground)
+anvil-base-with-alto:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    just _anvil-start "base" "8545" "31337"
+    echo "Waiting for EntryPoint contracts to be deployed..."
+    # Wait for EntryPoint v0.7 to be deployed (happens during 'Configure Nodes' step)
+    while ! cast code 0x0000000071727De22E5E9d8BAf0edAc6f37da032 --rpc-url http://127.0.0.1:8545 2>/dev/null | grep -q "^0x6080"; do
+        sleep 1
+    done
+    echo "EntryPoint deployed. Starting Alto bundler..."
+    just alto-run
 
 anvil-base-stop:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -144,6 +219,7 @@ anvil-base-stop:
         docker stop towns-base-chain 2>/dev/null || true
         docker rm towns-base-chain 2>/dev/null || true
     else
+        just _alto-stop
         ../scripts/kill-on-port.sh 8545 anvil_base
     fi
 
@@ -527,7 +603,7 @@ just-register-nodes-river:
 
 register-nodes-river: config-river-chain config-instances just-register-nodes-river
 
-config: config-root config-app-registry config-notifications register-nodes-base register-nodes-river storage-start
+config: config-root config-app-registry config-notifications register-nodes-base register-nodes-river storage-start _alto-start
 
 build:
     #!/usr/bin/env -S bash {{BASH_OPTS}}

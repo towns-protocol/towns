@@ -1,0 +1,43 @@
+{
+    "name": "@towns-protocol/smart-account",
+    "version": "0.0.1",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./create2": {
+            "types": "./dist/create2/index.d.ts",
+            "import": "./dist/create2/index.js"
+        },
+        "./id": {
+            "types": "./dist/id/index.d.ts",
+            "import": "./dist/id/index.js"
+        },
+        "./upgrade": {
+            "types": "./dist/upgrade/index.d.ts",
+            "import": "./dist/upgrade/index.js"
+        },
+        "./abis": {
+            "types": "./dist/abis/index.d.ts",
+            "import": "./dist/abis/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "viem": "^2.29.3"
+    },
+    "devDependencies": {
+        "@towns-protocol/generated": "workspace:^",
+        "permissionless": "^0.2.57",
+        "vitest": "^3.2.3",
+        "typescript": "~5.8.3"
+    }
+}

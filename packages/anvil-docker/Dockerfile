@@ -32,6 +32,9 @@ RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
     ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
+# Install Alto bundler globally using bun (for deploying ERC-4337 contracts)
+RUN bun install -g @pimlico/alto@0.0.20
+
 # Install just from precompiled binary
 RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
 
@@ -94,9 +97,19 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     bash \
     curl \
-    netcat-openbsd && \
+    netcat-openbsd \
+    ca-certificates \
+    unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Bun for Alto bundler
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
+
+# Install Alto bundler globally using bun
+RUN bun install -g @pimlico/alto@0.0.20
 
 # Create app directory
 WORKDIR /app

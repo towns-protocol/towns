@@ -59,16 +59,82 @@ import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
-import { parseEther } from 'viem'
+import walletLinkAbi from '@towns-protocol/generated/dev/abis/WalletLink.abi'
+import {
+    createPublicClient,
+    createWalletClient,
+    encodeAbiParameters,
+    encodeFunctionData,
+    http,
+    parseEther,
+    type Hex,
+    type PublicClient,
+    type Transport,
+    type Chain,
+    type WalletClient,
+} from 'viem'
+import { foundry } from 'viem/chains'
+import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts'
+import { createBundlerClient } from 'viem/account-abstraction'
+import {
+    discoverAccount,
+    modularAccountAbi,
+    toModularSmartAccount,
+} from '@towns-protocol/smart-account'
 import { execute } from 'viem/experimental/erc7821'
 import { UserDevice } from '@towns-protocol/encryption'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
+import IAppInstallerAbi from '@towns-protocol/generated/dev/abis/IAppInstaller.abi'
 
 const log = dlog('test:bot')
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
+
+// Smart account constants
+const BUNDLER_RPC_URL = process.env.BUNDLER_RPC_URL ?? 'http://127.0.0.1:4337'
+const LINKED_WALLET_MESSAGE = 'Link your external wallet'
+const ANVIL_PRIVATE_KEY =
+    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as const
+
+// Minimal ABI to read execution manifest from AccountModules contract
+const IExecutionModuleABI = [
+    {
+        name: 'executionManifest',
+        type: 'function',
+        inputs: [],
+        outputs: [
+            {
+                name: '',
+                type: 'tuple',
+                components: [
+                    {
+                        name: 'executionFunctions',
+                        type: 'tuple[]',
+                        components: [
+                            { name: 'executionSelector', type: 'bytes4' },
+                            { name: 'skipRuntimeValidation', type: 'bool' },
+                            { name: 'allowGlobalValidation', type: 'bool' },
+                        ],
+                    },
+                    {
+                        name: 'executionHooks',
+                        type: 'tuple[]',
+                        components: [
+                            { name: 'executionSelector', type: 'bytes4' },
+                            { name: 'entityId', type: 'uint32' },
+                            { name: 'isPreHook', type: 'bool' },
+                            { name: 'isPostHook', type: 'bool' },
+                        ],
+                    },
+                    { name: 'interfaceIds', type: 'bytes4[]' },
+                ],
+            },
+        ],
+        stateMutability: 'pure',
+    },
+] as const
 
 const SLASH_COMMANDS = [
     { name: 'help', description: 'Get help with bot commands' },
@@ -117,8 +183,17 @@ describe('Bot', { sequential: true }, () => {
     let bobDefaultChannel: Channel
     let ethersProvider: ethers.providers.StaticJsonRpcProvider
 
+    // Smart account variables for Bob
+    let bobSmartAccountOwner: PrivateKeyAccount
+    let bobSmartAccount: Awaited<ReturnType<typeof toModularSmartAccount>>
+    let bobSmartAccountAddress: Address
+    let viemPublicClient: PublicClient<Transport, Chain>
+    let viemWalletClient: WalletClient<Transport, Chain, PrivateKeyAccount>
+    let bundlerClient: ReturnType<typeof createBundlerClient>
+
     beforeAll(async () => {
         await shouldInitializeBotOwner()
+        await shouldSetupBobSmartAccount()
         await shouldMintBot()
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
@@ -161,6 +236,191 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.members.myself.setDisplayName(BOB_DISPLAY_NAME)
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
+    }
+
+    const shouldSetupBobSmartAccount = async () => {
+        // Create viem clients using townsConfig RPC URL
+        const baseRpcUrl = townsConfig.base.rpcUrl
+        const spaceFactoryAddress = townsConfig.base.chainConfig.addresses.spaceFactory
+
+        viemPublicClient = createPublicClient({
+            chain: foundry,
+            transport: http(baseRpcUrl),
+        })
+
+        viemWalletClient = createWalletClient({
+            chain: foundry,
+            transport: http(baseRpcUrl),
+            account: privateKeyToAccount(ANVIL_PRIVATE_KEY),
+        })
+
+        bundlerClient = createBundlerClient({
+            client: viemPublicClient,
+            transport: http(BUNDLER_RPC_URL),
+        })
+
+        // Generate a new private key for the smart account owner
+        bobSmartAccountOwner = privateKeyToAccount(generatePrivateKey())
+
+        // Discover the smart account address
+        const discovered = await discoverAccount(
+            viemPublicClient,
+            bobSmartAccountOwner.address,
+            'modular',
+        )
+        bobSmartAccountAddress = discovered.address
+
+        // Create the modular smart account instance
+        bobSmartAccount = await toModularSmartAccount({
+            client: viemPublicClient,
+            owner: bobSmartAccountOwner,
+            address: bobSmartAccountAddress,
+        })
+
+        // Fund the smart account using Anvil's default funded account
+        const fundTx = await viemWalletClient.sendTransaction({
+            to: bobSmartAccount.address,
+            value: parseEther('1'),
+        })
+        await viemPublicClient.waitForTransactionReceipt({ hash: fundTx })
+
+        // Create a viem account from Bob's root wallet for signing
+        const bobViemAccount = privateKeyToAccount(bob.rootWallet.privateKey as Hex)
+
+        // Get nonce for Bob's root key
+        const nonce = await viemPublicClient.readContract({
+            address: spaceFactoryAddress,
+            abi: walletLinkAbi,
+            functionName: 'getLatestNonceForRootKey',
+            args: [bobViemAccount.address],
+        })
+
+        // Create EIP-712 signature from Bob's root wallet using viem
+        // Domain and types must match WalletLinkBase.sol
+        const signature = await bobViemAccount.signTypedData({
+            domain: {
+                name: 'SpaceFactory',
+                version: '1',
+                chainId: foundry.id,
+                verifyingContract: spaceFactoryAddress,
+            },
+            types: {
+                LinkedWallet: [
+                    { name: 'message', type: 'string' },
+                    { name: 'userID', type: 'address' },
+                    { name: 'nonce', type: 'uint256' },
+                ],
+            },
+            primaryType: 'LinkedWallet',
+            message: {
+                message: LINKED_WALLET_MESSAGE,
+                userID: bobSmartAccount.address,
+                nonce,
+            },
+        })
+
+        // Send userOp to link the smart account to Bob's root key
+        // Note: Explicit gas limits required for Alto bundler with modular accounts
+        const userOpHash = await bundlerClient.sendUserOperation({
+            account: bobSmartAccount,
+            calls: [
+                {
+                    to: spaceFactoryAddress,
+                    abi: walletLinkAbi,
+                    functionName: 'linkCallerToRootKey',
+                    args: [
+                        {
+                            addr: bobViemAccount.address,
+                            signature,
+                            message: LINKED_WALLET_MESSAGE,
+                        },
+                        nonce,
+                    ],
+                },
+            ],
+            callGasLimit: 300000n,
+            verificationGasLimit: 500000n,
+            preVerificationGas: 100000n,
+        })
+
+        const receipt = await bundlerClient.waitForUserOperationReceipt({
+            hash: userOpHash,
+        })
+        expect(receipt.success).toBe(true)
+
+        // Verify the link
+        const isLinked = await viemPublicClient.readContract({
+            address: spaceFactoryAddress,
+            abi: walletLinkAbi,
+            functionName: 'checkIfLinked',
+            args: [bobViemAccount.address, bobSmartAccount.address],
+        })
+        expect(isLinked).toBe(true)
+        const accountModulesAddress = townsConfig.base.chainConfig.addresses.accountModules
+        if (!accountModulesAddress) {
+            throw new Error('AccountModules address is not configured')
+        }
+        const isAlreadyInstalled = await viemPublicClient.readContract({
+            address: accountModulesAddress,
+            abi: [
+                {
+                    name: 'isInstalled',
+                    type: 'function',
+                    inputs: [{ type: 'address', name: 'account' }],
+                    outputs: [{ type: 'bool' }],
+                    stateMutability: 'view',
+                },
+            ] as const,
+            functionName: 'isInstalled',
+            args: [bobSmartAccount.address],
+        })
+        if (isAlreadyInstalled) {
+            return
+        }
+        const manifest = await viemPublicClient.readContract({
+            address: accountModulesAddress,
+            abi: IExecutionModuleABI,
+            functionName: 'executionManifest',
+        })
+        const moduleInstallData = encodeAbiParameters(
+            [{ type: 'address' }],
+            [bobSmartAccount.address],
+        )
+        const installExecutionCallData = encodeFunctionData({
+            abi: modularAccountAbi,
+            functionName: 'installExecution',
+            args: [accountModulesAddress, manifest, moduleInstallData],
+        })
+        const executeBatchCallData = encodeFunctionData({
+            abi: modularAccountAbi,
+            functionName: 'executeBatch',
+            args: [
+                [
+                    {
+                        target: bobSmartAccount.address,
+                        value: 0n,
+                        data: installExecutionCallData,
+                    },
+                ],
+            ],
+        })
+
+        const encodedInstallCallData = await bobSmartAccount.encodeCallData(executeBatchCallData)
+
+        // Use explicit executeBatch calldata to avoid SelfCallRecursionDepthExceeded.
+        // Increased gas limits to avoid "out of gas: not enough gas for reentrancy sentry" error
+        const installModulesHash = await bundlerClient.sendUserOperation({
+            account: bobSmartAccount,
+            callData: encodedInstallCallData,
+            callGasLimit: 2000000n,
+            verificationGasLimit: 500000n,
+            preVerificationGas: 100000n,
+        })
+
+        const installModulesReceipt = await bundlerClient.waitForUserOperationReceipt({
+            hash: installModulesHash,
+        })
+        expect(installModulesReceipt.success).toBe(true)
     }
 
     const shouldMintBot = async () => {
@@ -292,6 +552,16 @@ describe('Bot', { sequential: true }, () => {
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
     }
+
+    it('should have Bob smart account linked to root key', async () => {
+        const isLinked = await viemPublicClient.readContract({
+            address: townsConfig.base.chainConfig.addresses.spaceFactory,
+            abi: walletLinkAbi,
+            functionName: 'checkIfLinked',
+            args: [bob.userId, bobSmartAccountAddress],
+        })
+        expect(isLinked).toBe(true)
+    })
 
     it('should have app_address defined in user stream for bot', async () => {
         const botUserStreamId = makeUserStreamId(botClientAddress)
@@ -999,12 +1269,12 @@ describe('Bot', { sequential: true }, () => {
             }),
         )
 
-        const bobBalanceBefore = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        const bobBalanceBefore = (await ethersProvider.getBalance(bobSmartAccountAddress)).toBigInt()
         // Bob sends a message asking for a tip
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me please!')
         await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
         // Verify bob's balance increased
-        const bobBalanceAfter = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        const bobBalanceAfter = (await ethersProvider.getBalance(bobSmartAccountAddress)).toBigInt()
         expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore)
     })
 
@@ -1034,12 +1304,12 @@ describe('Bot', { sequential: true }, () => {
             }),
         )
 
-        const bobTokenBalanceBefore = await TestERC20.balanceOf(tokenName, bob.userId)
+        const bobTokenBalanceBefore = await TestERC20.balanceOf(tokenName, bobSmartAccountAddress)
 
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me ERC-20!')
         await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
 
-        const bobTokenBalanceAfter = await TestERC20.balanceOf(tokenName, bob.userId)
+        const bobTokenBalanceAfter = await TestERC20.balanceOf(tokenName, bobSmartAccountAddress)
         expect(bobTokenBalanceAfter).toBeGreaterThan(bobTokenBalanceBefore)
 
         const botBalanceAfter = await TestERC20.balanceOf(tokenName, bot.appAddress)
@@ -2215,5 +2485,39 @@ describe('Bot', { sequential: true }, () => {
             expect(decrypted?.info?.mimetype).toBe('image/png')
             expect(decrypted?.info?.filename).toBe('bot-avatar.png')
         })
+    })
+
+    it('bot can be installed in DM channel', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const userOpHash = await bundlerClient.sendUserOperation({
+            account: bobSmartAccount,
+            calls: [
+                {
+                    to: appRegistryDapp.installer.address as `0x${string}`,
+                    abi: IAppInstallerAbi,
+                    functionName: 'installApp',
+                    args: [appAddress, bobSmartAccount.address, '0x'],
+                    value: parseEther('0.02'), // for the protocol fee
+                },
+            ],
+        })
+        const receipt = await bundlerClient.waitForUserOperationReceipt({
+            hash: userOpHash,
+        })
+        expect(receipt.success).toBe(true)
+        const receivedMessages: OnMessageType[] = []
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                if (e.isDm) {
+                    receivedMessages.push(e)
+                }
+            }),
+        )
+        const { streamId } = await bobClient.dms.createDM(bot.botId, appAddress)
+        const dm = bobClient.dms.getDm(streamId)
+        const { eventId } = await dm.sendMessage('Hello')
+        await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15_000 })
+        const message = receivedMessages.find((x) => x.eventId === eventId)
+        expect(message).toBeDefined()
     })
 })
