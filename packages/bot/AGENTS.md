@@ -47,12 +47,32 @@ User Action → Towns Server → Webhook POST → JWT Verify → Decrypt → Rou
 
 ```typescript
 {
-  userId: string      // Hex address with 0x prefix (e.g., "0x1234...")
-  spaceId: string     // Space identifier
-  channelId: string   // Channel/stream identifier  
-  eventId: string     // Unique event ID (use for replies/threads)
-  createdAt: Date     // Event timestamp (use for latency: Date.now() - createdAt)
+  userId: string           // Hex address with 0x prefix (e.g., "0x1234...")
+  spaceId: string | undefined  // Space identifier (undefined for DMs/GDMs)
+  channelId: string        // Channel/stream identifier
+  eventId: string          // Unique event ID (use for replies/threads)
+  createdAt: Date          // Event timestamp (use for latency: Date.now() - createdAt)
+  isDm: boolean            // true if event is from a DM channel
+  isGdm: boolean           // true if event is from a GDM (group DM) channel
 }
+```
+
+**Channel Type Discrimination:**
+The `isDm` and `isGdm` flags form a discriminated union with `spaceId`:
+- **Regular channel**: `isDm: false, isGdm: false, spaceId: string`
+- **DM channel**: `isDm: true, isGdm: false, spaceId: undefined`
+- **GDM channel**: `isDm: false, isGdm: true, spaceId: undefined`
+
+```typescript
+bot.onMessage(async (handler, event) => {
+  if (event.isDm || event.isGdm) {
+    // DM or GDM - spaceId is undefined here
+    console.log('Private message in channel:', event.channelId)
+  } else {
+    // Regular channel - spaceId is a string here
+    console.log('Message in space:', event.spaceId)
+  }
+})
 ```
 
 ### `onMessage` - Primary Message Handler
@@ -1300,7 +1320,7 @@ The `@towns-protocol/bot` package exports several types useful for building abst
 
 **`BotHandler`** - Type representing all methods available on the `handler` parameter. Use this when building helper functions, middleware, or utilities that need to accept a handler as a parameter.
 
-**`BasePayload`** - Type containing common fields present in all event payloads (`userId`, `spaceId`, `channelId`, `eventId`, `createdAt`). Use this when building generic event processing utilities that work across different event types.
+**`BasePayload`** - Type containing common fields present in all event payloads (`userId`, `spaceId`, `channelId`, `eventId`, `createdAt`, `isDm`, `isGdm`). This is a discriminated union type where `isDm` and `isGdm` flags determine whether `spaceId` is `string` or `undefined`. Use this when building generic event processing utilities that work across different event types.
 
 **`MessageOpts`** - Type defining options for sending messages (threadId, replyId, mentions, attachments, ephemeral). Use this when building message utilities that need to accept or manipulate message sending options.
 
@@ -2362,12 +2382,12 @@ bun  dev
 ## Common Gotchas for AI Agents
 
 1. **User IDs are addresses**: Always in format `0x...`, not usernames
-2. **No GDM support yet**: Group DMs are not supported yet 
-3. **Slash commands are exclusive**: They never trigger `onMessage`
-4. **Thread/Reply IDs only**: You never get the original message content
-5. **Forwarding settings matter**: Bot may not receive all messages. Bot developer must set the forwarding setting correctly. `ALL_MESSAGES` or `MENTIONS_REPLIES_REACTIONS`
-6. **Encryption is automatic**: Never handle encryption manually
-7. **Multiple handlers allowed**: All registered handlers for an event will fire
+2. **Slash commands are exclusive**: They never trigger `onMessage`
+3. **Thread/Reply IDs only**: You never get the original message content
+4. **Forwarding settings matter**: Bot may not receive all messages. Bot developer must set the forwarding setting correctly. `ALL_MESSAGES` or `MENTIONS_REPLIES_REACTIONS`
+5. **Encryption is automatic**: Never handle encryption manually
+6. **Multiple handlers allowed**: All registered handlers for an event will fire
+7. **DM vs GDM distinction**: Use `isDm` and `isGdm` flags to distinguish between DM and GDM channels; `spaceId` is `undefined` for both
 
 ## Quick Command Reference
 
