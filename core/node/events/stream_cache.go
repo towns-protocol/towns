@@ -188,6 +188,11 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 
 	s.appliedBlockNum.Store(uint64(s.params.AppliedBlockNum))
 
+	// delete streams from the DB that are no longer placed on this node
+	if store, ok := s.params.Storage.(*storage.PostgresStreamStore); ok {
+		storage.CleanupOrphanedStreams(ctx, store, localStreamResults)
+	}
+
 	// Close initial worker pool after all tasks are executed.
 	go initialReconcileWorkerPool.StopWait()
 

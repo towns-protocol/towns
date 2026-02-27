@@ -61,7 +61,9 @@ func (s *StreamCache) onStreamPlacementUpdated(
 			stream.local = nil
 			stream.mu.Unlock()
 		}
-		// TODO: if stream is removed from this node cleanup stream storage.
+
+		// DB for stream that are not placed on this node anymore are deleted on node boot
+		// This prevents running potential long DB operations on the main event processing loop.
 		return
 	}
 
