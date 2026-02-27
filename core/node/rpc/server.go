@@ -899,6 +899,7 @@ func (s *Service) initAppRegistryHandlers() error {
 		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
 		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
 		"/river.AppRegistryService/GetStatus",
+		"/river.AppRegistryService/GetAppActiveStatus",
 		"/river.AppRegistryService/GetAppMetadata",
 		"/river.AppRegistryService/ValidateBotName",
 	)

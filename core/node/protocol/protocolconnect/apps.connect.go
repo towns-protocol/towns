@@ -66,6 +66,9 @@ const (
 	// AppRegistryServiceSetAppActiveStatusProcedure is the fully-qualified name of the
 	// AppRegistryService's SetAppActiveStatus RPC.
 	AppRegistryServiceSetAppActiveStatusProcedure = "/river.AppRegistryService/SetAppActiveStatus"
+	// AppRegistryServiceGetAppActiveStatusProcedure is the fully-qualified name of the
+	// AppRegistryService's GetAppActiveStatus RPC.
+	AppRegistryServiceGetAppActiveStatusProcedure = "/river.AppRegistryService/GetAppActiveStatus"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -82,6 +85,7 @@ var (
 	appRegistryServiceGetSessionMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
 	appRegistryServiceValidateBotNameMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("ValidateBotName")
 	appRegistryServiceSetAppActiveStatusMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppActiveStatus")
+	appRegistryServiceGetAppActiveStatusMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppActiveStatus")
 )
 
 // AppRegistryServiceClient is a client for the river.AppRegistryService service.
@@ -106,6 +110,9 @@ type AppRegistryServiceClient interface {
 	// SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
 	// Deactivated apps won't receive forwarded messages but retain their configuration.
 	SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error)
+	// GetAppActiveStatus returns whether the app is currently active without pinging the bot.
+	// This is a lightweight alternative to GetStatus when only the active field is needed.
+	GetAppActiveStatus(context.Context, *connect.Request[protocol.GetAppActiveStatusRequest]) (*connect.Response[protocol.GetAppActiveStatusResponse], error)
 }
 
 // NewAppRegistryServiceClient constructs a client for the river.AppRegistryService service. By
@@ -184,6 +191,12 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(appRegistryServiceSetAppActiveStatusMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getAppActiveStatus: connect.NewClient[protocol.GetAppActiveStatusRequest, protocol.GetAppActiveStatusResponse](
+			httpClient,
+			baseURL+AppRegistryServiceGetAppActiveStatusProcedure,
+			connect.WithSchema(appRegistryServiceGetAppActiveStatusMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -200,6 +213,7 @@ type appRegistryServiceClient struct {
 	getSession         *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
 	validateBotName    *connect.Client[protocol.ValidateBotNameRequest, protocol.ValidateBotNameResponse]
 	setAppActiveStatus *connect.Client[protocol.SetAppActiveStatusRequest, protocol.SetAppActiveStatusResponse]
+	getAppActiveStatus *connect.Client[protocol.GetAppActiveStatusRequest, protocol.GetAppActiveStatusResponse]
 }
 
 // Register calls river.AppRegistryService.Register.
@@ -257,6 +271,11 @@ func (c *appRegistryServiceClient) SetAppActiveStatus(ctx context.Context, req *
 	return c.setAppActiveStatus.CallUnary(ctx, req)
 }
 
+// GetAppActiveStatus calls river.AppRegistryService.GetAppActiveStatus.
+func (c *appRegistryServiceClient) GetAppActiveStatus(ctx context.Context, req *connect.Request[protocol.GetAppActiveStatusRequest]) (*connect.Response[protocol.GetAppActiveStatusResponse], error) {
+	return c.getAppActiveStatus.CallUnary(ctx, req)
+}
+
 // AppRegistryServiceHandler is an implementation of the river.AppRegistryService service.
 type AppRegistryServiceHandler interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
@@ -279,6 +298,9 @@ type AppRegistryServiceHandler interface {
 	// SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
 	// Deactivated apps won't receive forwarded messages but retain their configuration.
 	SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error)
+	// GetAppActiveStatus returns whether the app is currently active without pinging the bot.
+	// This is a lightweight alternative to GetStatus when only the active field is needed.
+	GetAppActiveStatus(context.Context, *connect.Request[protocol.GetAppActiveStatusRequest]) (*connect.Response[protocol.GetAppActiveStatusResponse], error)
 }
 
 // NewAppRegistryServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -353,6 +375,12 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		connect.WithSchema(appRegistryServiceSetAppActiveStatusMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	appRegistryServiceGetAppActiveStatusHandler := connect.NewUnaryHandler(
+		AppRegistryServiceGetAppActiveStatusProcedure,
+		svc.GetAppActiveStatus,
+		connect.WithSchema(appRegistryServiceGetAppActiveStatusMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/river.AppRegistryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AppRegistryServiceRegisterProcedure:
@@ -377,6 +405,8 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 			appRegistryServiceValidateBotNameHandler.ServeHTTP(w, r)
 		case AppRegistryServiceSetAppActiveStatusProcedure:
 			appRegistryServiceSetAppActiveStatusHandler.ServeHTTP(w, r)
+		case AppRegistryServiceGetAppActiveStatusProcedure:
+			appRegistryServiceGetAppActiveStatusHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -428,4 +458,8 @@ func (UnimplementedAppRegistryServiceHandler) ValidateBotName(context.Context, *
 
 func (UnimplementedAppRegistryServiceHandler) SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.SetAppActiveStatus is not implemented"))
+}
+
+func (UnimplementedAppRegistryServiceHandler) GetAppActiveStatus(context.Context, *connect.Request[protocol.GetAppActiveStatusRequest]) (*connect.Response[protocol.GetAppActiveStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.GetAppActiveStatus is not implemented"))
 }

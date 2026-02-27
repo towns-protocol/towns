@@ -1036,3 +1036,32 @@ func (s *Service) SetAppActiveStatus(
 		Msg: &SetAppActiveStatusResponse{},
 	}, nil
 }
+
+func (s *Service) GetAppActiveStatus(
+	ctx context.Context,
+	req *connect.Request[GetAppActiveStatusRequest],
+) (
+	*connect.Response[GetAppActiveStatusResponse],
+	error,
+) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetAppActiveStatus"))
+
+	app, err := validateAddress(req.Msg.AppId, "app id", "GetAppActiveStatus")
+	if err != nil {
+		return nil, err
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_NOT_FOUND, err).
+			Message("app not found").
+			Tag("appId", app).
+			Func("GetAppActiveStatus")
+	}
+
+	return &connect.Response[GetAppActiveStatusResponse]{
+		Msg: &GetAppActiveStatusResponse{
+			Active: appInfo.Active,
+		},
+	}, nil
+}

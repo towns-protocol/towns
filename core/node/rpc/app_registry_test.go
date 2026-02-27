@@ -2675,6 +2675,107 @@ func TestAppRegistry_SetAppActiveStatus(t *testing.T) {
 	})
 }
 
+func TestAppRegistry_GetAppActiveStatus(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{
+		numBots: 1,
+	})
+
+	// Register and setup bot
+	tester.StartBotServices()
+	botCreds := tester.botCredentials[0]
+	tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+
+	t.Run("New app is active by default", func(t *testing.T) {
+		// GetAppActiveStatus is unauthenticated - no auth needed
+		resp, err := tester.appRegistryClient.GetAppActiveStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetAppActiveStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.True(t, resp.Msg.Active)
+	})
+
+	t.Run("Returns false after deactivation", func(t *testing.T) {
+		// Deactivate the app
+		setReq := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: false,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, setReq)
+		_, err := tester.appRegistryClient.SetAppActiveStatus(tester.ctx, setReq)
+		require.NoError(t, err)
+
+		// Verify GetAppActiveStatus returns false
+		resp, err := tester.appRegistryClient.GetAppActiveStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetAppActiveStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.False(t, resp.Msg.Active)
+	})
+
+	t.Run("Returns true after reactivation", func(t *testing.T) {
+		// Reactivate the app
+		setReq := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: true,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, setReq)
+		_, err := tester.appRegistryClient.SetAppActiveStatus(tester.ctx, setReq)
+		require.NoError(t, err)
+
+		// Verify GetAppActiveStatus returns true
+		resp, err := tester.appRegistryClient.GetAppActiveStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetAppActiveStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.True(t, resp.Msg.Active)
+	})
+
+	t.Run("Returns error for non-existent app", func(t *testing.T) {
+		nonExistentApp := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+		resp, err := tester.appRegistryClient.GetAppActiveStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetAppActiveStatusRequest{
+				AppId: nonExistentApp[:],
+			}),
+		)
+		require.Error(t, err)
+		require.Nil(t, resp)
+	})
+
+	t.Run("Works without authentication", func(t *testing.T) {
+		// Create unauthenticated client
+		unauthClient := protocolconnect.NewAppRegistryServiceClient(
+			tester.serviceTester.httpClient(),
+			"https://"+tester.appRegistryService.listener.Addr().String(),
+		)
+
+		// Should work without authentication
+		resp, err := unauthClient.GetAppActiveStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetAppActiveStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.True(t, resp.Msg.Active)
+	})
+}
+
 func TestAppRegistry_GetStatusWithActive(t *testing.T) {
 	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{
 		numBots: 2,

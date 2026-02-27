@@ -8,7 +8,7 @@ import "protocol.proto";
 // AppRegistryService allows apps and app owners to register apps, and set app-related preferences for messages added
 // to channels the app has membership in.
 //
-// These functions are all authenticated, with the exception of GetStatus, and require a session token to be passed
+// These functions are all authenticated, with the exception of GetStatus and GetAppActiveStatus, and require a session token to be passed
 // through the authorization metadata.
 // This session token can be obtained from the AuthenticationService. If the session token is missing or invalid an
 // Err_UNAUTHENTICATED (code=16) is returned.
@@ -40,6 +40,10 @@ service AppRegistryService {
     // SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
     // Deactivated apps won't receive forwarded messages but retain their configuration.
     rpc SetAppActiveStatus(SetAppActiveStatusRequest) returns (SetAppActiveStatusResponse);
+
+    // GetAppActiveStatus returns whether the app is currently active without pinging the bot.
+    // This is a lightweight alternative to GetStatus when only the active field is needed.
+    rpc GetAppActiveStatus(GetAppActiveStatusRequest) returns (GetAppActiveStatusResponse);
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -313,5 +317,14 @@ message SetAppActiveStatusRequest {
 }
 
 message SetAppActiveStatusResponse {}
+
+// Get app active status
+message GetAppActiveStatusRequest {
+    bytes app_id = 1;
+}
+
+message GetAppActiveStatusResponse {
+    bool active = 1;
+}
 
 
