@@ -63,7 +63,7 @@ Use `--help` for all options. Useful when modifying CI workflows.
 
 ## Package.json Scripts
 
-We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first.
+We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos is a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first.
 
 If you have a package in the monorepo, and
 a) you want it to be built on CI, add a `"build"` script
