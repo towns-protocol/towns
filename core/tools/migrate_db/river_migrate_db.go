@@ -168,7 +168,7 @@ func init() {
 	viper.SetDefault("RIVER_DB_SOURCE_PASSWORD", "")
 	viper.SetDefault("RIVER_DB_TARGET_PASSWORD", "")
 
-	rootCmd.PersistentFlags().StringP("schema", "i", "", "Schema name (i.e. instance hex id preffixed with 's0x')")
+	rootCmd.PersistentFlags().StringP("schema", "i", "", "Schema name (i.e. instance hex id prefixed with 's0x')")
 	_ = viper.BindPFlag("RIVER_DB_SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
 
 	rootCmd.PersistentFlags().StringP("schema_target_overwrite", "o", "", "Advanced: restore into different schema")
