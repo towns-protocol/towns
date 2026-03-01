@@ -1,5 +1,5 @@
 import { eq, sql, and } from 'ponder'
-import { ponder } from './metrics' // Use wrapped ponder with metrics
+import { ponder, trackDetailedQuery } from './metrics' // Use wrapped ponder with metrics
 import schema from 'ponder:schema'
 import {
     getReadSpaceInfoBlockNumber,
@@ -153,12 +153,15 @@ ponder.on('SpaceOwner:Transfer', async ({ event, context }) => {
         // We directly update without checking existence - if the space doesn't exist yet,
         // the UPDATE will affect 0 rows (harmless). The space will be created when
         // SpaceFactory:SpaceCreated is processed, with the correct owner already set.
+        const queryStart = Date.now()
         await context.db.sql
             .update(schema.space)
             .set({
                 owner: event.args.to,
             })
             .where(eq(schema.space.tokenId, event.args.tokenId))
+        const queryDuration = Date.now() - queryStart
+        trackDetailedQuery('SpaceOwner:Transfer_update_owner', queryDuration, 100)
     } catch (error) {
         console.error(`Error processing SpaceOwner:Transfer at blockNumber ${blockNumber}:`, error)
     }
